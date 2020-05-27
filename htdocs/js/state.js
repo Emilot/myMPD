@@ -71,6 +71,16 @@ function setCounter(currentSongId, totalTime, elapsedTime) {
                 }
                 tr.classList.remove('font-weight-bold');
             }
+            tr = document.getElementById('queueMiniTrackId' + lastState.currentSongId);
+            if (tr && tr.classList.contains('playing')) {
+                let posTd = tr.querySelector('[data-col=Pos]');
+                if (posTd) {
+                    posTd.classList.remove('material-icons');
+                    posTd.innerText = tr.getAttribute('data-songpos');
+                }
+                tr.classList.remove('font-weight-bold');
+                tr.classList.remove('playing');
+            }
         }
     }
     let tr = document.getElementById('queueTrackId' + currentSongId);
@@ -88,7 +98,18 @@ function setCounter(currentSongId, totalTime, elapsedTime) {
         }
         tr.classList.add('font-weight-bold');
     }
-    
+    tr = document.getElementById('queueMiniTrackId' + currentSongId);
+    if (tr && !tr.classList.contains('playing')) {
+        let posTd = tr.querySelector('[data-col=Pos]');
+        if (posTd) {
+            if (!posTd.classList.contains('material-icons')) {
+                posTd.classList.add('material-icons');
+                posTd.innerText = 'play_arrow';
+            }
+        }
+        tr.classList.add('font-weight-bold');
+        tr.classList.add('playing');
+    }
     if (progressTimer) {
         clearTimeout(progressTimer);
     }
