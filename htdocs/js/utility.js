@@ -69,6 +69,10 @@ function fileformat(audioformat) {
 function scrollToPosY(pos) {
     document.body.scrollTop = pos; // For Safari
     document.documentElement.scrollTop = pos; // For Chrome, Firefox, IE and Opera
+
+    if (app.current.app === 'Playback') {
+        document.getElementById('BrowseCovergridBox').scrollTop = 0;
+    }
 }
 
 function doSetFilterLetter(x) {
@@ -338,9 +342,12 @@ function toggleBtnChkCollapse(btn, collapse, state) {
     }
 }
 
-function setPagination(total, returned) {
-    let cat = app.current.app + (app.current.tab === undefined ? '': app.current.tab);
-    let totalPages = Math.ceil(total / settings.maxElementsPerPage);
+function setPagination(total, returned, limit = settings.maxElementsPerPage) {
+      let cat = app.current.app === 'Playback' ? 'BrowseCovergrid' : app.current.app + app.current.tab;
+       if (app.current.app === 'Search') {
+	cat = app.current.app + (app.current.tab === undefined ? '': app.current.tab);
+       }
+    let totalPages = Math.ceil(total / limit);
     if (totalPages === 0) {
         totalPages = 1;
     }
@@ -352,28 +359,28 @@ function setPagination(total, returned) {
         let pages = p[i].children[1].children[1];
         let next = p[i].children[2];
     
-        page.innerText = (app.current.page / settings.maxElementsPerPage + 1) + ' / ' + totalPages;
+        page.innerText = (app.current.page / limit + 1) + ' / ' + totalPages;
         if (totalPages > 1) {
             page.removeAttribute('disabled');
             let pl = '';
             for (let j = 0; j < totalPages; j++) {
-                pl += '<button data-page="' + (j * settings.maxElementsPerPage) + '" type="button" class="mr-1 mb-1 btn-sm btn btn-secondary">' +
-                      ( j + 1) + '</button>';
+                pl += '<button data-page="' + (j * limit) + '" type="button" class="mr-1 mb-1 btn-sm btn btn-secondary">' +
+                    (j + 1) + '</button>';
             }
             pages.innerHTML = pl;
             page.classList.remove('nodropdown');
         }
         else if (total === -1) {
             page.setAttribute('disabled', 'disabled');
-            page.innerText = (app.current.page / settings.maxElementsPerPage + 1);
+            page.innerText = (app.current.page / limit + 1);
             page.classList.add('nodropdown');
         }
         else {
             page.setAttribute('disabled', 'disabled');
             page.classList.add('nodropdown');
         }
-        
-        if (total > app.current.page + settings.maxElementsPerPage || total === -1 && returned >= settings.maxElementsPerPage) {
+
+        if (total > app.current.page + limit || total === -1 && returned >= limit) {
             next.removeAttribute('disabled');
             p[i].classList.remove('hide');
             document.getElementById(cat + 'ButtonsBottom').classList.remove('hide');
@@ -383,7 +390,7 @@ function setPagination(total, returned) {
             p[i].classList.add('hide');
             document.getElementById(cat + 'ButtonsBottom').classList.add('hide');
         }
-    
+
         if (app.current.page > 0) {
             prev.removeAttribute('disabled');
             p[i].classList.remove('hide');
@@ -444,5 +451,6 @@ function gotoPage(x) {
         default:
             app.current.page = x;
     }
+    setAppState(app.current.page, app.current.filter, app.current.sort, app.current.search);
     appGoto(app.current.app, app.current.tab, app.current.view, app.current.page + '/' + app.current.filter + '/' + app.current.sort + '/' + app.current.search);
 }

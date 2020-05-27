@@ -19,6 +19,7 @@
 <!--debug-->  <link href="css/mympd.css" rel="stylesheet">
 <!--debug-->  <link href="css/theme-dark.css" rel="stylesheet">
 <!--debug-->  <link href="css/theme-light.css" rel="stylesheet">
+<!--debug-->  <link href="css/theme-maroon.css" rel="stylesheet">
 <!--release   <link href="css/combined.css" rel="stylesheet">-->
   <link href="assets/favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon">
   <link href="mympd.webmanifest" rel="manifest" crossorigin="anonymous">
@@ -50,6 +51,7 @@
             <a data-phrase="Update smart playlists" class="dropdown-item text-light bg-lite-dark featSmartpls" href="#" data-href='{"cmd": "updateSmartPlaylists", "options": []}'></a>
           </div>
           <a data-phrase="Settings" class="dropdown-item text-light" href="#" data-toggle="modal" data-target="#modalSettings"></a>
+          <a data-phrase="Audio settings" class="dropdown-item text-light" href="#" data-toggle="modal" data-target="#modalCollybia"></a>
           <a data-phrase="Timer" class="dropdown-item text-light featTimer" href="#" data-toggle="modal" data-target="#modalTimer"></a>
           <a data-phrase="Mounts" class="dropdown-item text-light featMounts" href="#" data-toggle="modal" data-target="#modalMounts"></a>
           <a data-phrase="Browse directories" class="dropdown-item text-light featBrowse" href="browse/" target="_blank"></a>
@@ -102,7 +104,11 @@
   <div id="alertMpdState" class="alert alert-danger top-alert"></div>
   <div id="alertMympdState" class="alert alert-danger top-alert"></div>
   <!-- Main content -->
-  <main class="container">
+  <main class="container-fluid">
+
+<div id="row1" class="row no-gutters">
+  <div id="col1" class="col-md-6">
+
     <div class="card" id="cardPlayback">
       <div class="card-header"><span data-phrase="Playback"></span>
         <div class="btn-toolbar pull-right playback-toolbar">
@@ -321,9 +327,40 @@
       </div>
     </div>
     
-    <div class="card hide" id="cardBrowse">
+    <div id="cardQueueMini" class="card">
+      <div id="cardHeaderQueueMini" class="card-header">
+        <span class="navbar-text p-0" data-phrase="Next in queue"></span>
+      </div>
+
+      <div class="card-body">
+        <div class="table-responsive nowrap">
+          <table id="QueueMiniList" class="table table-hover table-sm">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th data-phrase="Title"></th>
+                <th data-phrase="Artist"></th>
+                <th data-phrase="Album"></th>
+                <th data-phrase="Duration"></th>
+              </tr>
+            </thead>
+            <tbody class="clickable">
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="cardFooterQueueMini" class="card-footer">
+      </div>
+    </div>
+  </div>
+
+  <div id="col2" class="col-md-6 d-none d-md-block">
+
+    <div class="card" id="cardBrowse">
       <div class="card-header" id="cardHeaderBrowse">
-        <ul class="nav nav-tabs card-header-tabs">
+        <small id="panel-heading-browse" class="text pull-right"></small>
+        <ul class="nav nav-tabs card-header-tabs hide">
           <li class="nav-item featTags">
             <a data-phrase="Database" data-href='{"cmd": "appGoto", "options": ["Browse", "Database"]}' class="nav-link text-dark" href="#" id="cardBrowseNavDatabase"></a>
           </li>        
@@ -415,7 +452,7 @@
         </div>
         <div class="btn-toolbar hide" id="BrowsePlaylistsButtonsBottom">
           <div class="btn-group mr-2">
-            <button type="button" class="btn btn-secondary material-icons" data-href='{"cmd": "scrollTo", "options": [0]}' data-title-phrase="To top">
+            <button type="button" class="btn btn-secondary material-icons" data-href='{"cmd": "scrollToPosY", "options": [0]}' data-title-phrase="To top">
               keyboard_arrow_up
             </button>
           </div>        
@@ -494,7 +531,7 @@
         
         <div class="btn-toolbar hide" id="BrowseDatabaseButtonsBottom">
           <div class="btn-group mr-2">
-            <button data-title-phrase="To top" type="button" class="btn btn-secondary material-icons" data-href='{"cmd": "scrollTo", "options": [0]}'>keyboard_arrow_up</button>
+            <button data-title-phrase="To top" type="button" class="btn btn-secondary material-icons" data-href='{"cmd": "scrollToPosY", "options": [0]}'>keyboard_arrow_up</button>
           </div>        
           <div id="BrowseDatabasePaginationBottom" class="btn-group mr-2 dropup">
             <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
@@ -561,7 +598,7 @@
         </div>
         <div class="btn-toolbar hide" id="BrowseFilesystemButtonsBottom">
           <div class="btn-group mr-2">
-            <button data-title-phrase="To top" type="button" class="btn btn-secondary material-icons" data-href='{"cmd": "scrollTo", "options": [0]}'>keyboard_arrow_up</button>
+            <button data-title-phrase="To top" type="button" class="btn btn-secondary material-icons" data-href='{"cmd": "scrollToPosY", "options": [0]}'>keyboard_arrow_up</button>
           </div>        
           <div id="BrowseFilesystemPaginationBottom" class="btn-group mr-2 dropup">
             <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
@@ -575,14 +612,20 @@
         </div>
       </div>
       
-      <div class="card-body hide" id="cardBrowseCovergrid">
+      <div id="cardBrowseCovergrid" class="card-body">
         <div class="btn-toolbar card-toolbar" id="BrowseCovergridButtons">
+          <div class="btn-group mr-2 hide">
+            <button id="btnBrowseCovergridAlbum" data-href='{"cmd": "gotoAlbumList", "options": []}' type="button" class="btn btn-secondary">
+              &laquo;
+              <span id="btnBrowseCovergridAlbumText" class="btnText hide" data-phrase="Album"></span>
+            </button>
+          </div>
           <form id="searchcovergrid" class="flex-grow-1">
             <div class="input-group mr-2">
               <div class="input-group-prepend">
                 <button data-title-phrase="Select tag to search" class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown">
                   <span class="material-icons">search</span>
-                  <span data-phrase="AlbumArtist" id="searchCovergridTagsDesc"></span>
+                  <span class="btnText hide" data-phrase="AlbumArtist" id="searchCovergridTagsDesc"></span>
                 </button>
                 <div class="dropdown-menu bg-lite-dark px-2" id="searchCovergridTags">
                 </div>
@@ -597,7 +640,7 @@
                 </div>
                 <div class="dropdown-divider"></div>
                 <div class="form-check">
-                  <button class="btn btn-secondary btn-xs clickable material-icons material-icons-small" id="covergridSortDesc">radio_button_unchecked</button>&nbsp;
+                  <button class="btn btn-secondary btn-xs clickable material-icons material-icons-small" id="covergridSortDesc">radio_button_unchecked</button>
                   <label class="form-check-label text-light" for="covergridSortDesc" data-phrase="Descending"></label>
                 </div>
             </div>
@@ -612,13 +655,47 @@
             <button data-title-phrase="Next page" data-href='{"cmd": "gotoPage", "options": ["next"]}' type="button" class="btn btn-secondary btn-group-append">&raquo;</button>
           </div>
         </div>
-        <div class="container justify-content-between">
+        <div id="BrowseCovergridBox">
+        <div class="container-fluid justify-content-between">
           <div id="BrowseCovergridList" class="row justify-content-between">
           </div>
         </div>
+
+        <div class="table-responsive-md">
+          <table id="BrowseCovergridAlbumList" class="table table-hover table-sm hide">
+            <thead>
+              <tr>
+                <th data-col="Type"></th>
+                <th data-col="Album" data-phrase="Album"></th>
+                <th data-col="AlbmArtist" data-phrase="AlbumArtist"></th>
+                <th data-col="Action"></th>
+              </tr>
+            </thead>
+            <tbody class="clickable">
+            </tbody>
+          </table>
+        </div>
+
+        <div class="table-responsive-md">
+          <table id="BrowseCovergridTitleList" class="table table-hover table-sm hide">
+            <caption>AlbumArtist - Album</caption>
+            <thead>
+              <tr>
+                <th data-col="Track">#</th>
+                <th data-col="Title" data-phrase="Title"></th>
+                <th data-col="Duration" data-phrase=Duration></th>
+                <th data-col="Action"></th>
+              </tr>
+            </thead>
+            <tbody class="clickable">
+            </tbody>
+          </table>
+        </div>
+        </div>
+
         <div class="btn-toolbar hide" id="BrowseCovergridButtonsBottom">
           <div class="btn-group mr-2">
-            <button data-title-phrase="To top" type="button" class="btn btn-secondary material-icons" data-href='{"cmd": "scrollTo", "options": [0]}'>keyboard_arrow_up</button>
+            <button data-title-phrase="To top" type="button" class="btn btn-secondary material-icons" data-href='{"cmd": "scrollToPosY", "options": [0]}'>keyboard_arrow_up</button>
           </div>        
           <div id="BrowseCovergridPaginationBottom" class="btn-group dropup">
             <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
@@ -634,10 +711,12 @@
 
       <div class="card-footer" id="cardFooterBrowse">
       </div>      
-    </div>        
+    </div>
+  </div>
+</div>      
 
     <div class="card hide" id="cardSearch">
-      <div class="card-header">
+      <div class="card-header" id="cardHeaderSearch">
         <span data-phrase="Search"></span>
         <span id="panel-heading-search" class="text pull-right"></span>
       </div>
@@ -653,7 +732,7 @@
                 <div class="dropdown-menu bg-lite-dark px-2" id="searchtags">
                 </div>
               </div>
-              <div class="input-group-prepend featAdvsearch">
+              <div class="input-group-prepend featAdvsearch hide">
                 <select class="form-control custom-select border-secondary rounded-0" id="searchMatch">
                   <option data-phrase="contains" value="contains"></option>
                   <option value="==">==</option>
@@ -706,7 +785,7 @@
         </div>
         <div class="btn-toolbar hide" id="SearchButtonsBottom">
           <div class="btn-group mr-2">
-            <button data-title-phrase="To top" type="button" class="btn btn-secondary material-icons" data-href='{"cmd": "scrollTo", "options": [0]}'>keyboard_arrow_up</button>
+            <button data-title-phrase="To top" type="button" class="btn btn-secondary material-icons" data-href='{"cmd": "scrollToPosY", "options": [0]}'>keyboard_arrow_up</button>
           </div>        
           <div id="SearchPaginationBottom" class="btn-group mr-2 dropup">
             <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
@@ -1470,7 +1549,248 @@
       </div>
     </div>
   </div>
-  
+
+  <div id="modalCollybia" class="modal fade" data-backdrop="static" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header pb-0">
+          <ul class="nav nav-tabs border-bottom-0">
+            <li class="nav-item">
+              <a class="nav-link active text-dark" href="#tabAudioSettings" data-toggle="tab" data-height="true" data-phrase="Audio"></a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link text-dark" href="#tabNetworkShare" data-toggle="tab" data-height="true" data-phrase="NAS"></a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link text-dark" href="#tabStreamingServices" data-toggle="tab" data-height="true" data-phrase="Streaming"></a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link text-dark" href="#tabUpdate" data-toggle="tab" data-height="true" data-phrase="Update"></a>
+            </li>
+          </ul>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="tab-content">
+            <div id="tabAudioSettings" class="tab-pane active">
+              <form id="tabAudioSettingsFrm">
+                <h4 data-phrase="Audio Settings"></h4>
+                <div class="form-group row">
+                  <label class="col-sm-4 col-form-label" for="selectDac" data-phrase="DAC List"></label>
+                  <div class="col-sm-8">
+                    <select id="selectDac" class="form-control custom-select border-secondary">
+                      <option value="none" data-phrase="None"></option>
+                      <option value="iqdacplus" data-phrase="Akkordion Music Player"></option>
+                      <option value="allo-boss-dac" data-phrase="Allo Boss DAC"></option>
+                      <option value="allo-digione" data-phrase="Allo Digione"></option>
+                      <option value="allo-katana-dac" data-phrase="Allo Katana DAC"></option>
+                      <option value="allo-piano-dac" data-phrase="Allo Piano DAC 2.0/2.1"></option>
+                      <option value="allo-piano-dac-plus" data-phrase="Allo Piano DAC Plus 2.1"></option>
+                      <option value="allo-piano-dac-plus_2.1" data-phrase="Allo Piano DAC Plus 2.1 with Kali"></option>
+                      <option value="applepi-dac" data-phrase="ApplePi-DAC (Orchard Audio)"></option>
+                      <option value="audioinjector-ultra" data-phrase="Audioinjector.net ultra"></option>
+                      <option value="audioinjector-wm8731" data-phrase="Audioinjector.net audio add on"></option>
+                      <option value="audiosense-pi" data-phrase="Audiosense-pi"></option>
+                      <option value="dionaudio-loco" data-phrase="Dion Audio LOCO DAC-AMP"></option>
+                      <option value="dionaudio-loco-v2" data-phrase="Dion Audio LOCO DAC-AMP v2"></option>
+                      <option value="fe-pi-audio" data-phrase="Fe-Pi Audio Sound Card"></option>
+                      <option value="hifiberry-dac" data-phrase="Hifiberry DAC"></option>
+                      <option value="hifiberry-dacplus" data-phrase="Hifiberry DAC Plus"></option>
+                      <option value="hifiberry-dacplusadc" data-phrase="HifiBerry DAC+ADC"></option>
+                      <option value="hifiberry-dacplusadcpro" data-phrase="HifiBerry DAC+ADC PRO"></option>
+                      <option value="hifiberry-dacplusdsp" data-phrase="HifiBerry DAC+DSP"></option>
+                      <option value="hifiberry-dacplushd" data-phrase="HifiBerry DAC+ HD"></option>
+                      <option value="hifiberry-digi" data-phrase="HifiBerry Digi and Digi+"></option>
+                      <option value="hifiberry-digi-pro" data-phrase="Hifiberry Digi+ Pro"></option>
+                      <option value="i-sabre-q2m" data-phrase="Audiophonics I-SABRE Q2M DAC"></option>
+                      <option value="iqaudio-codec" data-phrase="IQaudio Codec"></option>
+                      <option value="iqaudio-dac" data-phrase="IQaudio DAC"></option>
+                      <option value="iqaudio-dacplus" data-phrase="IQaudio DAC+"></option>
+                      <option value="iqaudio-digi-wm8804-audio" data-phrase="IQAudIO Digi"></option>
+                      <option value="justboom-both" data-phrase="Justboom-dac and justboom-digi simultaneous usage"></option>
+                      <option value="justboom-dac" data-phrase="JustBoom DAC Hat/Amp HAT/DAC Zero/Amp Zero"></option>
+                      <option value="justboom-digi" data-phrase="JustBoom Digi & Digi Zero"></option>
+                      <option value="hifiberry-dac" data-phrase="Mamboberry DACs"></option>
+                      <option value="max98357a" data-phrase="Maxim MAX98357A"></option>
+                      <option value="pisound" data-phrase="Blokas Labs pisound card"></option>
+                      <option value="rpi-cirrus-wm5102" data-phrase="Cirrus Logis Audio Card"></option>
+                      <option value="rpi-dac" data-phrase="RPi DAC"></option>
+                      <option value="rpi-proto" data-phrase="RPi Proto"></option>
+                      <option value="rra-digidac1-wm8741-audio" data-phrase="Red Rocks Audio DigiDAC1"></option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group row">
+                  <label class="col-sm-4 col-form-label" for="selectMixerType" data-phrase="DAC volume mode"></label>
+                  <div class="col-sm-8">
+                    <select id="selectMixerType" class="form-control custom-select border-secondary">
+                      <option value="hardware" data-phrase="Hardware"></option>
+                      <option value="software" data-phrase="Software"></option>
+                      <option value="disabled" data-phrase="Disabled"></option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group row">
+                  <label class="col-sm-4 col-form-label" for="btnDop" data-phrase="Enable DoP"></label>
+                  <div class="col-sm-8">
+                    <button id="btnDop" class="btn btn-secondary btn-sm material-icons" data-href='{"cmd": "toggleBtnChk", "options": []}' type="button"></button>
+                  </div>
+                </div>
+              </form>
+            </div>
+            <div id="tabNetworkShare" class="tab-pane">
+              <form id="NetworkShareFrm">
+                <h4 data-phrase="Your NAS Settings"></h4>
+                <!-- <div class="mb-3">If not applicable, ignore these</div> -->
+                <div class="form-group row">
+                  <label class="col-sm-4 col-form-label" for="selectNsType" data-phrase="Select type"></label>
+                  <div class="col-sm-8">
+                    <select id="selectNsType" class="form-control custom-select border-secondary">
+                      <option value="0" data-phrase="None (not applicable)"></option>
+                      <option value="1" data-phrase="Samba A (guest access)"></option>
+                      <option value="2" data-phrase="Samba B (access with credentials)"></option>
+                      <option value="3" data-phrase="NFS"></option>
+                    </select>
+                    <!-- <small class="form-text text-muted">Select Samba A for guest access or B for access with credentials</small> -->
+                  </div>
+                </div>
+                <div id="nsServerShare">
+                  <div class="form-group row">
+                    <label class="col-sm-4 col-form-label" for="inputNsServer" data-phrase="NAS IP address"></label>
+                    <div class="col-sm-8">
+                      <input id="inputNsServer" class="form-control border-secondary" type="text" data-placeholder-phrase="NAS IP address">
+                      <!-- <div class="invalid-feedback" data-phrase="Invalid server"></div> -->
+                      <div class="invalid-feedback" data-phrase="Invalid IP address"></div>
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label class="col-sm-4 col-form-label" for="inputNsShare" data-phrase="Path"></label>
+                    <div class="col-sm-8">
+                      <input id="inputNsShare" class="form-control border-secondary" type="text" data-placeholder-phrase="Music folder path in NAS (e.g. /music)">
+                      <div class="invalid-feedback" data-phrase="Path must start with a leading slash"></div>
+                    </div>
+                  </div>
+                </div>
+                <div id="sambaVersion" class="form-group row">
+                  <label class="col-sm-4 col-form-label" for="selectSambaVersion" data-phrase="Select samba version"></label>
+                  <div class="col-sm-8">
+                    <select id="selectSambaVersion" class="form-control custom-select border-secondary">
+                      <option value="vers=1.0" data-phrase="1.0"></option>
+                      <option value="vers=2.0" data-phrase="2.0"></option>
+                      <option value="vers=2.1" data-phrase="2.1"></option>
+                      <option value="vers=3.0" selected="selected" data-phrase="3.0"></option>
+                    </select>
+                  </div>
+                </div>
+                <div id="nsCredentials">
+                  <div class="form-group row">
+                    <label class="col-sm-4 col-form-label" for="inputNsUsername" data-phrase="Username"></label>
+                    <div class="col-sm-8">
+                      <input id="inputNsUsername" class="form-control border-secondary" type="text" data-placeholder-phrase="Username">
+                      <div class="invalid-feedback" data-phrase="Username cannot be blank"></div>
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label class="col-sm-4 col-form-label" for="inputNsPassword" data-phrase="Password"></label>
+                    <div class="col-sm-8">
+                      <input id="inputNsPassword" class="form-control border-secondary" type="password" data-placeholder-phrase="Password">
+                      <div class="invalid-feedback" data-phrase="Password cannot be blank"></div>
+                    </div>
+                  </div>
+                </div>
+              </form>
+              <small>Changes will need a system reboot</small>
+            </div>
+            <div id="tabStreamingServices" class="tab-pane">
+              <form id="StreamingServicesFrm">
+                <h4 data-phrase="Streaming Services"></h4>
+                <div class="form-group row">
+                  <label class="col-sm-4 col-form-label" for="btnAirplay" data-phrase="AirPlay"></label>
+                  <div class="col-sm-8">
+                    <button id="btnAirplay" class="btn btn-secondary btn-sm material-icons" data-href='{"cmd": "toggleBtnChk", "options": []}' type="button"></button>
+                  </div>
+                </div>
+                <div class="form-group row">
+                  <label class="col-sm-4 col-form-label" for="btnRoon" data-phrase="Roon"></label>
+                  <div class="col-sm-8">
+                    <button id="btnRoon" class="btn btn-secondary btn-sm material-icons" data-href='{"cmd": "toggleBtnChk", "options": []}' type="button"></button>
+                  </div>
+                </div>
+                <div class="form-group row">
+                  <label class="col-sm-4 col-form-label" for="btnSpotify" data-phrase="Spotify"></label>
+                  <div class="col-sm-8">
+                    <button id="btnSpotify" class="btn btn-secondary btn-sm material-icons" data-href='{"cmd": "toggleBtnChk", "options": []}' type="button"></button>
+                  </div>
+                </div>
+                <div class="form-group row">
+                  <label class="col-sm-4 col-form-label" for="btnTidalEnabled" data-phrase="Tidal"></label>
+                  <div class="col-sm-8 ">
+                    <button id="btnTidalEnabled" class="btn btn-sm btn-secondary material-icons" data-toggle="collapse" data-target="#collapseTidal" data-href='{"cmd": "toggleBtnChk", "options": []}' type="button"></button>
+                  </div>
+                </div>
+                <div id="collapseTidal" class="collapse">
+                  <div class="form-group row">
+                    <label class="col-sm-4 col-form-label" for="inputTidalUsername" data-phrase="Username"></label>
+                    <div class="col-sm-8 ">
+                      <input id="inputTidalUsername" type="text" class="form-control border-secondary">
+                      <div class="invalid-feedback" data-phrase="Username cannot be blank"></div>
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label class="col-sm-4 col-form-label" for="inputTidalPassword" data-phrase="Password"></label>
+                    <div class="col-sm-8 ">
+                      <input id="inputTidalPassword" type="password" class="form-control border-secondary">
+                      <div class="invalid-feedback" data-phrase="Password cannot be blank"></div>
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label class="col-sm-4 col-form-label" for="selectTidalAudioquality" data-phrase="Audioquality"></label>
+                    <div class="col-sm-8 ">
+                      <select id="selectTidalAudioquality" class="form-control custom-select border-secondary">
+                        <option value="LOW" data-phrase="LOW"></option>
+                        <option value="HIGH" data-phrase="HIGH"></option>
+                        <option value="LOSSLESS" data-phrase="LOSSLESS"></option>
+                        <option value="HI_RES" data-phrase="HI_RES"></option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+            <div id="tabUpdate" class="tab-pane">
+              <form id="UpdateFrm">
+                <h4 data-phrase="Collybia OS Version"></h4>
+                <ul>
+                  <li><span data-phrase="Current version"></span>: <span id="currentVersion"></span></li>
+                  <li><span data-phrase="Latest version"></span>: <span id="latestVersion"></span></li>
+                </ul>
+
+                <div class="form-group row">
+                  <label class="col-sm-4 col-form-label" for="btnCheckForUpdates" data-phrase="Check for updates"></label>
+                  <div class="col-sm-8">
+                    <button type="button" id="btnCheckForUpdates" class="btn btn-secondary btnCleanup" data-href='{"cmd": "checkForUpdates", "options": []}' data-phrase="Check"></button>
+                  </div>
+                </div>
+                
+                <div class="form-group row">
+                  <label id="lblInstallUpdates" class="col-sm-4 col-form-label"></label>
+                  <div class="col-sm-8">
+                    <button type="button" id="btnInstallUpdates" class="btn btn-secondary btnCleanup" data-href='{"cmd": "installUpdates", "options": []}' data-phrase="Install"></button>
+                  </div>
+                </div>
+                <small id="updateMsg"></small>
+              </form>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal" data-phrase="Cancel"></button>
+          <button type="button" class="btn btn-success" data-href='{"cmd": "saveCollybiaSettings", "options": []}' data-phrase="Save"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="modal fade" id="modalAbout" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -1967,6 +2287,8 @@
 <!--debug-->  <script src="js/misc.js"></script>
 <!--debug-->  <script src="js/popover.js"></script>
 <!--debug-->  <script src="js/mympd.js"></script>
+<!--debug-->  <script src="js/playback.js"></script>
+<!--debug-->  <script src="js/collybia.js"></script>
 <!--release   <script src="js/combined.js"></script>-->
  </body>
 </html>

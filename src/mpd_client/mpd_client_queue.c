@@ -77,6 +77,47 @@ sds mpd_client_get_queue_state(t_mpd_state *mpd_state, sds buffer) {
     return buffer;
 }
 
+sds mpd_client_put_queue_mini(t_mpd_state *mpd_state, sds buffer, sds method,
+    int request_id, const unsigned int pos, const t_tags *tagcols)
+{
+    struct mpd_status *status = mpd_run_status(mpd_state->conn);
+    if (status == NULL) {
+        buffer = check_error_and_recover(mpd_state, buffer, method, request_id);
+    }
+    if (mpd_send_list_queue_range_meta(mpd_state->conn, pos, pos + 5) == false) {
+        buffer = check_error_and_recover(mpd_state, buffer, method, request_id);
+        return buffer;
+    }
+    buffer = jsonrpc_start_result(buffer, method, request_id);
+    buffer = sdscat(buffer, ",\"data\":[");
+    unsigned entity_count = 0;
+    unsigned entities_returned = 0;
+    struct mpd_song *song;
+    while ((song = mpd_recv_song(mpd_state->conn)) != NULL) {
+        entity_count++;
+        if (entities_returned++) {
+            buffer = sdscat(buffer, ",");
+        }
+        buffer = sdscat(buffer, "{");
+        buffer = tojson_long(buffer, "id", mpd_song_get_id(song), true);
+        buffer = tojson_long(buffer, "Pos", mpd_song_get_pos(song), true);
+        buffer = put_song_tags(buffer, mpd_state, tagcols, song);
+        buffer = sdscat(buffer, "}");
+        mpd_song_free(song);
+    }
+
+    buffer = sdscat(buffer, "],");
+    buffer = tojson_long(buffer, "totalEntities", mpd_status_get_queue_length(status), true);
+    buffer = tojson_long(buffer, "pos", pos, true);
+    buffer = tojson_long(buffer, "returnedEntities", entities_returned, true);
+    buffer = tojson_long(buffer, "queueVersion", mpd_status_get_queue_version(status), false);
+    buffer = jsonrpc_end_result(buffer);
+
+    mpd_status_free(status);
+
+    return buffer;
+}
+
 sds mpd_client_put_queue_state(struct mpd_status *status, sds buffer) {
     buffer = jsonrpc_start_notify(buffer, "update_queue");
     buffer = tojson_long(buffer, "state", mpd_status_get_state(status), true);

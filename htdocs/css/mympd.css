@@ -721,3 +721,82 @@ div#playDropdown .row {
 #currentLyrics > p.expanded {
   max-height: none;
 }
+
+#mainMenu img {
+  height: 30px;
+  margin-right: 5px;
+  filter: invert(100%);
+}
+
+#headerCover {
+  display: inline-block;
+  width: 42px;
+  height: 42px;
+}
+
+#cardPlayback > div.card-header {
+  height: 54px !important;
+}
+
+#cardHeaderBrowse {
+  min-height: 54px;
+}
+
+#cardQueueMini {
+  height: 377px;
+}
+
+#cardFooterQueueMini {
+  height: 49px;
+}
+
+#BrowseCovergridBox {
+  overflow-y: auto;
+}
+
+[data-col=Img] {
+  width: 50px;
+}
+
+@media only screen and (max-width: 576px) {
+  .btnText {
+    display: none !important;
+  }
+}
+
+#QueueCurrentList td {
+  vertical-align: middle;
+}
+
+.tab {
+  display: none;
+}
+
+#modalInit img {
+  height: 30px;
+  margin-right: 5px;
+}
+
+#cardHeaderBrowse > ul, #cardHeaderQueue > ul {
+  float: left;
+}
+
+#cardHeaderQueueMini {
+  height: 32px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+#cardHeaderQueueMini > span {
+  vertical-align: middle;
+}
+
+.cardFooterPlayback .btnPlay, #btnPlayDropdown, #counter {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+#tabPlaybackSettings .btn, #tabGeneralSettings .btn, #tabInterfaceSettings .btn,
+#tabPlaybackSettings .btn-group {
+    float: right !important;
+}

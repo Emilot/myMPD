@@ -282,6 +282,61 @@ static int mympd_inihandler(void *user, const char *section, const char *name, c
         LOG_DEBUG("Adding syscmd %s: %s", name, value);
         list_push(&p_config->syscmd_list, name, 0, value, NULL);
     }
+    else if (MATCH("collybia", "dac")) {
+        p_config->dac = sdsreplace(p_config->dac, value);
+    }
+    else if (MATCH("collybia", "mixertype")) {
+        p_config->mixer_type = sdsreplace(p_config->mixer_type, value);
+    }
+    else if (MATCH("collybia", "dop")) {
+        p_config->dop = strcmp(value, "true") == 0 ? true : false;
+    }
+    else if (MATCH("collybia", "nstype")) {
+        p_config->ns_type = strtoimax(value, &crap, 10);
+        if (p_config->ns_type < 0 || p_config->ns_type > 3) {
+            LOG_WARN("Invalid share type %d", p_config->ns_type);
+            p_config->ns_type = 0;
+        }
+    }
+    else if (MATCH("collybia", "nsserver")) {
+        p_config->ns_server = sdsreplace(p_config->ns_server, value);
+    }
+    else if (MATCH("collybia", "nsshare")) {
+        p_config->ns_share = sdsreplace(p_config->ns_share, value);
+    }
+    else if (MATCH("collybia", "sambaversion")) {
+        p_config->samba_version = sdsreplace(p_config->samba_version, value);
+    }
+    else if (MATCH("collybia", "nsusername")) {
+        p_config->ns_username = sdsreplace(p_config->ns_username, value);
+    }
+    else if (MATCH("collybia", "nspassword")) {
+        p_config->ns_password = sdsreplace(p_config->ns_password, value);
+    }
+    else if (MATCH("collybia", "airplay")) {
+        p_config->airplay = strcmp(value, "true") == 0 ? true : false;
+    }
+    else if (MATCH("collybia", "roon")) {
+        p_config->roon = strcmp(value, "true") == 0 ? true : false;
+    }
+    else if (MATCH("collybia", "spotify")) {
+        p_config->spotify = strcmp(value, "true") == 0 ? true : false;
+    }
+    else if (MATCH("tidal", "enabled")) {
+        p_config->tidal_enabled = strcmp(value, "true") == 0 ? true : false;
+    }
+    else if (MATCH("tidal", "token")) {
+        p_config->tidal_token = sdsreplace(p_config->tidal_token, value);
+    }
+    else if (MATCH("tidal", "username")) {
+        p_config->tidal_username = sdsreplace(p_config->tidal_username, value);
+    }
+    else if (MATCH("tidal", "password")) {
+        p_config->tidal_password = sdsreplace(p_config->tidal_password, value);
+    }
+    else if (MATCH("tidal", "audioquality")) {
+        p_config->tidal_audioquality = sdsreplace(p_config->tidal_audioquality, value);
+    }
     else {
         LOG_WARN("Unkown config option: %s - %s", section, name);
         return 0;  
@@ -331,7 +386,11 @@ static void mympd_get_env(struct t_config *config) {
         "THEME_THEME", "THEME_CUSTOMPLACEHOLDERIMAGES",
         "THEME_BGCOVER", "THEME_BGCOLOR", "THEME_BGCSSFILTER", "THEME_COVERGRIDSIZE",
         "THEME_COVERIMAGE", "THEME_COVERIMAGENAME", "THEME_COVERIMAGESIZE",
-        "THEME_LOCALE", "THEME_HIGHLIGHTCOLOR", 0};
+        "THEME_LOCALE", "THEME_HIGHLIGHTCOLOR",        
+	"COLLYBIA_MIXERTYPE", "COLLYBIA_DAC", "COLLYBIA_DOP", "COLLYBIA_NSTYPE", "COLLYBIA_NSSERVER", 
+	"COLLYBIA_SAMBAVERSION", "COLLYBIA_NSSHARE", "COLLYBIA_NSUSERNAME", "COLLYBIA_NSPASSWORD", 
+	"COLLYBIA_AIRPLAY", "COLLYBIA_ROON", "COLLYBIA_SPOTIFY", "COLLYBIA_INIT",
+        "TIDAL_ENABLED", "TIDAL_USERNAME", "TIDAL_PASSWORD", "TIDAL_AUDIOQUALITY", 0};
     const char** ptr = env_vars;
     while (*ptr != 0) {
         mympd_parse_env(config, *ptr);
@@ -380,6 +439,16 @@ void mympd_free_config(t_config *config) {
     sdsfree(config->smartpls_prefix);
     sdsfree(config->booklet_name);
     list_free(&config->syscmd_list);
+    sdsfree(config->mixer_type);
+    sdsfree(config->dac);
+    sdsfree(config->ns_server);
+    sdsfree(config->ns_share);
+    sdsfree(config->samba_version);
+    sdsfree(config->ns_username);
+    sdsfree(config->ns_password);
+    sdsfree(config->tidal_username);
+    sdsfree(config->tidal_password);
+    sdsfree(config->tidal_audioquality);
     FREE_PTR(config);
 }
 
@@ -464,6 +533,22 @@ void mympd_config_defaults(t_config *config) {
     config->booklet_name = sdsnew("booklet.pdf");
     config->mounts = true;
     config->lyrics = true;
+    config->mixer_type = sdsnew("disabled");
+    config->dac = sdsnew("none");
+    config->dop = false;
+    config->ns_type = 0;
+    config->ns_server = sdsempty();
+    config->ns_share = sdsempty();
+    config->samba_version = sdsnew("vers=1.0");
+    config->ns_username = sdsempty();
+    config->ns_password = sdsempty();
+    config->airplay = false;
+    config->roon = false;
+    config->spotify = false;
+    config->tidal_enabled = false;
+    config->tidal_username = sdsempty();
+    config->tidal_password = sdsempty();
+    config->tidal_audioquality = sdsnew("HIGH");
     list_init(&config->syscmd_list);
 }
 

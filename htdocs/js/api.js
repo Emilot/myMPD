@@ -124,6 +124,9 @@ function webSocketConnect() {
                     if (app.current.app === 'Queue') {
                         getQueue();
                     }
+                    else if (app.current.app === 'Playback') {
+                        getQueueMini(obj.params.songPos, true);
+                    }
                     obj.result = obj.params;
                     parseUpdateQueue(obj);
                     break;
@@ -140,6 +143,7 @@ function webSocketConnect() {
                     //fall through
                 case 'update_finished':
                     updateDBfinished(obj.method);
+                    updateDBstats();
                     break;
                 case 'update_volume':
                     obj.result = obj.params;

@@ -5,6 +5,8 @@
  https://github.com/jcorporation/mympd
 */
 
+var openCoverId;
+
 function gotoBrowse(x) {
     let tag = x.parentNode.getAttribute('data-tag');
     let name = decodeURI(x.parentNode.getAttribute('data-name'));
@@ -396,12 +398,14 @@ function parseCovergrid(obj) {
                 if (event.target.classList.contains('card-body')) {
                     getCovergridTitleList(id);
                 }
-                else if (event.target.classList.contains('card-footer')){
-                    showMenu(event.target, event);                
+                else if (event.target.classList.contains('card-footer') ||
+                    event.target.classList.contains('card-header')) {
+                    showMenu(event.target, event);
                 }
             }, false);
-            col.firstChild.addEventListener('transitionend', function(event) {
-                if (event.target.getElementsByClassName('card-body')[0].style.backgroundImage !== '') {
+            col.firstChild.addEventListener('transitionend', function (event) {
+                if (event.target.getElementsByClassName('card-body')[0].style.backgroundImage !== '' ||
+                    openCoverId === undefined) {
                     return;
                 }
                 event.target.getElementsByTagName('table')[0].classList.remove('unvisible');
@@ -412,6 +416,7 @@ function parseCovergrid(obj) {
                     let cardBody = event.target.getElementsByClassName('card-body')[0];
                     let uri = decodeURI(cardBody.parentNode.getAttribute('data-uri'));
                     showGridImage(cardBody, uri);
+                    openCoverId = undefined;
                 }
                 else if (event.key === 'Enter') {
                     getCovergridTitleList(id);
@@ -436,11 +441,16 @@ function parseCovergrid(obj) {
     if (nrItems === 0) {
         cardContainer.innerHTML = t('Empty list');
     }
-    document.getElementById(app.current.app + (app.current.tab === undefined ? '' : app.current.tab) + 'List').classList.remove('opacity05');
+    document.getElementById('BrowseCovergridList').classList.remove('opacity05');
     document.getElementById('cardFooterBrowse').innerText = gtPage('Num entries', obj.result.returnedEntities, obj.result.totalEntities);
+
+    calcBoxHeight();
+    closeCover();
+    parseCovergridAlbum(obj);
 }
 
 function getCovergridTitleList(id) {
+    closeCover(id);
     let cardBody = document.getElementById(id);
     let card = cardBody.parentNode;
     card.classList.add('opacity05');
@@ -503,6 +513,7 @@ function parseCovergridTitleList(obj) {
     cardHeader.getElementsByClassName('close')[0].addEventListener('click', function(event) {
         event.stopPropagation();
         showGridImage(cardBody, uri);
+        openCoverId = undefined;
     }, false);
 
     let table = cardBody.getElementsByTagName('table')[0];
@@ -547,4 +558,13 @@ function setGridImage(changes, observer) {
             change.target.firstChild.getElementsByClassName('card-body')[0].style.backgroundImage = 'url("' + subdir + '/albumart/' + uri + '")';
         }
     });
+}
+
+function closeCover(id = undefined) {
+    if (openCoverId !== undefined) {
+        let cardBody = document.getElementById(openCoverId);
+        let uri = decodeURI(cardBody.parentNode.getAttribute('data-uri'));
+        showGridImage(cardBody, uri);
+    }
+    openCoverId = id;
 }

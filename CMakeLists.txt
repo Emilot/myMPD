@@ -14,6 +14,10 @@ set(CPACK_PACKAGE_VERSION_MAJOR "6")
 set(CPACK_PACKAGE_VERSION_MINOR "4")
 set(CPACK_PACKAGE_VERSION_PATCH "0")
 
+set(CPACK_PACKAGE_COLLYBIAVERSION_MAJOR "1")
+set(CPACK_PACKAGE_COLLYBIAVERSION_MINOR "3")
+set(CPACK_PACKAGE_COLLYBIAVERSION_PATCH "0")
+
 add_subdirectory("cli_tools")
 
 if(EXISTS "/etc/arch-release")
@@ -193,6 +197,7 @@ set(SOURCES
   src/web_server/web_server_utility.c
   src/web_server/web_server_albumart.c
   src/web_server/web_server_lyrics.c
+  src/collybia.c
   dist/src/mongoose/mongoose.c
   dist/src/frozen/frozen.c
   dist/src/inih/ini.c
@@ -268,7 +273,7 @@ set(LIBMPDCLIENT_SOURCES
 add_executable(mympd ${SOURCES} ${LIBMPDCLIENT_SOURCES} ${CERT_SOURCES})
 
 target_link_libraries(mympd ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(mympd m)
+target_link_libraries(mympd m -lcurl)
 if (OPENSSL_FOUND)
   target_link_libraries(mympd ${OPENSSL_LIBRARIES})
 endif()

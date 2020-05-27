@@ -195,6 +195,7 @@ function parseSettings() {
     document.getElementById('inputCovergridSize').value = settings.covergridSize;
 
     document.documentElement.style.setProperty('--mympd-coverimagesize', settings.coverimageSize + "px");
+    calcBoxHeight();
     document.documentElement.style.setProperty('--mympd-covergridsize', settings.covergridSize + "px");
     document.documentElement.style.setProperty('--mympd-highlightcolor', settings.highlightColor);
     
@@ -374,6 +375,9 @@ function parseSettings() {
     else if (app.current.app === 'Browse' && app.current.tab === 'Database' && app.current.search !== '') {
         appRoute();
     }
+    else if (app.current.app === 'Playback') {
+        getBrowseCovergrid();
+    }
 
     i18nHtml(document.getElementsByTagName('body')[0]);
 
@@ -395,6 +399,7 @@ function parseSettings() {
     else {
         logDebug('mediaSession not supported by browser');
     }
+    parseCollybiaSettings();
 
     settingsParsed = 'true';
 }

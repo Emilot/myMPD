@@ -147,11 +147,7 @@ static bool drop_privileges(t_config *config, uid_t startup_uid) {
         }
         
     }
-    //check if not root
-    if (getuid() == 0) {
-        LOG_ERROR("myMPD should not be run with root privileges");
-        return false;
-    }
+
     return true;
 }
 

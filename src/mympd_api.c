@@ -37,6 +37,7 @@
 #include "mympd_api/mympd_api_timer.h"
 #include "mympd_api/mympd_api_timer_handlers.h"
 #include "mympd_api.h"
+#include "collybia.h"
 
 //private definitions
 static void mympd_api(t_config *config, t_mympd_state *mympd_state, t_work_request *request);
@@ -143,14 +144,24 @@ static void mympd_api(t_config *config, t_mympd_state *mympd_state, t_work_reque
             struct json_token key;
             struct json_token val;
             bool rc = true;
+            bool mpd_conf_changed = false;
+            bool dac_changed = false;
+            bool ns_changed = false;
+            bool airplay_changed = false;
+            bool roon_changed = false;
+            bool spotify_changed = false;
             while ((h = json_next_key(request->data, sdslen(request->data), h, ".params", &key, &val)) != NULL) {
-                rc = mympd_api_settings_set(config, mympd_state, &key, &val);
+                rc = mympd_api_settings_set(config, mympd_state, &key, &val, &mpd_conf_changed, &ns_changed, &airplay_changed, &roon_changed, &spotify_changed, &dac_changed);
                 if (rc == false) {
                     break;
                 }
             }
             if (rc == true) {
-                //forward request to mpd_client queue            
+                //set collybia settings
+                int dc = collybia_settings_set(mympd_state, mpd_conf_changed, ns_changed, airplay_changed, roon_changed, spotify_changed, dac_changed);
+                sdsrange(request->data, 0, -3);
+                request->data = sdscatfmt(request->data, ",\"dc\":%i}}", dc);
+                //forward request to mpd_client queue
                 t_work_request *mpd_client_request = create_request(-1, request->id, request->cmd_id, request->method, request->data);
                 tiny_queue_push(mpd_client_queue, mpd_client_request);
                 response->data = jsonrpc_respond_ok(response->data, request->method, request->id);

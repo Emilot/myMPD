@@ -92,6 +92,22 @@ typedef struct t_mympd_state {
     sds booklet_name;
     struct t_timer_list timer_list;
     bool lyrics;
+    sds mixer_type;
+    sds dac;
+    bool dop;
+    int ns_type;
+    sds ns_server;
+    sds ns_share;
+    sds ns_username;
+    sds ns_password;
+    bool airplay;
+    bool roon;
+    bool spotify;
+    bool tidal_enabled;
+    sds tidal_username;
+    sds tidal_password;
+    sds tidal_audioquality;
+    sds samba_version;
 } t_mympd_state;
 
 void free_mympd_state(t_mympd_state *mympd_state);
