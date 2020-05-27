@@ -280,6 +280,7 @@ function clearCurrentCover() {
 }
 
 function songChange(obj) {
+    getQueueMini(obj.result.pos);
     let curSong = obj.result.Title + ':' + obj.result.Artist + ':' + obj.result.Album + ':' + obj.result.uri + ':' + obj.result.currentSongId;
     if (lastSong === curSong) {
         return;

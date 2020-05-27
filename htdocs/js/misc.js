@@ -129,7 +129,7 @@ function _updateDBfinished(idleEvent) {
     }
 
     //update database modal
-    if (document.getElementById('modalUpdateDB').classList.contains('show')) {
+    // if (document.getElementById('modalUpdateDB').classList.contains('show')) {
         if (idleEvent === 'update_database') {
             document.getElementById('updateDBfinished').innerText = t('Database successfully updated');
         }
@@ -141,7 +141,8 @@ function _updateDBfinished(idleEvent) {
         updateDBprogress.style.width = '100%';
         updateDBprogress.style.marginLeft = '0px';
         document.getElementById('updateDBfooter').classList.remove('hide');
-    }
+    // }
+    modalUpdateDB.show();
 
     //general notification
     if (idleEvent === 'update_database') {
