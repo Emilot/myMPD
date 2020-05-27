@@ -825,8 +825,9 @@ function appInit() {
     }
 
     document.getElementById('cardPlaybackTags').addEventListener('click', function(event) {
-        if (event.target.nodeName === 'H4') 
+        if (event.target.nodeName === 'SPAN' && event.target.parentNode.getAttribute('data-tag') !== null) {
             gotoBrowse(event.target);
+        }
     }, false);
 
     document.getElementById('BrowseBreadcrumb').addEventListener('click', function(event) {
