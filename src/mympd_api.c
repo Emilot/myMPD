@@ -304,6 +304,12 @@ static void mympd_api(t_config *config, t_mympd_state *mympd_state, t_work_reque
                 response->data = jsonrpc_respond_ok(response->data, request->method, request->id);
             }
             break;
+        case MYMPD_API_CHECK_FOR_UPDATES:
+            response->data = collybia_check_for_updates(response->data, request->method, request->id);
+            break;
+        case MYMPD_API_INSTALL_UPDATES:
+            response->data = collybia_install_updates(response->data, request->method, request->id);
+            break;
         default:
             response->data = jsonrpc_respond_message(response->data, request->method, request->id, "Unknown request", true);
             LOG_ERROR("Unknown API request: %.*s", sdslen(request->data), request->data);
