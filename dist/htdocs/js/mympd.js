@@ -1276,7 +1276,7 @@ function _updateDBfinished(idleEvent) {
     }
 
     //update database modal
-    if (document.getElementById('modalUpdateDB').classList.contains('show')) {
+    // if (document.getElementById('modalUpdateDB').classList.contains('show')) {
         if (idleEvent === 'update_database') {
             document.getElementById('updateDBfinished').innerText = t('Database successfully updated');
         }
@@ -1288,7 +1288,8 @@ function _updateDBfinished(idleEvent) {
         updateDBprogress.style.width = '100%';
         updateDBprogress.style.marginLeft = '0px';
         document.getElementById('updateDBfooter').classList.remove('hide');
-    }
+    // }
+    modalUpdateDB.show();
 
     //general notification
     if (idleEvent === 'update_database') {
@@ -2253,8 +2254,9 @@ function appInit() {
     }
 
     document.getElementById('cardPlaybackTags').addEventListener('click', function(event) {
-        if (event.target.nodeName === 'H4') 
+        if (event.target.nodeName === 'SPAN' && event.target.parentNode.getAttribute('data-tag') !== null) {
             gotoBrowse(event.target);
+        }
     }, false);
 
     document.getElementById('BrowseBreadcrumb').addEventListener('click', function(event) {
@@ -3887,7 +3889,8 @@ function showMenuTd(el) {
     let menu = '';
     if ((app.current.app === 'Browse' && app.current.tab === 'Filesystem') || app.current.app === 'Search' ||
         (app.current.app === 'Browse' && app.current.tab === 'Database') ||
-        (app.current.app === 'Browse' && app.current.tab === 'Covergrid' && el.nodeName === 'A')) {
+        (app.current.app === 'Browse' && app.current.tab === 'Covergrid' && el.nodeName === 'A') ||
+        (app.current.app === 'Playback' && el.nodeName === 'A')) {
         menu += addMenuItem({"cmd": "appendQueue", "options": [type, uri, name]}, t('Append to queue')) +
             (type === 'song' ? addMenuItem({"cmd": "appendAfterQueue", "options": [type, uri, nextsongpos, name]}, t('Add after current playing song')) : '') +
             addMenuItem({"cmd": "replaceQueue", "options": [type, uri, name]}, t('Replace queue')) +
@@ -3942,7 +3945,8 @@ function showMenuTd(el) {
             (settings.featPlaylists ? addMenuItem({"cmd": "showAddToPlaylist", "options": [uri, ""]}, t('Add to playlist')) : '') +
             (uri.indexOf('http') === -1 ? addMenuItem({"cmd": "songDetails", "options": [uri]}, t('Song details')) : '');
     }
-    else if (app.current.app === 'Browse' && app.current.tab === 'Covergrid' && el.nodeName === 'DIV') {
+    else if ((app.current.app === 'Browse' && app.current.tab === 'Covergrid' && el.nodeName === 'DIV') ||
+        (app.current.app === 'Playback' && el.nodeName === 'DIV')) {
         let album = decodeURI(el.parentNode.getAttribute('data-album'));
         let albumArtist = decodeURI(el.parentNode.getAttribute('data-albumartist'));
         let expression = '((Album == \'' + album + '\') AND (AlbumArtist == \'' + albumArtist + '\'))';
@@ -5677,6 +5681,16 @@ function setCounter(currentSongId, totalTime, elapsedTime) {
                 }
                 tr.classList.remove('font-weight-bold');
             }
+            tr = document.getElementById('queueMiniTrackId' + lastState.currentSongId);
+            if (tr && tr.classList.contains('playing')) {
+                let posTd = tr.querySelector('[data-col=Pos]');
+                if (posTd) {
+                    posTd.classList.remove('material-icons');
+                    posTd.innerText = tr.getAttribute('data-songpos');
+                }
+                tr.classList.remove('font-weight-bold');
+                tr.classList.remove('playing');
+            }
         }
     }
     let tr = document.getElementById('queueTrackId' + currentSongId);
@@ -5694,7 +5708,18 @@ function setCounter(currentSongId, totalTime, elapsedTime) {
         }
         tr.classList.add('font-weight-bold');
     }
-    
+    tr = document.getElementById('queueMiniTrackId' + currentSongId);
+    if (tr && !tr.classList.contains('playing')) {
+        let posTd = tr.querySelector('[data-col=Pos]');
+        if (posTd) {
+            if (!posTd.classList.contains('material-icons')) {
+                posTd.classList.add('material-icons');
+                posTd.innerText = 'play_arrow';
+            }
+        }
+        tr.classList.add('font-weight-bold');
+        tr.classList.add('playing');
+    }
     if (progressTimer) {
         clearTimeout(progressTimer);
     }
@@ -5865,6 +5890,7 @@ function clearCurrentCover() {
 }
 
 function songChange(obj) {
+    getQueueMini(obj.result.pos);
     let curSong = obj.result.Title + ':' + obj.result.Artist + ':' + obj.result.Album + ':' + obj.result.uri + ':' + obj.result.currentSongId;
     if (lastSong === curSong) {
         return;
@@ -7247,7 +7273,7 @@ function validatePath(el) {
         el.classList.add('is-invalid');
         return false;
     }
-    else if (el.value.match(/^\/[/.\w-]+$/) !== null) {
+    else if (el.value.match(/^\/[\/.\w-]+$/) !== null) {
         el.classList.remove('is-invalid');
         return true;
     }
@@ -7318,6 +7344,17 @@ function validateStream(el) {
 
 function validateHost(el) {
     if (el.value.match(/^([\w-.]+)$/) !== null) {
+        el.classList.remove('is-invalid');
+        return true;
+    }
+    else {
+        el.classList.add('is-invalid');
+        return false;
+    }
+}
+
+function validateIPAddress(el) {
+    if (el.value.match(/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/) !== null) {
         el.classList.remove('is-invalid');
         return true;
     }
