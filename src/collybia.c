@@ -335,17 +335,10 @@ sds collybia_check_for_updates(sds buffer, sds method, int request_id)
 sds collybia_install_updates(sds buffer, sds method, int request_id)
 {
     bool pacman = syscmd("systemctl start update");
-    bool reboot = false;
-
-    if (pacman == true)
-    {
-        reboot = syscmd("reboot");
-    }
 
     buffer = jsonrpc_start_result(buffer, method, request_id);
     buffer = sdscat(buffer, ",");
     buffer = tojson_bool(buffer, "pacman", pacman, true);
-    buffer = tojson_bool(buffer, "reboot", reboot, false);
     buffer = jsonrpc_end_result(buffer);
     return buffer;
 }
