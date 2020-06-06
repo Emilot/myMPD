@@ -334,7 +334,7 @@ sds collybia_check_for_updates(sds buffer, sds method, int request_id)
 
 sds collybia_install_updates(sds buffer, sds method, int request_id)
 {
-    bool pacman = syscmd("pacman -Syu --noconfirm");
+    bool pacman = syscmd("systemctl start update");
     bool reboot = false;
 
     if (pacman == true)
