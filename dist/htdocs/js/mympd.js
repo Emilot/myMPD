@@ -2775,6 +2775,8 @@ function appInit() {
         }
     });
     updateDBstats(); // update database stats (songs, playtime)
+    checkForUpdates(); // check for updates on launch
+
 }
 
 //Init app
