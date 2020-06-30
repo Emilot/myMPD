@@ -35,8 +35,8 @@ var cmds = [
     {"jsonrpc":"2.0","id":0,"method":"MPD_API_PLAYLIST_CONTENT_LIST","params":{"uri":"","offset":0,"filter":"","cols":["",""]}},
     {"jsonrpc":"2.0","id":0,"method":"MPD_API_PLAYLIST_SHUFFLE", "params":{"uri":""}},
     {"jsonrpc":"2.0","id":0,"method":"MPD_API_PLAYLIST_SORT", "params":{"uri":"","tag":""}},
-    {"jsonrpc":"2.0","id":0,"method":"MPD_API_SMARTPLS_UPDATE_ALL"},
-    {"jsonrpc":"2.0","id":0,"method":"MPD_API_SMARTPLS_UPDATE", "params":{"playlist":""}},
+    {"jsonrpc":"2.0","id":0,"method":"MPDWORKER_API_SMARTPLS_UPDATE_ALL", "params":{"force":false}},
+    {"jsonrpc":"2.0","id":0,"method":"MPDWORKER_API_SMARTPLS_UPDATE", "params":{"playlist":""}},
     {"jsonrpc":"2.0","id":0,"method":"MPD_API_SMARTPLS_SAVE","params":{"type":"","playlist":"","timerange":0,"sort":""}},
     {"jsonrpc":"2.0","id":0,"method":"MPD_API_SMARTPLS_GET","params":{"playlist":""}},
     {"jsonrpc":"2.0","id":0,"method":"MPD_API_DATABASE_SEARCH_ADV","params":{"offset":0,"expression":"(any contains '"+""+"')","sort":"", "sortdesc":false,"plist":"","cols":[""],"replace":false}},
@@ -81,11 +81,18 @@ var cmds = [
     {"jsonrpc":"2.0","id":0,"method":"MYMPD_API_BOOKMARK_LIST","params":{"offset":0}},
     {"jsonrpc":"2.0","id":0,"method":"MYMPD_API_BOOKMARK_SAVE","params":{"id": 0, "name":"", "uri":"", "type":""}},
     {"jsonrpc":"2.0","id":0,"method":"MYMPD_API_BOOKMARK_CLEAR"},
-    {"jsonrpc":"2.0","id":0,"method":"MYMPD_API_TIMER_SAVE","params":{"timerid": 0, "name": "", "enabled": false, "startHour": 0, "startMinute": 0, "action": "", "volume": 0, "playlist": "", "jukeboxMode": 0, "weekdays":[false,false,false,false,false,false,false]}},
+    {"jsonrpc":"2.0","id":0,"method":"MYMPD_API_TIMER_SAVE","params":{"timerid": 0, "name": "", "enabled": false, "startHour": 0, "startMinute": 0, "action": "", "subaction": "", "volume": 0, "playlist": "", "jukeboxMode": 0, "weekdays":[false,false,false,false,false,false,false], "arguments":{"arg1": ""}}},
     {"jsonrpc":"2.0","id":0,"method":"MYMPD_API_TIMER_LIST","params":{}},
     {"jsonrpc":"2.0","id":0,"method":"MYMPD_API_TIMER_GET","params":{"timerid":0}},
     {"jsonrpc":"2.0","id":0,"method":"MYMPD_API_TIMER_RM","params":{"timerid":0}},
-    {"jsonrpc":"2.0","id":0,"method":"MYMPD_API_TIMER_TOGGLE","params":{"timerid":0}}
+    {"jsonrpc":"2.0","id":0,"method":"MYMPD_API_TIMER_TOGGLE","params":{"timerid":0}},
+    {"jsonrpc":"2.0","id":0,"method":"MPD_API_MESSAGE_SEND","params":{"channel":"", "message":""}},
+    {"jsonrpc":"2.0","id":0,"method":"MYMPD_API_SCRIPT_SAVE","params":{"script":"","order":0,"content":"","arguments":["", ""]}},
+    {"jsonrpc":"2.0","id":0,"method":"MYMPD_API_SCRIPT_EXECUTE","params":{"script":"","arguments":{"arg1": ""}}},
+    {"jsonrpc":"2.0","id":0,"method":"MYMPD_API_SCRIPT_POST_EXECUTE","params":{"script":"","arguments":{"arg1": ""}}},
+    {"jsonrpc":"2.0","id":0,"method":"MYMPD_API_SCRIPT_LIST","params":{"all":true}},
+    {"jsonrpc":"2.0","id":0,"method":"MYMPD_API_SCRIPT_GET","params":{"script":""}},
+    {"jsonrpc":"2.0","id":0,"method":"MYMPD_API_SCRIPT_DELETE","params":{"script":""}}
 ];
 
 function init() {
@@ -109,6 +116,7 @@ function init() {
         }
         document.getElementById('params').innerHTML = form;
         document.getElementById('resultText').innerText = '';
+        document.getElementById('requestText').innerText = '';
         document.getElementById('resultState').innerText = 'Result';
     }, false);
     document.getElementById('btnSubmit').addEventListener('click', function(event) {
@@ -137,7 +145,12 @@ function sendAPI() {
             else if (!isNaN(value)) {
                 value = parseFloat(value);
             }
-            request.params[key] = value;
+            if (value.charAt(0) === '{' || value.charAt(0) === '[') {
+                request.params[key] = JSON.parse(value);
+            }
+            else {
+                request.params[key] = value;
+            }
         }
     }
     let ajaxRequest=new XMLHttpRequest();
@@ -161,6 +174,7 @@ function sendAPI() {
         }
     };
     ajaxRequest.send(JSON.stringify(request));
+    document.getElementById('requestText').innerText = JSON.stringify(request);
 }
 
 init();
