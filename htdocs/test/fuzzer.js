@@ -22,7 +22,7 @@ function defineCmds() {
     var string3 = blns[getRandomUint(blns_len)];
     var string4 = blns[getRandomUint(blns_len)];
     var string5 = blns[getRandomUint(blns_len)];
-    var bool0 = Math.random() >= 0.5;
+    var bool0 = getRandomBool();
     return [
         {"jsonrpc":"2.0","id":0,"method":"MYMPD_API_BOOKMARK_SAVE","params":{"id": int1, "name":string1, "uri":string2, "type":string3}},
         {"jsonrpc":"2.0","id":0,"method":"MYMPD_API_BOOKMARK_LIST","params":{"offset":int1}},
@@ -125,6 +125,10 @@ function getRandomInt() {
     return int;
 }
 
+function getRandomBool() {
+    return Math.random() >= 0.5;
+}
+
 function sendAPI(id) {
     if (id === 0) {
         cmds = defineCmds();
@@ -153,6 +157,14 @@ function sendAPI(id) {
             }
             i++;
             if (i < cmds.length) {
+                if (getRandomBool() === true) {
+                    //delete random params
+                    for (const key in cmds[i].params) {
+                        if (getRandomBool() === true) {
+                            delete cmds[i].params[key];
+                        }
+                    }
+                }
                 setTimeout(function() { sendAPI(i); }, sleep);
             }
             else if (j < blns_len) {
@@ -173,14 +185,19 @@ function sendAPI(id) {
 
 function e(x) {
     if (isNaN(x)) {
-        return x.replace(/([<>])/g, function(m0, m1) {
+        return x.replace(/([<>"'])/g, function(m0, m1) {
             if (m1 === '<') return '&lt;';
             else if (m1 === '>') return '&gt;';
+            else if (m1 === '"') return '&quot;';
+            else if (m1 === '\'') return '&apos;';
+        }).replace(/\\u(003C|003E|0022|0027)/gi, function(m0, m1) {
+            if (m1 === '003C') return '&lt;';
+            else if (m1 === '003E') return '&gt;';
+            else if (m1 === '0022') return '&quot;';
+            else if (m1 === '0027') return '&apos;';
         });
     }
-    else {
-        return x;
-    }
+    return x;
 }
 
 sendAPI(0);

@@ -830,15 +830,19 @@ var keymap = {
 
 function e(x) {
     if (isNaN(x)) {
-        return x.replace(/([<>"])/g, function(m0, m1) {
+        return x.replace(/([<>"'])/g, function(m0, m1) {
             if (m1 === '<') return '&lt;';
             else if (m1 === '>') return '&gt;';
             else if (m1 === '"') return '&quot;';
+            else if (m1 === '\'') return '&apos;';
+        }).replace(/\\u(003C|003E|0022|0027)/gi, function(m0, m1) {
+            if (m1 === '003C') return '&lt;';
+            else if (m1 === '003E') return '&gt;';
+            else if (m1 === '0022') return '&quot;';
+            else if (m1 === '0027') return '&apos;';
         });
     }
-    else {
-        return x;
-    }
+    return x;
 }
 
 function t(phrase, number, data) {
@@ -4007,6 +4011,9 @@ function parseScriptList(obj) {
         for (let i = 0; i < scriptListLen; i++) {
             let arglist = '';
             if (obj.result.data[i].metadata.arguments.length > 0) {
+                for (let j = 0; j < obj.result.data[i].metadata.arguments.length; j++) {
+                    obj.result.data[i].metadata.arguments[j] = e(obj.result.data[i].metadata.arguments[j]);
+                }
                 arglist = '"' + obj.result.data[i].metadata.arguments.join('","') + '"';
             }
             if (obj.result.data[i].metadata.order > 0) {
@@ -6597,12 +6604,12 @@ function prettyTimerAction(action, subaction) {
         return t('Stop playback');
     }
     if (action === 'syscmd') {
-        return t('System command') + ': ' + subaction;
+        return t('System command') + ': ' + e(subaction);
     }
     if (action === 'script') {
-        return t('Script') + ': ' + subaction;
+        return t('Script') + ': ' + e(subaction);
     }
-    return action + ': ' + subaction;
+    return e(action) + ': ' + e(subaction);
 }
 /*
  SPDX-License-Identifier: GPL-2.0-or-later
