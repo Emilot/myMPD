@@ -99,7 +99,6 @@ static void mympd_api(t_config *config, t_mympd_state *mympd_state, t_work_reque
     int int_buf1;
     int int_buf2;
     bool rc;
-    bool bool_buf1;
     LOG_VERBOSE("MYMPD API request (%d): %s", request->conn_id, request->data);
     
     //create response struct
@@ -108,6 +107,10 @@ static void mympd_api(t_config *config, t_mympd_state *mympd_state, t_work_reque
     switch(request->cmd_id) {
         #ifdef ENABLE_LUA
         case MYMPD_API_SCRIPT_SAVE:
+            if (config->scripteditor == false) {
+                response->data = jsonrpc_respond_message(response->data, request->method, request->id, "Editing scripts is disabled", true);
+                break;
+            }
             je = json_scanf(request->data, sdslen(request->data), "{params: {script: %Q, order: %d, content: %Q}}", &p_charbuf1, &int_buf1, &p_charbuf2);
             if (je == 3) {
                 struct json_token val;
@@ -136,6 +139,10 @@ static void mympd_api(t_config *config, t_mympd_state *mympd_state, t_work_reque
             }
             break;
         case MYMPD_API_SCRIPT_DELETE:
+            if (config->scripteditor == false) {
+                response->data = jsonrpc_respond_message(response->data, request->method, request->id, "Editing scripts is disabled", true);
+                break;
+            }
             je = json_scanf(request->data, sdslen(request->data), "{params: {script: %Q}}", &p_charbuf1);
             if (je == 1 && validate_string_not_empty(p_charbuf1) == true) {
                 rc = mympd_api_script_delete(config, p_charbuf1);
@@ -151,17 +158,23 @@ static void mympd_api(t_config *config, t_mympd_state *mympd_state, t_work_reque
             }
             break;
         case MYMPD_API_SCRIPT_GET:
+            if (config->scripteditor == false) {
+                response->data = jsonrpc_respond_message(response->data, request->method, request->id, "Editing scripts is disabled", true);
+                break;
+            }
             je = json_scanf(request->data, sdslen(request->data), "{params: {script: %Q}}", &p_charbuf1);
             if (je == 1 && validate_string_not_empty(p_charbuf1) == true) {
                 response->data = mympd_api_script_get(config, response->data, request->method, request->id, p_charbuf1);
             }
             break;
-        case MYMPD_API_SCRIPT_LIST:
+        case MYMPD_API_SCRIPT_LIST: {
+            bool bool_buf1;
             je = json_scanf(request->data, sdslen(request->data), "{params: {all: %B}}", &bool_buf1);
             if (je == 1) {
                 response->data = mympd_api_script_list(config, response->data, request->method, request->id, bool_buf1);
             }
             break;
+        }
         case MYMPD_API_SCRIPT_INIT:
             if (config->scripting == true) {
                 if (request->extra != NULL) {

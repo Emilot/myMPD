@@ -2169,7 +2169,7 @@ function appInit() {
         event.stopPropagation();
         event.preventDefault();
         if (event.target.nodeName === 'TD') {
-            if (event.target.parentNode.getAttribute('data-script') === '') {
+            if (settings.featScripteditor === false || event.target.parentNode.getAttribute('data-script') === '') {
                 return false;
             }
             showEditScript(decodeURI(event.target.parentNode.getAttribute('data-script')));
@@ -3301,7 +3301,7 @@ function showRenamePlaylist(from) {
 function renamePlaylist() {
     let from = document.getElementById('renamePlaylistFrom').value;
     let to = document.getElementById('renamePlaylistTo').value;
-    if (to !== from && validatePlname(to) === true && validatePlname(from) === true) {
+    if (to !== from && validatePlname(to) === true) {
         sendAPI("MPD_API_PLAYLIST_RENAME", {"from": from, "to": to});
         modalRenamePlaylist.hide();
     }
@@ -4028,7 +4028,8 @@ function parseScriptList(obj) {
             }
             scriptList += '<tr data-script="' + encodeURI(obj.result.data[i].name) + '"><td>' + e(obj.result.data[i].name) + '</td>' +
                 '<td data-col="Action">' +
-                    '<a href="#" title="' + t('Delete') + '" data-action="delete" class="material-icons color-darkgrey">delete</a>' +
+                    (settings.featScripteditor === true ? 
+                        '<a href="#" title="' + t('Delete') + '" data-action="delete" class="material-icons color-darkgrey">delete</a>' : '') +
                     '<a href="#" title="' + t('Execute') + '" data-action="execute" class="material-icons color-darkgrey" ' +
                     ' data-href=\'{"script": "' + e(obj.result.data[i].name) + '", "arguments": [' + arglist + ']}\'>play_arrow</a>' +
                 '</td></tr>';
@@ -4396,7 +4397,7 @@ function parseSettings() {
     toggleBtnChkCollapse('btnSmartpls', 'collapseSmartpls', settings.smartpls);
     
     let features = ["featLocalplayer", "featSyscmds", "featMixramp", "featCacert", "featBookmarks", 
-        "featRegex", "featTimer", "featLyrics", "featScripting"];
+        "featRegex", "featTimer", "featLyrics", "featScripting", "featScripteditor"];
     for (let j = 0; j < features.length; j++) {
         let Els = document.getElementsByClassName(features[j]);
         let ElsLen = Els.length;
