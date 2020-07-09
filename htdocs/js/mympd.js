@@ -6,7 +6,7 @@
 */
 
 /* Disable eslint warnings */
-/* global Modal, Dropdown, Collapse, Popover, Carousel, phrases, locales */
+/* global BSN, phrases, locales */
 
 var socket = null;
 var lastSong = '';
@@ -23,14 +23,14 @@ var alertTimeout = null;
 var progressTimer = null;
 var deferredPrompt;
 var dragEl;
-var playlistEl;
 var websocketConnected = false;
 var websocketTimer = null;
 var appInited = false;
 var subdir = '';
 var uiEnabled = true;
 var locale = navigator.language || navigator.userLanguage;
-
+var scale = '1.0';
+var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 var ligatureMore = 'menu';
 
 var app = {};
@@ -96,33 +96,37 @@ domCache.searchCrumb = document.getElementById('searchCrumb');
 domCache.body = document.getElementsByTagName('body')[0];
 
 /* eslint-disable no-unused-vars */
-var modalConnection = new Modal(document.getElementById('modalConnection'));
-var modalSettings = new Modal(document.getElementById('modalSettings'));
-var modalAbout = new Modal(document.getElementById('modalAbout')); 
-var modalSaveQueue = new Modal(document.getElementById('modalSaveQueue'));
-var modalAddToQueue = new Modal(document.getElementById('modalAddToQueue'));
-var modalSongDetails = new Modal(document.getElementById('modalSongDetails'));
-var modalAddToPlaylist = new Modal(document.getElementById('modalAddToPlaylist'));
-var modalRenamePlaylist = new Modal(document.getElementById('modalRenamePlaylist'));
-var modalUpdateDB = new Modal(document.getElementById('modalUpdateDB'));
-var modalSaveSmartPlaylist = new Modal(document.getElementById('modalSaveSmartPlaylist'));
-var modalDeletePlaylist = new Modal(document.getElementById('modalDeletePlaylist'));
-var modalSaveBookmark = new Modal(document.getElementById('modalSaveBookmark'));
-var modalTimer = new Modal(document.getElementById('modalTimer'));
-var modalMounts = new Modal(document.getElementById('modalMounts'));
+var modalConnection = new BSN.Modal(document.getElementById('modalConnection'));
+var modalSettings = new BSN.Modal(document.getElementById('modalSettings'));
+var modalAbout = new BSN.Modal(document.getElementById('modalAbout')); 
+var modalSaveQueue = new BSN.Modal(document.getElementById('modalSaveQueue'));
+var modalAddToQueue = new BSN.Modal(document.getElementById('modalAddToQueue'));
+var modalSongDetails = new BSN.Modal(document.getElementById('modalSongDetails'));
+var modalAddToPlaylist = new BSN.Modal(document.getElementById('modalAddToPlaylist'));
+var modalRenamePlaylist = new BSN.Modal(document.getElementById('modalRenamePlaylist'));
+var modalUpdateDB = new BSN.Modal(document.getElementById('modalUpdateDB'));
+var modalSaveSmartPlaylist = new BSN.Modal(document.getElementById('modalSaveSmartPlaylist'));
+var modalDeletePlaylist = new BSN.Modal(document.getElementById('modalDeletePlaylist'));
+var modalSaveBookmark = new BSN.Modal(document.getElementById('modalSaveBookmark'));
+var modalTimer = new BSN.Modal(document.getElementById('modalTimer'));
+var modalMounts = new BSN.Modal(document.getElementById('modalMounts'));
+var modalExecScript = new BSN.Modal(document.getElementById('modalExecScript'));
+var modalScripts = new BSN.Modal(document.getElementById('modalScripts'));
 var modalCollybia = new Modal(document.getElementById('modalCollybia'));
 
-var dropdownMainMenu; 
-var dropdownVolumeMenu = new Dropdown(document.getElementById('volumeMenu'));
-var dropdownBookmarks = new Dropdown(document.getElementById('BrowseFilesystemBookmark'));
-var dropdownLocalPlayer = new Dropdown(document.getElementById('localPlaybackMenu'));
-var dropdownPlay = new Dropdown(document.getElementById('btnPlayDropdown'));
-var dropdownCovergridSort = new Dropdown(document.getElementById('btnCovergridSortDropdown'));
-var dropdownNeighbors = new Dropdown(document.getElementById('btnDropdownNeighbors'));
+var dropdownMainMenu = new BSN.Dropdown(document.getElementById('mainMenu'));
+var dropdownVolumeMenu = new BSN.Dropdown(document.getElementById('volumeMenu'));
+var dropdownBookmarks = new BSN.Dropdown(document.getElementById('BrowseFilesystemBookmark'));
+var dropdownLocalPlayer = new BSN.Dropdown(document.getElementById('localPlaybackMenu'));
+var dropdownPlay = new BSN.Dropdown(document.getElementById('btnPlayDropdown'));
+var dropdownCovergridSort = new BSN.Dropdown(document.getElementById('btnCovergridSortDropdown'));
+var dropdownNeighbors = new BSN.Dropdown(document.getElementById('btnDropdownNeighbors'));
 
-var collapseDBupdate = new Collapse(document.getElementById('navDBupdate'));
-var collapseSyscmds = new Collapse(document.getElementById('navSyscmds'));
-var collapseJukeboxMode = new Collapse(document.getElementById('labelJukeboxMode'));
+var collapseDBupdate = new BSN.Collapse(document.getElementById('navDBupdate'));
+var collapseSettings = new BSN.Collapse(document.getElementById('navSettings'));
+var collapseSyscmds = new BSN.Collapse(document.getElementById('navSyscmds'));
+var collapseScripting = new BSN.Collapse(document.getElementById('navScripting'));
+var collapseJukeboxMode = new BSN.Collapse(document.getElementById('labelJukeboxMode'));
 /* eslint-enable no-unused-vars */
 
 function appPrepare(scrollPos) {
@@ -417,6 +421,21 @@ function clearAndReload() {
 }
 
 function appInitStart() {
+    //set initial scale
+    if (isMobile === true) {
+        scale = localStorage.getItem('scale-ratio');
+        if (scale === null) {
+            scale = '1.0';
+        }
+        setViewport(false);
+    }
+    else {
+        let m = document.getElementsByClassName('featMobile');
+        for (let i = 0; i < m.length; i++) {
+            m[i].classList.add('hide');
+        }        
+    }
+
     subdir = window.location.pathname.replace('/index.html', '').replace(/\/$/, '');
     let localeList = '<option value="default" data-phrase="Browser default"></option>';
     for (let i = 0; i < locales.length; i++) {
@@ -569,6 +588,10 @@ function appInit() {
         showListMounts();
     });
     
+    document.getElementById('modalScripts').addEventListener('shown.bs.modal', function () {
+        showListScripts();
+    });
+    
     document.getElementById('modalAbout').addEventListener('shown.bs.modal', function () {
         sendAPI("MPD_API_DATABASE_STATS", {}, parseStats);
         getServerinfo();
@@ -597,12 +620,7 @@ function appInit() {
     }, false);
     
     document.getElementById('selectTimerAction').addEventListener('change', function() {
-        if (this.options[this.selectedIndex].value === 'startplay') {
-            document.getElementById('timerActionPlay').classList.remove('hide');
-        }
-        else {
-            document.getElementById('timerActionPlay').classList.add('hide');
-        }
+        selectTimerActionChange();
     }, false);
     
     let selectTimerHour = ''; 
@@ -629,9 +647,10 @@ function appInit() {
     document.getElementById('modalAddToQueue').addEventListener('shown.bs.modal', function () {
         document.getElementById('inputAddToQueueQuantity').classList.remove('is-invalid');
         document.getElementById('warnJukeboxPlaylist2').classList.add('hide');
-        if (settings.featPlaylists) {
-            playlistEl = 'selectAddToQueuePlaylist';
-            sendAPI("MPD_API_PLAYLIST_LIST", {"offset": 0, "filter": "-"}, getAllPlaylists);
+        if (settings.featPlaylists === true) {
+            sendAPI("MPD_API_PLAYLIST_LIST_ALL", {"offset": 0, "filter": "-"}, function(obj) { 
+                getAllPlaylists(obj, 'selectAddToQueuePlaylist');
+            });
         }
     });
 
@@ -652,6 +671,7 @@ function appInit() {
         document.getElementById('inputCrossfade').classList.remove('is-invalid');
         document.getElementById('inputMixrampdb').classList.remove('is-invalid');
         document.getElementById('inputMixrampdelay').classList.remove('is-invalid');
+        document.getElementById('inputScaleRatio').classList.remove('is-invalid');
     });
 
     document.getElementById('modalCollybia').addEventListener('shown.bs.modal', function () {
@@ -797,6 +817,12 @@ function appInit() {
             parseCmd(event, event.target.getAttribute('data-href'));
         }
     }, false);
+    
+    document.getElementById('scripts').addEventListener('click', function(event) {
+        if (event.target.nodeName === 'A') {
+            execScript(event.target.getAttribute('data-href'));
+        }
+    }, false);
 
     let hrefs = document.querySelectorAll('[data-href]');
     let hrefsLen = hrefs.length;
@@ -825,7 +851,7 @@ function appInit() {
     }
 
     document.getElementById('cardPlaybackTags').addEventListener('click', function(event) {
-        if (event.target.nodeName === 'SPAN' && event.target.parentNode.getAttribute('data-tag') !== null) {
+        if (event.target.nodeName === 'P')
             gotoBrowse(event.target);
         }
     }, false);
@@ -864,6 +890,7 @@ function appInit() {
     document.getElementById('outputs').addEventListener('click', function(event) {
         if (event.target.nodeName === 'BUTTON') {
             event.stopPropagation();
+            event.preventDefault();
             sendAPI("MPD_API_PLAYER_TOGGLE_OUTPUT", {"output": event.target.getAttribute('data-output-id'), "state": (event.target.classList.contains('active') ? 0 : 1)});
             toggleBtn(event.target.id);
         }
@@ -873,7 +900,9 @@ function appInit() {
         event.stopPropagation();
         event.preventDefault();
         if (event.target.nodeName === 'TD') {
-            showEditTimer(event.target.parentNode.getAttribute('data-id'));
+            if (!event.target.parentNode.classList.contains('not-clickable')) {
+                showEditTimer(event.target.parentNode.getAttribute('data-id'));
+            }
         }
         else if (event.target.nodeName === 'A') {
             deleteTimer(event.target.parentNode.parentNode.getAttribute('data-id'));
@@ -900,6 +929,27 @@ function appInit() {
             }
             else if (action === 'update') {
                 updateMount(event.target, mountPoint);
+            }
+        }
+    }, false);
+    
+    document.getElementById('listScriptsList').addEventListener('click', function(event) {
+        event.stopPropagation();
+        event.preventDefault();
+        if (event.target.nodeName === 'TD') {
+            if (settings.featScripteditor === false || event.target.parentNode.getAttribute('data-script') === '') {
+                return false;
+            }
+            showEditScript(decodeURI(event.target.parentNode.getAttribute('data-script')));
+        }
+        else if (event.target.nodeName === 'A') {
+            let action = event.target.getAttribute('data-action');
+            let script = decodeURI(event.target.parentNode.parentNode.getAttribute('data-script'));
+            if (action === 'delete') {
+                deleteScript(script);
+            }
+            else if (action === 'execute') {
+                execScript(event.target.getAttribute('data-href'));
             }
         }
     }, false);
@@ -1242,6 +1292,20 @@ function appInit() {
         }
     }, false);
 
+    document.getElementById('inputScriptArgument').addEventListener('keyup', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            event.stopPropagation();
+            addScriptArgument();
+        }
+    }, false);
+    
+    document.getElementById('selectScriptArguments').addEventListener('click', function(event) {
+        if (event.target.nodeName === 'OPTION') {
+            removeScriptArgument(event);
+        }
+    }, false);
+
     document.getElementsByTagName('body')[0].addEventListener('click', function() {
         hideMenu();
     }, false);
@@ -1263,7 +1327,7 @@ function appInit() {
 
     document.addEventListener('keydown', function(event) {
         if (event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT' ||
-            event.ctrlKey || event.altKey) {
+            event.target.tagName === 'TEXTAREA' || event.ctrlKey || event.altKey) {
             return;
         }
         let cmd = keymap[event.key];
@@ -1293,12 +1357,7 @@ function appInit() {
     window.addEventListener('beforeinstallprompt', function(event) {
         // Prevent Chrome 67 and earlier from automatically showing the prompt
         event.preventDefault();
-        // Stash the event so it can be triggered later.
-        deferredPrompt = event;
-    });
-    
-    window.addEventListener('beforeinstallprompt', function(event) {
-        event.preventDefault();
+        // Stash the event so it can be triggered later
         deferredPrompt = event;
         // Update UI notify the user they can add to home screen
         domCache.btnAdd.classList.remove('hide');

@@ -97,11 +97,20 @@ function webSocketConnect() {
                 logError('Invalid JSON data received: ' + msg.data);
                 return;
             }
+            
+            if (obj.error) {
+                showNotification(t(obj.error.message, obj.error.data), '', '', 'danger');
+                return;
+            }
+            else if (obj.result) {
+                showNotification(t(obj.result.message, obj.result.data), '', '', 'success');
+                return;
+            }
 
             switch (obj.method) {
                 case 'welcome':
                     websocketConnected = true;
-                    showNotification(t('Connected to myMPD') + ': ' + wsUrl, '', '', 'success');
+                    showNotification(t('Connected to myMPD'), wsUrl, '', 'success');
                     appRoute();
                     sendAPI("MPD_API_PLAYER_STATE", {}, parseState, true);
                     break;
@@ -165,6 +174,16 @@ function webSocketConnect() {
                 case 'error':
                     if (document.getElementById('alertMpdState').classList.contains('hide')) {
                         showNotification(t(obj.params.message), '', '', 'danger');
+                    }
+                    break;
+                case 'warn':
+                    if (document.getElementById('alertMpdState').classList.contains('hide')) {
+                        showNotification(t(obj.params.message), '', '', 'warning');
+                    }
+                    break;
+                case 'info':
+                    if (document.getElementById('alertMpdState').classList.contains('hide')) {
+                        showNotification(t(obj.params.message), '', '', 'success');
                     }
                     break;
                 default:
