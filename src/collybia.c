@@ -87,14 +87,14 @@ static int ns_set(int type, const char *server, const char *share, const char *v
             {
                 credentials = sdscatfmt(credentials, "username=%s,password=%s", username, password);
             }
-            mnt_opts = sdscatfmt(mnt_opts, "%s,%s,ro,uid=mpd,gid=audio,iocharset=utf8,nolock,noauto,x-systemd.automount,x-systemd.device-timeout=10s", vers, credentials);
+            mnt_opts = sdscatfmt(mnt_opts, "%s,%s,ro,uid=mpd,gid=audio,iocharset=utf8,nolock,noauto,x-systemd.automount,x-systemd.device-timeout=10", vers, credentials);
         }
         else if (type == 3)
         {
             mnt_fsname = sdscatfmt(mnt_fsname, "%s:%s", server, share);
             mnt_dir = sdscat(mnt_dir, "nfs");
             mnt_type = sdscat(mnt_type, "nfs");
-            mnt_opts = sdscat(mnt_opts, "ro,noauto,x-systemd.automount,x-systemd.device-timeout=10s,rsize=8192,wsize=8192");
+            mnt_opts = sdscat(mnt_opts, "ro,noauto,x-systemd.automount,x-systemd.device-timeout=10,rsize=8192,wsize=8192");
         }
         struct mntent n = {mnt_fsname, mnt_dir, mnt_type, mnt_opts, 0, 0};
         bool append = true;
@@ -167,7 +167,7 @@ static int ns_set(int type, const char *server, const char *share, const char *v
 }
 
 int collybia_settings_set(t_mympd_state *mympd_state, bool mpd_conf_changed,
-                       bool ns_changed, bool airplay_changed, bool roon_changed, bool spotify_changed, bool dac_changed)
+                       bool ns_changed, bool airplay_changed, bool roon_changed, bool spotify_changed, bool dac_changed, bool ffmpeg_changed)
 {
     // TODO: error checking, revert to old values on fail
     bool rc = true;
@@ -191,7 +191,6 @@ int collybia_settings_set(t_mympd_state *mympd_state, bool mpd_conf_changed,
         {
             dc = 3;
         }
-
         const char *tidal_enabled = mympd_state->tidal_enabled == true ? "yes" : "no";
         conf = sdsreplace(conf, "/etc/upmpdcli.conf");
         cmdline = sdscrop(cmdline);
@@ -209,6 +208,22 @@ int collybia_settings_set(t_mympd_state *mympd_state, bool mpd_conf_changed,
     if (dac_changed == true)
     {
        syscmd("systemctl restart dac_change");
+       syscmd("systemctl stop dac_change");
+    }
+
+    if (ffmpeg_changed == true)
+    {
+        const char *ffmpeg = mympd_state->ffmpeg == true ? "yes" : "no";
+        sds conf = sdsnew("/etc/mpd.conf");
+        sds cmdline = sdscatfmt(sdsempty(), "sed -E -i '0,/enabled/ s/^enabled.*/enabled \"%s\"/' %S",
+                            ffmpeg, conf);
+        rc = syscmd(cmdline);
+        if (rc == true && dc == 0)
+        {
+            dc = 3;
+        }
+        sdsfree(conf);
+        sdsfree(cmdline);
     }
 
     if (airplay_changed == true)
