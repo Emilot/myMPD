@@ -217,10 +217,10 @@ static void mpd_client_idle(t_config *config, t_mpd_client_state *mpd_client_sta
             break;
         }
         case MPD_DISCONNECTED:
-            if (mpd_state->dc != 0) {
-                LOG_DEBUG("dc %d", mpd_state->dc);
+            if (mpd_client_state->dc != 0) {
+                LOG_DEBUG("dc %d", mpd_client_state->dc);
                 int rc;
-                if (mpd_state->dc != 3) {
+                if (mpd_client_state->dc != 3) {
                     rc = system("reboot");
                 }
                 else {
@@ -229,7 +229,7 @@ static void mpd_client_idle(t_config *config, t_mpd_client_state *mpd_client_sta
                 if (rc != 0) {
                     LOG_ERROR("Executing syscmd failed");
                 }
-                mpd_state->dc = 0;
+                mpd_client_state->dc = 0;
             }
             /* Try to connect */
             if (strncmp(mpd_client_state->mpd_state->mpd_host, "/", 1) == 0) {
