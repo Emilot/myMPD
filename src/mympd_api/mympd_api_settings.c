@@ -39,7 +39,7 @@ void mympd_api_settings_delete(t_config *config) {
         "last_played", "last_played_count", "locale", "localplayer", "localplayer_autoplay", "love", "love_channel", "love_message",
         "max_elements_per_page",  "mpd_host", "mpd_pass", "mpd_port", "notification_page", "notification_web", "searchtaglist",
         "smartpls", "stickers", "stream_port", "stream_url", "taglist", "music_directory", "bookmarks", "bookmark_list", "covergrid_size", 
-        "theme", "timer", "highlight_color", "media_session", "booklet_name", "lyrics", "mixer_type", "dop", "ns_type", "ns_server",
+        "theme", "timer", "highlight_color", "media_session", "booklet_name", "lyrics", "mixer_type", "dop", "ffmpeg", "ns_type", "ns_server",
 	"ns_share", "samba_version", "ns_username", "ns_password", "airplay", "roon", "spotify",
         "tidal_enabled", "tidal_username", "tidal_password", "tidal_audioquality", 0};
     const char** ptr = state_files;
@@ -136,7 +136,7 @@ bool mympd_api_cols_save(t_config *config, t_mympd_state *mympd_state, const cha
 
 bool mympd_api_settings_set(t_config *config, t_mympd_state *mympd_state, struct json_token *key,
                             struct json_token *val, bool *mpd_conf_changed, bool *ns_changed,
-                            bool *airplay_changed, bool *roon_changed, bool *spotify_changed, bool *dac_changed) {
+                            bool *airplay_changed, bool *roon_changed, bool *spotify_changed, bool *dac_changed, bool *ffmpeg_changed) {
     sds settingname = sdsempty();
     sds settingvalue = sdscatlen(sdsempty(), val->ptr, val->len);
     char *crap;
@@ -366,6 +366,13 @@ bool mympd_api_settings_set(t_config *config, t_mympd_state *mympd_state, struct
         mympd_state->dop = val->type == JSON_TYPE_TRUE ? true : false;
         settingname = sdscat(settingname, "dop");
     }
+    else if (strncmp(key->ptr, "ffmpeg", key->len) == 0) {
+        if ((mympd_state->ffmpeg == true && val->type == JSON_TYPE_FALSE) ||
+            (mympd_state->ffmpeg == false && val->type == JSON_TYPE_TRUE))
+            *ffmpeg_changed = true;
+        mympd_state->ffmpeg = val->type == JSON_TYPE_TRUE ? true : false;
+        settingname = sdscat(settingname, "ffmpeg");
+    }
     else if (strncmp(key->ptr, "nsType", key->len) == 0) {
         int ns_type = strtoimax(settingvalue, &crap, 10);
         if (ns_type < 0 || ns_type > 3) {
@@ -474,7 +481,7 @@ void mympd_api_settings_reset(t_config *config, t_mympd_state *mympd_state) {
     free_mympd_state_sds(mympd_state);
     mympd_api_read_statefiles(config, mympd_state);
     mympd_api_push_to_mpd_client(mympd_state);
-    collybia_settings_set(mympd_state, true, true, true, true, true, true);
+    collybia_settings_set(mympd_state, true, true, true, true, true, true, true);
 }
 
 void mympd_api_read_statefiles(t_config *config, t_mympd_state *mympd_state) {
@@ -534,6 +541,7 @@ void mympd_api_read_statefiles(t_config *config, t_mympd_state *mympd_state) {
     mympd_state->mixer_type = state_file_rw_string(config, "mixer_type", config->mixer_type, false);
     mympd_state->dac = state_file_rw_string(config, "dac", config->dac, false);
     mympd_state->dop = state_file_rw_bool(config, "dop", config->dop, false);
+    mympd_state->ffmpeg = state_file_rw_bool(config, "ffmpeg", config->ffmpeg, false);
     mympd_state->ns_type = state_file_rw_int(config, "ns_type", config->ns_type, false);
     mympd_state->ns_server = state_file_rw_string(config, "ns_server", config->ns_server, false);
     mympd_state->ns_share = state_file_rw_string(config, "ns_share", config->ns_share, false);
@@ -705,6 +713,7 @@ sds mympd_api_settings_put(t_config *config, t_mympd_state *mympd_state, sds buf
     buffer = tojson_char(buffer, "mixerType", mympd_state->mixer_type, true);
     buffer = tojson_char(buffer, "dac", mympd_state->dac, true);
     buffer = tojson_bool(buffer, "dop", mympd_state->dop, true);
+    buffer = tojson_bool(buffer, "ffmpeg", mympd_state->ffmpeg, true);
     buffer = tojson_long(buffer, "nsType", mympd_state->ns_type, true);
     buffer = tojson_char(buffer, "nsServer", mympd_state->ns_server, true);
     buffer = tojson_char(buffer, "nsShare", mympd_state->ns_share, true);

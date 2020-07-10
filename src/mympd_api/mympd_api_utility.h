@@ -97,6 +97,7 @@ typedef struct t_mympd_state {
     sds mixer_type;
     sds dac;
     bool dop;
+    bool ffmpeg;
     int ns_type;
     sds ns_server;
     sds ns_share;
