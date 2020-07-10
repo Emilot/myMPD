@@ -315,6 +315,9 @@ static int mympd_inihandler(void *user, const char *section, const char *name, c
     else if (MATCH("collybia", "dop")) {
         p_config->dop = strcmp(value, "true") == 0 ? true : false;
     }
+    else if (MATCH("collybia", "ffmpeg")) {
+        p_config->ffmpeg = strcmp(value, "true") == 0 ? true : false;
+    }
     else if (MATCH("collybia", "nstype")) {
         p_config->ns_type = strtoimax(value, &crap, 10);
         if (p_config->ns_type < 0 || p_config->ns_type > 3) {
@@ -417,7 +420,7 @@ static void mympd_get_env(struct t_config *config) {
         "THEME_BGCOVER", "THEME_BGCOLOR", "THEME_BGCSSFILTER", "THEME_COVERGRIDSIZE",
         "THEME_COVERIMAGE", "THEME_COVERIMAGENAME", "THEME_COVERIMAGESIZE",
         "THEME_LOCALE", "THEME_HIGHLIGHTCOLOR",        
-	"COLLYBIA_MIXERTYPE", "COLLYBIA_DAC", "COLLYBIA_DOP", "COLLYBIA_NSTYPE", "COLLYBIA_NSSERVER", 
+	"COLLYBIA_MIXERTYPE", "COLLYBIA_DAC", "COLLYBIA_DOP", "COLLYBIA_FFMPEG", "COLLYBIA_NSTYPE", "COLLYBIA_NSSERVER", 
 	"COLLYBIA_SAMBAVERSION", "COLLYBIA_NSSHARE", "COLLYBIA_NSUSERNAME", "COLLYBIA_NSPASSWORD", 
 	"COLLYBIA_AIRPLAY", "COLLYBIA_ROON", "COLLYBIA_SPOTIFY", "COLLYBIA_INIT",
         "TIDAL_ENABLED", "TIDAL_USERNAME", "TIDAL_PASSWORD", "TIDAL_AUDIOQUALITY", 0};
@@ -569,6 +572,7 @@ void mympd_config_defaults(t_config *config) {
     config->mixer_type = sdsnew("disabled");
     config->dac = sdsnew("none");
     config->dop = false;
+    config->ffmpeg = true;
     config->ns_type = 0;
     config->ns_server = sdsempty();
     config->ns_share = sdsempty();

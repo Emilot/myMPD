@@ -294,23 +294,23 @@ static void mympd_api(t_config *config, t_mympd_state *mympd_state, t_work_reque
             void *h = NULL;
             struct json_token key;
             struct json_token val;
-            bool rc = true;
             bool mpd_conf_changed = false;
             bool dac_changed = false;
             bool ns_changed = false;
             bool airplay_changed = false;
             bool roon_changed = false;
             bool spotify_changed = false;
+            bool ffmpeg_changed = false;
             rc = true;
             while ((h = json_next_key(request->data, sdslen(request->data), h, ".params", &key, &val)) != NULL) {
-                rc = mympd_api_settings_set(config, mympd_state, &key, &val, &mpd_conf_changed, &ns_changed, &airplay_changed, &roon_changed, &spotify_changed, &dac_changed);
+                rc = mympd_api_settings_set(config, mympd_state, &key, &val, &mpd_conf_changed, &ns_changed, &airplay_changed, &roon_changed, &spotify_changed, &dac_changed, &ffmpeg_changed);
                 if (rc == false) {
                     break;
                 }
             }
             if (rc == true) {
                 //set collybia settings
-                int dc = collybia_settings_set(mympd_state, mpd_conf_changed, ns_changed, airplay_changed, roon_changed, spotify_changed, dac_changed);
+                int dc = collybia_settings_set(mympd_state, mpd_conf_changed, ns_changed, airplay_changed, roon_changed, spotify_changed, dac_changed, ffmpeg_changed);
                 sdsrange(request->data, 0, -3);
                 request->data = sdscatfmt(request->data, ",\"dc\":%i}}", dc);
                 //forward request to mpd_client queue
