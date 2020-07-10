@@ -112,7 +112,7 @@ var modalTimer = new BSN.Modal(document.getElementById('modalTimer'));
 var modalMounts = new BSN.Modal(document.getElementById('modalMounts'));
 var modalExecScript = new BSN.Modal(document.getElementById('modalExecScript'));
 var modalScripts = new BSN.Modal(document.getElementById('modalScripts'));
-var modalCollybia = new Modal(document.getElementById('modalCollybia'));
+var modalCollybia = new BSN.Modal(document.getElementById('modalCollybia'));
 
 var dropdownMainMenu = new BSN.Dropdown(document.getElementById('mainMenu'));
 var dropdownVolumeMenu = new BSN.Dropdown(document.getElementById('volumeMenu'));
@@ -851,7 +851,7 @@ function appInit() {
     }
 
     document.getElementById('cardPlaybackTags').addEventListener('click', function(event) {
-        if (event.target.nodeName === 'P')
+        if (event.target.nodeName === 'SPAN' && event.target.parentNode.getAttribute('data-tag') !== null) {
             gotoBrowse(event.target);
         }
     }, false);
