@@ -68,7 +68,7 @@ typedef struct t_mpd_client_state {
     sds music_directory;
     sds music_directory_value;
     sds booklet_name;
-	int dc;
+    int dc;
     //taglists
     t_tags search_tag_types;
     t_tags browse_tag_types;

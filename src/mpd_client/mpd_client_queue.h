@@ -16,6 +16,6 @@ sds mpd_client_search_queue(t_mpd_client_state *mpd_client_state, sds buffer, sd
                             const char *searchstr, const t_tags *tagcols);
 bool mpd_client_queue_replace_with_song(t_mpd_client_state *mpd_client_state, const char *uri);
 bool mpd_client_queue_replace_with_playlist(t_mpd_client_state *mpd_client_state, const char *plist);
-sds mpd_client_put_queue_mini(t_mpd_state *mpd_state, sds buffer, sds method, int request_id,
+sds mpd_client_put_queue_mini(t_mpd_client_state *mpd_client_state, sds buffer, sds method, int request_id,
                               const unsigned int pos, const t_tags *tagcols);
 #endif

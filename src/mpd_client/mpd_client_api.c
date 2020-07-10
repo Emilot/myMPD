@@ -381,7 +381,7 @@ void mpd_client_api(t_config *config, t_mpd_client_state *mpd_client_state, void
             assert(tagcols);
             je = json_scanf(request->data, sdslen(request->data), "{params: {pos: %u, cols: %M}}", &uint_buf1, json_to_tags, tagcols);
             if (je == 2) {
-                response->data = mpd_client_put_queue_mini(mpd_state, response->data, request->method, request->id, uint_buf1, tagcols);
+                response->data = mpd_client_put_queue_mini(mpd_client_state, response->data, request->method, request->id, uint_buf1, tagcols);
             }
             free(tagcols);
             break;

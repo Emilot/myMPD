@@ -80,15 +80,15 @@ sds mpd_client_get_queue_state(t_mpd_client_state *mpd_client_state, sds buffer)
     return buffer;
 }
 
-sds mpd_client_put_queue_mini(t_mpd_state *mpd_state, sds buffer, sds method,
+sds mpd_client_put_queue_mini(t_mpd_client_state *mpd_client_state, sds buffer, sds method,
     int request_id, const unsigned int pos, const t_tags *tagcols)
 {
-    struct mpd_status *status = mpd_run_status(mpd_state->conn);
+    struct mpd_status *status = mpd_run_status(mpd_client_state->mpd_state->conn);
     if (status == NULL) {
-        buffer = check_error_and_recover(mpd_state, buffer, method, request_id);
+        buffer = check_error_and_recover(mpd_client_state->mpd_state, buffer, method, request_id);
     }
-    if (mpd_send_list_queue_range_meta(mpd_state->conn, pos, pos + 5) == false) {
-        buffer = check_error_and_recover(mpd_state, buffer, method, request_id);
+    if (mpd_send_list_queue_range_meta(mpd_client_state->mpd_state->conn, pos, pos + 5) == false) {
+        buffer = check_error_and_recover(mpd_client_state->mpd_state, buffer, method, request_id);
         return buffer;
     }
     buffer = jsonrpc_start_result(buffer, method, request_id);
@@ -96,7 +96,7 @@ sds mpd_client_put_queue_mini(t_mpd_state *mpd_state, sds buffer, sds method,
     unsigned entity_count = 0;
     unsigned entities_returned = 0;
     struct mpd_song *song;
-    while ((song = mpd_recv_song(mpd_state->conn)) != NULL) {
+    while ((song = mpd_recv_song(mpd_client_state->mpd_state->conn)) != NULL) {
         entity_count++;
         if (entities_returned++) {
             buffer = sdscat(buffer, ",");
@@ -104,7 +104,7 @@ sds mpd_client_put_queue_mini(t_mpd_state *mpd_state, sds buffer, sds method,
         buffer = sdscat(buffer, "{");
         buffer = tojson_long(buffer, "id", mpd_song_get_id(song), true);
         buffer = tojson_long(buffer, "Pos", mpd_song_get_pos(song), true);
-        buffer = put_song_tags(buffer, mpd_state, tagcols, song);
+        buffer = put_song_tags(buffer, mpd_client_state->mpd_state, tagcols, song);
         buffer = sdscat(buffer, "}");
         mpd_song_free(song);
     }
