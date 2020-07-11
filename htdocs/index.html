@@ -1599,16 +1599,16 @@
                   <div class="col-sm-8">
                     <select id="selectDac" class="form-control custom-select border-secondary">
                       <option value="none" data-phrase="None"></option>
-                      <option value="iqdacplus" data-phrase="Akkordion Music Player"></option>
-                      <option value="allo-boss-dac" data-phrase="Allo Boss DAC"></option>
+                      <option value="akkordion-iqdacplus" data-phrase="Akkordion Music Player"></option>
+                      <option value="allo-boss-dac-pcm512x-audio" data-phrase="Allo Boss DAC"></option>
                       <option value="allo-digione" data-phrase="Allo Digione"></option>
-                      <option value="allo-katana-dac" data-phrase="Allo Katana DAC"></option>
-                      <option value="allo-piano-dac" data-phrase="Allo Piano DAC 2.0/2.1"></option>
-                      <option value="allo-piano-dac-plus" data-phrase="Allo Piano DAC Plus 2.1"></option>
-                      <option value="allo-piano-dac-plus_2.1" data-phrase="Allo Piano DAC Plus 2.1 with Kali"></option>
+                      <option value="allo-katana-dac-audio" data-phrase="Allo Katana DAC"></option>
+                      <option value="allo-piano-dac-pcm512x-audio" data-phrase="Allo Piano DAC 2.0/2.1"></option>
+                      <option value="allo-piano-dac-plus-pcm512x-audio" data-phrase="Allo Piano DAC Plus 2.1"></option>
+                      <option value="allo-piano-dac-plus-pcm512x-audio" data-phrase="Allo Piano DAC Plus 2.1 with Kali"></option>
                       <option value="applepi-dac" data-phrase="ApplePi-DAC (Orchard Audio)"></option>
                       <option value="audioinjector-ultra" data-phrase="Audioinjector.net ultra"></option>
-                      <option value="audioinjector-wm8731" data-phrase="Audioinjector.net audio add on"></option>
+                      <option value="audioinjector-wm8731-audio" data-phrase="Audioinjector.net audio add on"></option>
                       <option value="audiosense-pi" data-phrase="Audiosense-pi"></option>
                       <option value="dionaudio-loco" data-phrase="Dion Audio LOCO DAC-AMP"></option>
                       <option value="dionaudio-loco-v2" data-phrase="Dion Audio LOCO DAC-AMP v2"></option>
@@ -1643,9 +1643,9 @@
                   <label class="col-sm-4 col-form-label" for="selectMixerType" data-phrase="DAC volume mode"></label>
                   <div class="col-sm-8">
                     <select id="selectMixerType" class="form-control custom-select border-secondary">
+                      <option value="disabled" data-phrase="Disabled"></option>
                       <option value="hardware" data-phrase="Hardware"></option>
                       <option value="software" data-phrase="Software"></option>
-                      <option value="disabled" data-phrase="Disabled"></option>
                     </select>
                   </div>
                 </div>
@@ -1653,6 +1653,12 @@
                   <label class="col-sm-4 col-form-label" for="btnDop" data-phrase="Enable DoP"></label>
                   <div class="col-sm-8">
                     <button id="btnDop" class="btn btn-secondary btn-sm material-icons" data-href='{"cmd": "toggleBtnChk", "options": []}' type="button"></button>
+                  </div>
+                </div>
+                <div class="form-group row">
+                  <label class="col-sm-4 col-form-label" for="btnFFmpeg" data-phrase="Enable FFmpeg"></label>
+                  <div class="col-sm-8">
+                    <button id="btnFFmpeg" class="btn btn-secondary btn-sm material-icons" data-href='{"cmd": "toggleBtnChk", "options": []}' type="button"></button>
                   </div>
                 </div>
               </form>
