@@ -5,6 +5,20 @@
  https://github.com/jcorporation/mympd
 */
 
+//eslint-disable-next-line no-unused-vars
+function openFullscreen() {
+    let elem = document.documentElement;
+    if (elem.requestFullscreen) {
+        elem.requestFullscreen();
+    } else if (elem.mozRequestFullScreen) { /* Firefox */
+        elem.mozRequestFullScreen();
+    } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+        elem.webkitRequestFullscreen();
+    } else if (elem.msRequestFullscreen) { /* IE/Edge */
+        elem.msRequestFullscreen();
+    }
+}
+
 function setViewport(store) {
     let viewport = document.querySelector("meta[name=viewport]");
     viewport.setAttribute('content', 'width=device-width, initial-scale=' + scale + ', maximum-scale=' + scale);

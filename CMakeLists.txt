@@ -12,7 +12,7 @@ project (mympd C)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/")
 set(CPACK_PACKAGE_VERSION_MAJOR "6")
 set(CPACK_PACKAGE_VERSION_MINOR "5")
-set(CPACK_PACKAGE_VERSION_PATCH "0")
+set(CPACK_PACKAGE_VERSION_PATCH "1")
 
 set(CPACK_PACKAGE_COLLYBIAVERSION_MAJOR "1")
 set(CPACK_PACKAGE_COLLYBIAVERSION_MINOR "4")
@@ -58,9 +58,6 @@ message("ASSETS_PATH: ${ASSETS_PATH}")
 
 find_package(Threads REQUIRED)
 
-#embedded libmpdclient
-include_directories(dist/src/libmpdclient/include)
-
 if(NOT "${ENABLE_SSL}" MATCHES "OFF")
   message("Searching for openssl")
   find_package(OpenSSL)
@@ -102,7 +99,8 @@ if(NOT "${ENABLE_LUA}" MATCHES "OFF")
   message("Searching for lua")
   find_package(Lua)
 endif()
- if((LUA_FOUND) AND ("${LUA_VERSION_STRING}" VERSION_GREATER "5.3.0"))
+
+if((LUA_FOUND) AND ("${LUA_VERSION_STRING}" VERSION_GREATER "5.3.0"))
   set(ENABLE_LUA "ON")
   include_directories(${LUA_INCLUDE_DIR})
 else()
@@ -118,7 +116,8 @@ configure_file(contrib/initscripts/mympd.service.in contrib/initscripts/mympd.se
 configure_file(contrib/initscripts/mympd.sysVinit.in contrib/initscripts/mympd.sysVinit @ONLY)
 configure_file(contrib/initscripts/mympd.openrc.in contrib/initscripts/mympd.openrc @ONLY)
 
- include_directories(${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR} dist/src/libmpdclient/include)
+include_directories(${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR} dist/src/libmpdclient/include)
+
 include(CheckCSourceCompiles)
 
 if(${MEMCHECK} MATCHES "TRUE")

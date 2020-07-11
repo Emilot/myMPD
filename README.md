@@ -1,7 +1,7 @@
 myMPD
 =====
 
-myMPD is a standalone and lightweight MPD web client. It's tuned for minimal resource usage and requires only very few dependencies. Therefore myMPD is ideal for raspberry pis and similar devices.
+myMPD is a standalone and lightweight web-based MPD client. It's tuned for minimal resource usage and requires only very few dependencies. Therefore myMPD is ideal for raspberry pis and similar devices.
 
 The backend ist written in C and has no dependencies to external databases or webservers. The configuration is stored in plain text files and all the data is pulled on demand from MPD. The MPD database is the only source of truth for myMPD.
 
@@ -71,16 +71,18 @@ Backend
 
 Dependencies
 ------------
+myMPD has no hard dependencies beside the standard c libraries. 
+Not installing the optional dependencies leads only to a smaller subset of myMPD functions.
 - OpenSSL >= 1.1.0 (optional): for https support
 - libid3tag (optional): to extract embedded albumart
 - libflac (optional): to extract embedded albumart
-- liblua (optional): for scripting myMPD
+- liblua >= 5.3.0 (optional): for scripting myMPD
 
 Build Dependencies
 ------------------
 - cmake >= 3.4
 - libasan3: for debug builds only
-- Java: to minify files
+- Java: to minify files (optional)
 - Perl: to create translation files
 
 Quick Build Instructions
