@@ -861,6 +861,7 @@ function parseCollybiaSettings() {
     document.getElementById('selectDac').value = settings.dac;
     document.getElementById('selectMixerType').value = settings.mixerType;
     toggleBtnChk('btnDop', settings.dop);
+    toggleBtnChk('btnFFmpeg', settings.ffmpeg);
 
     document.getElementById('selectNsType').value = settings.nsType;
     document.getElementById('inputNsServer').value = settings.nsServer;
@@ -949,6 +950,7 @@ function saveCollybiaSettings() {
             "dac": selectDac.options[selectDac.selectedIndex].value,
             "mixerType": selectMixerType.options[selectMixerType.selectedIndex].value,
             "dop": (document.getElementById('btnDop').classList.contains('active') ? true : false),
+            "ffmpeg": (document.getElementById('btnFFmpeg').classList.contains('active') ? true : false),
             "nsType": parseInt(selectNsTypeValue),
             "nsServer": inputNsServer.value,
             "nsShare": inputNsShare.value,
