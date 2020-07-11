@@ -307,6 +307,9 @@ installrelease() {
   cd release || exit 1  
   make install DESTDIR="$DESTDIR"
   addmympduser
+  echo "myMPD installed"
+  echo "Modify mympd.conf to suit your needs or use the"
+  echo "mympd-config tool to generate a valid mympd.conf automatically."
 }
 
 builddebug() {
@@ -357,6 +360,7 @@ cleanup() {
   rm -rf release
   rm -rf debug
   rm -rf package
+  rm -rf test/build
   
   #htdocs
   rm -f htdocs/js/bootstrap-native-v4.js
