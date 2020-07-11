@@ -1008,8 +1008,7 @@ var keymap = {
     "q": {"cmd": "queueSelectedItem", "options": [true], "desc": "Append item to queue"},
     "Q": {"cmd": "queueSelectedItem", "options": [false], "desc": "Replace queue with item"},
     "d": {"cmd": "dequeueSelectedItem", "options": [], "desc": "Remove item from queue"},
-    "x": {"cmd": "addSelectedItemToPlaylist", "options": [], "desc": "Append item to playlist"},
-    "F": {"cmd": "openFullscreen", "options": [], "desc": "Open fullscreen"}
+    "x": {"cmd": "addSelectedItemToPlaylist", "options": [], "desc": "Append item to playlist"}
 };
 /*
  SPDX-License-Identifier: GPL-2.0-or-later
@@ -1180,20 +1179,6 @@ function logLog(loglevel, line) {
  myMPD (c) 2018-2020 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 */
-
-//eslint-disable-next-line no-unused-vars
-function openFullscreen() {
-    let elem = document.documentElement;
-    if (elem.requestFullscreen) {
-        elem.requestFullscreen();
-    } else if (elem.mozRequestFullScreen) { /* Firefox */
-        elem.mozRequestFullScreen();
-    } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
-        elem.webkitRequestFullscreen();
-    } else if (elem.msRequestFullscreen) { /* IE/Edge */
-        elem.msRequestFullscreen();
-    }
-}
 
 function setViewport(store) {
     let viewport = document.querySelector("meta[name=viewport]");
