@@ -194,7 +194,7 @@ int collybia_settings_set(t_mympd_state *mympd_state, bool mpd_conf_changed,
         const char *tidal_enabled = mympd_state->tidal_enabled == true ? "yes" : "no";
         conf = sdsreplace(conf, "/etc/upmpdcli.conf");
         cmdline = sdscrop(cmdline);
-        cmdline = sdscatfmt(cmdline, "sed -i 's/^enabled.*/enabled \"%s\"/;s/^tidaluser.*/tidaluser = %S /;s/^tidalpass.*/tidalpass = %S /;s/^tidalquality.*/tidalquality = %S /' %S",
+        cmdline = sdscatfmt(cmdline, "sed -i 's/^enabled.*/enabled \"%s\"/;s/^#tidaluser.*/tidaluser = %S /;s/^#tidalpass.*/tidalpass = %S /;s/^#tidalquality.*/tidalquality = %S /' %S",
                             tidal_enabled, mympd_state->tidal_username, mympd_state->tidal_password, mympd_state->tidal_audioquality, conf);
         rc = syscmd(cmdline);
         if (rc == true && dc == 0)
@@ -207,8 +207,7 @@ int collybia_settings_set(t_mympd_state *mympd_state, bool mpd_conf_changed,
 
     if (dac_changed == true)
     {
-       syscmd("systemctl restart dac_change");
-       syscmd("systemctl stop dac_change");
+      syscmd("systemctl start dac_change");
     }
 
     if (ffmpeg_changed == true)
