@@ -33,22 +33,25 @@ umask 0022
 #get myMPD version
 VERSION=$(grep CPACK_PACKAGE_VERSION_ CMakeLists.txt | cut -d\" -f2 | tr '\n' '.' | sed 's/\.$//')
 
-#gzip is needed to compress assets for release
-GZIPBIN=$(command -v gzip)
-if [ "$GZIPBIN" = "" ]
+if [ "$1" != "installdeps" ]
 then
-  echo "ERROR: gzip not found"
-  exit 1
-fi
-GZIP="$GZIPBIN -f -v -9"
-GZIPCAT="$GZIPBIN -f -v -9 -c"
+  #gzip is needed to compress assets for release
+  GZIPBIN=$(command -v gzip)
+  if [ "$GZIPBIN" = "" ]
+  then
+    echo "ERROR: gzip not found"
+    exit 1
+  fi
+  GZIP="$GZIPBIN -f -v -9"
+  GZIPCAT="$GZIPBIN -f -v -9 -c"
 
-#perl is needed to create i18n.js
-PERLBIN=$(command -v perl)
-if [ "$PERLBIN" = "" ]
-then
-  echo "ERROR: perl not found"
-  exit 1
+  #perl is needed to create i18n.js
+  PERLBIN=$(command -v perl)
+  if [ "$PERLBIN" = "" ]
+  then
+    echo "ERROR: perl not found"
+    exit 1
+  fi
 fi
 
 #java is optional to minify js and css
@@ -615,16 +618,16 @@ installdeps() {
     apt-get update
     apt-get install -y --no-install-recommends \
 	gcc cmake perl libssl-dev libid3tag0-dev libflac-dev \
-	build-essential liblua5.3-dev $JAVADEB
+	build-essential liblua5.3-dev pkg-config $JAVADEB
   elif [ -f /etc/arch-release ]
   then
     #arch
-    pacman -S gcc cmake perl openssl libid3tag flac jre-openjdk-headless lua
+    pacman -S gcc cmake perl openssl libid3tag flac jre-openjdk-headless lua pkgconf
   elif [ -f /etc/alpine-release ]
   then
     #alpine
-    apk add gcc cmake perl openssl-dev libid3tag-dev libflac-dev lua5.3-dev \
-    	openjdk11-jre-headless linux-headers
+    apk add cmake perl openssl-dev libid3tag-dev flac-dev lua5.3-dev \
+    	openjdk11-jre-headless alpine-sdk linux-headers pkgconf
   elif [ -f /etc/SuSE-release ]
   then
     #suse

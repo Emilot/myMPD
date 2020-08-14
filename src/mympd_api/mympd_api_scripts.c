@@ -17,6 +17,8 @@
 #include <inttypes.h>
 #include <dirent.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/syscall.h>
 
 #include <mpd/client.h>
 
@@ -315,7 +317,6 @@ static void *mympd_api_script_execute(void *script_thread_arg) {
             else if (strcmp(tokens[i], "io") == 0)        { luaopen_io(lua_vm); }
             else if (strcmp(tokens[i], "os") == 0)        { luaopen_os(lua_vm); }
             else if (strcmp(tokens[i], "debug") == 0)     { luaopen_package(lua_vm); }
-            else if (strcmp(tokens[i], "bit32") == 0)     { luaopen_bit32(lua_vm); }
             //custom libs
             else if (strcmp(tokens[i], "json") == 0 ||
                      strcmp(tokens[i], "mympd") == 0)     { mympd_luaopen(lua_vm, tokens[i]);
@@ -399,9 +400,11 @@ static sds lua_err_to_str(sds buffer, int rc, bool phrase, const char *script) {
         case LUA_ERRMEM:
             buffer = sdscatfmt(buffer, "Error executing script %s}: Memory allocation error", (phrase == true ? "%{script}" : script));
             break;
+        #if LUA_VERSION_5_3
         case LUA_ERRGCMM:
             buffer = sdscatfmt(buffer, "Error executing script %s: Error in garbage collector", (phrase == true ? "%{script}" : script));
             break;
+        #endif
         case LUA_ERRFILE:
             buffer = sdscatfmt(buffer, "Error executing script %s: Can not open or read script file", (phrase == true ? "%{script}" : script));
             break;
@@ -523,10 +526,11 @@ static int _mympd_api(lua_State *lua_vm, bool raw) {
     }
 
     //pid_t tid = gettid();
-    pthread_t tid = pthread_self();
+    //pthread_t tid = pthread_self();
+    pid_t tid = syscall(__NR_gettid);
     
     t_work_request *request = create_request(-2, tid, method_id, method, "");
-    request->data = sdscatprintf(request->data, "{\"jsonrpc\":\"2.0\",\"id\":%ld,\"method\":\"%s\",\"params\":{", tid, method);
+    request->data = sdscatprintf(request->data, "{\"jsonrpc\":\"2.0\",\"id\":%d,\"method\":\"%s\",\"params\":{", tid, method);
     if (raw == false) {
         for (int i = 2; i < n; i = i + 2) {
             bool comma = i + 1 < n ? true : false;
