@@ -37,7 +37,7 @@
   <header>
     <nav class="navbar navbar-expand navbar-dark fixed-top bg-dark d-flex justify-content-between">
       <div class="dropdown nav-item mr-3" id="headerLeft">
-        <a class="dropdown-toggle navbar-brand pr-0" href="#" id="mainMenu">
+        <a class="dropdown-toggle navbar-brand pr-0 alwaysEnabled" href="#" id="mainMenu">
           <span class="material-icons header-logo">play_circle_outline</span>myMPD
         </a>
         <div class="dropdown-menu bg-lite-dark" id="mainMenuDropdown">
@@ -99,7 +99,14 @@
           <button id="localPlaybackMenu" class="btn btn-secondary dropdown-toggle pl-2 pr-2 material-icons" type="button" data-toggle="dropdown">airplay</button>
           <div class="dropdown-menu bg-lite-dark">
             <h2 data-phrase="Local playback" class="dropdown-header dropdown-header-lx text-light"></h2>
-            <div data-phrase="Connecting to stream..." id="alertLocalPlayback" class="alert alert-warning mx-4"></div>
+            <div id="alertLocalPlayback" class="alert alert-warning mx-4 p-2 hide">
+              <span data-phrase="Connecting to stream..."></span>
+              <a class="btn btn-sm btn-warning float-right material-icons material-icons-small px-1">refresh</a>
+            </div>
+            <div id="errorLocalPlayback" class="alert alert-danger mx-4 p-2 hide">
+              <span data-phrase="Error loading stream"></span>
+              <a class="btn btn-sm btn-danger float-right material-icons material-icons-small px-1">refresh</a>
+            </div>
             <audio class="mx-4" id="localPlayer" preload="none" controls=""></audio>
           </div>
         </div>
@@ -1374,12 +1381,9 @@
                     <div class="col-sm-8">
                       <input id="inputStreamUrl" type="text" class="form-control border-secondary" value="">
                       <div class="invalid-feedback" data-phrase="Invalid URI"></div>
-                    </div>
-                  </div>
-                  <div class="form-group row">
-                    <label class="col-sm-4 col-form-label" for="btnLocalplayerAutoplay" data-phrase="Autoplay"></label>
-                    <div class="col-sm-8 ">
-                      <button data-href='{"cmd": "toggleBtnChk", "options": []}' type="button" class="btn btn-sm btn-secondary material-icons" id="btnLocalplayerAutoplay"></button>
+                      <div id="infoLocalplayer" class="mt-2 alert alert-dark hide">
+                        <span data-phrase="No mixed content,  MPD stream must be served over https:"></span>&nbsp;<a class="alert-link" target="_blank" href="https://github.com/jcorporation/myMPD/wiki/Local-playback" data-phrase="Details"></a>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -2015,6 +2019,7 @@
               <div class="form-group row">
                 <label class="col-sm-4 col-form-label" for="inputScriptName" data-phrase="Script name"></label>
                 <div class="col-sm-8">
+                  <input id="inputOldScriptName" type="hidden"/>
                   <input id="inputScriptName" class="form-control border-secondary" type="text"/>
                   <div class="invalid-feedback" data-phrase="Invalid script name"></div>
                 </div>
@@ -2269,6 +2274,7 @@
 <!--debug-->  <script src="js/scripts.js"></script>
 <!--debug-->  <script src="js/trigger.js"></script>
 <!--debug-->  <script src="js/popover.js"></script>
+<!--debug-->  <script src="js/localplayer.js"></script>
 <!--debug-->  <script src="js/mympd.js"></script>
 <!--release   <script src="js/combined.js"></script>-->
  </body>
