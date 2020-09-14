@@ -142,11 +142,31 @@ button {
   white-space: nowrap;
 }
 
-@media only screen and (max-width: 384px) {
-  #btnStop {
+@media only screen and (max-width: 440px) {
+  #volumeMenu::after,
+  #localPlaybackMenu::after {
     display: none;
   }
 }
+
+@media only screen and (max-width: 400px) {
+  #btnPrev, 
+  #btnPlay,
+  #btnStop {
+    padding-right: 4px !important;
+  }
+  #btnNext,
+  #btnPlay,
+  #btnStop {
+    padding-left: 4px !important;
+  }
+}
+
+@media only screen and (max-width: 380px) {
+  #btnStop {
+    display: none;
+  }
+}  
 
 @media only screen and (max-width: 576px) {
   .header-logo {
@@ -211,6 +231,7 @@ small {
 
 .card {
   min-height: 300px;
+  word-break: break-word;
 }
 
 .cardFooterPlayback {
@@ -387,6 +408,7 @@ a.card-img-left {
 
 #counter {
   cursor: text;
+  word-break: normal;
 }
 
 #volumeBar {
@@ -765,8 +787,8 @@ a.text-success:focus {
 
 @media only screen and (min-width: 992px) and (min-height: 43rem) {
   #currentCover {
-    width: 28rem;
-    height: 28rem;
+    width: 26rem;
+    height: 26rem;
   }
 }
 
