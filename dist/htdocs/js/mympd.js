@@ -60,20 +60,32 @@ function sendAPI(method, params, callback, onerror) {
 
 function webSocketConnect() {
     if (socket !== null && socket.readyState === WebSocket.OPEN) {
-        logInfo("Socket already connected");
+        logInfo('Socket already connected');
         websocketConnected = true;
+        socketRetry = 0;
         return;
     }
     else if (socket !== null && socket.readyState === WebSocket.CONNECTING) {
-        logInfo("Socket connection in progress");
+        logInfo('Socket connection in progress');
         websocketConnected = false;
+        socketRetry++;
+        if (socketRetry > 20) {
+            logError('Socket connection timed out');
+            webSocketClose();
+            setTimeout(function() {
+                webSocketConnect();
+            }, 1000);
+            socketRetry = 0;
+        }
         return;
     }
     else {
         websocketConnected = false;
     }
+    
     let wsUrl = getWsUrl();
     socket = new WebSocket(wsUrl);
+    socketRetry = 0;
     logInfo('Connecting to ' + wsUrl);
 
     try {
@@ -214,6 +226,19 @@ function webSocketConnect() {
     } catch(error) {
         logError(error);
     }
+}
+
+function webSocketClose() {
+    if (websocketTimer !== null) {
+        clearTimeout(websocketTimer);
+        websocketTimer = null;
+    }
+    if (socket !== null) {
+        socket.onclose = function () {}; // disable onclose handler first
+        socket.close();
+        socket = null;
+    }
+    websocketConnected = false;
 }
 
 function getWsUrl() {
@@ -945,6 +970,74 @@ function i18nHtml(root) {
         }
     }
 }
+function setLocalPlayerUrl() {
+    if (window.location.protocol === 'https:') {
+        document.getElementById('infoLocalplayer').classList.remove('hide');
+        document.getElementById('selectStreamMode').options[0].setAttribute('data-phrase','HTTPS Port');
+    }
+    else {
+        document.getElementById('infoLocalplayer').classList.add('hide');
+        document.getElementById('selectStreamMode').options[0].setAttribute('data-phrase','HTTP Port');
+    }
+    if (settings.streamUrl === '') {
+        settings.mpdstream = window.location.protocol + '//';
+        if (settings.mpdHost.match(/^127\./) !== null || settings.mpdHost === 'localhost' || settings.mpdHost.match(/^\//) !== null) {
+            settings.mpdstream += window.location.hostname;
+        }
+        else {
+            settings.mpdstream += settings.mpdHost;
+        }
+        settings.mpdstream += ':' + settings.streamPort + '/';
+    } 
+    else {
+        settings.mpdstream = settings.streamUrl;
+    }
+    const localPlayer = document.getElementById('localPlayer');
+    if (localPlayer.src !== settings.mpdstream) {
+        localPlayer.pause();
+        localPlayer.src = settings.mpdstream;
+        localPlayer.load();
+        setTimeout(function() {
+            checkLocalPlayerState();
+        }, 500);
+    }
+
+}
+
+function clickCheckLocalPlayerState(event) {
+    const el = event.target;
+    el.classList.add('disabled');
+    const parent = document.getElementById('localPlayer').parentNode;
+    document.getElementById('localPlayer').remove();
+    let localPlayer = document.createElement('audio');
+    localPlayer.setAttribute('preload', 'none');
+    localPlayer.setAttribute('controls', '');
+    localPlayer.setAttribute('id', 'localPlayer');
+    localPlayer.classList.add('mx-4');
+    parent.appendChild(localPlayer);
+    setLocalPlayerUrl();
+    setTimeout(function() {
+        el.classList.remove('disabled');
+        localPlayer.play();
+    }, 500);
+}
+
+function checkLocalPlayerState() {
+    const localPlayer = document.getElementById('localPlayer');
+    document.getElementById('errorLocalPlayback').classList.add('hide');
+    document.getElementById('alertLocalPlayback').classList.add('hide');
+    if (localPlayer.networkState === 0) {
+        logDebug('localPlayer networkState: ' + localPlayer.networkState);
+        document.getElementById('alertLocalPlayback').classList.remove('hide');
+    }
+    else if (localPlayer.networkState >=1) {
+        logDebug('localPlayer networkState: ' + localPlayer.networkState);
+    }
+    if (localPlayer.networkState === 3) {
+        logError('localPlayer networkState: ' + localPlayer.networkState);
+        document.getElementById('errorLocalPlayback').classList.remove('hide');
+    }
+}
 /*
  SPDX-License-Identifier: GPL-2.0-or-later
  myMPD (c) 2018-2020 Juergen Mang <mail@jcgames.de>
@@ -1292,6 +1385,9 @@ function parseNeighbors(obj) {
             list += '<a href="#" class="list-group-item list-group-item-action" data-value="' + obj.result.data[i].uri + '">' + 
                     obj.result.data[i].uri + '<br/><small>' + obj.result.data[i].displayName + '</small></a>';
         }    
+        if (obj.result.returnedEntities === 0) {
+            list = '<div class="list-group-item"><span class="material-icons">error_outline</span>&nbsp;' + t('Empty list') + '</div>';
+        }
     }
     document.getElementById('dropdownNeighbors').children[0].innerHTML = list;
 }
@@ -1305,6 +1401,10 @@ function parseNeighbors(obj) {
 /* global BSN, phrases, locales */
 
 var socket = null;
+var websocketConnected = false;
+var websocketTimer = null;
+var socketRetry = 0;
+
 var lastSong = '';
 var lastSongObj = {};
 var lastState;
@@ -1317,10 +1417,9 @@ var settings = {};
 settings.loglevel = 2;
 var alertTimeout = null;
 var progressTimer = null;
-var deferredPrompt;
+var deferredA2HSprompt;
 var dragEl;
-var websocketConnected = false;
-var websocketTimer = null;
+
 var appInited = false;
 var subdir = '';
 var uiEnabled = true;
@@ -1378,7 +1477,7 @@ domCache.btnNext = document.getElementById('btnNext');
 domCache.progressBar = document.getElementById('progressBar');
 domCache.volumeBar = document.getElementById('volumeBar');
 domCache.outputs = document.getElementById('outputs');
-domCache.btnAdd = document.getElementById('nav-add2homescreen');
+domCache.btnA2HS = document.getElementById('nav-add2homescreen');
 domCache.currentCover = document.getElementById('currentCover');
 domCache.currentTitle = document.getElementById('currentTitle');
 domCache.btnVoteUp = document.getElementById('btnVoteUp');
@@ -1636,8 +1735,9 @@ function appRoute() {
                 }
                 let match = lastEl.substring(lastEl.indexOf(' ') + 1);
                 match = match.substring(0, match.indexOf(' '));
-                if (match === '')
+                if (match === '') {
                     match = 'contains';
+                }
                 document.getElementById('searchMatch').value = match;
             }
         }
@@ -1720,6 +1820,35 @@ function clearAndReload() {
     location.reload();
 }
 
+function a2hsInit() {
+    window.addEventListener('beforeinstallprompt', function(event) {
+        logDebug('Event: beforeinstallprompt');
+        // Prevent Chrome 67 and earlier from automatically showing the prompt
+        event.preventDefault();
+        // Stash the event so it can be triggered later
+        deferredA2HSprompt = event;
+        // Update UI notify the user they can add to home screen
+        domCache.btnA2HS.classList.remove('hide');
+    });
+
+    domCache.btnA2HS.addEventListener('click', function() {
+        // Hide our user interface that shows our A2HS button
+        domCache.btnA2HS.classList.add('hide');
+        // Show the prompt
+        deferredA2HSprompt.prompt();
+        // Wait for the user to respond to the prompt
+        deferredA2HSprompt.userChoice.then((choiceResult) => {
+            choiceResult.outcome === 'accepted' ? logDebug('User accepted the A2HS prompt') : logDebug('User dismissed the A2HS prompt');
+            deferredA2HSprompt = null;
+        });
+    });
+    
+    window.addEventListener('appinstalled', function() {
+        logInfo('myMPD installed as app');
+        showNotification(t('myMPD installed as app'), '', '', 'success');
+    });
+}
+
 function appInitStart() {
     //set initial scale
     if (isMobile === true) {
@@ -1770,6 +1899,8 @@ function appInitStart() {
     document.getElementById('splashScreen').classList.remove('hide');
     document.getElementsByTagName('body')[0].classList.add('overflow-hidden');
     document.getElementById('splashScreenAlert').innerText = t('Fetch myMPD settings');
+
+    a2hsInit();
 
     getSettings(true);
     appInitWait();
@@ -2043,6 +2174,7 @@ function appInit() {
         let value = this.options[this.selectedIndex].value;
         if (value === '2') {
             document.getElementById('inputAddToQueueQuantity').setAttribute('disabled', 'disabled');
+            document.getElementById('inputAddToQueueQuantity').value = '1';
             document.getElementById('selectAddToQueuePlaylist').setAttribute('disabled', 'disabled');
             document.getElementById('selectAddToQueuePlaylist').value = 'Database';
         }
@@ -2346,7 +2478,7 @@ function appInit() {
     
     document.getElementById('BrowseDatabaseTagList').addEventListener('click', function(event) {
         if (event.target.nodeName === 'TD') {
-            appGoto('Browse', 'Database', app.current.view, '0/-/-/' + event.target.parentNode.getAttribute('data-uri'));
+            appGoto('Browse', 'Database', app.current.view, '0/-/-/' + decodeURI(event.target.parentNode.getAttribute('data-uri')));
         }
     }, false);
     
@@ -2495,7 +2627,7 @@ function appInit() {
                 let li = document.createElement('button');
                 li.classList.add('btn', 'btn-light', 'mr-2');
                 li.setAttribute('data-filter', encodeURI(app.current.filter + ' ' + match.options[match.selectedIndex].value +' \'' + this.value + '\''));
-                li.innerHTML = app.current.filter + ' ' + match.options[match.selectedIndex].value + ' \'' + e(this.value) + '\'<span class="ml-2 badge badge-secondary">&times;</span>';
+                li.innerHTML = e(app.current.filter) + ' ' + e(match.options[match.selectedIndex].value) + ' \'' + e(this.value) + '\'<span class="ml-2 badge badge-secondary">&times;</span>';
                 this.value = '';
                 domCache.searchCrumb.appendChild(li);
             }
@@ -2641,77 +2773,34 @@ function appInit() {
     });
     document.getElementById('selectTheme').innerHTML = selectThemeHtml;
 
-    
-    window.addEventListener('beforeinstallprompt', function(event) {
-        // Prevent Chrome 67 and earlier from automatically showing the prompt
-        event.preventDefault();
-        // Stash the event so it can be triggered later
-        deferredPrompt = event;
-        // Update UI notify the user they can add to home screen
-        domCache.btnAdd.classList.remove('hide');
-    });
-    
-    domCache.btnAdd.addEventListener('click', function() {
-        // Hide our user interface that shows our A2HS button
-        domCache.btnAdd.classList.add('hide');
-        // Show the prompt
-        deferredPrompt.prompt();
-        // Wait for the user to respond to the prompt
-        deferredPrompt.userChoice.then((choiceResult) => {
-            if (choiceResult.outcome === 'accepted') {
-                logVerbose('User accepted the A2HS prompt');
-            }
-            else {
-                logVerbose('User dismissed the A2HS prompt');
-            }
-            deferredPrompt = null;
-        });
-    });
-    
-    window.addEventListener('appinstalled', function() {
-        logInfo('myMPD installed as app');
-        showNotification(t('myMPD installed as app'), '', '', 'success');
-    });
-
     window.addEventListener('beforeunload', function() {
-        if (websocketTimer !== null) {
-            clearTimeout(websocketTimer);
-            websocketTimer = null;
-        }
-        if (socket !== null) {
-            socket.onclose = function () {}; // disable onclose handler first
-            socket.close();
-            socket = null;
-        }
-        websocketConnected = false;
+        webSocketClose();
     });
     
     document.getElementById('alertLocalPlayback').getElementsByTagName('a')[0].addEventListener('click', function(event) {
         event.stopPropagation();
         event.preventDefault();
-        checkLocalPlayerState();    
+        clickCheckLocalPlayerState(event);
     }, false);
     
     document.getElementById('errorLocalPlayback').getElementsByTagName('a')[0].addEventListener('click', function(event) {
         event.stopPropagation();
         event.preventDefault();
-        checkLocalPlayerState();    
+        clickCheckLocalPlayerState(event);
     }, false);
+
+    document.getElementById('localPlayer').addEventListener('click', function(event) {
+        event.stopPropagation();
+    });
     
     document.getElementById('localPlayer').addEventListener('canplay', function() {
         logDebug('localPlayer event: canplay');
         document.getElementById('alertLocalPlayback').classList.add('hide');
         document.getElementById('errorLocalPlayback').classList.add('hide');
-        if (settings.featLocalplayer === true && settings.localplayerAutoplay === true) {
-            localplayerPlay();
-        }
     });
     document.getElementById('localPlayer').addEventListener('error', function() {
         logError('localPlayer event: error');
         document.getElementById('errorLocalPlayback').classList.remove('hide');
-        if (settings.featLocalplayer === true && settings.localplayerAutoplay === true) {
-            localplayerPlay();
-        }
     });
 }
 
@@ -2928,10 +3017,13 @@ function notificationsSupported() {
     return "Notification" in window;
 }
 
-function setElsState(tag, state) {
-    let els = document.getElementsByTagName(tag);
+function setElsState(tag, state, type) {
+    let els = type === 'tag' ? document.getElementsByTagName(tag) : document.getElementsByClassName(tag);
     let elsLen = els.length;
     for (let i = 0; i < elsLen; i++) {
+        if (els[i].classList.contains('close')) {
+            continue;
+        }
         if (state === 'disabled') {
             if (els[i].classList.contains('alwaysEnabled') === false) {
                 if (els[i].getAttribute('disabled') === null) {
@@ -2957,9 +3049,10 @@ function toggleUI() {
     let enabled = state === 'disabled' ? false : true;
     if (enabled !== uiEnabled) {
         logDebug('Setting ui state to ' + state);
-        setElsState('a', state);
-        setElsState('input', state);
-        setElsState('button', state);
+        setElsState('a', state, 'tag');
+        setElsState('input', state, 'tag');
+        setElsState('button', state, 'tag');
+        setElsState('clickable', state, 'class');
         uiEnabled = enabled;
     }
 
@@ -3200,12 +3293,12 @@ function parsePlaylists(obj) {
     
     if (nrItems === 0) {
         if (app.current.view === 'All') {
-            tbody.innerHTML = '<tr><td><span class="material-icons">error_outline</span></td>' +
+            tbody.innerHTML = '<tr class="not-clickable"><td><span class="material-icons">error_outline</span></td>' +
                               '<td colspan="3">' + t('No playlists found') + '</td></tr>';
         }
         else {
-            tbody.innerHTML = '<tr><td><span class="material-icons">error_outline</span></td>' +
-                              '<td colspan="' + (settings.colsBrowsePlaylistsDetail.length - 1) + '">' + t('Empty playlist') + '</td></tr>';
+            tbody.innerHTML = '<tr class="not-clickable"><td><span class="material-icons">error_outline</span></td>' +
+                              '<td colspan="' + settings.colsBrowsePlaylistsDetail.length + '">' + t('Empty playlist') + '</td></tr>';
         }
     }
             
@@ -4138,6 +4231,7 @@ function saveScript() {
             args.push(argSel.options[i].text);
         }
         sendAPI("MYMPD_API_SCRIPT_SAVE", {
+            "oldscript": document.getElementById('inputOldScriptName').value,
             "script": nameEl.value,
             "order": parseInt(orderEl.value),
             "content": document.getElementById('textareaScriptContent').value,
@@ -4178,6 +4272,7 @@ function showEditScript(script) {
         sendAPI("MYMPD_API_SCRIPT_GET", {"script": script}, parseEditScript, false);
     }
     else {
+        document.getElementById('inputOldScriptName').value = '';
         document.getElementById('inputScriptName').value = '';
         document.getElementById('inputScriptOrder').value = '1';
         document.getElementById('inputScriptArgument').value = '';
@@ -4187,6 +4282,7 @@ function showEditScript(script) {
 }
 
 function parseEditScript(obj) {
+    document.getElementById('inputOldScriptName').value = obj.result.script;
     document.getElementById('inputScriptName').value = obj.result.script;
     document.getElementById('inputScriptOrder').value = obj.result.metadata.order;
     document.getElementById('inputScriptArgument').value = '';
@@ -4342,7 +4438,7 @@ function search(x) {
             expression += ')';
         if (expression.length <= 2)
             expression = '';
-        appGoto('Search', undefined, undefined, '0/' + app.current.filter + '/' + app.current.sort + '/' + encodeURI(expression));
+        appGoto('Search', undefined, undefined, '0/' + app.current.filter + '/' + app.current.sort + '/' + expression);
     }
     else
         appGoto('Search', undefined, undefined, '0/' + app.current.filter + '/' + app.current.sort + '/' + x);
@@ -4488,7 +4584,6 @@ function parseUrlhandlers(obj) {
                 break;
         }
     }
-    storagePlugins += '<option value="udisks://">udisks://</option>';
     document.getElementById('selectMountUrlhandler').innerHTML = storagePlugins;
 }
 
@@ -4569,7 +4664,6 @@ function parseSettings() {
     toggleBtnChk('btnNotifyPage', settings.notificationPage);
     toggleBtnChk('btnMediaSession', settings.mediaSession);
     toggleBtnChkCollapse('btnFeatLocalplayer', 'collapseLocalplayer', settings.featLocalplayer);
-    toggleBtnChk('btnLocalplayerAutoplay', settings.localplayerAutoplay);
     toggleBtnChk('btnFeatTimer', settings.featTimer);
     toggleBtnChk('btnBookmarks', settings.featBookmarks);
     toggleBtnChk('btnFeatLyrics', settings.featLyrics);
@@ -4724,36 +4818,7 @@ function parseSettings() {
     document.getElementById('selectSmartplsSort').value = settings.smartplsSort;
 
     if (settings.featLocalplayer === true) {
-        if (window.location.protocol === 'https:') {
-            document.getElementById('infoLocalplayer').classList.remove('hide');
-            document.getElementById('selectStreamMode').options[0].setAttribute('data-phrase','HTTPS Port');
-        }
-        else {
-            document.getElementById('infoLocalplayer').classList.add('hide');
-            document.getElementById('selectStreamMode').options[0].setAttribute('data-phrase','HTTP Port');
-        }
-        if (settings.streamUrl === '') {
-            settings.mpdstream = window.location.protocol + '//';
-            if (settings.mpdHost.match(/^127\./) !== null || settings.mpdHost === 'localhost' || settings.mpdHost.match(/^\//) !== null) {
-                settings.mpdstream += window.location.hostname;
-            }
-            else {
-                settings.mpdstream += settings.mpdHost;
-            }
-            settings.mpdstream += ':' + settings.streamPort + '/';
-        } 
-        else {
-            settings.mpdstream = settings.streamUrl;
-        }
-        let localPlayer = document.getElementById('localPlayer');
-        if (localPlayer.src !== settings.mpdstream) {
-            localPlayer.pause();
-            localPlayer.src = settings.mpdstream;
-            localPlayer.load();
-            setTimeout(function() {
-                checkLocalPlayerState();
-            }, 500);
-        }
+        setLocalPlayerUrl();
     }
     
     if (settings.musicDirectory === 'auto') {
@@ -5202,7 +5267,6 @@ function saveSettings(closeModal) {
             "bgColor": document.getElementById('inputBgColor').value,
             "bgCssFilter": document.getElementById('inputBgCssFilter').value,
             "featLocalplayer": (document.getElementById('btnFeatLocalplayer').classList.contains('active') ? true : false),
-            "localplayerAutoplay": (document.getElementById('btnLocalplayerAutoplay').classList.contains('active') ? true : false),
             "streamUrl": streamUrl,
             "streamPort": parseInt(streamPort),
             "coverimage": (document.getElementById('btnCoverimage').classList.contains('active') ? true : false),
@@ -5447,11 +5511,11 @@ function parseSongDetails(obj) {
     if (settings.featLibrary === true && settings.publish === true) {
         songDetailsHTML += '<tr><th>' + t('Filename') + '</th><td><a class="breakAll text-success" href="/browse/music/' + 
             encodeURI(obj.result.uri) + '" target="_blank" title="' + e(obj.result.uri) + '">' + 
-            e(basename(obj.result.uri)) + '</a></td></tr>';
+            e(basename(obj.result.uri, true)) + '</a></td></tr>';
     }
     else {
         songDetailsHTML += '<tr><th>' + t('Filename') + '</th><td class="breakAll"><span title="' + e(obj.result.uri) + '">' + 
-            e(basename(obj.result.uri)) + '</span></td></tr>';
+            e(basename(obj.result.uri, true)) + '</span></td></tr>';
     }
     songDetailsHTML += '<tr><th>' + t('Filetype') + '</th><td>' + filetype(obj.result.uri) + '</td></tr>';
     songDetailsHTML += '<tr><th>' + t('LastModified') + '</th><td>' + localeDate(obj.result.LastModified) + '</td></tr>';
@@ -6133,23 +6197,6 @@ function mediaSessionSetMetadata(title, artist, album, url) {
                 album: album
             });
         }
-    }
-}
-
-function checkLocalPlayerState() {
-    let localPlayer = document.getElementById('localPlayer');
-    document.getElementById('errorLocalPlayback').classList.add('hide');
-    document.getElementById('alertLocalPlayback').classList.add('hide');
-    if (localPlayer.networkState === 0) {
-        logDebug('localPlayer networkState: ' + localPlayer.networkState);
-        document.getElementById('alertLocalPlayback').classList.remove('hide');
-    }
-    else if (localPlayer.networkState >=1) {
-        logDebug('localPlayer networkState: ' + localPlayer.networkState);
-    }
-    if (localPlayer.networkState === 3) {
-        logError('localPlayer networkState: ' + localPlayer.networkState);
-        document.getElementById('errorLocalPlayback').classList.remove('hide');
     }
 }
 /*
@@ -7095,8 +7142,13 @@ function dirname(uri) {
     return uri.replace(/\/[^/]*$/, '');
 }
 
-function basename(uri) {
-   return uri.split('/').reverse()[0];
+function basename(uri, removeQuery) {
+    if (removeQuery === true) {
+        return uri.split('/').reverse()[0].split(/[?#]/)[0];
+    }
+    else {
+        return uri.split('/').reverse()[0];
+    }
 }
 
 function filetype(uri) {
