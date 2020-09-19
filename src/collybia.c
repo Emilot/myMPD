@@ -167,7 +167,7 @@ static int ns_set(int type, const char *server, const char *share, const char *v
 }
 
 int collybia_settings_set(t_mympd_state *mympd_state, bool mpd_conf_changed,
-                       bool ns_changed, bool airplay_changed, bool roon_changed, bool spotify_changed, bool dac_changed, bool ffmpeg_changed)
+                       bool ns_changed, bool apmode_changed, bool airplay_changed, bool roon_changed, bool spotify_changed, bool dac_changed, bool ffmpeg_changed)
 {
     // TODO: error checking, revert to old values on fail
     bool rc = true;
@@ -223,6 +223,20 @@ int collybia_settings_set(t_mympd_state *mympd_state, bool mpd_conf_changed,
         }
         sdsfree(conf);
         sdsfree(cmdline);
+    }
+
+    if (apmode_changed == true)
+    {
+        if (mympd_state->apmode == true)
+        {
+            syscmd("systemctl enable create_ap");
+            syscmd("systemctl start create_ap");
+        }
+        else
+        {
+            syscmd("systemctl stop create_ap");
+            syscmd("systemctl disable create_ap");
+        }
     }
 
     if (airplay_changed == true)

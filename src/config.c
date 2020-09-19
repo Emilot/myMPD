@@ -343,6 +343,9 @@ static int mympd_inihandler(void *user, const char *section, const char *name, c
     else if (MATCH("collybia", "nspassword")) {
         p_config->ns_password = sdsreplace(p_config->ns_password, value);
     }
+    else if (MATCH("collybia", "apmode")) {
+        p_config->apmode = strcmp(value, "true") == 0 ? true : false;
+    }
     else if (MATCH("collybia", "airplay")) {
         p_config->airplay = strcmp(value, "true") == 0 ? true : false;
     }
@@ -425,7 +428,7 @@ static void mympd_get_env(struct t_config *config) {
         "THEME_LOCALE", "THEME_HIGHLIGHTCOLOR",        
 	"COLLYBIA_MIXERTYPE", "COLLYBIA_DAC", "COLLYBIA_DOP", "COLLYBIA_FFMPEG", "COLLYBIA_NSTYPE", "COLLYBIA_NSSERVER", 
 	"COLLYBIA_SAMBAVERSION", "COLLYBIA_NSSHARE", "COLLYBIA_NSUSERNAME", "COLLYBIA_NSPASSWORD", 
-	"COLLYBIA_AIRPLAY", "COLLYBIA_ROON", "COLLYBIA_SPOTIFY", "COLLYBIA_INIT",
+	"COLLYBIA_AIRPLAY", "COLLYBIA_APMODE", "COLLYBIA_ROON", "COLLYBIA_SPOTIFY", "COLLYBIA_INIT",
         "TIDAL_ENABLED", "TIDAL_USERNAME", "TIDAL_PASSWORD", "TIDAL_AUDIOQUALITY", 0};
     const char** ptr = env_vars;
     while (*ptr != 0) {
@@ -582,6 +585,7 @@ void mympd_config_defaults(t_config *config) {
     config->samba_version = sdsnew("vers=1.0");
     config->ns_username = sdsempty();
     config->ns_password = sdsempty();
+    config->apmode = false;
     config->airplay = false;
     config->roon = false;
     config->spotify = false;

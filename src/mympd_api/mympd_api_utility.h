@@ -104,6 +104,7 @@ typedef struct t_mympd_state {
     sds ns_username;
     sds ns_password;
     bool airplay;
+    bool apmode;
     bool roon;
     bool spotify;
     bool tidal_enabled;

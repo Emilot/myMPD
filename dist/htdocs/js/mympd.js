@@ -920,6 +920,7 @@ function parseCollybiaSettings() {
         document.getElementById('nsCredentials').classList.add('hide');
     }
 
+    toggleBtnChk('btnAPMode', settings.apmode);
     toggleBtnChk('btnAirplay', settings.airplay);
     toggleBtnChk('btnRoon', settings.roon);
     toggleBtnChk('btnSpotify', settings.spotify);
@@ -982,6 +983,7 @@ function saveCollybiaSettings() {
             "sambaVersion": selectSambaVersion.options[selectSambaVersion.selectedIndex].value,
             "nsUsername": inputNsUsername.value,
             "nsPassword": inputNsPassword.value,
+            "apmode": (document.getElementById('btnAPMode').classList.contains('active') ? true : false),
             "airplay": (document.getElementById('btnAirplay').classList.contains('active') ? true : false),
             "roon": (document.getElementById('btnRoon').classList.contains('active') ? true : false),
             "spotify": (document.getElementById('btnSpotify').classList.contains('active') ? true : false),

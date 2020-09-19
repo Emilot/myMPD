@@ -137,6 +137,7 @@ typedef struct t_config {
     sds ns_share;
     sds ns_username;
     sds ns_password;
+    bool apmode;
     bool airplay;
     bool roon;
     bool spotify;
