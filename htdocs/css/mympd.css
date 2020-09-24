@@ -126,6 +126,7 @@ button {
 
 .cardBodyPlayback {
   padding-bottom: 0;
+  overflow-y: auto;
 }
 
 #BrowseBreadrumb {
@@ -771,36 +772,6 @@ a.text-success:focus {
   border-bottom-color: rgba(0, 0, 0, 0.125);
 }
 
-#headerCover {
-  display: inline-block;
-  width: 42px;
-  height: 42px;
-}
-
-#cardPlayback {
-  max-height: calc(100vh - 10rem);
-}
-
-#cardHeaderBrowse {
-  min-height: 54px;
-}
-
-#cardQueueMini {
-  height: 377px;
-}
-
-#cardFooterQueueMini {
-  height: 49px;
-}
-
-#BrowseCovergridBox {
-  overflow-y: auto;
-}
-
-[data-col=Img] {
-  width: 50px;
-}
-
 /*resize coverimage in playback card*/
 @media only screen and (min-width: 768px) and (min-height: 35rem) {
   #currentCover {
@@ -823,6 +794,42 @@ a.text-success:focus {
 
 .btn-warning {
   background-color: #ffc107 !important;
+}
+
+#headerCover {
+  display: inline-block;
+  width: 42px;
+  height: 42px;
+}
+
+#cardPlayback > div.card-header {
+  height: 54px !important;
+}
+
+#cardHeaderBrowse {
+  min-height: 54px;
+}
+
+#cardQueueMini {
+  height: 377px;
+}
+
+#cardFooterQueueMini {
+  height: 49px;
+}
+
+#BrowseCovergridBox {
+  overflow-y: auto;
+}
+
+[data-col=Img] {
+  width: 50px;
+}
+
+@media only screen and (max-width: 576px) {
+  .btnText {
+    display: none !important;
+  }
 }
 
 #QueueCurrentList td {
@@ -863,4 +870,3 @@ a.text-success:focus {
   margin-right: 1.25rem;
   margin-bottom: 1.25rem;
 }
-
