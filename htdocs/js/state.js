@@ -99,7 +99,8 @@ function setCounter(currentSongId, totalTime, elapsedTime) {
     currentSong.elapsedTime = elapsedTime;
     currentSong.currentSongId = currentSongId;
 
-    domCache.progressBar.value = Math.floor(1000 * elapsedTime / totalTime);
+    const progressPx = Math.ceil(domCache.progress.offsetWidth * elapsedTime / totalTime);
+    domCache.progressBar.style.width = progressPx + 'px'; 
 
     let counterText = beautifySongDuration(elapsedTime) + "&nbsp;/&nbsp;" + beautifySongDuration(totalTime);
     domCache.counter.innerHTML = counterText;
@@ -176,10 +177,10 @@ function parseState(obj) {
     if (obj.result.songPos === '-1') {
         domCache.currentTitle.innerText = 'Not playing';
         document.title = 'myMPD';
-        let headerTitle = document.getElementById('headerTitle');
-        headerTitle.innerText = '';
-        headerTitle.removeAttribute('title');
-        headerTitle.classList.remove('clickable');
+        let footerTitle = document.getElementById('footerTitle');
+        footerTitle.innerText = '';
+        footerTitle.removeAttribute('title');
+        footerTitle.classList.remove('clickable');
         clearCurrentCover();
         if (settings.bgCover === true) {
             clearBackgroundImage();
@@ -267,11 +268,16 @@ function clearBackgroundImage() {
 }
 
 function setCurrentCover(url) {
+    _setCurrentCover(url, domCache.currentCover);
+    _setCurrentCover(url, domCache.footerCover);
+}
+
+function _setCurrentCover(url, el) {
     if (url === undefined) {
         clearCurrentCover();
         return;
     }
-    let old = domCache.currentCover.querySelectorAll('.coverbg');
+    let old = el.querySelectorAll('.coverbg');
     for (let i = 0; i < old.length; i++) {
         if (old[i].style.zIndex === '2') {
             old[i].remove();        
@@ -285,17 +291,22 @@ function setCurrentCover(url) {
     div.classList.add('coverbg');
     div.style.backgroundImage = 'url("' + subdir + '/albumart/' + url + '")';
     div.style.opacity = 0;
-    domCache.currentCover.insertBefore(div, domCache.currentCover.firstChild);
+    el.insertBefore(div, el.firstChild);
 
     let img = new Image();
     img.onload = function() {
-        domCache.currentCover.querySelector('.coverbg').style.opacity = 1;
+        el.querySelector('.coverbg').style.opacity = 1;
     };
     img.src = subdir + '/albumart/' + url;
 }
 
-function clearCurrentCover() {
-    let old = domCache.currentCover.querySelectorAll('.coverbg');
+function clearCurrentCover(el) {
+    _clearCurrentCover(domCache.currentCover);
+    _clearCurrentCover(domCache.footerCover);
+}
+
+function _clearCurrentCover(el) {
+    let old = el.querySelectorAll('.coverbg');
     for (let i = 0; i < old.length; i++) {
         if (old[i].style.zIndex === '2') {
             old[i].remove();        
@@ -327,32 +338,51 @@ function songChange(obj) {
         textNotification += obj.result.Artist;
         htmlNotification += obj.result.Artist;
         pageTitle += obj.result.Artist + ' - ';
-    } 
+        domCache.footerArtist.innerText = obj.result.Artist;
+        domCache.footerArtist.setAttribute('data-name', encodeURI(obj.result.Artist));
+        domCache.footerArtist.classList.add('clickable');
+    }
+    else {
+        domCache.footerArtist.innerText = '';
+        domCache.footerArtist.setAttribute('data-name', '');
+        domCache.footerArtist.classList.remove('clickable');
+    }
 
     if (obj.result.Album !== undefined && obj.result.Album.length > 0 && obj.result.Album !== '-') {
         textNotification += ' - ' + obj.result.Album;
         htmlNotification += '<br/>' + obj.result.Album;
+        domCache.footerAlbum.innerText = obj.result.Album;
+        domCache.footerAlbum.setAttribute('data-name', encodeURI(obj.result.Album));
+        domCache.footerAlbum.classList.add('clickable');
+    }
+    else {
+        domCache.footerAlbum.innerText = '';
+        domCache.footerAlbum.setAttribute('data-name', '');
+        domCache.footerAlbum.classList.remove('clickable');
     }
 
     if (obj.result.Title !== undefined && obj.result.Title.length > 0) {
         pageTitle += obj.result.Title;
         domCache.currentTitle.innerText = obj.result.Title;
         domCache.currentTitle.setAttribute('data-uri', encodeURI(obj.result.uri));
+        domCache.footerTitle.innerText = obj.result.Title;
+        domCache.footerTitle.classList.add('clickable');
     }
     else {
         domCache.currentTitle.innerText = '';
         domCache.currentTitle.setAttribute('data-uri', '');
+        domCache.footerTitle.innerText = '';
+        domCache.footerTitle.setAttribute('data-name', '');
+        domCache.footerTitle.classList.remove('clickable');        
     }
     document.title = 'myMPD: ' + pageTitle;
-    let headerTitle = document.getElementById('headerTitle');
-    headerTitle.innerText = pageTitle;
-    headerTitle.title = pageTitle;
+    domCache.footerCover.title = pageTitle;
     
     if (obj.result.uri !== undefined && obj.result.uri !== '' && obj.result.uri.indexOf('://') === -1) {
-        headerTitle.classList.add('clickable');
+        footerTitle.classList.add('clickable');
     }
     else {
-        headerTitle.classList.remove('clickable');
+        footerTitle.classList.remove('clickable');
     }
 
     if (obj.result.uri !== undefined) {
@@ -409,7 +439,7 @@ function songChange(obj) {
 
 //eslint-disable-next-line no-unused-vars
 function gotoTagList() {
-    appGoto(app.current.app, app.current.tab, app.current.view, '0/-/-/');
+    appGoto(app.current.app, app.current.tab, app.current.view, '0/-/-/-/');
 }
 
 //eslint-disable-next-line no-unused-vars

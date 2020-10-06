@@ -18,11 +18,21 @@ function getSelectValue(selectId) {
 }
 
 function alignDropdown(el) {
-    if (getXpos(el.children[0]) > domCache.body.offsetWidth * 0.66) {
-        el.getElementsByClassName('dropdown-menu')[0].classList.add('dropdown-menu-right');
+    const x = getXpos(el.children[0]);
+    
+    if (x < domCache.body.offsetWidth * 0.66) {
+        if (el.id === 'navState') {
+            el.classList.remove('dropdown');
+            el.classList.add('dropright');
+        }
+        else {
+            el.getElementsByClassName('dropdown-menu')[0].classList.remove('dropdown-menu-right');
+        }
     }
     else {
-        el.getElementsByClassName('dropdown-menu')[0].classList.remove('dropdown-menu-right');
+        el.getElementsByClassName('dropdown-menu')[0].classList.add('dropdown-menu-right');
+        el.classList.add('dropdown');
+        el.classList.remove('dropright');
     }
 }
 
@@ -128,7 +138,8 @@ function addFilterLetter(x) {
             default:
                 filter = event.target.innerText;
         }
-        appGoto(app.current.app, app.current.tab, app.current.view, '0/' + filter + '/' + app.current.sort + '/' + app.current.search);
+        appGoto(app.current.app, app.current.tab, app.current.view, '0/' + filter + '/' + app.current.sort + '/' + 
+            app.current.tag + '/' + app.current.search);
     }, false);
 }
 
@@ -159,7 +170,11 @@ function addTagList(el, list) {
     for (let i = 0; i < settings[list].length; i++) {
         tagList += '<button type="button" class="btn btn-secondary btn-sm btn-block" data-tag="' + settings[list][i] + '">' + t(settings[list][i]) + '</button>';
     }
-    if (el === 'covergridSortTagsList') {
+    if (el === 'BrowseDatabaseByTagDropdown' || el === 'BrowseNavFilesystemDropdown' || el === 'BrowseNavPlaylistsDropdown') {
+        tagList += '<button type="button" class="btn btn-secondary btn-sm btn-block' + (el === 'BrowseNavPlaylistsDropdown' ? ' active' : '') + '" data-tag="Playlists">' + t('Playlists') + '</button>' +
+            '<button type="button" class="btn btn-secondary btn-sm btn-block' + (el === 'BrowseNavFilesystemDropdown' ? ' active' : '') + '" data-tag="Filesystem">' + t('Filesystem') + '</button>'
+    }
+    else if (el === 'databaseSortTagsList') {
         if (settings.tags.includes('Date')) {
             tagList += '<button type="button" class="btn btn-secondary btn-sm btn-block" data-tag="Date">' + t('Date') + '</button>';
         }
@@ -456,5 +471,6 @@ function gotoPage(x) {
         default:
             app.current.page = x;
     }
-    appGoto(app.current.app, app.current.tab, app.current.view, app.current.page + '/' + app.current.filter + '/' + app.current.sort + '/' + app.current.search);
+    appGoto(app.current.app, app.current.tab, app.current.view, app.current.page + '/' + app.current.filter + '/' + 
+        app.current.sort + '/' + app.current.tag + '/' + app.current.search);
 }
