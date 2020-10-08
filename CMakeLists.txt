@@ -11,8 +11,8 @@ include(GNUInstallDirs)
 project (mympd C)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/")
 set(CPACK_PACKAGE_VERSION_MAJOR "6")
-set(CPACK_PACKAGE_VERSION_MINOR "6")
-set(CPACK_PACKAGE_VERSION_PATCH "2")
+set(CPACK_PACKAGE_VERSION_MINOR "7")
+set(CPACK_PACKAGE_VERSION_PATCH "0")
 
 set(CPACK_PACKAGE_COLLYBIAVERSION_MAJOR "1")
 set(CPACK_PACKAGE_COLLYBIAVERSION_MINOR "5")
@@ -232,6 +232,7 @@ set(SOURCES
   src/web_server/web_server_albumart.c
   src/web_server/web_server_lyrics.c
   src/collybia.c
+  src/web_server/web_server_tagpics.c
   dist/src/mongoose/mongoose.c
   dist/src/frozen/frozen.c
   dist/src/inih/ini.c

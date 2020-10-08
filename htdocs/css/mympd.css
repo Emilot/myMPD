@@ -10,12 +10,16 @@
 
 :root {
   --mympd-coverimagesize: 250px;
-  --mympd-covergridsize: 200px;
+  --mympd-coverimagesizesmall: 200px;
   --mympd-highlightcolor: #28a745;
 }
 
 .highlight {
   color: var(--mympd-highlightcolor, #28a745) !important;
+}
+
+.highlight-bg {
+  background-color: var(--mympd-highlightcolor, #28a745) !important;
 }
 
 #highlightColorPreview,
@@ -88,7 +92,6 @@ td[data-col=Action] {
   height: 100%;
   background-position: center center;
   background-size: cover;
-  top: 3.5rem;
   filter: blur(5px);
   transition: opacity 1s;
   z-index: -9;
@@ -106,27 +109,116 @@ td[data-col=Action] {
   z-index: 3;
 }
 
-main {
-  padding-top: 1rem;
+.badge {
+  font-size: 65%;
+  vertical-align: top;
+  margin-left: 0 !important;
 }
 
-footer {
-  position: absolute;
-  bottom: 0;
+#navQueue > a {
+  padding-right: 1rem;
 }
 
-.footerText,
+@media only screen and (orientation: landscape) {
+  nav#header {
+    height: 100vw;
+    width: 4rem;
+    flex-flow: column;
+    padding-top: 0.6rem;
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: 6.5rem;
+    justify-content: normal !important;
+  }
+  body {
+    padding-top: 0;
+    padding-left: 4rem;
+  }
+  #headerLeft {
+    margin-bottom: 2rem;
+  }
+  .navText {
+    display: none;
+  }
+  #navbar-main > div {
+    margin-bottom: 0.6rem;
+  }
+  #navbar-main {
+    flex-direction: column !important;
+  }
+  #navQueue > a {
+    padding-right: 0 !important;
+  }
+}
+
+@media only screen and (max-width: 700px) {
+  .navText {
+    display: none;
+  }
+  #counter {
+    display: none;
+  }
+  .ml-5 {
+    margin-left: 1rem !important;
+  }
+}
+
+@media only screen and (max-height: 380px) and (orientation: landscape) {
+  #navbar-main > div {
+    margin-bottom: 0;
+  }
+}
+
+div#footerCover {
+  width: 4rem;
+  height: 4rem;
+  background-size: cover;
+  flex-shrink: 0;
+  position: relative;
+}
+
+span#footerTitle {
+  height: 2rem;
+}
+
+div#footerInfo {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+div#footerProgress {
+  height: 1rem;
+  background-color: transparent;
+  border-radius: 0;
+}
+
+div#footerProgress:hover div#footerProgressBar {
+  border-top: 0.4rem solid var(--mympd-highlightcolor, #28a745);
+  border-bottom: 0.4rem solid var(--mympd-highlightcolor, #28a745);
+}
+
+div#footerProgressBar {
+  height: 0.4rem;
+  width: 0;
+  margin-bottom: -0.6rem;
+  transition: none;
+}
+
+.navText {
+  margin-left: 0.5rem !important;
+}
+
+.navTextQueue {
+  margin-right: 0.5rem;
+}
+
 #badgeQueueItems {
-  margin-left: 0.5rem;
+  margin-left: 0 !important;
 }
 
 button {
   overflow: hidden;
-}
-
-.cardBodyPlayback {
-  padding-bottom: 0;
-  overflow-y: auto;
 }
 
 #BrowseBreadrumb {
@@ -142,39 +234,28 @@ button {
   white-space: nowrap;
 }
 
+#mainMenu::after {
+  display: none !important;
+}
+
 @media only screen and (max-width: 440px) {
   #volumeMenu::after,
   #localPlaybackMenu::after {
-    display: none;
+    display: none !important;
   }
 }
 
 @media only screen and (max-width: 400px) {
   #btnPrev, 
-  #btnPlay,
-  #btnStop {
+  #btnPlay {
     padding-right: 4px !important;
   }
   #btnNext,
-  #btnPlay,
-  #btnStop {
+  #btnPlay {
     padding-left: 4px !important;
   }
-}
-
-@media only screen and (max-width: 380px) {
-  #btnStop {
-    display: none;
-  }
-}  
-
-@media only screen and (max-width: 576px) {
-  .header-logo {
+  #footerPlaying {
     display: none !important;
-  }
-
-  .footerText {
-    display: none;
   }
 }
 
@@ -182,16 +263,6 @@ button {
   .modal-lg {
     max-width: calc(100vw - 5rem) !important;
   }
-}
-
-@media only screen and (max-width: 768px) {
-  #headerTitle {
-    display: none !important;
-  }
-}
-
-#headerTitle {
-  text-overflow: ellipsis;
 }
 
 .clickable {
@@ -230,12 +301,10 @@ small {
 }
 
 .card {
-  min-height: 300px;
   word-break: break-word;
-}
-
-.cardFooterPlayback {
-  padding: 0;
+  background-color: transparent !important;
+  border: none;
+  margin-bottom: 2rem;
 }
 
 .album-cover {
@@ -254,12 +323,27 @@ small {
   z-index: 1;
 }
 
+.album-cover-small {
+  background-size: cover;
+  border: 1px solid black;
+  border-radius: 5px;
+  overflow: hidden;
+  max-width: 100%;
+  width: var(--mympd-coverimagesizesmall, 200px);
+  height: var(--mympd-coverimagesizesmall, 200px);
+  background-color: #eee;
+  float: left;
+  margin-bottom: 1.25rem;
+  margin-right: 1.25rem;
+  position: relative;
+  z-index: 1;
+}
+
 .card-grid {
-  width: var(--mympd-covergridsize, 200px);
+  width: var(--mympd-coverimagesizesmall, 200px);
   min-height: 0 !important;
   margin-bottom: 1.25rem;
   overflow: hidden;
-  transition: width 0.5s, height 0.5s;
   max-width: 100%;
 }
 
@@ -269,26 +353,20 @@ small {
   text-overflow: ellipsis;
 }
 
+.card-grid:focus {
+  border-width: 1px;
+  border-style: solid;
+  border-color:var(--mympd-highlightcolor, #28a745) !important;
+}
+
 .album-cover-grid {
   background-size: cover;
   overflow: hidden;
   background-color: #eee;
-  width: var(--mympd-covergridsize, 200px);
-  height: var(--mympd-covergridsize, 200px);
+  width: var(--mympd-coverimagesizesmall, 200px);
+  height: var(--mympd-coverimagesizesmall, 200px);
   max-width: 100%;
   padding: 0 0.5rem;
-}
-
-a.card-img-left {
-  overflow: hidden;
-  display: block;
-  border-radius: 5px;
-  background-size: cover;
-  margin-bottom: 5px;
-  cursor: pointer;
-  width: var(--mympd-coverimagesize, 250px);
-  height: var(--mympd-coverimagesize, 250px);
-  max-width: 100%;
 }
 
 .album-cover-loading {
@@ -375,6 +453,10 @@ a.card-img-left {
   font-size: 1rem;
 }
 
+.material-icons-lg {
+  font-size: 2.4rem;
+}
+
 .material-icons-small-left {
   font-size: 1rem;
   margin-left: -1em;
@@ -402,15 +484,6 @@ a.card-img-left {
   min-width: 8rem;
 }
 
-.progressBarPlay {
-  font-size: 1.8rem;
-}
-
-#counter {
-  cursor: text;
-  word-break: normal;
-}
-
 #volumeBar {
   margin-top: 2px;
   width: 160px;
@@ -423,9 +496,9 @@ a.card-img-left {
 }
 
 .header-logo {
-  font-size: 2rem;
-  float: left;
+  font-size: 2.5rem;
   margin-right: 5px;
+  color: var(--mympd-highlightcolor, #28a745) !important;
 }
 
 .letters > button {
@@ -454,7 +527,7 @@ button.active-fg-red {
 
 div#alertBox {
   position: fixed;
-  bottom: 4rem;
+  bottom: 6rem;
   right: 1rem;
   width: 80%;
   max-width: 400px;
@@ -522,20 +595,6 @@ caption {
   float: none;
 }
 
-#BrowseDatabaseAlbumListCaption {
-  margin-left: 15px;
-  margin-right: 15px;
-  width: 100%;
-}
-
-#BrowseDatabaseAlbumListCaption h2 {
-  display: inline;
-}
-
-#BrowseDatabaseAlbumListCaption small {
-  padding-top: 0.8rem;
-}
-
 .menu-indent {
   padding-left: 1rem;
 }
@@ -585,6 +644,12 @@ textarea.small {
   box-shadow: none !important;
 }
 
+.btn-dark:not(:disabled):not(.disabled):active:focus,
+.btn-dark:not(:disabled):not(.disabled).active:focus,
+.show > .btn-dark.dropdown-toggle:focus {
+  box-shadow: none !important;
+}
+
 .btn-light:not(:disabled):not(.disabled):active,
 .btn-light:not(:disabled):not(.disabled).active,
 .show > .btn-light.dropdown-toggle,
@@ -594,6 +659,14 @@ textarea.small {
   color: #fff;
   background-color: var(--mympd-highlightcolor, #28a745) !important;
   border-color: var(--mympd-highlightcolor, #28a745) !important;
+}
+
+.btn-dark:not(:disabled):not(.disabled):active,
+.btn-dark:not(:disabled):not(.disabled).active,
+.show > .btn-dark.dropdown-toggle {
+    color: #fff;
+    background-color: var(--mympd-highlightcolor, #28a745) !important;
+    border-color: var(--mympd-highlightcolor, #28a745) !important;
 }
 
 .btn-light:focus,
@@ -629,7 +702,7 @@ textarea.small {
   max-width: none;
 }
 
-img.covergrid-header {
+img.database-header {
   width: 50px;
   height: 50px;
   display: block;
@@ -637,32 +710,12 @@ img.covergrid-header {
   margin-right: 1rem;
 }
 
-div.covergrid-header {
+div.database-header {
   padding: 0.37rem 0.75rem !important;
 }
 
-@media (min-width: 576px) {
-  .container {
-    max-width: none;
-  }
-}
-
-@media (min-width: 768px) {
-  .container {
-    max-width: 960px;
-  }
-}
-
-@media (min-width: 992px) {
-  .container {
-    max-width: 960px;
-  }
-}
-
-@media (min-width: 1200px) {
-  .container {
-    max-width: 1140px;
-  }
+.container {
+  max-width: none;
 }
 
 div#playDropdown .row {
@@ -708,10 +761,6 @@ a.text-success:focus {
   white-space: nowrap;
 }
 
-.playback-toolbar {
-  margin-top: -0.25rem;
-}
-
 #navState > a::after {
   display: none;
 }
@@ -734,7 +783,7 @@ a.text-success:focus {
   border-radius: 0;
   border-left: none;
   border-right: none;
-  padding-top: 0;
+  padding-top: 0.3rem;
   padding-bottom: 0.1rem;
   margin-top: -0.3rem;
 }
@@ -869,4 +918,11 @@ a.text-success:focus {
   font-size: 3rem;
   margin-right: 1.25rem;
   margin-bottom: 1.25rem;
+}
+
+div#footerProgressPos {
+  display: none;
+  position: absolute;
+  bottom: 6rem;
+  left: 0;
 }

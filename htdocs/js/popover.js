@@ -31,7 +31,7 @@ function hideMenu() {
         if (menuEl.parentNode.parentNode.classList.contains('selected')) {
             focusTable(undefined, menuEl.parentNode.parentNode.parentNode.parentNode);
         }
-        else if (app.current.app === 'Browse' && app.current.tab === 'Covergrid') {
+        else if (app.current.app === 'Browse' && app.current.tab === 'Database') {
             focusTable(undefined, menuEl.parentNode.parentNode.parentNode.parentNode);
         }
     }
@@ -88,6 +88,11 @@ function showMenuTd(el) {
     let uri = decodeURI(el.getAttribute('data-uri'));
     let name = decodeURI(el.getAttribute('data-name'));
     let nextsongpos = 0;
+    if (type === null || uri === '') {
+        type = el.parentNode.getAttribute('data-type');
+        uri = decodeURI(el.parentNode.getAttribute('data-uri'));
+        name = el.parentNode.getAttribute('data-name');
+    }
     if (type === null || uri === '') {
         type = el.parentNode.parentNode.getAttribute('data-type');
         uri = decodeURI(el.parentNode.parentNode.getAttribute('data-uri'));

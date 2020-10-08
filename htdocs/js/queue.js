@@ -12,10 +12,20 @@ function parseUpdateQueue(obj) {
             domCache.btnsPlay[i].innerText = 'play_arrow';
         }
         playstate = 'stop';
+        domCache.progressBar.style.transition = 'none';
+        domCache.progressBar.style.width = '0px';
+        setTimeout(function() {
+            domCache.progressBar.style.transition = progressBarTransition;
+        }, 10);
     }
     else if (obj.result.state === 2) {
         for (let i = 0; i < domCache.btnsPlayLen; i++) {
-            domCache.btnsPlay[i].innerText = 'pause';
+            if (settings.footerStop === true) {
+                domCache.btnsPlay[i].innerText = 'stop';
+            }
+            else {
+                domCache.btnsPlay[i].innerText = 'pause';
+            }
         }
         playstate = 'play';
     }
@@ -73,13 +83,13 @@ function parseQueue(obj) {
     }
 
     if (obj.result.totalTime && obj.result.totalTime > 0 && obj.result.totalEntities <= settings.maxElementsPerPage ) {
-        document.getElementById('cardFooterQueue').innerText = t('Num songs', obj.result.totalEntities) + ' – ' + beautifyDuration(obj.result.totalTime);
+        //document.getElementById('cardFooterQueue').innerText = t('Num songs', obj.result.totalEntities) + ' – ' + beautifyDuration(obj.result.totalTime);
     }
     else if (obj.result.totalEntities > 0) {
-        document.getElementById('cardFooterQueue').innerText = t('Num songs', obj.result.totalEntities);
+        //document.getElementById('cardFooterQueue').innerText = t('Num songs', obj.result.totalEntities);
     }
     else {
-        document.getElementById('cardFooterQueue').innerText = '';
+        //document.getElementById('cardFooterQueue').innerText = '';
     }
 
     let nrItems = obj.result.returnedEntities;
@@ -139,7 +149,7 @@ function parseQueue(obj) {
 }
 
 function parseLastPlayed(obj) {
-    document.getElementById('cardFooterQueue').innerText = t('Num songs', obj.result.totalEntities);
+    //document.getElementById('cardFooterQueue').innerText = t('Num songs', obj.result.totalEntities);
     let nrItems = obj.result.returnedEntities;
     let table = document.getElementById('QueueLastPlayedList');
     let navigate = document.activeElement.parentNode.parentNode === table ? true : false;
