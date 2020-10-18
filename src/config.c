@@ -272,6 +272,9 @@ static int mympd_inihandler(void *user, const char *section, const char *name, c
     else if (MATCH("mympd", "partitions")) {
         p_config->partitions = strtobool(value);
     }
+    else if (MATCH("mympd", "footerstop")) {
+        p_config->footer_stop = strtobool(value);
+    }
     else if (MATCH("theme", "theme")) {
         p_config->theme = sdsreplace(p_config->theme, value);
     }
@@ -296,8 +299,8 @@ static int mympd_inihandler(void *user, const char *section, const char *name, c
     else if (MATCH("theme", "coverimagesize")) {
         p_config->coverimage_size = strtoimax(value, &crap, 10);
     }
-    else if (MATCH("theme", "covergridsize")) {
-        p_config->covergrid_size = strtoimax(value, &crap, 10);
+    else if (MATCH("theme", "coverimagesizesmall")) {
+        p_config->coverimage_size_small = strtoimax(value, &crap, 10);
     }
     else if (MATCH("theme", "locale")) {
         p_config->locale = sdsreplace(p_config->locale, value);
@@ -357,12 +360,12 @@ static void mympd_get_env(struct t_config *config) {
         "MYMPD_COLSBROWSEFILESYSTEM", "MYMPD_COLSPLAYBACK", "MYMPD_COLSQUEUELASTPLAYED",
         "MYMPD_LOCALPLAYER", "MYMPD_STREAMPORT",
         "MYMPD_STREAMURL", "MYMPD_VOLUMESTEP", "MYMPD_COVERCACHEKEEPDAYS", "MYMPD_COVERCACHE",
-        "MYMPD_COVERCACHEAVOID", "MYMPD_LYRICS", "MYMPD_PARTITIONS",
+        "MYMPD_COVERCACHEAVOID", "MYMPD_LYRICS", "MYMPD_PARTITIONS", "MYMPD_FOOTERSTOP",
       #ifdef ENABLE_LUA
         "MYMPD_SCRIPTING", "MYMPD_REMOTESCRIPTING", "MYMPD_LUALIBS", "MYMPD_SCRIPTEDITOR",
       #endif
         "THEME_THEME", "THEME_CUSTOMPLACEHOLDERIMAGES",
-        "THEME_BGCOVER", "THEME_BGCOLOR", "THEME_BGCSSFILTER", "THEME_COVERGRIDSIZE",
+        "THEME_BGCOVER", "THEME_BGCOLOR", "THEME_BGCSSFILTER", "THEME_COVERIMAGESIZESMALL",
         "THEME_COVERIMAGE", "THEME_COVERIMAGENAME", "THEME_COVERIMAGESIZE",
         "THEME_LOCALE", "THEME_HIGHLIGHTCOLOR", 0};
     const char** ptr = env_vars;
@@ -474,13 +477,13 @@ void mympd_config_defaults(t_config *config) {
     config->localplayer = false;
     config->stream_port = 8000;
     config->stream_url = sdsempty();
-    config->bg_cover = false;
-    config->bg_color = sdsnew("#888");
-    config->bg_css_filter = sdsnew("blur(5px)");
+    config->bg_cover = true;
+    config->bg_color = sdsnew("#fff");
+    config->bg_css_filter = sdsnew("grayscale(100%) opacity(5%)");
     config->coverimage = true;
     config->coverimage_name = sdsnew("folder, cover");
     config->coverimage_size = 250;
-    config->covergrid_size = 200;
+    config->coverimage_size_small = 200;
     config->locale = sdsnew("default");
     config->startup_time = time(NULL);
     config->readonly = false;
@@ -507,6 +510,7 @@ void mympd_config_defaults(t_config *config) {
     config->lualibs = sdsnew("base, string, utf8, table, math, mympd");
     config->scripteditor = false;
     config->partitions = false;
+    config->footer_stop = false;
     list_init(&config->syscmd_list);
 }
 
@@ -631,6 +635,7 @@ bool mympd_dump_config(void) {
         "mounts = %s\n"
         "lyrics = %s\n"
         "partitions = %s\n"
+        "footerstop = %s\n"
         "\n",
         p_config->user,
         (p_config->chroot == true ? "true" : "false"),
@@ -688,7 +693,8 @@ bool mympd_dump_config(void) {
         p_config->booklet_name,
         (p_config->mounts == true ? "true" : "false"),
         (p_config->lyrics == true ? "true" : "false"),
-        (p_config->partitions == true ? "true" : "false")
+        (p_config->partitions == true ? "true" : "false"),
+        (p_config->footer_stop == true ? "true" : "false")
     );
 
     fprintf(fp, "[theme]\n"
@@ -699,7 +705,7 @@ bool mympd_dump_config(void) {
         "coverimage = %s\n"
         "coverimagename = %s\n"
         "coverimagesize = %d\n"
-        "covergridsize = %d\n"
+        "coverimagesizesmall = %d\n"
         "locale = %s\n"
         "customplaceholderimages = %s\n"
         "highlightcolor = %s\n\n",
@@ -710,7 +716,7 @@ bool mympd_dump_config(void) {
         (p_config->coverimage == true ? "true" : "false"),
         p_config->coverimage_name,
         p_config->coverimage_size,
-        p_config->covergrid_size,
+        p_config->coverimage_size_small,
         p_config->locale,
         (p_config->custom_placeholder_images == true ? "true" : "false"),
         p_config->highlight_color
