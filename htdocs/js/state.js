@@ -73,10 +73,18 @@ function showListOutputAttributes(outputName) {
         let list = '<tr><td>' + t('Name') + '</td><td>' + e(output.name) + '</td></tr>' +
             '<tr><td>' + t('State') + '</td><td>' + (output.state === 1 ? t('enabled') : t('disabled')) + '</td></tr>' +
             '<tr><td>' + t('Plugin') + '</td><td>' + e(output.plugin) + '</td></tr>';
+        let i = 0;
         Object.keys(output.attributes).forEach(function(key) {
+            i++;
             list += '<tr><td>' + e(key) + '</td><td><input name="' + e(key) + '" class="form-control border-secondary" type="text" value="' + 
                 e(output.attributes[key]) + '"/></td></tr>';
         });
+        if (i > 0) {
+            document.getElementById('btnOutputAttributesSave').removeAttribute('disabled');
+        }
+        else {
+            document.getElementById('btnOutputAttributesSave').setAttribute('disabled', 'disabled');
+        }
         document.getElementById('outputAttributesList').innerHTML = list;
     });
 }
@@ -99,7 +107,7 @@ function setCounter(currentSongId, totalTime, elapsedTime) {
     currentSong.elapsedTime = elapsedTime;
     currentSong.currentSongId = currentSongId;
 
-    const progressPx = Math.ceil(domCache.progress.offsetWidth * elapsedTime / totalTime);
+    const progressPx = totalTime > 0 ? Math.ceil(domCache.progress.offsetWidth * elapsedTime / totalTime) : 0;
     if (progressPx === 0) {
         domCache.progressBar.style.transition = 'none';
     }
@@ -108,6 +116,13 @@ function setCounter(currentSongId, totalTime, elapsedTime) {
         setTimeout(function() {
             domCache.progressBar.style.transition = progressBarTransition;
         }, 10);
+    }
+    
+    if (totalTime <= 0) {
+        domCache.progress.style.cursor = 'default';
+    }
+    else {
+        domCache.progress.style.cursor = 'pointer';
     }
 
     let counterText = beautifySongDuration(elapsedTime) + "&nbsp;/&nbsp;" + beautifySongDuration(totalTime);
@@ -185,10 +200,9 @@ function parseState(obj) {
     if (obj.result.songPos === '-1') {
         domCache.currentTitle.innerText = 'Not playing';
         document.title = 'myMPD';
-        let footerTitle = document.getElementById('footerTitle');
-        footerTitle.innerText = '';
-        footerTitle.removeAttribute('title');
-        footerTitle.classList.remove('clickable');
+        domCache.footerTitle.innerText = '';
+        domCache.footerTitle.removeAttribute('title');
+        domCache.footerTitle.classList.remove('clickable');
         clearCurrentCover();
         if (settings.bgCover === true) {
             clearBackgroundImage();
@@ -311,7 +325,7 @@ function _setCurrentCover(url, el) {
     img.src = subdir + '/albumart/' + url;
 }
 
-function clearCurrentCover(el) {
+function clearCurrentCover() {
     _clearCurrentCover(domCache.currentCover);
     _clearCurrentCover(domCache.footerCover);
 }
@@ -390,10 +404,10 @@ function songChange(obj) {
     domCache.footerCover.title = pageTitle;
     
     if (obj.result.uri !== undefined && obj.result.uri !== '' && obj.result.uri.indexOf('://') === -1) {
-        footerTitle.classList.add('clickable');
+        domCache.footerTitle.classList.add('clickable');
     }
     else {
-        footerTitle.classList.remove('clickable');
+        domCache.footerTitle.classList.remove('clickable');
     }
 
     if (obj.result.uri !== undefined) {

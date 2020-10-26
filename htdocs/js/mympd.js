@@ -122,6 +122,7 @@ var modalPartitions = new BSN.Modal(document.getElementById('modalPartitions'));
 var modalPartitionOutputs = new BSN.Modal(document.getElementById('modalPartitionOutputs'));
 var modalTrigger = new BSN.Modal(document.getElementById('modalTrigger'));
 var modalOutputAttributes = new BSN.Modal(document.getElementById('modalOutputAttributes'));
+var modalPicture = new BSN.Modal(document.getElementById('modalPicture'));
 
 var dropdownMainMenu = new BSN.Dropdown(document.getElementById('mainMenu'));
 var dropdownVolumeMenu = new BSN.Dropdown(document.getElementById('volumeMenu'));
@@ -300,7 +301,6 @@ function appRoute() {
     else if (app.current.app === 'Browse' && app.current.tab === 'Database' && app.current.view === 'List') {
         document.getElementById('viewListDatabase').classList.remove('hide');
         document.getElementById('viewDetailDatabase').classList.add('hide');
-        document.getElementById('searchDatabaseStr').value = app.current.search;
         selectTag('searchDatabaseTags', 'searchDatabaseTagsDesc', app.current.filter);
         selectTag('BrowseDatabaseByTagDropdown', 'btnBrowseDatabaseByTagDesc', app.current.tag);
         let sort = app.current.sort;
@@ -315,29 +315,53 @@ function appRoute() {
         }
         selectTag('databaseSortTags', undefined, sort);
         if (app.current.tag === 'Album') {
+            const crumbEl = document.getElementById('searchDatabaseCrumb');
+            const searchEl = document.getElementById('searchDatabaseStr');
+            
+            let crumbs = '';
+            let elements = app.current.search.split(' AND ');
+            for (let i = 0; i < elements.length - 1 ; i++) {
+                let value = elements[i].substring(1, elements[i].length - 1);
+                crumbs += '<button data-filter="' + encodeURI(value) + '" class="btn btn-light mr-2">' + e(value) + '<span class="badge badge-secondary">&times</span></button>';
+            }
+            crumbEl.innerHTML = crumbs;
+            if (searchEl.value === '' && elements.length >= 1) {
+                let lastEl = elements[elements.length - 1].substring(1,  elements[elements.length - 1].length - 1);
+                let lastElValue = lastEl.substring(lastEl.indexOf('\'') + 1, lastEl.length - 1);
+                if (searchEl.value !== lastElValue) {
+                    crumbEl.innerHTML += '<button data-filter="' + encodeURI(lastEl) +'" class="btn btn-light mr-2">' + e(lastEl) + '<span class="badge badge-secondary">&times;</span></button>';
+                }
+                document.getElementById('searchDatabaseMatch').value = 'contains';
+                //selectTag('searchDatabaseTags', 'searchDatabaseTagsDesc', 'Album');
+            }
+            crumbEl.classList.remove('hide');
+            document.getElementById('searchDatabaseMatch').classList.remove('hide');
+            document.getElementById('btnDatabaseSortDropdown').removeAttribute('disabled');
+            document.getElementById('btnDatabaseSearchDropdown').removeAttribute('disabled');
             sendAPI("MPD_API_DATABASE_GET_ALBUMS", {"offset": app.current.page, "searchstr": app.current.search, 
                 "filter": app.current.filter, "sort": sort, "sortdesc": sortdesc}, parseDatabase);
         }
         else {
-            sendAPI("MPD_API_DATABASE_TAG_LIST", {"offset": app.current.page, "searchstr": app.current.search, 
-                "filter": app.current.filter, "sort": sort, "sortdesc": sortdesc, "tag": app.current.tag}, parseDatabase);
-        }
-        if (app.current.tag !== 'Album') {
+            document.getElementById('searchDatabaseCrumb').classList.add('hide');
+            document.getElementById('searchDatabaseMatch').classList.add('hide');
             document.getElementById('btnDatabaseSortDropdown').setAttribute('disabled', 'disabled');
             document.getElementById('btnDatabaseSearchDropdown').setAttribute('disabled', 'disabled');
-        }
-        else {
-            document.getElementById('btnDatabaseSortDropdown').removeAttribute('disabled');
-            document.getElementById('btnDatabaseSearchDropdown').removeAttribute('disabled');
+            document.getElementById('searchDatabaseStr').value = app.current.search;
+            sendAPI("MPD_API_DATABASE_TAG_LIST", {"offset": app.current.page, "searchstr": app.current.search, 
+                "filter": app.current.filter, "sort": sort, "sortdesc": sortdesc, "tag": app.current.tag}, parseDatabase);
         }
     }
     else if (app.current.app === 'Browse' && app.current.tab === 'Database' && app.current.view === 'Detail') {
         document.getElementById('viewListDatabase').classList.add('hide');
         document.getElementById('viewDetailDatabase').classList.remove('hide');
         if (app.current.filter === 'Album') {
+            let cols = settings.colsBrowseDatabaseDetail.slice();
+            if (cols.includes('Disc') === false) {
+                cols.push('Disc');
+            }
             sendAPI("MPD_API_DATABASE_TAG_ALBUM_TITLE_LIST", {"album": app.current.tag,
                 "search": app.current.search,
-                "tag": app.current.sort, "cols": settings.colsBrowseDatabaseDetail}, parseAlbumDetails);
+                "tag": app.current.sort, "cols": cols}, parseAlbumDetails);
         }    
     }
     else if (app.current.app === 'Search') {
@@ -347,14 +371,14 @@ function appRoute() {
             let elements = app.current.search.substring(1, app.current.search.length - 1).split(' AND ');
             for (let i = 0; i < elements.length - 1 ; i++) {
                 let value = elements[i].substring(1, elements[i].length - 1);
-                crumbs += '<button data-filter="' + encodeURI(value) + '" class="btn btn-light mr-2">' + e(value) + '<span class="ml-2 badge badge-secondary">&times</span></button>';
+                crumbs += '<button data-filter="' + encodeURI(value) + '" class="btn btn-light mr-2">' + e(value) + '<span class="badge badge-secondary">&times</span></button>';
             }
             domCache.searchCrumb.innerHTML = crumbs;
             if (domCache.searchstr.value === '' && elements.length >= 1) {
                 let lastEl = elements[elements.length - 1].substring(1,  elements[elements.length - 1].length - 1);
                 let lastElValue = lastEl.substring(lastEl.indexOf('\'') + 1, lastEl.length - 1);
                 if (domCache.searchstr.value !== lastElValue) {
-                    domCache.searchCrumb.innerHTML += '<button data-filter="' + encodeURI(lastEl) +'" class="btn btn-light mr-2">' + e(lastEl) + '<span href="#" class="ml-2 badge badge-secondary">&times;</span></button>';
+                    domCache.searchCrumb.innerHTML += '<button data-filter="' + encodeURI(lastEl) +'" class="btn btn-light mr-2">' + e(lastEl) + '<span class="ml-2 badge badge-secondary">&times;</span></button>';
                 }
                 let match = lastEl.substring(lastEl.indexOf(' ') + 1);
                 match = match.substring(0, match.indexOf(' '));
@@ -571,7 +595,7 @@ function appInit() {
     }, false);
 
     domCache.progress.addEventListener('click', function(event) {
-        if (currentSong && currentSong.currentSongId >= 0) {
+        if (currentSong && currentSong.currentSongId >= 0 && currentSong.totalTime > 0) {
             domCache.progressBar.style.transition = 'none';
             domCache.progressBar.style.width = event.clientX + 'px';
             setTimeout(function() {
@@ -582,13 +606,15 @@ function appInit() {
         }
     }, false);
     domCache.progress.addEventListener('mousemove', function(event) {
-        if (playstate === 'pause' || playstate === 'play') {
-	    domCache.progressPos.innerText = beautifySongDuration(Math.ceil((currentSong.totalTime / event.target.offsetWidth) * event.clientX));
-	    domCache.progressPos.style.display = 'block';
-	    domCache.progressPos.style.left = event.clientX + 'px';
+        if ((playstate === 'pause' || playstate === 'play') && currentSong.totalTime > 0) {
+            domCache.progressPos.innerText = beautifySongDuration(Math.ceil((currentSong.totalTime / event.target.offsetWidth) * event.clientX));
+            domCache.progressPos.style.display = 'block';
+            const w = domCache.progressPos.offsetWidth / 2;
+	    const posX = event.clientX < w ? event.clientX : (event.clientX < window.innerWidth - w ? event.clientX - w : event.clientX - (w * 2));
+            domCache.progressPos.style.left = posX + 'px';
         }
     }, false);
-    domCache.progress.addEventListener('mouseout', function(event) {
+    domCache.progress.addEventListener('mouseout', function() {
         domCache.progressPos.style.display = 'none';
     }, false);
 
@@ -886,7 +912,7 @@ function appInit() {
 
     document.getElementById('cardPlaybackTags').addEventListener('click', function(event) {
         if (event.target.nodeName === 'P') 
-            gotoBrowse(event.target);
+            gotoBrowse();
     }, false);
 
     document.getElementById('BrowseBreadcrumb').addEventListener('click', function(event) {
@@ -910,7 +936,7 @@ function appInit() {
             else if (event.target.parentNode.getAttribute('data-tag') !== null) {
                 modalSongDetails.hide();
                 event.preventDefault();
-                gotoBrowse(event.target);
+                gotoBrowse();
             } 
         }
         else if (event.target.nodeName === 'BUTTON') { 
@@ -1190,16 +1216,6 @@ function appInit() {
                 + app.current.tag + '/' + app.current.search);
         }
     }, false);
-    
-    document.getElementById('searchDatabaseStr').addEventListener('keyup', function(event) {
-        if (event.key === 'Escape') {
-            this.blur();
-        }
-        else {
-            appGoto(app.current.app, app.current.tab, app.current.view, '0/' + app.current.filter + '/' + app.current.sort + '/'
-                + app.current.tag + '/' + this.value);
-        }
-    }, false);
 
     document.getElementById('BrowseDatabaseByTagDropdown').addEventListener('click', function(event) {
         navBrowseHandler(event);
@@ -1255,6 +1271,53 @@ function appInit() {
     
     document.getElementById('searchdatabase').addEventListener('submit', function() {
         return false;
+    }, false);
+
+    document.getElementById('searchDatabaseStr').addEventListener('keyup', function(event) {
+        if (event.key === 'Escape') {
+            this.blur();
+        }
+        else if (event.key === 'Enter' && app.current.tag === 'Album') {
+            if (this.value !== '') {
+                let match = document.getElementById('searchDatabaseMatch');
+                let li = document.createElement('button');
+                li.classList.add('btn', 'btn-light', 'mr-2');
+                li.setAttribute('data-filter', encodeURI(app.current.filter + ' ' + match.options[match.selectedIndex].value + ' \'' + this.value + '\''));
+                li.innerHTML = e(app.current.filter) + ' ' + match.options[match.selectedIndex].value + ' \'' + e(this.value) + '\'<span class="ml-2 badge badge-secondary">&times;</span>';
+                this.value = '';
+                document.getElementById('searchDatabaseCrumb').appendChild(li);
+            }
+            else {
+                searchAlbumgrid(this.value);
+            }
+        }
+        else if (app.current.tag === 'Album') {
+            searchAlbumgrid(this.value);
+        }
+        else {
+            appGoto(app.current.app, app.current.tab, app.current.view, '0/' + app.current.filter + '/' + app.current.sort + '/'
+                + app.current.tag + '/' + this.value);        
+        }
+    }, false);
+
+    document.getElementById('searchDatabaseCrumb').addEventListener('click', function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (event.target.nodeName === 'SPAN') {
+            event.target.parentNode.remove();
+            searchAlbumgrid('');
+        }
+        else if (event.target.nodeName === 'BUTTON') {
+            let value = decodeURI(event.target.getAttribute('data-filter'));
+            document.getElementById('searchDatabaseStr').value = value.substring(value.indexOf('\'') + 1, value.length - 1);
+            let match = value.substring(value.indexOf(' ') + 1);
+            match = match.substring(0, match.indexOf(' '));
+            document.getElementById('searchDatabaseMatch').value = match;
+            let filter = value.substring(0, value.indexOf(' '));
+            selectTag('searchDatabaseTags', 'searchDatabaseTagsDesc', filter);
+            event.target.remove();
+            searchAlbumgrid(document.getElementById('searchDatabaseStr').value);
+        }
     }, false);
 
     domCache.searchstr.addEventListener('keyup', function(event) {
