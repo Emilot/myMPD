@@ -10,7 +10,6 @@
 let strings = {};
 strings['cols'] = 'cols: array of columns to return';
 strings['offset'] = 'offset: Offset of the returned list';
-strings['filter_char'] = 'filter: filter by first character of playlist name';
 
 let desc = {};
 desc['MPD_API_QUEUE_CLEAR'] = 'Clears the queue';
@@ -120,16 +119,20 @@ desc['MPD_API_PLAYLIST_RM_ALL'] = 'Removes all playlists.' +
       '<li>deleteEmptyPlaylists: deletes all empty playlists</li>' +
     '</ul></li>' +
     '</ul>';
-desc['MPD_API_PLAYLIST_LIST'] = 'Lists all playlists.' +
+desc['MPD_API_PLAYLIST_LIST'] = 'Lists all playlists (paginated).' +
     '<ul>' +
     '<li>' + strings['offset'] + '</li>' +
-    '<li>' + strings['filter_char'] + '</li>' +
+    '<li>searchstr: string to search</li>' +
+    '</ul>';
+desc['MPD_API_PLAYLIST_LIST_ALL'] = 'Lists all playlists (realy all).' +
+    '<ul>' +
+    '<li>searchstr: string to search</li>' +
     '</ul>';
 desc['MPD_API_PLAYLIST_CONTENT_LIST'] = 'Lists the content of a playlist.' +
     '<ul>' +
     '<li>uri: playlist</li>' +
     '<li>' + strings['offset'] + '</li>' +
-    '<li>' + strings['filter_char'] + '</li>' +
+    '<li>searchstr: string to search</li>' +
     '<li>' + strings['cols'] + '</li>' +
     '</ul>';
 desc['MPD_API_PLAYLIST_SHUFFLE'] = 'Shuffles the playlist.' +

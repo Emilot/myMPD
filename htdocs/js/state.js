@@ -313,7 +313,7 @@ function _setCurrentCover(url, el) {
     }
 
     let div = document.createElement('div');
-    div.classList.add('coverbg');
+    div.classList.add('coverbg', 'carousel');
     div.style.backgroundImage = 'url("' + subdir + '/albumart/' + url + '")';
     div.style.opacity = 0;
     el.insertBefore(div, el.firstChild);
@@ -448,6 +448,10 @@ function songChange(obj) {
         }
     }
     
+    document.getElementById('currentBooklet').innerHTML = obj.result.bookletPath === '' || obj.result.bookletPath === undefined|| settings.featBrowse === false ? '' : 
+            '<span class="text-light material-icons">description</span>&nbsp;<a class="text-light" target="_blank" href="' + subdir + '/browse/music/' + 
+            e(obj.result.bookletPath) + '">' + t('Download booklet') + '</a>';
+    
     //Update Artist in queue view for http streams
     let playingTr = document.getElementById('queueTrackId' + obj.result.currentSongId);
     if (playingTr) {
@@ -464,7 +468,7 @@ function songChange(obj) {
 
 //eslint-disable-next-line no-unused-vars
 function gotoTagList() {
-    appGoto(app.current.app, app.current.tab, app.current.view, '0/-/-/-/');
+    appGoto(app.current.app, app.current.tab, app.current.view, '0', '-', '-', '-', '');
 }
 
 //eslint-disable-next-line no-unused-vars

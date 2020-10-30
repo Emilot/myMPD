@@ -207,7 +207,7 @@ void mpd_client_api(t_config *config, t_mpd_client_state *mpd_client_state, void
                     response->data = jsonrpc_respond_message(response->data, request->method, request->id, "Failed to set like, invalid like value", true);
                     break;
                 }
-                if (strstr(p_charbuf1, "://") != NULL) {
+                if (is_streamuri(p_charbuf1) == false) {
                     response->data = jsonrpc_respond_message(response->data, request->method, request->id, "Failed to set like, invalid song uri", true);
                     break;
                 }
@@ -501,18 +501,21 @@ void mpd_client_api(t_config *config, t_mpd_client_state *mpd_client_state, void
             }
             break;            
         case MPD_API_PLAYLIST_LIST:
-            je = json_scanf(request->data, sdslen(request->data), "{params: {offset: %u, filter: %Q}}", &uint_buf1, &p_charbuf1);
+            je = json_scanf(request->data, sdslen(request->data), "{params: {offset: %u, searchstr: %Q}}", &uint_buf1, &p_charbuf1);
             if (je == 2) {
                 response->data = mpd_client_put_playlists(config, mpd_client_state, response->data, request->method, request->id, uint_buf1, p_charbuf1, true);
             }
             break;
         case MPD_API_PLAYLIST_LIST_ALL:
-            response->data = mpd_client_put_playlists(config, mpd_client_state, response->data, request->method, request->id, 0, "-", false);
+            je = json_scanf(request->data, sdslen(request->data), "{params: {searchstr: %Q}}", &p_charbuf1);
+            if (je == 1) {
+                response->data = mpd_client_put_playlists(config, mpd_client_state, response->data, request->method, request->id, 0, p_charbuf1, false);
+            }
             break;
         case MPD_API_PLAYLIST_CONTENT_LIST: {
             t_tags *tagcols = (t_tags *)malloc(sizeof(t_tags));
             assert(tagcols);
-            je = json_scanf(request->data, sdslen(request->data), "{params: {uri: %Q, offset:%u, filter:%Q, cols: %M}}", 
+            je = json_scanf(request->data, sdslen(request->data), "{params: {uri: %Q, offset:%u, searchstr:%Q, cols: %M}}", 
                 &p_charbuf1, &uint_buf1, &p_charbuf2, json_to_tags, tagcols);
             if (je == 4) {
                 response->data = mpd_client_put_playlist_list(config, mpd_client_state, response->data, request->method, request->id, p_charbuf1, uint_buf1, p_charbuf2, tagcols);
@@ -570,7 +573,7 @@ void mpd_client_api(t_config *config, t_mpd_client_state *mpd_client_state, void
         case MPD_API_DATABASE_FILESYSTEM_LIST: {
             t_tags *tagcols = (t_tags *)malloc(sizeof(t_tags));
             assert(tagcols);
-            je = json_scanf(request->data, sdslen(request->data), "{params: {offset:%u, filter:%Q, path:%Q, cols: %M}}", 
+            je = json_scanf(request->data, sdslen(request->data), "{params: {offset:%u, searchstr:%Q, path:%Q, cols: %M}}", 
                 &uint_buf1, &p_charbuf1, &p_charbuf2, json_to_tags, tagcols);
             if (je == 4) {
                 response->data = mpd_client_put_filesystem(config, mpd_client_state, response->data, request->method, request->id, p_charbuf2, uint_buf1, p_charbuf1, tagcols);
@@ -735,7 +738,7 @@ void mpd_client_api(t_config *config, t_mpd_client_state *mpd_client_state, void
         case MPD_API_DATABASE_TAG_ALBUM_TITLE_LIST: {
             t_tags *tagcols = (t_tags *)malloc(sizeof(t_tags));
             assert(tagcols);
-            je = json_scanf(request->data, sdslen(request->data), "{params: {album: %Q, search: %Q, tag: %Q, cols: %M}}", 
+            je = json_scanf(request->data, sdslen(request->data), "{params: {album: %Q, searchstr: %Q, tag: %Q, cols: %M}}", 
                 &p_charbuf1, &p_charbuf2, &p_charbuf3, json_to_tags, tagcols);
             if (je == 4) {
                 response->data = mpd_client_put_songs_in_album(mpd_client_state, response->data, request->method, request->id, p_charbuf1, p_charbuf2, p_charbuf3, tagcols);

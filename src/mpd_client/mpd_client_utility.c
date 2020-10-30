@@ -30,16 +30,18 @@
 #include "mpd_client_utility.h"
 
 //private definitons
-static void detect_extra_files(t_mpd_client_state *mpd_client_state, const char *uri, bool *booklet, struct list *images);
+static void detect_extra_files(t_mpd_client_state *mpd_client_state, const char *uri, sds *booklet_path, struct list *images, bool is_dirname);
 
 //public functions
 
-sds put_extra_files(t_mpd_client_state *mpd_client_state, sds buffer, const char *uri) {
-    bool booklet = false;
+sds put_extra_files(t_mpd_client_state *mpd_client_state, sds buffer, const char *uri, bool is_dirname) {
     struct list images;
     list_init(&images);
-    detect_extra_files(mpd_client_state, uri, &booklet, &images);
-    buffer = tojson_bool(buffer, "booklet", booklet, true);
+    sds booklet_path = sdsempty();
+    if (is_streamuri(uri) == false) {
+        detect_extra_files(mpd_client_state, uri, &booklet_path, &images, is_dirname);
+    }
+    buffer = tojson_char(buffer, "bookletPath", booklet_path, true);
     buffer = sdscat(buffer, "\"images\": [");
     struct list_node *current = images.head;
     while (current != NULL) {
@@ -51,6 +53,7 @@ sds put_extra_files(t_mpd_client_state *mpd_client_state, sds buffer, const char
     }
     buffer = sdscat(buffer, "]");
     list_free(&images);
+    sdsfree(booklet_path);
     return buffer;
 }
 
@@ -164,17 +167,15 @@ void free_mpd_client_state(t_mpd_client_state *mpd_client_state) {
 
 //private functions
 
-static void detect_extra_files(t_mpd_client_state *mpd_client_state, const char *uri, bool *booklet, struct list *images) {
-    *booklet = false;
-  
+static void detect_extra_files(t_mpd_client_state *mpd_client_state, const char *uri, sds *booklet_path, struct list *images, bool is_dirname) {
     char *uricpy = strdup(uri);
     
-    char *filename = basename(uricpy);
-    strip_extension(filename);
+    //char *filename = basename(uricpy);
+    //strip_extension(filename);
     
-    char *path = dirname(uricpy);
+    const char *path = is_dirname == false ? dirname(uricpy) : uri;
     sds albumpath = sdscatfmt(sdsempty(), "%s/%s", mpd_client_state->music_directory_value, path);
-    
+    LOG_DEBUG("Read extra files from albumpath: %s", albumpath);
     DIR *album_dir = opendir(albumpath);
     if (album_dir != NULL) {
         struct dirent *next_file;
@@ -182,13 +183,13 @@ static void detect_extra_files(t_mpd_client_state *mpd_client_state, const char 
             const char *ext = strrchr(next_file->d_name, '.');
             if (strcmp(next_file->d_name, mpd_client_state->booklet_name) == 0) {
                 LOG_DEBUG("Found booklet for uri %s", uri);
-                *booklet = true;
+                *booklet_path = sdscatfmt(*booklet_path, "%s/%s", path, mpd_client_state->booklet_name);
             }
             else if (ext != NULL) {
-                if (strcmp(ext, ".webp") == 0 || strcmp(ext, ".jpg") == 0 ||
-                    strcmp(ext, ".jpeg") == 0 || strcmp(ext, ".png") == 0 ||
-                    strcmp(ext, ".tiff") == 0 || strcmp(ext, ".svg") == 0 ||
-                    strcmp(ext, ".bmp") == 0) 
+                if (strcasecmp(ext, ".webp") == 0 || strcasecmp(ext, ".jpg") == 0 ||
+                    strcasecmp(ext, ".jpeg") == 0 || strcasecmp(ext, ".png") == 0 ||
+                    strcasecmp(ext, ".tiff") == 0 || strcasecmp(ext, ".svg") == 0 ||
+                    strcasecmp(ext, ".bmp") == 0) 
                 {
                     sds fullpath = sdscatfmt(sdsempty(), "%s/%s", path, next_file->d_name);
                     list_push(images, fullpath, 0, NULL, NULL);
@@ -197,6 +198,9 @@ static void detect_extra_files(t_mpd_client_state *mpd_client_state, const char 
             }
         }
         closedir(album_dir);
+    }
+    else {
+        LOG_ERROR("Can not open dir \"%s\" to get list of extra files", albumpath);
     }
     FREE_PTR(uricpy);
     sdsfree(albumpath);

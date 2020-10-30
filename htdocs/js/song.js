@@ -58,8 +58,8 @@ function parseSongDetails(obj) {
         songDetailsHTML += '<tr><th>' + t('Fingerprint') + '</th><td class="breakAll" id="fingerprint"><a class="text-success" data-uri="' + 
             encodeURI(obj.result.uri) + '" id="calcFingerprint" href="#">' + t('Calculate') + '</a></td></tr>';
     }
-    if (obj.result.booklet === true && settings.publish === true) {
-        songDetailsHTML += '<tr><th>' + t('Booklet') + '</th><td><a class="text-success" href="/browse/music/' + dirname(obj.result.uri) + '/' + settings.bookletName + '" target="_blank">' + t('Download') + '</a></td></tr>';
+    if (obj.result.bookletPath !== '' && settings.publish === true) {
+        songDetailsHTML += '<tr><th>' + t('Booklet') + '</th><td><a class="text-success" href="' + subdir + '/browse/music/' + dirname(obj.result.uri) + '/' + settings.bookletName + '" target="_blank">' + t('Download') + '</a></td></tr>';
     }
     if (settings.featStickers === true) {
         songDetailsHTML += '<tr><th colspan="2" class="pt-3"><h5>' + t('Statistics') + '</h5></th></tr>' +
@@ -109,38 +109,8 @@ function parseSongDetails(obj) {
                 images.push(subdir + '/browse/music/' + obj.result.images[i]);
             }
         }
-    
-        let carousel = '<div id="songPicsCarousel" class="carousel slide" data-ride="carousel">' +
-            '<ol class="carousel-indicators">';
-        for (let i = 0; i < images.length; i++) {
-            carousel += '<li data-target="#songPicsCarousel" data-slide-to="' + i + '"' +
-                (i === 0 ? ' class="active"' : '') + '></li>';
-        }    
-        carousel += '</ol>' +
-            '<div class="carousel-inner" role="listbox">';
-        for (let i = 0; i < images.length; i++) {
-            carousel += '<div class="carousel-item' + (i === 0 ? ' active' : '') + '"><div></div></div>';
-        }
-        carousel += '</div>' +
-            '<a class="carousel-control-prev" href="#songPicsCarousel" data-slide="prev">' +
-                '<span class="carousel-control-prev-icon"></span>' +
-            '</a>' +
-            '<a class="carousel-control-next" href="#songPicsCarousel" data-slide="next">' +
-                '<span class="carousel-control-next-icon"></span>' +
-            '</a>' +
-            '</div>';
-    
-        document.getElementById('tabSongPics').innerHTML = carousel;
-        let carouselItems = document.getElementById('tabSongPics').getElementsByClassName('carousel-item');
-        for (let i = 0; i < carouselItems.length; i++) {
-            carouselItems[i].children[0].style.backgroundImage = 'url("' + encodeURI(images[i]) + '")';
-        }
-        let myCarousel = document.getElementById('songPicsCarousel');
-        //eslint-disable-next-line no-undef, no-unused-vars
-        let myCarouselInit = new BSN.Carousel(myCarousel, {
-            interval: false,
-            pause: false
-        });
+        const imgEl = document.getElementById('tabSongPics');
+        createImgCarousel(imgEl, 'songPicsCarousel', images);
     }
     else {
         document.getElementById('tabSongPics').innerText = '';

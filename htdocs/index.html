@@ -94,11 +94,13 @@
     </nav>
   </header>
   <!-- Alerts -->
-  <noscript>
-    <div data-phrase="JavaScript is disabled" class="alert alert-danger top-alert"></div>
-  </noscript>
-  <div id="alertMpdState" class="alert alert-danger top-alert"></div>
-  <div id="alertMympdState" class="alert alert-danger top-alert"></div>
+  <div id="top-alerts">
+    <noscript>
+      <div data-phrase="JavaScript is disabled" class="alert alert-danger top-alert"></div>
+    </noscript>
+    <div id="alertMpdState" class="alert alert-danger top-alert"></div>
+    <div id="alertMympdState" class="alert alert-danger top-alert"></div>
+  </div>
   <!-- Main content -->
   <main>
     <div class="card" id="cardPlayback">
@@ -166,10 +168,11 @@
             </div>
           </div>
         </div>
-        <div class="album-cover album-cover-loading featCoverimage clickable" id="currentCover" data-href='{"cmd": "zoomPicture", "options": []}'></div>
+        <div class="album-cover album-cover-loading featCoverimage clickable carousel" id="currentCover" data-href='{"cmd": "zoomPicture", "options": []}'></div>
         <div class="album-desc breakAll">
           <h2 id="currentTitle" data-href='{"cmd": "clickTitle", "options": []}'></h2>
           <div class="featTags" id="cardPlaybackTags"></div>
+          <div id="currentBooklet"></div>
         </div>
       </div>
     </div>
@@ -324,12 +327,14 @@
           <div class="btn-group mr-2 hide">
             <button data-title-phrase="Playlists" data-href='{"cmd": "appGoto", "options": ["Browse", "Playlists", "All"]}' id="btnBrowsePlaylistsAll" type="button" class="btn btn-secondary"><span class="material-icons">apps</span></button>
           </div>
-          
-          <div class="btn-group mr-2">
-            <button id="BrowsePlaylistsFilter" class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"><span class="material-icons">filter_list</span></button>
-            <div class="dropdown-menu bg-lite-dark px-2 letters" id="BrowsePlaylistsFilterLetters">
+          <form id="searchPlaylists" class="flex-grow-1">
+            <div class="input-group mr-2">
+              <div class="input-group-prepend">
+                <span class="input-group-text border-secondary text-light bg-secondary"><span class="material-icons">search</span></span>
+              </div>
+              <input data-placeholder-phrase="Search" type="text" class="form-control border-secondary" id="searchPlaylistsStr"/>
             </div>
-          </div>
+          </form>          
           <div class="hide btn-group mr-2" id="playlistContentBtns">
             <button data-title-phrase="Clear playlist" type="button" class="btn btn-secondary material-icons rounded-right mr-2" data-href='{"cmd": "playlistClear", "options": []}'>clear_all</button>
             <button data-href='{"cmd": "playlistShuffle", "options": []}' class="btn btn-secondary material-icons rounded mr-2" type="button" data-title-phrase="Shuffle playlist">shuffle</button>
@@ -503,7 +508,7 @@
               </div>
             </div>
           </div>
-          <div id="viewDetailDatabaseCover" class="featCoverimage album-cover-small album-cover-loading clickable" data-href='{"cmd": "zoomPicture", "options": []}'></div>
+          <div id="viewDetailDatabaseCover" class="featCoverimage album-cover-small album-cover-loading clickable carousel" data-href='{"cmd": "zoomPicture", "options": []}'></div>
           <div id="viewDetailDatabaseInfo"></div>
           <table id="BrowseDatabaseDetailList" class="table table-hover table-sm">
             <thead>
@@ -529,11 +534,6 @@
             <div class="dropdown-menu bg-lite-dark px-2" id="BrowseNavFilesystemDropdown">
             </div>
           </div>
-          <div class="btn-group mr-2">
-            <button id="BrowseFilesystemFilter" class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"><span class="material-icons">filter_list</span></button>
-            <div class="dropdown-menu bg-lite-dark px-2 letters" id="BrowseFilesystemFilterLetters">
-            </div>
-          </div>
           <div class="input-group mr-2">
             <div class="input-group-prepend">
               <button data-title-phrase="Add all to queue" data-href='{"cmd": "addAllFromBrowseFilesystem", "options": []}' id="BrowseFilesystemAddAllSongs" class="btn btn-secondary material-icons">library_add</button>
@@ -549,6 +549,14 @@
             <div class="dropdown-menu bg-lite-dark px-2" id="BrowseFilesystemBookmarks">
             </div>
           </div>
+          <form id="searchdatabase" class="flex-grow-1">
+            <div class="input-group mr-2">
+              <div class="input-group-prepend">
+                <span class="input-group-text border-secondary text-light bg-secondary"><span class="material-icons">search</span></span>
+              </div>
+              <input data-placeholder-phrase="Search" type="text" class="form-control border-secondary" id="searchFilesystemStr"/>
+            </div>
+          </form>
           <div id="BrowseFilesystemPaginationTop" class="btn-group mr-2 hide">
             <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
               <div class="btn-group">
@@ -560,6 +568,7 @@
           </div>
         </div>
         <ol id="BrowseBreadcrumb" class="breadcrumb"></ol>
+        <div id="BrowseFilesystemImages" class="featBrowse not-clickable" data-href='{"cmd": "zoomPicture", "options": []}'></div>
         <div class="table-responsive-md">
           <table id="BrowseFilesystemList" class="table table-hover table-sm">
             <thead>
@@ -692,7 +701,7 @@
         </div>
       </div>
       <div class="d-flex flex-fill navbar-nav ml-5 text-light" id="footerInfo">
-        <div id="footerCover" class="album-cover-loading mr-3 clickable" data-href='{"cmd": "zoomPicture", "options": []}'>
+        <div id="footerCover" class="album-cover-loading mr-3 clickable carousel" data-href='{"cmd": "zoomPicture", "options": []}'>
         </div>
         <div id="footerPlaying">
           <span id="footerTitle" class="notclickable" data-href='{"cmd": "clickTitle", "options": []}'>Title</span><br/>
@@ -2135,7 +2144,11 @@
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-body">
-          <div id="modalPictureImg" class="coverimage-loading" data-dismiss="modal"></div>
+          <div id="modalPictureImg" class="coverimage-loading"></div>
+        </div>
+        <div class="modal-footer justify-content-between">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal" data-phrase="Close"></button>
+          <button id="modalPictureZoom" data-href='{"cmd":"zoomZoomPicture","options":[]}' type="button" class="btn btn-success" data-phrase="Zoom"></button>
         </div>
       </div>
     </div>
