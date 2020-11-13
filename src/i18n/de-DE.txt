@@ -792,9 +792,6 @@ Wiegergabeliste bearbeiten
 Update smart playlist
 Intelligente Wiedergabeliste aktualisieren
 
-Delete playlist
-Wiedergabeliste löschen
-
 Remove
 Entfernen
 
@@ -1538,3 +1535,42 @@ Disc 1
 
 Disc
 Disc
+
+Can not delete home icon
+Icon konnte nicht gelöscht werden
+
+Can not save home icon
+Icon konnte nicht gespeichert werden
+
+Home
+Startseite
+
+Add to homescreen
+Zum Homescreen hinzufügen
+
+Can not get home icon
+Konnte Homeicon nicht abrufen
+
+Can not move home icon
+Homeicon konnte nicht verschoben werden
+
+Delete home icon
+Löschen
+
+Duplicate home icon
+Kopieren
+
+Edit home icon
+Bearbeiten
+
+Execute home icon action
+Ausführen
+
+Ligature
+Ligatur
+
+Options
+Optionen
+
+Picture
+Bild

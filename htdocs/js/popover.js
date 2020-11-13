@@ -34,6 +34,9 @@ function hideMenu() {
         else if (app.current.app === 'Browse' && app.current.tab === 'Database') {
             focusTable(undefined, menuEl.parentNode.parentNode.parentNode.parentNode);
         }
+        else if (app.current.app === 'Home') {
+            focusTable(undefined, menuEl.parentNode.parentNode.parentNode.parentNode);
+        }
     }
 }
 
@@ -112,6 +115,7 @@ function showMenuTd(el) {
             (type !== 'plist' && type !== 'smartpls' && settings.featPlaylists ? addMenuItem({"cmd": "showAddToPlaylist", "options": [uri, ""]}, t('Add to playlist')) : '') +
             (type === 'song' ? addMenuItem({"cmd": "songDetails", "options": [uri]}, t('Song details')) : '') +
             (type === 'plist' || type === 'smartpls' ? addMenuItem({"cmd": "playlistDetails", "options": [uri]}, t('View playlist')) : '') +
+            ((type === 'plist' || type === 'smartpls') && settings.featHome === true ? addMenuItem({"cmd": "addPlistToHome", "options": [uri, name]}, t('Add to homescreen')) : '') +
             (type === 'dir' && settings.featBookmarks ? addMenuItem({"cmd": "showBookmarkSave", "options": [-1, name, uri, type]}, t('Add bookmark')) : '');
         if (app.current.tab === 'Filesystem') {
             menu += (type === 'dir' ? addMenuItem({"cmd": "updateDB", "options": [dirname(uri), true]}, t('Update directory')) : '') +
@@ -137,7 +141,8 @@ function showMenuTd(el) {
             (settings.smartpls === true && type === 'smartpls' ? addMenuItem({"cmd": "showSmartPlaylist", "options": [uri]}, t('Edit smart playlist')) : '') +
             (settings.smartpls === true && type === 'smartpls' ? addMenuItem({"cmd": "updateSmartPlaylist", "options": [uri]}, t('Update smart playlist')) : '') +
             addMenuItem({"cmd": "showRenamePlaylist", "options": [uri]}, t('Rename playlist')) + 
-            addMenuItem({"cmd": "showDelPlaylist", "options": [uri]}, t('Delete playlist'));
+            addMenuItem({"cmd": "showDelPlaylist", "options": [uri]}, t('Delete playlist')) +
+            (settings.featHome === true ?addMenuItem({"cmd": "addPlistToHome", "options": [uri, name]}, t('Add to homescreen')) : '');
     }
     else if (app.current.app === 'Browse' && app.current.tab === 'Playlists' && app.current.view === 'Detail') {
         let x = document.getElementById('BrowsePlaylistsDetailList');
@@ -159,6 +164,13 @@ function showMenuTd(el) {
             addMenuItem({"cmd": "replaceQueue", "options": [type, uri, name]}, t('Replace queue')) +
             (settings.featPlaylists ? addMenuItem({"cmd": "showAddToPlaylist", "options": [uri, ""]}, t('Add to playlist')) : '') +
             (uri.indexOf('http') === -1 ? addMenuItem({"cmd": "songDetails", "options": [uri]}, t('Song details')) : '');
+    }
+    else if (app.current.app === 'Home') {
+        const pos = parseInt(el.parentNode.getAttribute('data-pos'));
+        menu += addMenuItem({"cmd": "executeHomeIcon", "options": [pos]}, t('Execute home icon action')) +
+                addMenuItem({"cmd": "editHomeIcon", "options": [pos]}, t('Edit home icon')) +
+                addMenuItem({"cmd": "duplicateHomeIcon", "options": [pos]}, t('Duplicate home icon')) +
+                addMenuItem({"cmd": "deleteHomeIcon", "options": [pos]}, t('Delete home icon'));
     }
 
     new BSN.Popover(el, { trigger: 'click', delay: 0, dismissible: true, template: '<div class="popover" role="tooltip">' +

@@ -34,7 +34,12 @@ function saveConnection() {
         }
     }
     if (formOK === true) {
-        sendAPI("MYMPD_API_CONNECTION_SAVE", {"mpdHost": mpdHostEl.value, "mpdPort": mpdPortEl.value, "mpdPass": mpdPassEl.value, "musicDirectory": musicDirectory}, getSettings);
+        sendAPI("MYMPD_API_CONNECTION_SAVE", {
+            "mpdHost": mpdHostEl.value,
+            "mpdPort": mpdPortEl.value,
+            "mpdPass": mpdPassEl.value,
+            "musicDirectory": musicDirectory
+        }, getSettings);
         modalConnection.hide();    
     }
 }
@@ -78,7 +83,9 @@ function joinSettings(obj) {
     settingsLock = false;
     parseSettings();
     toggleUI();
-    sendAPI("MPD_API_URLHANDLERS", {}, parseUrlhandlers,false);
+    if (settings.mpdConnected === true) {
+        sendAPI("MPD_API_URLHANDLERS", {}, parseUrlhandlers,false);
+    }
     btnWaiting(document.getElementById('btnApplySettings'), false);
 }
 
@@ -226,7 +233,7 @@ function parseSettings() {
     toggleBtnChkCollapse('btnSmartpls', 'collapseSmartpls', settings.smartpls);
     
     let features = ["featLocalplayer", "featSyscmds", "featMixramp", "featCacert", "featBookmarks", 
-        "featRegex", "featTimer", "featLyrics", "featScripting", "featScripteditor"];
+        "featRegex", "featTimer", "featLyrics", "featScripting", "featScripteditor", "featHome"];
     for (let j = 0; j < features.length; j++) {
         let Els = document.getElementsByClassName(features[j]);
         let ElsLen = Els.length;
