@@ -5,30 +5,36 @@
  https://github.com/jcorporation/mympd
 */
 
-function setStateIcon(state) {
+function setStateIcon() {
     if (websocketConnected === false || settings.mpdConnected === false) {
-        domCache.mainMenu.classList.add('text-light');
-        domCache.mainMenu.classList.remove('connected');
+//        domCache.mainMenu.classList.add('text-light');
+//        domCache.mainMenu.classList.remove('connected');
+        document.getElementById('logoBg').setAttribute('fill', '#6c757d');
     }
     else {
-        domCache.mainMenu.classList.add('connected');
-        domCache.mainMenu.classList.remove('text-light');
+//        domCache.mainMenu.classList.add('connected');
+//        domCache.mainMenu.classList.remove('text-light');
+        document.getElementById('logoBg').setAttribute('fill', settings.highlightColor);
     }
 }
 
 function toggleAlert(alertBox, state, msg) {
-    let mpdState = document.getElementById(alertBox);
+    const alertBoxEl = document.getElementById(alertBox);
     if (state === false) {
-        mpdState.innerHTML = '';
-        mpdState.classList.add('hide');
+        alertBoxEl.innerHTML = '';
+        alertBoxEl.classList.add('hide');
     }
     else {
-        mpdState.innerHTML = msg;
-        mpdState.classList.remove('hide');
+        alertBoxEl.innerHTML = msg;
+        alertBoxEl.classList.remove('hide');
     }
 }
 
 function showNotification(notificationTitle, notificationText, notificationHtml, notificationType) {
+    if (notificationTitle === 'No current song') {
+        return;
+    }
+
     if (settings.notificationWeb === true) {
         let notification = new Notification(notificationTitle, {icon: 'assets/favicon.ico', body: notificationText});
         setTimeout(notification.close.bind(notification), 3000);
@@ -82,7 +88,7 @@ function showNotification(notificationTitle, notificationText, notificationHtml,
             hideNotification();
         }, 3000);
     }
-    setStateIcon('newMessage');
+    setStateIcon();
     logMessage(notificationTitle, notificationText, notificationHtml, notificationType);
 }
 
@@ -135,7 +141,7 @@ function clearLogOverview() {
     for (let i = overviewEls.length - 1; i >= 0; i--) {
         overviewEls[i].remove();
     }
-    setStateIcon('noMessage');
+    setStateIcon();
 }
 
 function hideNotification() {
@@ -184,8 +190,18 @@ function setElsState(tag, state, type) {
 
 function toggleUI() {
     let state = 'disabled';
+    const topAlert = document.getElementById('top-alerts');
     if (websocketConnected === true && settings.mpdConnected === true) {
+        topAlert.classList.add('hide');
         state = 'enabled';
+    }
+    else {
+        let topPadding = 0;
+        if (window.innerWidth < window.innerHeight) {
+            topPadding = domCache.header.offsetHeight;
+        }
+        topAlert.style.paddingTop = topPadding + 'px';
+        topAlert.classList.remove('hide');
     }
     let enabled = state === 'disabled' ? false : true;
     if (enabled !== uiEnabled) {
@@ -208,9 +224,10 @@ function toggleUI() {
     if (websocketConnected === true) {
         toggleAlert('alertMympdState', false, '');
     }
-    else {
+    else if (appInited === true) {
         toggleAlert('alertMympdState', true, t('Websocket is disconnected'));
         logMessage(t('Websocket is disconnected'), '', '', 'danger');
     }
+ 
     setStateIcon();
 }

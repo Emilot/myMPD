@@ -81,15 +81,22 @@ function parseQueue(obj) {
         gotoPage(obj.result.offset);
         return;
     }
-
+/*
     if (obj.result.totalTime && obj.result.totalTime > 0 && obj.result.totalEntities <= settings.maxElementsPerPage ) {
-        //document.getElementById('cardFooterQueue').innerText = t('Num songs', obj.result.totalEntities) + ' – ' + beautifyDuration(obj.result.totalTime);
+        document.getElementById('cardFooterQueue').innerText = t('Num songs', obj.result.totalEntities) + ' – ' + beautifyDuration(obj.result.totalTime);
     }
     else if (obj.result.totalEntities > 0) {
-        //document.getElementById('cardFooterQueue').innerText = t('Num songs', obj.result.totalEntities);
+        document.getElementById('cardFooterQueue').innerText = t('Num songs', obj.result.totalEntities);
     }
     else {
-        //document.getElementById('cardFooterQueue').innerText = '';
+        document.getElementById('cardFooterQueue').innerText = '';
+    }
+*/
+    if (obj.result.totalEntities > settings.maxElementsPerPage) {
+        document.getElementById('btnQueueGotoPlayingSong').parentNode.classList.remove('hide');
+    }
+    else {
+        document.getElementById('btnQueueGotoPlayingSong').parentNode.classList.add('hide');
     }
 
     let nrItems = obj.result.returnedEntities;
@@ -316,4 +323,11 @@ function delQueueSong(mode, start, end) {
     else if (mode === 'single') {
         sendAPI("MPD_API_QUEUE_RM_TRACK", { "track": start});
     }
+}
+
+//eslint-disable-next-line no-unused-vars
+function gotoPlayingSong() {
+    let page = lastState.songPos < settings.maxElementsPerPage ? 0 : Math.floor(lastState.songPos / settings.maxElementsPerPage) * settings.maxElementsPerPage;
+    console.log(page);
+    gotoPage(page);
 }

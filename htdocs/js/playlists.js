@@ -14,7 +14,8 @@ function parsePlaylists(obj) {
         document.getElementById('smartPlaylistContentBtns').classList.add('hide');
         document.getElementById('btnAddSmartpls').parentNode.classList.remove('hide');
         document.getElementById('BrowseNavPlaylists').parentNode.classList.remove('hide');
-    } else {
+    }
+    else {
         if (obj.result.uri.indexOf('.') > -1 || obj.result.smartpls === true) {
             document.getElementById('BrowsePlaylistsDetailList').setAttribute('data-ro', 'true')
             document.getElementById('playlistContentBtns').classList.add('hide');
@@ -120,7 +121,7 @@ function parsePlaylists(obj) {
 //eslint-disable-next-line no-unused-vars
 function playlistDetails(uri) {
     document.getElementById('BrowsePlaylistsAllList').classList.add('opacity05');
-    appGoto('Browse', 'Playlists', 'Detail', '0/-/-/-/' + uri);
+    appGoto('Browse', 'Playlists', 'Detail', '0', uri, '-', '-', '');
 }
 
 //eslint-disable-next-line no-unused-vars
@@ -364,7 +365,7 @@ function showAddToPlaylist(uri, searchstr) {
     }
     modalAddToPlaylist.show();
     if (settings.featPlaylists) {
-        sendAPI("MPD_API_PLAYLIST_LIST_ALL", {"offset": 0, "filter": "-"}, function(obj) {
+        sendAPI("MPD_API_PLAYLIST_LIST_ALL", {"searchstr": ""}, function(obj) {
             getAllPlaylists(obj, 'addToPlaylistPlaylist');
         });
     }

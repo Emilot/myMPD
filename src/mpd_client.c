@@ -53,6 +53,7 @@ void *mpd_client_loop(void *arg_config) {
     t_config *config = (t_config *) arg_config;
     //State of mpd connection
     t_mpd_client_state *mpd_client_state = (t_mpd_client_state *)malloc(sizeof(t_mpd_client_state));
+    assert(mpd_client_state);
     default_mpd_client_state(mpd_client_state);
     triggerfile_read(config, mpd_client_state);
     //wait for initial settings
@@ -208,14 +209,21 @@ static void mpd_client_idle(t_config *config, t_mpd_client_state *mpd_client_sta
                 LOG_DEBUG("Handle request (mpd disconnected)");
                 t_work_request *request = tiny_queue_shift(mpd_client_queue, 50, 0);
                 if (request != NULL) {
-                    //create response struct
-                    if (request->conn_id > -1) {
-                        t_work_result *response = create_result(request);
-                        response->data = jsonrpc_respond_message(response->data, request->method, request->id, "MPD disconnected", true);
-                        LOG_DEBUG("Send http response to connection %lu: %s", request->conn_id, response->data);
-                        tiny_queue_push(web_server_queue, response, 0);
+                    if (request->cmd_id == MYMPD_API_SETTINGS_SET) {
+                        //allow to change mpd host
+                        mpd_client_api(config, mpd_client_state, request);
+                        mpd_client_state->mpd_state->conn_state = MPD_DISCONNECTED;
                     }
-                    free_request(request);
+                    else {
+                        //other requests not allowed
+                        if (request->conn_id > -1) {
+                            t_work_result *response = create_result(request);
+                            response->data = jsonrpc_respond_message(response->data, request->method, request->id, "MPD disconnected", true);
+                            LOG_DEBUG("Send http response to connection %lu: %s", request->conn_id, response->data);
+                            tiny_queue_push(web_server_queue, response, 0);
+                        }
+                        free_request(request);
+                    }
                 }
             }
             if (now < mpd_client_state->mpd_state->reconnect_time) {

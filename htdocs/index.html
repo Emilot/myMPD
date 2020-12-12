@@ -29,7 +29,15 @@
   <!-- Splash screen -->
   <div id="splashScreen">
     <div id="splashScreenLogo">
-      <span class="material-icons splashScreenIcon">play_circle_outline</span> myMPD
+      <!--<span class="material-icons splashScreenIcon">play_circle_outline</span> myMPD-->
+      <svg width="6rem" height="6rem" version="1.1" viewBox="0 0 8.4666665 8.4666669" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="4.2333" cy="4.2333" rx="4.2333" ry="4.2333" fill="#28a745"/>
+        <path d="m1.5772 4.8257h0.59026v-1.1847h-0.59026z" fill="#fff" stroke-width=".26458"/>
+        <path d="m3.9382 7.195h0.59025v-5.9233h-0.59025z" fill="#fff" stroke-width=".26458"/>
+        <path d="m2.7577 6.0103h0.59026v-3.554h-0.59026z" fill="#fff" stroke-width=".26458"/>
+        <path d="m5.1187 2.4563v3.554l2.7826-1.777z" fill="#fff" stroke-width=".26458"/>
+      </svg>
+      myMPD
     </div>
     <div id="splashScreenAlert" data-phrase="Initializing myMPD"></div>
   </div>
@@ -37,7 +45,16 @@
   <header>
     <nav id="header" class="navbar navbar-expand navbar-dark fixed-top bg-dark d-flex justify-content-between">
       <div class="dropdown nav-item" id="headerLeft">
-        <a class="dropdown-toggle alwaysEnabled material-icons text-light" href="#" id="mainMenu">play_circle_outline</a>
+        <!--<a class="dropdown-toggle alwaysEnabled material-icons text-light" href="#" id="mainMenu" data-title-phrase="myMPD menu">play_circle_outline</a>-->
+        <a class="dropdown-toggle alwaysEnabled" href="#" id="mainMenu" data-title-phrase="myMPD menu">
+          <svg width="2.5rem" height="2.5rem" version="1.1" viewBox="0 0 8.4666665 8.4666669" xmlns="http://www.w3.org/2000/svg">
+            <ellipse id="logoBg" cx="4.2333" cy="4.2333" rx="4.2333" ry="4.2333" fill="#6c757d"/>
+            <path d="m1.5772 4.8257h0.59026v-1.1847h-0.59026z" fill="#fff" stroke-width=".26458"/>
+            <path d="m3.9382 7.195h0.59025v-5.9233h-0.59025z" fill="#fff" stroke-width=".26458"/>
+            <path d="m2.7577 6.0103h0.59026v-3.554h-0.59026z" fill="#fff" stroke-width=".26458"/>
+            <path d="m5.1187 2.4563v3.554l2.7826-1.777z" fill="#fff" stroke-width=".26458"/>
+          </svg>
+        </a>
         <div class="dropdown-menu bg-lite-dark" id="mainMenuDropdown">
           <a data-phrase="Add stream" class="dropdown-item text-light" href="#" data-href='{"cmd": "showAddToPlaylist", "options": ["stream"]}'></a>
           <a id="navDBupdate" class="subMenu dropdown-item text-light" data-toggle="collapse" href="#menu-dbupdate"><span class="material-icons material-icons-left">keyboard_arrow_right</span><span data-phrase="Update"></span></a>
@@ -63,6 +80,7 @@
           <div id="syscmds" class="featSyscmds noInitChilds collapse"></div>
           <a id="navScripting" class="subMenu featScripting dropdown-item text-light alwaysEnabled" data-toggle="collapse" href="#scripts"><span class="material-icons material-icons-left">keyboard_arrow_right</span><span data-phrase="Scripts"></span></a>
           <div id="scripts" class="featScripting noInitChilds collapse"></div>
+          <div class="dropdown-divider"></div>
           <a id="navNotifications" class="subMenu dropdown-item text-light alwaysEnabled" data-toggle="collapse" href="#menu-notifications"><span class="material-icons material-icons-left">keyboard_arrow_right</span><span data-phrase="Notifications"></span></a>
           <div id="menu-notifications" class="collapse menu-indent">
             <div id="logOverview" class="pl-2 pb-0 pr-2"></div>
@@ -70,52 +88,42 @@
         </div>
       </div>
       <div id="navbar-main" class="d-flex">
-        <div id="navPlayback" class="nav-item flex-fill text-center">
-          <a data-title-phrase="Playback" data-href='{"cmd": "appGoto", "options": ["Playback"]}' class="nav-link text-light" href="#">
-            <span class="material-icons">play_arrow</span><span class="navText" data-phrase="Playback"></span>
-          </a>
-        </div>
-        <div id="navQueue" class="nav-item flex-fill text-center">
-          <a data-title-phrase="Queue" data-href='{"cmd": "appGoto", "options": ["Queue"]}' class="nav-link text-light" href="#">
-            <span class="material-icons">queue_music</span><span class="navText navTextQueue" data-phrase="Queue"></span><span id="badgeQueueItems" class="badge badge-secondary"></span>
-          </a>
-        </div>
-        <div id="navBrowse" class="nav-item flex-fill text-center">
-          <a data-title-phrase="Browse" data-href='{"cmd": "appGoto", "options": ["Browse"]}' class="nav-link text-light" href="#">
-            <span class="material-icons">library_music</span><span class="navText" data-phrase="Browse"></span>
-          </a>
-        </div>
-        <div id="navSearch" class="nav-item flex-fill text-center">
-          <a data-title-phrase="Search" data-href='{"cmd": "appGoto", "options": ["Search"]}' class="nav-link text-light" href="#">
-            <span class="material-icons">search</span><span class="navText" data-phrase="Search"></span>
-          </a>
-        </div>
       </div>
     </nav>
   </header>
   <!-- Alerts -->
-  <noscript>
-    <div data-phrase="JavaScript is disabled" class="alert alert-danger top-alert"></div>
-  </noscript>
-  <div id="alertMpdState" class="alert alert-danger top-alert"></div>
-  <div id="alertMympdState" class="alert alert-danger top-alert"></div>
+  <div id="top-alerts">
+    <noscript>
+      <div data-phrase="JavaScript is disabled" class="alert alert-danger top-alert"></div>
+    </noscript>
+    <div id="alertMpdState" class="alert alert-danger top-alert"></div>
+    <div id="alertMympdState" class="alert alert-danger top-alert"></div>
+  </div>
   <!-- Main content -->
   <main>
+    <div class="card" id="cardHome">
+      <div class="card-body">
+        <div class="container HomeContainer">
+          <div id="HomeCards" class="row noInitChilds">
+          </div>
+        </div>      
+      </div>
+    </div>
     <div class="card" id="cardPlayback">
-      <div class="card-body cardBodyPlayback">
+      <div class="card-body">
         <div class="btn-toolbar card-toolbar" id="PlaybackButtonsTop">
           <div class="btn-group btn-group featStickers">
-            <button data-title-phrase="Dislike song" id="btnVoteDown" data-href='{"cmd": "voteSong", "options": [0]}' class="btn btn-secondary material-icons">thumb_down</button>
-            <button data-title-phrase="Like song" id="btnVoteUp" data-href='{"cmd": "voteSong", "options": [2]}' class="btn btn-secondary material-icons">thumb_up</button>
+            <button disabled="disabled" data-title-phrase="Dislike song" id="btnVoteDown" data-href='{"cmd": "voteSong", "options": [0]}' class="btn btn-secondary material-icons">thumb_down</button>
+            <button disabled="disabled" data-title-phrase="Like song" id="btnVoteUp" data-href='{"cmd": "voteSong", "options": [2]}' class="btn btn-secondary material-icons">thumb_up</button>
           </div>
           <div class="btn-group btn-group featLove ml-2">
-            <button data-title-phrase="Love song" data-href='{"cmd": "loveSong", "options": []}' class="btn btn-secondary material-icons">favorite</button>
+            <button disabled="disabled" data-title-phrase="Love song" data-href='{"cmd": "loveSong", "options": []}' class="btn btn-secondary material-icons">favorite</button>
           </div>
           <div class="btn-group btn-group featPlaylists ml-2">
-            <button data-title-phrase="Add to playlist" data-href='{"cmd": "showAddToPlaylistCurrentSong", "options": []}' class="btn btn-secondary material-icons">playlist_add</button>
+            <button disabled="disabled" id="addCurrentSongToPlaylist" data-title-phrase="Add to playlist" data-href='{"cmd": "showAddToPlaylistCurrentSong", "options": []}' class="btn btn-secondary material-icons">playlist_add</button>
           </div>
           <div class="btn-group dropdown ml-2">
-            <button id="btnPlayDropdown" class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"><span class="material-icons">tune</span></button>
+            <button data-title-phrase="Playback settings" id="btnPlayDropdown" class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"><span class="material-icons">tune</span></button>
             <div class="dropdown-menu bg-lite-dark px-2" id="playDropdown">
               <form>
                 <div class="form-group row">
@@ -160,16 +168,17 @@
             </div>
           </div>
           <div class="btn-group ml-2 featTags">
-            <button id="PlaybackColsBtn" class="btn btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"><span class="material-icons">settings</span></button>
+            <button data-title-phrase="Display tags" id="PlaybackColsBtn" class="btn btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"><span class="material-icons">settings</span></button>
             <div class="dropdown-menu text-light bg-lite-dark px-2" id="PlaybackColsDropdown"><form></form>
               <button data-phrase="Apply" data-href='{"cmd": "saveColsPlayback", "options": ["Playback"]}' class="btn btn-success btn-block btn-sm mt-2"></button>
             </div>
           </div>
         </div>
-        <div class="album-cover album-cover-loading featCoverimage" id="currentCover"></div>
+        <div class="album-cover album-cover-loading featCoverimage clickable carousel" id="currentCover" data-href='{"cmd": "zoomPicture", "options": []}'></div>
         <div class="album-desc breakAll">
           <h2 id="currentTitle" data-href='{"cmd": "clickTitle", "options": []}'></h2>
           <div class="featTags" id="cardPlaybackTags"></div>
+          <div id="currentBooklet"></div>
         </div>
       </div>
     </div>
@@ -178,10 +187,11 @@
       <div class="card-body hide" id="cardQueueCurrent">
         <div class="btn-toolbar card-toolbar" id="QueueCurrentButtonsTop">
           <div class="btn-group mr-2">
-            <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"><span class="material-icons">layers</span></button>
+            <button data-title-phrase="Select view" class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"><span class="material-icons">layers</span></button>
             <div class="dropdown-menu bg-lite-dark px-2">
               <button data-phrase="Queue" class="btn btn-sm btn-block btn-secondary active" data-href='{"cmd": "appGoto", "options": ["Queue", "Current"]}'></button>
               <button data-phrase="Last played" class="btn btn-sm btn-block btn-secondary" data-href='{"cmd": "appGoto", "options": ["Queue", "LastPlayed"]}'></button>
+              <button data-phrase="Jukebox" class="btn btn-sm btn-block btn-secondary" data-href='{"cmd": "appGoto", "options": ["Queue", "Jukebox"]}'></button>
             </div>
           </div>
           <div class="btn-group mr-2 featPlaylists">
@@ -214,6 +224,12 @@
               <input data-placeholder-phrase="Search queue" type="text" class="form-control border-secondary" id="searchqueuestr"/>
             </div>
           </form>
+          <div class="btn-group mr-2">
+            <button id="btnQueueGotoPlayingSong" data-title-phrase="Goto playing song" type="button" class="btn btn-secondary material-icons" data-href='{"cmd": "gotoPlayingSong", "options": []}'>playlist_play</button>
+          </div>
+          <div class="btn-group mr-2 featHome">
+            <button data-title-phrase="Add to homescreen" data-href='{"cmd": "addViewToHome", "options": []}'  type="button" class="btn btn-secondary"><span class="material-icons">add_to_home_screen</span></button>
+          </div>
           <div id="QueueCurrentPaginationTop" class="btn-group mr-2 hide">
             <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
               <div class="btn-group">
@@ -244,7 +260,7 @@
         <div class="btn-toolbar hide" id="QueueCurrentButtonsBottom">
           <div class="btn-group mr-2">
             <button type="button" class="btn btn-secondary material-icons" data-href='{"cmd": "scrollToPosY", "options: [0]}' data-title-phrase="To top">keyboard_arrow_up</button>
-          </div>        
+          </div>
           <div id="QueueCurrentPaginationBottom" class="btn-group mr-2 dropup">
             <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
               <div class="btn-group">
@@ -259,14 +275,18 @@
 
       <div class="card-body hide" id="cardQueueLastPlayed">
         <div class="btn-toolbar card-toolbar">
-          <div class="btn-group">
-            <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"><span class="material-icons">layers</span></button>
+          <div class="btn-group mr-2">
+            <button data-title-phrase="Select view" class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"><span class="material-icons">layers</span></button>
             <div class="dropdown-menu bg-lite-dark px-2">
               <button data-phrase="Queue" class="btn btn-sm btn-block btn-secondary" data-href='{"cmd": "appGoto", "options": ["Queue", "Current"]}'></button>
               <button data-phrase="Last played" class="btn btn-sm btn-block btn-secondary active" data-href='{"cmd": "appGoto", "options": ["Queue", "LastPlayed"]}'></button>
+              <button data-phrase="Jukebox" class="btn btn-sm btn-block btn-secondary" data-href='{"cmd": "appGoto", "options": ["Queue", "Jukebox"]}'></button>
             </div>
           </div>
-          <div id="QueueLastPlayedPaginationTop" class="btn-group ml-2 hide">
+          <div class="btn-group mr-2 featHome">
+            <button data-title-phrase="Add to homescreen" data-href='{"cmd": "addViewToHome", "options": []}'  type="button" class="btn btn-secondary"><span class="material-icons">add_to_home_screen</span></button>
+          </div>
+          <div id="QueueLastPlayedPaginationTop" class="btn-group hide">
             <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
               <div class="btn-group">
                 <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"></button>
@@ -308,25 +328,84 @@
           </div>
         </div>
       </div>
+
+      <div class="card-body hide" id="cardQueueJukebox">
+        <div class="btn-toolbar card-toolbar">
+          <div class="btn-group mr-2">
+            <button data-title-phrase="Select view" class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"><span class="material-icons">layers</span></button>
+            <div class="dropdown-menu bg-lite-dark px-2">
+              <button data-phrase="Queue" class="btn btn-sm btn-block btn-secondary" data-href='{"cmd": "appGoto", "options": ["Queue", "Current"]}'></button>
+              <button data-phrase="Last played" class="btn btn-sm btn-block btn-secondary" data-href='{"cmd": "appGoto", "options": ["Queue", "LastPlayed"]}'></button>
+              <button data-phrase="Jukebox" class="btn btn-sm btn-block btn-secondary active" data-href='{"cmd": "appGoto", "options": ["Queue", "Jukebox"]}'></button>
+            </div>
+          </div>
+          <div class="btn-group mr-2 featHome">
+            <button data-title-phrase="Add to homescreen" data-href='{"cmd": "addViewToHome", "options": []}'  type="button" class="btn btn-secondary"><span class="material-icons">add_to_home_screen</span></button>
+          </div>
+          <div id="QueueJukeboxPaginationTop" class="btn-group hide">
+            <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
+              <div class="btn-group">
+                <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"></button>
+                <div class="dropdown-menu bg-lite-dark px-2 pages">
+                </div>
+              </div>            
+            <button data-title-phrase="Next page" data-href='{"cmd": "gotoPage", "options": ["next"]}' type="button" class="btn btn-secondary btn-group-append">&raquo;</button>
+          </div>
+        </div>
+
+        <div class="table-responsive-md">
+          <table id="QueueJukeboxList" class="table table-hover table-sm">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th data-phrase="Title"></th>
+                <th data-phrase="Artist"></th>
+                <th data-phrase="Album"></th>
+                <th data-phrase="Duration"></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody class="clickable">
+            </tbody>
+          </table>
+        </div>
+        <div class="btn-toolbar hide" id="QueueJukeboxButtonsBottom">
+          <div class="btn-group mr-2">
+            <button type="button" class="btn btn-secondary material-icons" data-href='{"cmd": "scrollToPosY", "options: [0]}' data-title-phrase="To top">keyboard_arrow_up</button>
+          </div>        
+          <div id="QueueJukeboxPaginationBottom" class="btn-group mr-2 dropup">
+            <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
+              <div class="btn-group">
+                <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"></button>
+                <div class="dropdown-menu bg-lite-dark px-2 pages">
+                </div>
+              </div>            
+            <button data-title-phrase="Next page" data-href='{"cmd": "gotoPage", "options": ["next"]}' type="button" class="btn btn-secondary btn-group-append">&raquo;</button>
+          </div>
+        </div>
+      </div>
+      
     </div>
     
     <div class="card hide" id="cardBrowse">
       <div class="card-body hide" id="cardBrowsePlaylists">
         <div class="btn-toolbar card-toolbar" id="BrowsePlaylistsButtons">
           <div class="btn-group mr-2">
-            <button data-title-phrase="Select tag to display" id="BrowseNavPlaylists" class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"><span class="material-icons">layers</span></button>
+            <button data-title-phrase="Select view" id="BrowseNavPlaylists" class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"><span class="material-icons">layers</span></button>
             <div class="dropdown-menu bg-lite-dark px-2" id="BrowseNavPlaylistsDropdown">
             </div>
           </div>
           <div class="btn-group mr-2 hide">
             <button data-title-phrase="Playlists" data-href='{"cmd": "appGoto", "options": ["Browse", "Playlists", "All"]}' id="btnBrowsePlaylistsAll" type="button" class="btn btn-secondary"><span class="material-icons">apps</span></button>
           </div>
-          
-          <div class="btn-group mr-2">
-            <button id="BrowsePlaylistsFilter" class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"><span class="material-icons">filter_list</span></button>
-            <div class="dropdown-menu bg-lite-dark px-2 letters" id="BrowsePlaylistsFilterLetters">
+          <form id="searchPlaylists" class="flex-grow-1">
+            <div class="input-group mr-2">
+              <div class="input-group-prepend">
+                <span class="input-group-text border-secondary text-light bg-secondary"><span class="material-icons">search</span></span>
+              </div>
+              <input data-placeholder-phrase="Search" type="text" class="form-control border-secondary" id="searchPlaylistsStr"/>
             </div>
-          </div>
+          </form>          
           <div class="hide btn-group mr-2" id="playlistContentBtns">
             <button data-title-phrase="Clear playlist" type="button" class="btn btn-secondary material-icons rounded-right mr-2" data-href='{"cmd": "playlistClear", "options": []}'>clear_all</button>
             <button data-href='{"cmd": "playlistShuffle", "options": []}' class="btn btn-secondary material-icons rounded mr-2" type="button" data-title-phrase="Shuffle playlist">shuffle</button>
@@ -350,6 +429,9 @@
               <button data-phrase="Most played" data-href='{"cmd": "addSmartpls", "options": ["mostPlayed"]}' type="button" class="btn btn-secondary btn-block"></button>
               <button data-phrase="Newest songs" data-href='{"cmd": "addSmartpls", "options": ["newest"]}' type="button" class="btn btn-secondary btn-block"></button>
             </div>
+          </div>
+          <div class="btn-group mr-2 featHome">
+            <button data-title-phrase="Add to homescreen" data-href='{"cmd": "addViewToHome", "options": []}'  type="button" class="btn btn-secondary"><span class="material-icons">add_to_home_screen</span></button>
           </div>
           <div id="BrowsePlaylistsPaginationTop" class="btn-group mr-2 hide">
             <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
@@ -412,7 +494,7 @@
         <div id="viewListDatabase">
           <div class="btn-toolbar card-toolbar" id="BrowseDatabaseButtons">
             <div class="btn-group mr-2">
-              <button data-title-phrase="Select tag to display" id="btnBrowseDatabaseByTag" class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown">
+              <button data-title-phrase="Select view" id="btnBrowseDatabaseByTag" class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown">
                 <span class="material-icons">layers</span>
                 <span data-phrase="Album" id="btnBrowseDatabaseByTagDesc" class="hide"></span>
               </button>
@@ -424,10 +506,19 @@
                 <div class="input-group-prepend">
                   <button id="btnDatabaseSearchDropdown" data-title-phrase="Select tag to search" class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown">
                     <span class="material-icons">search</span>
-                    <span data-phrase="AlbumArtist" id="searchDatabaseTagsDesc" class="hide"></span>
+                    <span data-phrase="AlbumArtist" id="searchDatabaseTagsDesc"></span>
                   </button>
                   <div class="dropdown-menu bg-lite-dark px-2" id="searchDatabaseTags">
                   </div>
+                </div>
+                <div class="input-group-prepend featAdvsearch">
+                  <select class="form-control custom-select border-secondary rounded-0" id="searchDatabaseMatch">
+                    <option data-phrase="contains" value="contains"></option>
+                    <option value="==">==</option>
+                    <option class="featRegex" value="=~">=~</option>
+                    <option value="!=">!=</option>
+                    <option value="!~">!~</option>
+                  </select>
                 </div>            
                 <input data-placeholder-phrase="Search" type="text" class="form-control border-secondary" id="searchDatabaseStr"/>
               </div>
@@ -444,6 +535,9 @@
                 </div>
               </div>
             </div>
+            <div class="btn-group mr-2 featHome">
+              <button data-title-phrase="Add to homescreen" data-href='{"cmd": "addViewToHome", "options": []}'  type="button" class="btn btn-secondary"><span class="material-icons">add_to_home_screen</span></button>              
+            </div>
             <div id="BrowseDatabasePaginationTop" class="btn-group hide mr-2">
               <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
                 <div class="btn-group">
@@ -454,8 +548,9 @@
               <button data-title-phrase="Next page" data-href='{"cmd": "gotoPage", "options": ["next"]}' type="button" class="btn btn-secondary btn-group-append">&raquo;</button>
             </div>
           </div>
-          <div class="container justify-content-between">
-            <div id="BrowseDatabaseCards" class="row justify-content-between">
+          <ol class="featAdvsearch breadcrumb hide" id="searchDatabaseCrumb"></ol>
+          <div class="container BrowseDatabaseCardsContainer">
+            <div id="BrowseDatabaseCards" class="row">
             </div>
           </div>
           <div class="btn-toolbar hide" id="BrowseDatabaseButtonsBottom">
@@ -478,7 +573,7 @@
             <div class="input-group mr-2">
               <button class="btn btn-secondary material-icons" data-href='{"cmd": "backToAlbumGrid", "options": []}'>apps</button>
             </div>
-            <div class="input-group">
+            <div class="input-group mr-2">
               <div class="input-group-prepend">
                 <button data-title-phrase="Append to queue" class="btn btn-secondary material-icons" data-href='{"cmd": "addAlbum", "options": ["appendQueue"]}'>library_add</button>
                 <button class="btn btn-secondary dropdown-toggle dropdown-toggle-split rounded-right" type="button" data-toggle="dropdown"></button>
@@ -489,8 +584,11 @@
                 </div>
               </div>
             </div>
+            <div class="btn-group mr-2 featHome">
+              <button data-title-phrase="Add to homescreen" data-href='{"cmd": "addViewToHome", "options": []}'  type="button" class="btn btn-secondary"><span class="material-icons">add_to_home_screen</span></button>              
+            </div>
           </div>
-          <div id="viewDetailDatabaseCover" class="featCoverimage album-cover-small album-cover-loading"></div>
+          <div id="viewDetailDatabaseCover" class="featCoverimage album-cover-small album-cover-loading clickable carousel" data-href='{"cmd": "zoomPicture", "options": []}'></div>
           <div id="viewDetailDatabaseInfo"></div>
           <table id="BrowseDatabaseDetailList" class="table table-hover table-sm">
             <thead>
@@ -512,13 +610,8 @@
       <div class="card-body hide" id="cardBrowseFilesystem">
         <div class="btn-toolbar card-toolbar" id="BrowseFilesystemButtons">
           <div class="btn-group mr-2">
-            <button data-title-phrase="Select tag to display" id="BrowseNavFilesystem" class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"><span class="material-icons">layers</span></button>
+            <button data-title-phrase="Select view" id="BrowseNavFilesystem" class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"><span class="material-icons">layers</span></button>
             <div class="dropdown-menu bg-lite-dark px-2" id="BrowseNavFilesystemDropdown">
-            </div>
-          </div>
-          <div class="btn-group mr-2">
-            <button id="BrowseFilesystemFilter" class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"><span class="material-icons">filter_list</span></button>
-            <div class="dropdown-menu bg-lite-dark px-2 letters" id="BrowseFilesystemFilterLetters">
             </div>
           </div>
           <div class="input-group mr-2">
@@ -536,6 +629,17 @@
             <div class="dropdown-menu bg-lite-dark px-2" id="BrowseFilesystemBookmarks">
             </div>
           </div>
+          <form class="flex-grow-1">
+            <div class="input-group mr-2">
+              <div class="input-group-prepend">
+                <span class="input-group-text border-secondary text-light bg-secondary"><span class="material-icons">search</span></span>
+              </div>
+              <input data-placeholder-phrase="Search" type="text" class="form-control border-secondary" id="searchFilesystemStr"/>
+            </div>
+          </form>
+          <div class="btn-group mr-2 featHome">
+            <button data-title-phrase="Add to homescreen" data-href='{"cmd": "addViewToHome", "options": []}'  type="button" class="btn btn-secondary"><span class="material-icons">add_to_home_screen</span></button>              
+          </div>
           <div id="BrowseFilesystemPaginationTop" class="btn-group mr-2 hide">
             <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
               <div class="btn-group">
@@ -547,6 +651,7 @@
           </div>
         </div>
         <ol id="BrowseBreadcrumb" class="breadcrumb"></ol>
+        <div id="BrowseFilesystemImages" class="featBrowse not-clickable" data-href='{"cmd": "zoomPicture", "options": []}'></div>
         <div class="table-responsive-md">
           <table id="BrowseFilesystemList" class="table table-hover table-sm">
             <thead>
@@ -616,6 +721,9 @@
               </div>
             </div>
           </div>
+          <div class="btn-group mr-2 featHome">
+            <button data-title-phrase="Add to homescreen" data-href='{"cmd": "addViewToHome", "options": []}'  type="button" class="btn btn-secondary"><span class="material-icons">add_to_home_screen</span></button>              
+          </div>
           <div id="SearchPaginationTop" class="btn-group mr-2 hide">
             <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
               <div class="btn-group">
@@ -670,16 +778,16 @@
     <nav class="navbar navbar-expand navbar-dark bg-dark">
       <div class="btn-toolbar nav-item flex-nowrap">
         <div class="btn-group mr-2" id="playControlBtns">
-          <button data-href='{"cmd": "clickPrev", "options": []}' id="btnPrev" type="button" class="btn btn-dark pl-2 pr-2 material-icons">skip_previous</button>
-          <button data-href='{"cmd": "clickPlay", "options": []}' id="btnPlay" type="button" class="btnPlay btn btn-lg btn-dark pl-2 pr-2 material-icons material-icons-lg">pause</button>
-          <button data-href='{"cmd": "clickNext", "options": []}' id="btnNext" type="button" class="btn btn-dark pl-2 pr-2 material-icons">skip_next</button>
+          <button data-title-phrase="Previous" data-href='{"cmd": "clickPrev", "options": []}' id="btnPrev" type="button" class="btn btn-dark pl-2 pr-2 material-icons">skip_previous</button>
+          <button data-title-phrase="Toggle play" data-href='{"cmd": "clickPlay", "options": []}' id="btnPlay" type="button" class="btnPlay btn btn-lg btn-dark pl-2 pr-2 material-icons material-icons-lg">pause</button>
+          <button data-title-phrase="Next" data-href='{"cmd": "clickNext", "options": []}' id="btnNext" type="button" class="btn btn-dark pl-2 pr-2 material-icons">skip_next</button>
         </div>
         <div class="align-self-center">
           <small id="counter" class="text-light">0:00&nbsp;/&nbsp;0:00</small>
         </div>
       </div>
       <div class="d-flex flex-fill navbar-nav ml-5 text-light" id="footerInfo">
-        <div id="footerCover" class="album-cover-loading mr-3">
+        <div data-title-phrase="Show cover" id="footerCover" class="album-cover-loading mr-3 clickable carousel" data-href='{"cmd": "zoomPicture", "options": []}'>
         </div>
         <div id="footerPlaying">
           <span id="footerTitle" class="notclickable" data-href='{"cmd": "clickTitle", "options": []}'>Title</span><br/>
@@ -688,7 +796,7 @@
       </div>
       <div class="btn-toolbar nav-item flex-nowrap ml-5">
         <div class="btn-group dropup">
-          <button id="volumeMenu" class="btn btn-dark dropdown-toggle pl-2 pr-2" type="button" data-toggle="dropdown"><span class="material-icons">volume_up</span></button>
+          <button data-title-phrase="Outputs" id="volumeMenu" class="btn btn-dark dropdown-toggle pl-2 pr-2" type="button" data-toggle="dropdown"><span class="material-icons">volume_up</span></button>
           <div class="dropdown-menu bg-lite-dark">
             <h2 class="dropdown-header text-light"><span data-phrase="Volume"></span>: <span id="volumePrct"></span></h2>
             <form class="px-4 py-0 pb-3" id="volumeControl">
@@ -708,7 +816,7 @@
           </div>
         </div>
         <div class="btn-group dropup featLocalplayer ml-2">
-          <button id="localPlaybackMenu" class="btn btn-dark dropdown-toggle pl-2 pr-2" type="button" data-toggle="dropdown"><span class="material-icons">airplay</span></button>
+          <button data-title-phrase="Local playback" id="localPlaybackMenu" class="btn btn-dark dropdown-toggle pl-2 pr-2" type="button" data-toggle="dropdown"><span class="material-icons">airplay</span></button>
           <div class="dropdown-menu bg-lite-dark">
             <h2 data-phrase="Local playback" class="dropdown-header dropdown-header-lx text-light"></h2>
             <div id="alertLocalPlayback" class="alert alert-warning mx-4 p-2 hide">
@@ -1157,7 +1265,12 @@
                   <div class="form-group row">
                     <label class="col-sm-4 col-form-label" for="inputBgCssFilter" data-phrase="CSS filter"></label>
                     <div class="col-sm-8 ">
-                      <input id="inputBgCssFilter" type="text" class="form-control border-secondary" value="blur(5px)" placeholder="blur(5px)">
+                      <div class="input-group">
+                        <input id="inputBgCssFilter" type="text" class="form-control border-secondary" value="blur(5px)" placeholder="grayscale(100%) opacity(5%)">
+                        <div class="input-group-append">
+                          <button data-href='{"cmd": "resetValue", "options": ["inputBgCssFilter"]}' data-title-phrase="Reset to default" class="btn btn-secondary"><span class="material-icons">undo</span></button>
+                        </div>
+                      </div>
                       <div class="invalid-feedback" data-phrase="Invalid CSS filter"></div>
                     </div>
                   </div>
@@ -2112,7 +2225,21 @@
         </div>
         <div class="modal-footer justify-content-between">
           <button type="button" class="btn btn-secondary" data-dismiss="modal" data-phrase="Cancel"></button>
-          <button data-href='{"cmd":"saveOutputAttributes","options":[]}' type="button" class="btn btn-success" data-phrase="Save"></button>
+          <button id="btnOutputAttributesSave" data-href='{"cmd":"saveOutputAttributes","options":[]}' type="button" class="btn btn-success" data-phrase="Save"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalPicture" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-body">
+          <div id="modalPictureImg" class="coverimage-loading"></div>
+        </div>
+        <div class="modal-footer justify-content-between">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal" data-phrase="Close"></button>
+          <button id="modalPictureZoom" data-href='{"cmd":"zoomZoomPicture","options":[]}' type="button" class="btn btn-success" data-phrase="Zoom"></button>
         </div>
       </div>
     </div>
@@ -2184,6 +2311,76 @@
     </div>
   </div>
 
+  <div class="modal fade" id="modalEditHomeIcon" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><span class="material-icons title-icon">home</span> <span id="modalEditHomeIconTitle" data-phrase="Edit home icon"></span></h5>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>          
+        </div>
+        <div class="modal-body">
+          <form id="editHomeIconForm">
+            <input type="hidden" id="inputHomeIconReplace">
+            <input type="hidden" id="inputHomeIconOldpos">
+            <div class="form-group row">
+              <label class="col-sm-4 col-form-label" for="inputHomeIconName" data-phrase="Name"></label>
+              <div class="col-sm-8">
+                <input id="inputHomeIconName" class="form-control border-secondary" type="text"/>
+              </div>
+            </div>
+            <div class="form-group row">
+              <label class="col-sm-4 col-form-label" for="inputHomeIconImage" data-phrase="Picture"></label>
+              <div class="col-sm-8">
+                <select id="selectHomeIconImage" class="form-control custom-select border-secondary"></select>
+              </div>
+            </div>
+            <div id="divHomeIconLigature" class="hide">
+              <div class="form-group row">
+                <label class="col-sm-4 col-form-label" for="inputHomeIconLigature" data-phrase="Ligature"></label>
+                <div class="col-sm-8">
+                  <input id="inputHomeIconLigature" class="form-control border-secondary" type="text"/>
+                  <small><a class="text-success" href="https://material.io/icons" target="_blank" data-phrase="Ligature overview"></a></small>
+                </div>
+              </div>
+              <div class="form-group row">
+                <label class="col-sm-4 col-form-label" for="inputHomeIconBgcolor" data-phrase="Background color"></label>
+                <div class="col-sm-8">
+                  <input id="inputHomeIconBgcolor" class="form-control border-secondary" type="text"/>
+                </div>
+              </div>
+            </div>
+            <div class="form-group row">
+              <label class="col-sm-4 col-form-label" data-phrase="Preview"></label>
+              <div class="col-sm-8">
+                <div id="homeIconPreview" class="material-icons"></div>
+              </div>
+            </div>
+            <hr/>
+            <div class="form-group row">
+              <label class="col-sm-4 col-form-label" for="selectHomeIconCmd" data-phrase="Action"></label>
+              <div class="col-sm-8">
+                <select id="selectHomeIconCmd" class="form-control custom-select border-secondary">
+                  <option value="appGoto" data-options='{"options":["App","Tab","View","Offset","Filter","Sort","Tag","Search"]}' data-phrase="Goto view"></option>
+                  <option value="replaceQueue" data-options='{"options":["Type","Uri","Name"]}' data-phrase="Replace queue"></option>
+                  <option value="execScriptFromOptions" data-options='{"options":["Script","Arguments"]}' data-phrase="Execute Script"></option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group row">
+              <label class="col-sm-4 col-form-label" for="divHomeIconOptions" data-phrase="Options"></label>
+              <div class="col-sm-8" id="divHomeIconOptions">
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer justify-content-between">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal" data-phrase="Cancel"></button>
+          <button data-href='{"cmd":"saveHomeIcon","options":[]}' type="button" class="btn btn-success" data-phrase="Save"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 <!--debug-->  <script src="js/i18n.js"></script>
 <!--debug-->  <script src="js/keymap.js"></script>
 <!--debug-->  <script src="js/themes.js"></script>
@@ -2199,6 +2396,7 @@
 <!--debug-->  <script src="js/partitions.js"></script>
 <!--debug-->  <script src="js/api.js"></script>
 <!--debug-->  <script src="js/tables.js"></script>
+<!--debug-->  <script src="js/grid.js"></script>
 <!--debug-->  <script src="js/search.js"></script>
 <!--debug-->  <script src="js/queue.js"></script>
 <!--debug-->  <script src="js/playlists.js"></script>
@@ -2210,6 +2408,8 @@
 <!--debug-->  <script src="js/trigger.js"></script>
 <!--debug-->  <script src="js/popover.js"></script>
 <!--debug-->  <script src="js/localplayer.js"></script>
+<!--debug-->  <script src="js/home.js"></script>
+<!--debug-->  <script src="js/jukebox.js"></script>
 <!--debug-->  <script src="js/mympd.js"></script>
 <!--release   <script src="js/combined.js"></script>-->
  </body>

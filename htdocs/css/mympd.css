@@ -10,7 +10,7 @@
 
 :root {
   --mympd-coverimagesize: 250px;
-  --mympd-coverimagesizesmall: 200px;
+  --mympd-coverimagesizesmall: 175px;
   --mympd-highlightcolor: #28a745;
 }
 
@@ -77,9 +77,13 @@ html {
 
 body {
   min-height: 100vh;
-  padding-top: 4rem;
+  padding-top: 3rem;
   padding-bottom: 4rem;
   background-color: #888;
+}
+
+main {
+  padding-top: 0.5rem;
 }
 
 .breakAll {
@@ -128,7 +132,8 @@ td[data-col=Action] {
     height: 100vw;
     width: 4rem;
     flex-flow: column;
-    padding-top: 0.6rem;
+/*    padding-top: 0.6rem */
+    padding-top: 1.2rem;
     padding-left: 0;
     padding-right: 0;
     padding-bottom: 6.5rem;
@@ -137,6 +142,9 @@ td[data-col=Action] {
   body {
     padding-top: 0;
     padding-left: 4rem;
+  }
+  main {
+    padding-top: 0;
   }
   #headerLeft {
     margin-bottom: 2rem;
@@ -280,10 +288,14 @@ button {
   background-color: inherit !important;
 }
 
+.not-clickable-nobg {
+  cursor: default !important;
+}
+
 [data-col=Pos],
 [data-col=Type],
 [data-col=Track] {
-  width: 2rem;
+  max-width: 5rem;
   min-width: min-content;
   /* @alternate */
   min-width: -moz-min-content;
@@ -300,10 +312,6 @@ tr > th {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-small {
-  color: #aaa;
 }
 
 .card {
@@ -335,8 +343,8 @@ small {
   border-radius: 5px;
   overflow: hidden;
   max-width: 100%;
-  width: var(--mympd-coverimagesizesmall, 200px);
-  height: var(--mympd-coverimagesizesmall, 200px);
+  width: var(--mympd-coverimagesizesmall, 175px);
+  height: var(--mympd-coverimagesizesmall, 175px);
   background-color: #eee;
   float: left;
   margin-bottom: 1.25rem;
@@ -345,8 +353,44 @@ small {
   z-index: 1;
 }
 
+.home-icons {
+  width: 8rem;
+  min-height: 0 !important;
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+  max-width: 100%;
+  text-align: center;
+  padding-top: 0.8rem;
+  border-radius: 0;
+}
+
+.home-icons .card-body {
+  font-size: 2rem;
+  height: 4rem;
+  width: 4rem;
+  padding-bottom:0;
+  background-size: cover;
+  background-position: center center;
+  background-color: var(--mympd-highlightcolor, #28a745);
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+  padding-top: 1rem;
+  padding-left:0;
+  padding-right:0;
+}
+
+.home-icons .card-footer {
+  border-top: none;
+  background-color: transparent;
+}
+
+.dragover-icon {
+  border-left: 1px solid var(--mympd-highlightcolor, #28a745);
+}
+
 .card-grid {
-  width: var(--mympd-coverimagesizesmall, 200px);
+  width: var(--mympd-coverimagesizesmall, 175px);
   min-height: 0 !important;
   margin-bottom: 1.25rem;
   overflow: hidden;
@@ -359,7 +403,8 @@ small {
   text-overflow: ellipsis;
 }
 
-.card-grid:focus {
+.card-grid:focus,
+.home-icons:focus {
   border-width: 1px;
   border-style: solid;
   border-color:var(--mympd-highlightcolor, #28a745) !important;
@@ -369,14 +414,15 @@ small {
   background-size: cover;
   overflow: hidden;
   background-color: #eee;
-  width: var(--mympd-coverimagesizesmall, 200px);
-  height: var(--mympd-coverimagesizesmall, 200px);
+  width: var(--mympd-coverimagesizesmall, 175px);
+  height: var(--mympd-coverimagesizesmall, 175px);
   max-width: 100%;
-  padding: 0 0.5rem;
+  padding: 0.5rem;
 }
 
 .album-cover-loading {
-  background-image: url("../assets/coverimage-loading.svg");
+/*  background-image: url("../assets/coverimage-loading.svg");*/
+  background-image: url("../assets/coverimage-mympd.svg");
 }
 
 .album-cover-songdetails {
@@ -427,7 +473,7 @@ small {
   font-family: 'Material Icons';
   font-weight: normal;
   font-style: normal;
-  font-size: 1.4rem;  /* Preferred icon size */
+  font-size: 1.4rem;
   line-height: 1;
   text-transform: none;
   letter-spacing: normal;
@@ -450,9 +496,9 @@ small {
 }
 
 .material-icons-left {
-  font-size: 1rem;
+/*  font-size: 1rem; */
   margin-left: -1em;
-  vertical-align: middle;
+/*  vertical-align: middle; */
 }
 
 .material-icons-small {
@@ -463,10 +509,12 @@ small {
   font-size: 2.4rem;
 }
 
+/*
 .material-icons-small-left {
   font-size: 1rem;
   margin-left: -1em;
 }
+*/
 
 .btn-sm-big-icon {
   font-size: 1.4rem !important;
@@ -609,7 +657,8 @@ div.key {
   line-height: 2rem;
 }
 
-ol#searchCrumb {
+ol#searchCrumb,
+ol#searchDatabaseCrumb {
   padding: 0.5rem;
 }
 
@@ -621,9 +670,12 @@ ol#searchCrumb {
   font-size: 1.2rem;
 }
 
-#mainMenu {
-  font-size: 2.5rem;
+#mainMenu img {
+  width: 2.5rem;
+  height: 2.5rem;
+/*  font-size: 2.5rem;
   margin-right: 5px;
+*/
 }
 
 .connected,
@@ -783,13 +835,20 @@ a.text-success:focus {
   font-size: 0.8rem;
 }
 
+#top-alerts {
+  position: fixed;
+  width: 100%;
+  z-index: 1000;
+  top: 0;
+}
+
 .top-alert {
   border-radius: 0;
   border-left: none;
   border-right: none;
   padding-top: 0.3rem;
   padding-bottom: 0.1rem;
-  margin-top: -0.3rem;
+  margin-bottom: 0;
 }
 
 #lyricsText {
@@ -862,5 +921,75 @@ div#footerProgressPos {
 }
 
 div.active #badgeQueueItems {
- filter: brightness(80%);
+  filter: brightness(80%);
+}
+
+.btn .badge {
+  top: -2px;
+  left: 7px;
+}
+
+div.BrowseDatabaseCardsContainer,
+div.HomeContainer {
+  padding-right: 5px;
+  padding-left: 5px;
+}
+
+div.BrowseDatabaseCardsContainer .col,
+div.HomeContainer .col {
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.btn.disabled,
+.btn:disabled {
+  cursor: default;
+  opacity: 0.50;
+}
+
+div#modalPictureImg {
+  background-position: center center;
+  background-size: cover;
+  padding-top: 100%;
+  width: 100%;
+}
+
+div#BrowseFilesystemImages {
+  height: calc(var(--mympd-coverimagesizesmall, 175px) + 1rem);
+  margin-bottom: 1rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+}
+
+div#BrowseFilesystemImages > div {
+  height: var(--mympd-coverimagesizesmall, 175px);
+  width: var(--mympd-coverimagesizesmall, 175px);
+  background-position: center center;
+  background-size: cover;
+  display: inline-block;
+  margin-right: 1rem;
+  cursor: pointer;
+}
+
+div#homeIconPreview {
+  background-position: center center;
+  background-size: cover;
+  width: 4rem;
+  height: 4rem; 
+  font-size: 2rem;
+  padding-bottom:0;
+  text-align: center;
+  padding-top: 1rem;
+  float:left;
+  margin-right: 2rem;
+}
+
+div.album-grid-mouseover {
+  background-color: rgba(0, 0, 0, 0.5);  
+  color: white;
+  width: 3rem;
+  height: 3rem;
+  padding: 0.3rem;
+  font-size: 2.4rem;
 }

@@ -93,6 +93,48 @@ struct list_node *list_node_at(const struct list *l, unsigned index) {
     return current;
 }
 
+bool list_move_item_pos(struct list *l, unsigned from, unsigned to) {
+    if (from > l->length || to > l->length) {
+        return false;
+    }
+    if (from == to) {
+        return true;
+    }
+
+    //extract node at from position;
+    struct list_node *node = list_node_extract(l, from);
+    if (node == NULL) {
+        return false;
+    }
+
+    struct list_node *current = l->head;
+    struct list_node **previous = &l->head;
+    if (to > from) {
+        to--;
+    }
+    for (; to > 0; to--) {
+        previous = &current->next;
+        current = current->next;
+    }
+    //insert extracted node
+    node->next = *previous;
+    *previous = node;
+    l->length++;
+    return true;
+}
+
+bool list_swap_item_pos(struct list *l, unsigned index1, unsigned index2) {
+   if (l->length < 2) {
+        return false;
+    }
+    struct list_node *node1 = list_node_at(l, index1);
+    struct list_node *node2 = list_node_at(l, index2);
+    if (node1 == NULL || node2 == NULL) {
+        return false;
+    }
+    return list_swap_item(node1, node2);
+}
+
 bool list_swap_item(struct list_node *n1, struct list_node *n2) {
     if (n1 == n2) {
         return false;
@@ -225,11 +267,11 @@ bool list_sort_by_key(struct list *l, bool order) {
     return true;
 }
 
-bool list_replace(struct list *l, int pos, const char *key, long value_i, const char *value_p, void *user_data) {
+bool list_replace(struct list *l, unsigned pos, const char *key, long value_i, const char *value_p, void *user_data) {
     if (pos >= l->length) {
         return false;
     }
-    int i = 0;
+    unsigned i = 0;
     struct list_node *current = l->head;
     while (current->next != NULL) {
         if (i == pos) {
@@ -366,32 +408,40 @@ bool list_free(struct list *l) {
         free(tmp);
     }
     list_init(l);
-    return 0;
+    return true;
 }
 
 //private functions
-
 static struct list_node *list_node_extract(struct list *l, unsigned idx) {
-    if (l->head == NULL) { 
+    if (l->head == NULL || idx >= l->length) { 
         return NULL; 
     }
-    struct list_node *current = l->head;
-    struct list_node **previous = &l->head;
-    for (; idx > 0; idx--) {
-        if (current->next == NULL) {
-            return NULL;
+
+    struct list_node *current = NULL;
+    struct list_node *previous = NULL;
+    unsigned i = 0;
+    for (current = l->head; current != NULL; previous = current, current = current->next) {
+        if (i == idx) {
+            if (previous == NULL) {
+                //Fix head
+                l->head = current->next;
+            }
+            else {
+                //Fix previous nodes next to skip over the removed node
+                previous->next = current->next;
+            }
+            //Fix tail
+            if (l->tail == current) {
+                l->tail = previous;
+            }
+            l->length--;
+            break;
         }
-        previous = &current->next;
-        current = current->next;
+        i++;
     }
-    //set tail to the previous node, if it is removed
-    if (l->tail == current) {
-        l->tail = *previous;
-    }
-    //set the previous node's 'next' value to the current nodes next value
-    *previous = current->next;
     //null out this node's next value since it's not part of a list anymore
-    current->next = NULL;
-    l->length--;
+    if (current != NULL) {
+        current->next = NULL;
+    }
     return current;
 }

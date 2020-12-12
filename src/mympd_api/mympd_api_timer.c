@@ -4,6 +4,8 @@
  https://github.com/jcorporation/mympd
 */
 
+#include <assert.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdint.h>
@@ -13,7 +15,6 @@
 #include <poll.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <errno.h>
 #include <time.h>
 
 #include "../../dist/src/frozen/frozen.h"
@@ -121,6 +122,7 @@ bool add_timer(struct t_timer_list *l, unsigned int timeout, unsigned int interv
     }
 
     struct t_timer_node *new_node = (struct t_timer_node *)malloc(sizeof(struct t_timer_node));
+    assert(new_node);
     if (new_node == NULL) {
         return false;
     }
@@ -406,10 +408,10 @@ bool timerfile_read(t_config *config, t_mympd_state *mympd_state) {
     char *line = NULL;
     size_t n = 0;
     FILE *fp = fopen(timer_file, "r");
-    sdsfree(timer_file);
     if (fp != NULL) {
         while (getline(&line, &n, fp) > 0) {
             struct t_timer_definition *timer_def = malloc(sizeof(struct t_timer_definition));
+            assert(timer_def);
             sds param = sdscatfmt(sdsempty(), "{params: %s}", line);
             timer_def = parse_timer(timer_def, param, sdslen(param));
             int timerid;
@@ -424,11 +426,17 @@ bool timerfile_read(t_config *config, t_mympd_state *mympd_state) {
             }
             else {
                 LOG_ERROR("Invalid timer line");
+                LOG_DEBUG("Errorneous line: %s", line);
             }
         }
         FREE_PTR(line);
         fclose(fp);
     }
+    else {
+        //ignore error
+        LOG_DEBUG("Can not open file \"%s\": %s", timer_file, strerror(errno));
+    }
+    sdsfree(timer_file);
     LOG_VERBOSE("Read %d timer(s) from disc", mympd_state->timer_list.length);
     return true;
 }
@@ -441,7 +449,7 @@ bool timerfile_save(t_config *config, t_mympd_state *mympd_state) {
     sds tmp_file = sdscatfmt(sdsempty(), "%s/state/timer_list.XXXXXX", config->varlibdir);
     int fd = mkstemp(tmp_file);
     if (fd < 0) {
-        LOG_ERROR("Can't open %s for write", tmp_file);
+        LOG_ERROR("Can not open file \"%s\" for write: %s", tmp_file, strerror(errno));
         sdsfree(tmp_file);
         return false;
     }
@@ -487,7 +495,7 @@ bool timerfile_save(t_config *config, t_mympd_state *mympd_state) {
     sdsfree(buffer);
     sds timer_file = sdscatfmt(sdsempty(), "%s/state/timer_list", config->varlibdir);
     if (rename(tmp_file, timer_file) == -1) {
-        LOG_ERROR("Renaming file from %s to %s failed", tmp_file, timer_file);
+        LOG_ERROR("Renaming file from \"%s\" to \"%s\" failed: %s", tmp_file, timer_file, strerror(errno));
         sdsfree(tmp_file);
         sdsfree(timer_file);
         return false;

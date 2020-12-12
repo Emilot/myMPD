@@ -11,8 +11,8 @@ include(GNUInstallDirs)
 project (mympd C)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/")
 set(CPACK_PACKAGE_VERSION_MAJOR "6")
-set(CPACK_PACKAGE_VERSION_MINOR "7")
-set(CPACK_PACKAGE_VERSION_PATCH "0")
+set(CPACK_PACKAGE_VERSION_MINOR "8")
+set(CPACK_PACKAGE_VERSION_PATCH "3")
 
 if(EXISTS "/etc/arch-release")
   set(WEBAPPS "/webapps/${PROJECT_NAME}")
@@ -215,6 +215,7 @@ set(SOURCES
   src/mpd_worker/mpd_worker_stickercache.c
   src/mympd_api.c
   src/mympd_api/mympd_api_bookmarks.c
+  src/mympd_api/mympd_api_home.c
   src/mympd_api/mympd_api_utility.c
   src/mympd_api/mympd_api_settings.c
   src/mympd_api/mympd_api_syscmds.c

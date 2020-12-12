@@ -4,13 +4,13 @@
  https://github.com/jcorporation/mympd
 */
 
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/stat.h> 
 #include <string.h>
-#include <errno.h>
 #include <mpd/client.h>
 
 #include "../../dist/src/sds/sds.h"
@@ -23,6 +23,7 @@
 #include "../mpd_shared/mpd_shared_typedefs.h"
 #include "../mpd_shared/mpd_shared_tags.h"
 #include "../mpd_shared.h"
+#include "../random.h"
 #include "mpd_shared_playlists.h"
 
 unsigned long mpd_shared_get_db_mtime(t_mpd_state *mpd_state) {
@@ -152,21 +153,20 @@ sds mpd_shared_playlist_shuffle_sort(t_mpd_state *mpd_state, sds buffer, sds met
         }
     }
     
+    unsigned int randnr = randrange(100000,999999);
+    sds uri_tmp = sdscatprintf(sdsempty(), "%u-tmp-%s", randnr, uri);
+    sds uri_old = sdscatprintf(sdsempty(), "%u-old-%s", randnr, uri);
+    
+    //add sorted/shuffled songs to a new playlist
     if (mpd_command_list_begin(mpd_state->conn, false) == true) {
-        rc = mpd_send_playlist_clear(mpd_state->conn, uri);
-        if (rc == false) {
-            LOG_ERROR("Error adding command to command list mpd_send_playlist_clear");
-        }
-        else {
-            struct list_node *current = plist.head;
-            while (current != NULL) {
-                rc = mpd_send_playlist_add(mpd_state->conn, uri, current->key);
-                if (rc == false) {
-                    LOG_ERROR("Error adding command to command list mpd_send_playlist_add");
-                    break;
-                }
-                current = current->next;
+        struct list_node *current = plist.head;
+        while (current != NULL) {
+            rc = mpd_send_playlist_add(mpd_state->conn, uri_tmp, current->key);
+            if (rc == false) {
+                LOG_ERROR("Error adding command to command list mpd_send_playlist_add");
+                break;
             }
+            current = current->next;
         }
         if (mpd_command_list_end(mpd_state->conn)) {
             mpd_response_finish(mpd_state->conn);
@@ -174,8 +174,40 @@ sds mpd_shared_playlist_shuffle_sort(t_mpd_state *mpd_state, sds buffer, sds met
     }
     list_free(&plist);
     if (check_error_and_recover2(mpd_state, &buffer, method, request_id, false) == false) {
+        rc = mpd_run_rm(mpd_state->conn, uri_tmp);
+        check_rc_error_and_recover(mpd_state, NULL, method, request_id, false, rc, "mpd_run_rm");
+        sdsfree(uri_tmp);
+        sdsfree(uri_old);
         return buffer;
     }
+
+    //rename original playlist to old playlist
+    rc = mpd_run_rename(mpd_state->conn, uri, uri_old);
+    if (check_rc_error_and_recover(mpd_state, &buffer, method, request_id, false, rc, "mpd_run_rename") == false) {
+        sdsfree(uri_tmp);
+        sdsfree(uri_old);
+        return buffer;
+    }
+    //rename new playlist to orginal playlist
+    rc = mpd_run_rename(mpd_state->conn, uri_tmp, uri);
+    if (check_rc_error_and_recover(mpd_state, &buffer, method, request_id, false, rc, "mpd_run_rename") == false) {
+        //restore original playlist
+        rc = mpd_run_rename(mpd_state->conn, uri_old, uri);
+        check_rc_error_and_recover(mpd_state, NULL, method, request_id, false, rc, "mpd_run_rename");
+        sdsfree(uri_tmp);
+        sdsfree(uri_old);
+        return buffer;
+    }
+    //delete old playlist
+    rc = mpd_run_rm(mpd_state->conn, uri_old);
+    if (check_rc_error_and_recover(mpd_state, &buffer, method, request_id, false, rc, "mpd_run_rm") == false) {
+        sdsfree(uri_tmp);
+        sdsfree(uri_old);
+        return buffer;
+    }
+    
+    sdsfree(uri_tmp);
+    sdsfree(uri_old);
     
     if (sort_tags.tags[0] != MPD_TAG_UNKNOWN) {
         enable_mpd_tags(mpd_state, mpd_state->mympd_tag_types);
@@ -201,7 +233,7 @@ bool mpd_shared_smartpls_save(t_config *config, const char *smartpltype, const c
     sds tmp_file = sdscatfmt(sdsempty(), "%s/smartpls/%s.XXXXXX", config->varlibdir, playlist);
     int fd = mkstemp(tmp_file);
     if (fd < 0 ) {
-        LOG_ERROR("Can't open %s for write", tmp_file);
+        LOG_ERROR("Can not open file \"%s\" for write: %s", tmp_file, strerror(errno));
         sdsfree(tmp_file);
         return false;
     }
@@ -232,7 +264,7 @@ bool mpd_shared_smartpls_save(t_config *config, const char *smartpltype, const c
     sds pl_file = sdscatfmt(sdsempty(), "%s/smartpls/%s", config->varlibdir, playlist);
     rc = rename(tmp_file, pl_file);
     if (rc == -1) {
-        LOG_ERROR("Renaming file from %s to %s failed", tmp_file, pl_file);
+        LOG_ERROR("Renaming file from %s to %s failed: %s", tmp_file, pl_file, strerror(errno));
         sdsfree(tmp_file);
         sdsfree(pl_file);
         return false;

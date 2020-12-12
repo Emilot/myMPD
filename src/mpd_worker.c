@@ -43,6 +43,7 @@ void *mpd_worker_loop(void *arg_config) {
     t_config *config = (t_config *) arg_config;
     //State of mpd connection
     t_mpd_worker_state *mpd_worker_state = (t_mpd_worker_state *)malloc(sizeof(t_mpd_worker_state));
+    assert(mpd_worker_state);
     default_mpd_worker_state(mpd_worker_state);
 
     //wait for initial settings
@@ -80,6 +81,24 @@ static void mpd_worker_idle(t_config *config, t_mpd_worker_state *mpd_worker_sta
     
     switch (mpd_worker_state->mpd_state->conn_state) {
         case MPD_WAIT: {
+            mpd_worker_queue_length = tiny_queue_length(mpd_worker_queue, 50);
+            if (mpd_worker_queue_length > 0) {
+                //Handle request
+                LOG_DEBUG("Handle request (mpd disconnected)");
+                t_work_request *request = tiny_queue_shift(mpd_worker_queue, 50, 0);
+                if (request != NULL) {
+                    if (request->cmd_id == MYMPD_API_SETTINGS_SET) {
+                        //allow to change mpd host
+                        mpd_worker_api(config, mpd_worker_state, request);
+                        mpd_worker_state->mpd_state->conn_state = MPD_DISCONNECTED;
+                    }
+                    else {
+                        //other requests not allowed
+                        free_request(request);
+                    }
+                }
+            }
+
             time_t now = time(NULL);
             if (now > mpd_worker_state->mpd_state->reconnect_time) {
                 mpd_worker_state->mpd_state->conn_state = MPD_DISCONNECTED;

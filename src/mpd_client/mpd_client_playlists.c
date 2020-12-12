@@ -4,11 +4,13 @@
  https://github.com/jcorporation/mympd
 */
 
+#define _GNU_SOURCE
+
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <errno.h>
 #include <dirent.h>
 #include <inttypes.h>
 #include <ctype.h>
@@ -51,41 +53,21 @@ void mpd_client_smartpls_update_all(void) {
 }
 
 sds mpd_client_put_playlists(t_config *config, t_mpd_client_state *mpd_client_state, sds buffer, sds method, long request_id,
-                             const unsigned int offset, const char *filter, bool paginated) 
+                             const unsigned int offset, const char *searchstr, bool paginated) 
 {
-    buffer = jsonrpc_start_result(buffer, method, request_id);
-    buffer = sdscat(buffer,",\"data\":[");
-
     bool rc = mpd_send_list_playlists(mpd_client_state->mpd_state->conn);
     if (check_rc_error_and_recover(mpd_client_state->mpd_state, &buffer, method, request_id, false, rc, "mpd_send_list_playlists") == false) {
         return buffer;
     }
 
     struct mpd_playlist *pl;
-    unsigned entity_count = 0;
-    unsigned entities_returned = 0;
+    struct list entity_list;
+    list_init(&entity_list);
+    size_t search_len = strlen(searchstr);
     while ((pl = mpd_recv_playlist(mpd_client_state->mpd_state->conn)) != NULL) {
-        entity_count++;
-        if ((entity_count > offset && entity_count <= offset + mpd_client_state->max_elements_per_page) ||
-            paginated == false) 
-        {
-            const char *plpath = mpd_playlist_get_path(pl);
-            if (strncmp(filter, "-", 1) == 0 || strncasecmp(filter, plpath, 1) == 0 ||
-               (strncmp(filter, "0", 1) == 0 && isalpha(*plpath) == 0 )) 
-            {
-                if (entities_returned++) {
-                    buffer = sdscat(buffer,",");
-                }
-                bool smartpls = is_smartpls(config, mpd_client_state, plpath);
-                buffer = sdscat(buffer, "{");
-                buffer = tojson_char(buffer, "Type", (smartpls == true ? "smartpls" : "plist"), true);
-                buffer = tojson_char(buffer, "uri", plpath, true);
-                buffer = tojson_char(buffer, "name", plpath, true);
-                buffer = tojson_long(buffer, "last_modified", mpd_playlist_get_last_modified(pl), false);
-                buffer = sdscat(buffer, "}");
-            } else {
-                entity_count--;
-            }
+        const char *plpath = mpd_playlist_get_path(pl);
+        if (search_len == 0  || strcasestr(plpath, searchstr) != NULL) {
+            list_push(&entity_list, plpath, mpd_playlist_get_last_modified(pl), NULL, NULL);
         }
         mpd_playlist_free(pl);
     }
@@ -94,7 +76,36 @@ sds mpd_client_put_playlists(t_config *config, t_mpd_client_state *mpd_client_st
         return buffer;
     }
 
+    list_sort_by_key(&entity_list, true);
+    
+    buffer = jsonrpc_start_result(buffer, method, request_id);
+    buffer = sdscat(buffer,",\"data\":[");
+
+    unsigned entity_count = 0;
+    unsigned entities_returned = 0;
+    struct list_node *current = entity_list.head;
+    while (current != NULL) {
+        entity_count++;
+        if ((entity_count > offset && entity_count <= offset + mpd_client_state->max_elements_per_page) ||
+            paginated == false) 
+        {
+            if (entities_returned++) {
+                buffer = sdscat(buffer,",");
+            }
+            bool smartpls = is_smartpls(config, mpd_client_state, current->key);
+            buffer = sdscat(buffer, "{");
+            buffer = tojson_char(buffer, "Type", (smartpls == true ? "smartpls" : "plist"), true);
+            buffer = tojson_char(buffer, "uri", current->key, true);
+            buffer = tojson_char(buffer, "name", current->key, true);
+            buffer = tojson_long(buffer, "last_modified", current->value_i, false);
+            buffer = sdscat(buffer, "}");
+        }
+        current = current->next;
+    }
+    list_free(&entity_list);
+    
     buffer = sdscat(buffer, "],");
+    buffer = tojson_char(buffer, "searchstr", searchstr, true);
     buffer = tojson_long(buffer, "totalEntities", entity_count, true);
     buffer = tojson_long(buffer, "returnedEntities", entities_returned, true);
     buffer = tojson_long(buffer, "offset", offset, false);
@@ -104,7 +115,7 @@ sds mpd_client_put_playlists(t_config *config, t_mpd_client_state *mpd_client_st
 }
 
 sds mpd_client_put_playlist_list(t_config *config, t_mpd_client_state *mpd_client_state, sds buffer, sds method, long request_id,
-                                 const char *uri, const unsigned int offset, const char *filter, const t_tags *tagcols)
+                                 const char *uri, const unsigned int offset, const char *searchstr, const t_tags *tagcols)
 {
     bool rc = mpd_send_list_playlist_meta(mpd_client_state->mpd_state->conn, uri);
     if (check_rc_error_and_recover(mpd_client_state->mpd_state, &buffer, method, request_id, false, rc, "mpd_send_list_playlist_meta") == false) {
@@ -117,13 +128,13 @@ sds mpd_client_put_playlist_list(t_config *config, t_mpd_client_state *mpd_clien
     struct mpd_song *song;
     unsigned entities_returned = 0;
     unsigned entity_count = 0;
+    sds entityName = sdsempty();
+    size_t search_len = strlen(searchstr);
     while ((song = mpd_recv_song(mpd_client_state->mpd_state->conn)) != NULL) {
         entity_count++;
         if (entity_count > offset && entity_count <= offset + mpd_client_state->max_elements_per_page) {
-            const char *entityName = mpd_shared_get_tag(song, MPD_TAG_TITLE);
-            if (strncmp(filter, "-", 1) == 0 || strncasecmp(filter, entityName, 1) == 0 ||
-               (strncmp(filter, "0", 1) == 0 && isalpha(*entityName) == 0))
-            {
+            entityName = mpd_shared_get_tags(song, MPD_TAG_TITLE, entityName);
+            if (search_len == 0  || strcasestr(entityName, searchstr) != NULL) {
                 if (entities_returned++) {
                     buffer= sdscat(buffer, ",");
                 }
@@ -139,7 +150,7 @@ sds mpd_client_put_playlist_list(t_config *config, t_mpd_client_state *mpd_clien
         }
         mpd_song_free(song);
     }
-
+    sdsfree(entityName);
     mpd_response_finish(mpd_client_state->mpd_state->conn);
     if (check_error_and_recover2(mpd_client_state->mpd_state, &buffer, method, request_id, false) == false) {
         return buffer;
@@ -151,7 +162,7 @@ sds mpd_client_put_playlist_list(t_config *config, t_mpd_client_state *mpd_clien
     buffer = tojson_long(buffer, "totalEntities", entity_count, true);
     buffer = tojson_long(buffer, "returnedEntities", entities_returned, true);
     buffer = tojson_long(buffer, "offset", offset, true);
-    buffer = tojson_char(buffer, "filter", filter, true);
+    buffer = tojson_char(buffer, "searchstr", searchstr, true);
     buffer = tojson_char(buffer, "uri", uri, true);
     buffer = tojson_bool(buffer, "smartpls", smartpls, false);
     buffer = jsonrpc_end_result(buffer);
@@ -174,7 +185,7 @@ sds mpd_client_playlist_rename(t_config *config, t_mpd_client_state *mpd_client_
             if (access(new_pl_file, F_OK ) == -1) { /* Flawfinder: ignore */
                 //new playlist doesn't exist
                 if (rename(old_pl_file, new_pl_file) == -1) {
-                    LOG_ERROR("Renaming smart playlist %s to %s failed", old_pl_file, new_pl_file);
+                    LOG_ERROR("Renaming smart playlist %s to %s failed: %s", old_pl_file, new_pl_file, strerror(errno));
                     buffer = jsonrpc_respond_message(buffer, method, request_id, "Renaming playlist failed", true);
                     sdsfree(old_pl_file);
                     sdsfree(new_pl_file);
@@ -203,12 +214,17 @@ sds mpd_client_playlist_delete(t_config *config, t_mpd_client_state *mpd_client_
     if (mpd_client_state->feat_smartpls == true) {
         sds pl_file = sdscatfmt(sdsempty(), "%s/smartpls/%s", config->varlibdir, playlist);
         int rc = unlink(pl_file);
-        sdsfree(pl_file);
         if (rc == -1 && errno != ENOENT) {
             buffer = jsonrpc_respond_message(buffer, method, request_id, "Deleting smart playlist failed", true);
             LOG_ERROR("Deleting smart playlist \"%s\" failed: %s", playlist, strerror(errno));
+            sdsfree(pl_file);
             return buffer;
         }
+        else {
+            //ignore error
+            LOG_DEBUG("Error removing file \"%s\": %s", pl_file, strerror(errno));
+        }
+        sdsfree(pl_file);
     }
     //remove mpd playlist
     bool rc = mpd_run_rm(mpd_client_state->mpd_state->conn, playlist);
@@ -349,7 +365,7 @@ sds mpd_client_playlist_delete_all(t_config *config, t_mpd_client_state *mpd_cli
                             LOG_VERBOSE("Removed orphaned smartpls file \"%s\"", smartpls_file);
                         }
                         else {
-                            LOG_ERROR("Removing smartpls file \"%s\" failed: %s", smartpls_file, strerror(errno));
+                            LOG_ERROR("Error removing file \"%s\": %s", smartpls_file, strerror(errno));
                         }
                         sdsfree(smartpls_file);
                     }
@@ -358,7 +374,7 @@ sds mpd_client_playlist_delete_all(t_config *config, t_mpd_client_state *mpd_cli
             closedir(smartpls_dir);
         }
         else {
-            LOG_ERROR("Can not open smartpls dir \"%s\"", smartpls_path);
+            LOG_ERROR("Can not open smartpls dir \"%s\": %s", smartpls_path, strerror(errno));
         }
         sdsfree(smartpls_path);
     }

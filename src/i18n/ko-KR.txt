@@ -726,9 +726,6 @@ Focus search
 myMPD installed as app
 myMPD가 앱으로 설치됨
 
-Can not start playing
-연주를 시작할 수 없음
-
 MPD disconnected
 MPD 연결 끊어짐
 
@@ -794,9 +791,6 @@ Edit playlist
 
 Update smart playlist
 스마트 연주목록 업데이트
-
-Delete playlist
-연주목록 지우기
 
 Remove
 지우기
@@ -1245,9 +1239,6 @@ Info
 Error
 오류
 
-Websocket is disconnected
-웹소켓 연결 안 됨
-
 Auto
 자동
 
@@ -1517,3 +1508,144 @@ enabled
 
 No mixed content,  MPD stream must be served over https:
 혼합된 컨텐트는 안되며, MPD 스트리밍 서비스는 https:를 통해야 합니다.
+
+Details
+상세
+
+Port
+포트
+
+Websocket is disconnected
+웹소켓 연결 안 됨
+
+Goto playing song
+연주 곡으로 가기
+
+Download booklet
+책자 내려받기
+
+Zoom
+확대
+
+Disc 1
+디스크 1
+
+Disc
+디스크
+
+Can not delete home icon
+홈 아이콘을 지울 수 없음
+
+Can not save home icon
+홈 아이콘을 저장할 수 없음
+
+Home
+홈
+
+Add to homescreen
+홈 화면에 추가
+
+Can not get home icon
+홈 화면을 가져올 수 없음
+
+Can not move home icon
+홈 화면을 옮길 수 없음
+
+Delete home icon
+홈 화면 지움
+
+Duplicate home icon
+홈 화면 복사
+
+Edit home icon
+홈 화면 수정
+
+Ligature
+연결
+
+Options
+옵션
+
+Picture
+그림
+
+Homescreen welcome
+홈 아이콘을 아직 추가하지 않았습니다. 보기, 연주목록, 스크립트를 추가할 수 있습니다.
+
+Can not open directory pics
+디렉터리 그림을 열 수 없음
+
+Ligature overview
+연결 미리보기
+
+Use ligature
+연결 사용
+
+Add and play playlist
+연주목록에 추가하고 연주하기
+
+Goto view
+보기로 가기
+
+View
+보기
+
+Could not remove song from jukebox queue
+뮤직박스 순서의 곡을 지울 수 없음
+
+Reset to default
+기본값으로 설정
+
+Execute Script
+스크립트 실행
+
+App
+앱
+
+Tab
+탭
+
+Offset
+오프셋
+
+Filter
+필터
+
+Sort
+정렬
+
+Tag
+태그
+
+Columns
+열
+
+Display tags
+태그 표시
+
+Next
+다음
+
+Outputs
+출력
+
+Playback settings
+연주 설정
+
+Previous
+이전
+
+Select view
+보기 선택
+
+Show cover
+커버 보기
+
+Toggle play
+연주 토글
+
+myMPD menu
+myMPD 메뉴
+
+Invalid volume level
+잘못된 음량 수준

@@ -22,13 +22,18 @@ function navBrowseHandler(event) {
             app.current.filter = tag;
             app.current.sort = tag;
         }
-        appGoto(app.current.app, app.current.tab, app.current.view, '0/' + app.current.filter + '/' + app.current.sort + '/' 
-                + tag  + '/' + app.current.search);
+        app.current.search = '';
+        document.getElementById('searchDatabaseMatch').value = 'contains';
+        appGoto(app.current.app, app.current.tab, app.current.view, 
+            '0', app.current.filter, app.current.sort, tag, app.current.search);
     }
 }
 
 function gotoBrowse() {
-    let x = event.target;
+    if (settings.featAdvsearch === false) {
+        return;
+    }
+    const x = event.target;
     let tag = x.getAttribute('data-tag');
     let name = decodeURI(x.getAttribute('data-name'));
     if (tag === null) {
@@ -36,7 +41,24 @@ function gotoBrowse() {
         name = decodeURI(x.parentNode.getAttribute('data-name'));
     }
     if (tag !== '' && name !== '' && name !== '-' && settings.browsetags.includes(tag)) {
-        appGoto('Browse', 'Database', 'List', '0/' + tag + '/AlbumArtist/Album/' + name);
+        if (tag === 'Album') {
+            let artist = x.getAttribute('data-albumartist');
+            if (artist === null) {
+                artist = x.parentNode.getAttribute('data-albumartist');
+            }
+            if (artist !== null) {
+                //Show album details
+                appGoto('Browse', 'Database', 'Detail', '0', tag, tagAlbumArtist, name, decodeURI(artist));
+            }
+            else {
+                //show filtered album list
+                appGoto('Browse', 'Database', 'List', '0', tag, tagAlbumArtist, 'Album', '(' + tag + ' == \'' + name + '\')');
+            }
+        }
+        else {
+            //show filtered album list
+            appGoto('Browse', 'Database', 'List', '0', tag, tagAlbumArtist, 'Album', '(' + tag + ' == \'' + name + '\')');
+        }
     }
 }
 
@@ -51,10 +73,33 @@ function parseFilesystem(obj) {
         tbody.innerHTML = '<tr><td><span class="material-icons">error_outline</span></td>' +
                           '<td colspan="' + colspan + '">' + t(obj.error.message) + '</td></tr>';
         document.getElementById(app.current.app + (app.current.tab === undefined ? '' : app.current.tab) + 'List').classList.remove('opacity05');
-        document.getElementById('cardFooterBrowse').innerText = '';
+        //document.getElementById('cardFooterBrowse').innerText = '';
         return;
     }
-
+    
+    if (app.current.app === 'Browse' && app.current.tab === 'Filesystem') {
+        const imageList = document.getElementById('BrowseFilesystemImages');
+        imageList.innerHTML = '';
+        if ((obj.result.images.length === 0 && obj.result.bookletPath === '') || settings.publish === false) {
+            imageList.classList.add('hide');
+        }
+        else {
+            imageList.classList.remove('hide');
+        }
+        if (obj.result.bookletPath !== '' && settings.publish === true) {
+            let img = document.createElement('div');
+            img.style.backgroundImage = 'url("' + subdir + '/assets/coverimage-booklet.svg")';
+            img.classList.add('booklet');
+            img.setAttribute('data-href', subdir + '/browse/music/' + obj.result.bookletPath);
+            img.title = t('Booklet');
+            imageList.appendChild(img);
+        }
+        for (let i = 0; i < obj.result.images.length; i++) {
+            let img = document.createElement('div');
+            img.style.backgroundImage = 'url("' + subdir + '/browse/music/' + obj.result.images[i] + '"),url("assets/coverimage-loading.svg")';
+            imageList.appendChild(img);
+        }
+    }
     let nrItems = obj.result.returnedEntities;
     let tr = tbody.getElementsByTagName('tr');
     let navigate = document.activeElement.parentNode.parentNode === table ? true : false;
@@ -66,6 +111,15 @@ function parseFilesystem(obj) {
         row.setAttribute('data-type', obj.result.data[i].Type);
         row.setAttribute('data-uri', uri);
         row.setAttribute('tabindex', 0);
+        if (app.current.app === 'Search' && settings.featTags === true && settings.featAdvsearch === true) {
+            //add artist and album information for album actions in search app
+            if (obj.result.data[i].Album !== null) {
+                row.setAttribute('data-album', encodeURI(obj.result.data[i].Album));
+            }
+            if (obj.result.data[i][tagAlbumArtist] !== null) {
+                row.setAttribute('data-albumartist', encodeURI(obj.result.data[i][tagAlbumArtist]));
+            }
+        }
         if (obj.result.data[i].Type === 'song') {
             row.setAttribute('data-name', obj.result.data[i].Title);
         }
@@ -96,7 +150,12 @@ function parseFilesystem(obj) {
                 row.innerHTML = tds;
                 break;
             case 'song':
-                obj.result.data[i].Duration = beautifySongDuration(obj.result.data[i].Duration);
+                if (obj.result.data[i].Duration !== undefined) {
+                    obj.result.data[i].Duration = beautifySongDuration(obj.result.data[i].Duration);
+                }
+                if (obj.result.data[i].LastModified !== undefined) {
+                    obj.result.data[i].LastModified = localeDate(obj.result.data[i].LastModified);
+                }
                 for (let c = 0; c < settings['cols' + list].length; c++) {
                     tds += '<td data-col="' + settings['cols' + list][c] + '">';
                     if (settings['cols' + list][c] === 'Type') {
@@ -192,6 +251,8 @@ function parseDatabase(obj) {
     let nrItems = obj.result.returnedEntities;
     let cardContainer = document.getElementById('BrowseDatabaseCards');
     let cols = cardContainer.getElementsByClassName('col');
+    const has_io = 'IntersectionObserver' in window ? true : false;
+
     if (cols.length === 0) {
         cardContainer.innerHTML = '';
     }
@@ -204,7 +265,7 @@ function parseDatabase(obj) {
         if (obj.result.data[i].Album === '') {
             obj.result.data[i].Album = t('Unknown album');
         }
-        let id = genId('database' + obj.result.data[i].Album + obj.result.data[i].AlbumArtist);
+        let id;
         let html;
         let picture = '';
         if (obj.result.tag === 'Album') {
@@ -215,9 +276,9 @@ function parseDatabase(obj) {
                        'data-type="dir" data-name="' + encodeURI(obj.result.data[i].Album) + '" ' +
                        'data-album="' + encodeURI(obj.result.data[i].Album) + '" ' +
                        'data-albumartist="' + encodeURI(obj.result.data[i].AlbumArtist) + '" tabindex="0">' +
-                   '<div class="card-body album-cover-loading album-cover-grid bg-white" id="' + id + '"></div>' +
-                   '<div class="card-footer card-footer-grid p-2" title="' + obj.result.data[i].AlbumArtist + ': ' + obj.result.data[i].Album + '">' +
-                   obj.result.data[i].Album + '<br/><small>' + obj.result.data[i].AlbumArtist + '</small>' +
+                   '<div class="card-body album-cover-loading album-cover-grid bg-white d-flex" id="' + id + '"></div>' +
+                   '<div class="card-footer card-footer-grid p-2" title="' + e(obj.result.data[i].AlbumArtist) + ': ' + e(obj.result.data[i].Album) + '">' +
+                   e(obj.result.data[i].Album) + '<br/><small>' + e(obj.result.data[i].AlbumArtist) + '</small>' +
                    '</div></div>';
         }
         else {
@@ -225,8 +286,8 @@ function parseDatabase(obj) {
             picture = subdir + '/tagpics/' + obj.result.tag + '/' + encodeURI(obj.result.data[i].value);
             html = '<div class="card card-grid clickable" data-picture="' + picture + '" data-tag="' + encodeURI(obj.result.data[i].value) + '" tabindex="0">' +
                    (obj.result.pics === true ? '<div class="card-body album-cover-loading album-cover-grid bg-white" id="' + id + '"></div>' : '') +
-                   '<div class="card-footer card-footer-grid p-2" title="' + obj.result.data[i].value + '">' +
-                   obj.result.data[i].value + '<br/>' +
+                   '<div class="card-footer card-footer-grid p-2" title="' + e(obj.result.data[i].value) + '">' +
+                   e(obj.result.data[i].value) + '<br/>' +
                    '</div></div>';
         }
         col.innerHTML = html;
@@ -241,77 +302,21 @@ function parseDatabase(obj) {
             cardContainer.append(col);
             replaced = true;
         }
-        if ('IntersectionObserver' in window && replaced === true) {
-            let options = {
-                root: null,
-                rootMargin: '0px',
-            };
-            let observer = new IntersectionObserver(setGridImage, options);
-            observer.observe(col);
-        }
-        else if (replaced === true) {
-            col.firstChild.firstChild.style.backgroundImage = picture;
-        }
         if (replaced === true) {
-            col.firstChild.addEventListener('click', function(event) {
-                if (app.current.tag === 'Album') {
-                    if (event.target.classList.contains('card-body')) {
-                        appGoto('Browse', 'Database', 'Detail', '0/Album/AlbumArtist/' + 
-                            decodeURI(event.target.parentNode.getAttribute('data-album')) + 
-                            '/' + decodeURI(event.target.parentNode.getAttribute('data-albumartist')));
-                    }
-                    else if (event.target.classList.contains('card-footer')){
-                        showMenu(event.target, event);                
-                    }
-                }
-                else {
-                    appGoto(app.current.app, app.current.card, undefined, '0/' + app.current.tag + 
-                        '/AlbumArtist/Album/' + decodeURI(event.target.parentNode.getAttribute('data-tag')));
-                }
-            }, false);
-            col.firstChild.addEventListener('keydown', function(event) {
-                let handled = false;
-                if (event.key === 'Enter') {
-                    if (app.current.tag === 'Album') {
-                        appGoto('Browse', 'Database', 'Detail', '0/Album/AlbumArtist/' + 
-                            decodeURI(event.target.getAttribute('data-album')) + 
-                            '/' + decodeURI(event.target.getAttribute('data-albumartist')));
-                    }
-                    else {
-                        appGoto(app.current.app, app.current.card, undefined, '0/' + app.current.tag + 
-                        '/AlbumArtist/Album/' + decodeURI(event.target.getAttribute('data-tag')));
-                    }
-                    handled = true;
-                }
-                else if (event.key === ' ') {
-                    if (app.current.tag === 'Album') {
-                        showMenu(event.target.getElementsByClassName('card-footer')[0], event);
-                    }
-                    handled = true;
-                }
-                else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-                    const cur = event.target;
-                    const next = event.key === 'ArrowDown' ? (event.target.parentNode.nextElementSibling !== null ? event.target.parentNode.nextElementSibling.firstChild : null)
-                                                           : (event.target.parentNode.previousElementSibling != null ? event.target.parentNode.previousElementSibling.firstChild : null);
-                    if (next != null) {
-                        next.focus();
-                        cur.classList.remove('selected');
-                        next.classList.add('selected');
-                        handled = true;
-                        scrollFocusIntoView();
-                    }
-                }
-                else if (event.key === 'Escape') {
-                    const cur = event.target;
-                    cur.blur();
-                    cur.classList.remove('selected');
-                    handled = true;
-                }
-                if (handled === true) {
-                    event.stopPropagation();
-                    event.preventDefault();
-                }
-            }, false);
+            if (has_io === true) {
+                let options = {
+                    root: null,
+                    rootMargin: '0px',
+                };
+                let observer = new IntersectionObserver(setGridImage, options);
+                observer.observe(col);
+            }
+            else {
+                col.firstChild.firstChild.style.backgroundImage = picture;
+            }
+            if (obj.result.tag === 'Album' && isMobile === true) {
+                addPlayButton(document.getElementById(id));
+            }
         }
     }
     let colsLen = cols.length - 1;
@@ -340,18 +345,43 @@ function setGridImage(changes, observer) {
     });
 }
 
+function addPlayButton(parentEl) {
+    const div = document.createElement('div');
+    div.classList.add('align-self-end', 'album-grid-mouseover', 'material-icons', 'rounded-circle', 'clickable');
+    div.innerText = 'play_arrow';
+    parentEl.appendChild(div);
+    div.addEventListener('click', function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        replaceQueue('dir', decodeURI(event.target.parentNode.parentNode.getAttribute('data-uri')), decodeURI(event.target.parentNode.parentNode.getAttribute('data-name')));
+    }, false);
+}
+
 function parseAlbumDetails(obj) {
     const coverEl = document.getElementById('viewDetailDatabaseCover');
     coverEl.style.backgroundImage = 'url("' + subdir + '/albumart/' + obj.result.data[0].uri + '"), url("' + subdir + '/assets/coverimage-loading.svg")';
+    coverEl.setAttribute('data-images', obj.result.images.join(';;'));
     const infoEl = document.getElementById('viewDetailDatabaseInfo');
     infoEl.innerHTML = '<h1>' + e(obj.result.Album) + '</h1>' +
-        '<p>' + e(obj.result.AlbumArtist) + '</p>';
-    const cardFooter = document.getElementById('cardFooterBrowse');
+        '<small> ' + t('AlbumArtist') + '</small><p>' + e(obj.result.AlbumArtist) + '</p>' +
+        (obj.result.bookletPath === '' || settings.featBrowse === false ? '' : 
+            '<span class="text-light material-icons">description</span>&nbsp;<a class="text-light" target="_blank" href="' + subdir + '/browse/music/' + 
+            e(obj.result.bookletPath) + '">' + t('Download booklet') + '</a>') +
+        '</p>';
     const table = document.getElementById('BrowseDatabaseDetailList');
     const tbody = table.getElementsByTagName('tbody')[0];
+    const nrCols = settings.colsBrowseDatabaseDetail.length;
     let titleList = '';
+    if (obj.result.Discs > 1) {
+        titleList = '<tr class="not-clickable"><td><span class="material-icons">album</span></td><td colspan="' + nrCols +'">' + t('Disc 1') + '</td></tr>';
+    }
     let nrItems = obj.result.returnedEntities;
+    let lastDisc = parseInt(obj.result.data[0].Disc);
     for (let i = 0; i < nrItems; i++) {
+        if (lastDisc < parseInt(obj.result.data[i].Disc)) {
+            titleList += '<tr class="not-clickable"><td><span class="material-icons">album</span></td><td colspan="' + nrCols +'">' + 
+                t('Disc') + ' ' + e(obj.result.data[i].Disc) + '</td></tr>';
+        }
         if (obj.result.data[i].Duration) {
             obj.result.data[i].Duration = beautifySongDuration(obj.result.data[i].Duration);
         }
@@ -360,20 +390,27 @@ function parseAlbumDetails(obj) {
             titleList += '<td data-col="' + settings.colsBrowseDatabaseDetail[c] + '">' + e(obj.result.data[i][settings.colsBrowseDatabaseDetail[c]]) + '</td>';
         }
         titleList += '<td data-col="Action"><a href="#" class="material-icons color-darkgrey">' + ligatureMore + '</a></td></tr>';
+        lastDisc = obj.result.data[i].Disc;
     }
     tbody.innerHTML = titleList;
-    //cardFooter.innerHTML = t('Num songs', obj.result.totalEntities) + ' &ndash; ' + beautifyDuration(obj.result.totalTime);
+    //document.getElementById('cardFooterBrowse').innerHTML = t('Num songs', obj.result.totalEntities) + ' &ndash; ' + beautifyDuration(obj.result.totalTime);
     document.getElementById('BrowseDatabaseDetailList').classList.remove('opacity05');
 }
 
+//eslint-disable-next-line no-unused-vars
 function backToAlbumGrid() {
     appGoto('Browse', 'Database', 'List');
 }  
 
+//eslint-disable-next-line no-unused-vars
 function addAlbum(action) {
     const album = decodeURI(app.current.tag);
     const albumArtist = decodeURI(app.current.search);
-    const expression = '((Album == \'' + album + '\') AND (AlbumArtist == \'' + albumArtist + '\'))';
+    _addAlbum(action, albumArtist, album);
+}
+
+function _addAlbum(action, albumArtist, album) {
+    const expression = '((Album == \'' + album + '\') AND (' + tagAlbumArtist + ' == \'' + albumArtist + '\'))';
     if (action === 'appendQueue') {
         addAllFromSearchPlist('queue', expression, false);
     }
@@ -383,4 +420,28 @@ function addAlbum(action) {
     else if (action === 'addPlaylist') {
         showAddToPlaylist('ALBUM', expression);
     }
+}
+
+function searchAlbumgrid(x) {
+    let expression = '';
+    let crumbs = document.getElementById('searchDatabaseCrumb').children;
+    for (let i = 0; i < crumbs.length; i++) {
+        if (i > 0) {
+            expression += ' AND ';
+        }
+        expression += '(' + decodeURI(crumbs[i].getAttribute('data-filter')) + ')';
+    }
+    if (x !== '') {
+        if (expression !== '') {
+            expression += ' AND ';
+        }
+        let match = document.getElementById('searchDatabaseMatch');
+        expression += '(' + app.current.filter + ' ' + match.options[match.selectedIndex].value + ' \'' + x +'\')';
+    }
+    
+    if (expression.length <= 2) {
+        expression = '';
+    }
+    appGoto(app.current.app, app.current.tab, app.current.view, 
+        '0', app.current.filter, app.current.sort, app.current.tag, expression);
 }

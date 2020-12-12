@@ -12,9 +12,22 @@ function removeIsInvalid(el) {
     }
 }
 
-function getSelectValue(selectId) {
+function getSelectValue(el) {
+    if (typeof el === 'string')	{
+        el = document.getElementById(el);
+    }
+    if (el && el.selectedIndex >= 0) {
+        return el.options[el.selectedIndex].value;
+    }
+    return undefined;
+}
+
+function getSelectedOptionAttribute(selectId, attribute) {
     let el = document.getElementById(selectId);
-    return el.options[el.selectedIndex].value;
+    if (el && el.selectedIndex >= 0) {
+        return el.options[el.selectedIndex].getAttribute(attribute);
+    }
+    return undefined;
 }
 
 function alignDropdown(el) {
@@ -93,56 +106,6 @@ function scrollToPosY(pos) {
     document.documentElement.scrollTop = pos; // For Chrome, Firefox, IE and Opera
 }
 
-function doSetFilterLetter(x) {
-    let af = document.getElementById(x + 'Letters').getElementsByClassName('active')[0];
-    if (af) {
-        af.classList.remove('active');
-    }
-    let filter = app.current.filter;
-    if (filter === '0') {
-        filter = '#';
-    }
-    
-    document.getElementById(x).innerHTML = '<span class="material-icons">filter_list</span>' + (filter !== '-' ? ' ' + filter : '');
-    
-    if (filter !== '-') {
-        let btns = document.getElementById(x + 'Letters').getElementsByTagName('button');
-        let btnsLen = btns.length;
-        for (let i = 0; i < btnsLen; i++) {
-            if (btns[i].innerText === filter) {
-                btns[i].classList.add('active');
-                break;
-            }
-        }
-    }
-}
-
-function addFilterLetter(x) {
-    let filter = '<button class="mr-1 mb-1 btn btn-sm btn-secondary material-icons material-icons-small">delete</button>' +
-        '<button class="mr-1 mb-1 btn btn-sm btn-secondary">#</button>';
-    for (let i = 65; i <= 90; i++) {
-        filter += '<button class="mr-1 mb-1 btn-sm btn btn-secondary">' + String.fromCharCode(i) + '</button>';
-    }
-
-    let letters = document.getElementById(x);
-    letters.innerHTML = filter;
-    
-    letters.addEventListener('click', function(event) {
-        switch (event.target.innerText) {
-            case 'delete':
-                filter = '-';
-                break;
-            case '#':
-                filter = '0';
-                break;
-            default:
-                filter = event.target.innerText;
-        }
-        appGoto(app.current.app, app.current.tab, app.current.view, '0/' + filter + '/' + app.current.sort + '/' + 
-            app.current.tag + '/' + app.current.search);
-    }, false);
-}
-
 function selectTag(btnsEl, desc, setTo) {
     let btns = document.getElementById(btnsEl);
     let aBtn = btns.querySelector('.active')
@@ -171,7 +134,12 @@ function addTagList(el, list) {
         tagList += '<button type="button" class="btn btn-secondary btn-sm btn-block" data-tag="' + settings[list][i] + '">' + t(settings[list][i]) + '</button>';
     }
     if (el === 'BrowseNavFilesystemDropdown' || el === 'BrowseNavPlaylistsDropdown') {
-        tagList = '<button type="button" class="btn btn-secondary btn-sm btn-block" data-tag="Database">Database</button>';
+        if (settings.featTags === true && settings.featAdvsearch === true) {
+            tagList = '<button type="button" class="btn btn-secondary btn-sm btn-block" data-tag="Database">' + t('Database') + '</button>';
+        }
+        else {
+            tagList = '';
+        }
     }
     if (el === 'BrowseDatabaseByTagDropdown' || el === 'BrowseNavFilesystemDropdown' || el === 'BrowseNavPlaylistsDropdown') {
         if (el === 'BrowseDatabaseByTagDropdown') {
@@ -372,7 +340,7 @@ function toggleBtnChkCollapse(btn, collapse, state) {
 }
 
 function setPagination(total, returned) {
-    let cat = app.current.app + (app.current.tab === undefined ? '': app.current.tab);
+    let cat = app.current.app + (app.current.tab === undefined ? '' : app.current.tab);
     let totalPages = Math.ceil(total / settings.maxElementsPerPage);
     if (totalPages === 0) {
         totalPages = 1;
@@ -433,7 +401,9 @@ function genId(x) {
 }
 
 function parseCmd(event, href) {
-    event.preventDefault();
+    if (event !== null) {
+        event.preventDefault();
+    }
     let cmd = href;
     if (typeof(href) === 'string') {
         cmd = JSON.parse(href);
@@ -448,6 +418,7 @@ function parseCmd(event, href) {
             case 'toggleBtnChk':
             case 'toggleBtnGroup':
             case 'toggleBtnGroupCollapse':
+            case 'zoomPicture':
             case 'setPlaySettings':
                 window[cmd.cmd](event.target, ... cmd.options);
                 break;
@@ -464,12 +435,13 @@ function parseCmd(event, href) {
 }
 
 function gotoPage(x) {
+    console.log(app.current.page);
     switch (x) {
         case 'next':
-            app.current.page += settings.maxElementsPerPage;
+            app.current.page = parseInt(app.current.page) + parseInt(settings.maxElementsPerPage);
             break;
         case 'prev':
-            app.current.page -= settings.maxElementsPerPage;
+            app.current.page = parseInt(app.current.page) - parseInt(settings.maxElementsPerPage);
             if (app.current.page < 0) {
                 app.current.page = 0;
             }
@@ -477,6 +449,6 @@ function gotoPage(x) {
         default:
             app.current.page = x;
     }
-    appGoto(app.current.app, app.current.tab, app.current.view, app.current.page + '/' + app.current.filter + '/' + 
-        app.current.sort + '/' + app.current.tag + '/' + app.current.search);
+    appGoto(app.current.app, app.current.tab, app.current.view, 
+        app.current.page, app.current.filter, app.current.sort, app.current.tag, app.current.search);
 }
