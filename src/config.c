@@ -6,6 +6,7 @@
 
 #define _GNU_SOURCE
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -228,6 +229,9 @@ static int mympd_inihandler(void *user, const char *section, const char *name, c
     else if (MATCH("mympd", "colsqueuelastplayed")) {
         p_config->cols_queue_last_played = sdsreplace(p_config->cols_queue_last_played, value);
     }
+    else if (MATCH("mympd", "colsqueuejukebox")) {
+        p_config->cols_queue_jukebox = sdsreplace(p_config->cols_queue_jukebox, value);
+    }
     else if (MATCH("mympd", "localplayer")) {
         p_config->localplayer = strtobool(value);
     }
@@ -277,6 +281,12 @@ static int mympd_inihandler(void *user, const char *section, const char *name, c
     }
     else if (MATCH("mympd", "home")) {
         p_config->home = strtobool(value);
+    }
+    else if (MATCH("mympd", "volumemin")) {
+        p_config->volume_min = strtoumax(value, &crap, 10);
+    }
+    else if (MATCH("mympd", "volumemax")) {
+        p_config->volume_max = strtoumax(value, &crap, 10);
     }
     else if (MATCH("theme", "theme")) {
         p_config->theme = sdsreplace(p_config->theme, value);
@@ -361,9 +371,10 @@ static void mympd_get_env(struct t_config *config) {
         "MYMPD_JUKEBOXUNIQUETAG", "MYMPD_COLSQUEUECURRENT","MYMPD_COLSSEARCH", 
         "MYMPD_COLSBROWSEDATABASE", "MYMPD_COLSBROWSEPLAYLISTDETAIL",
         "MYMPD_COLSBROWSEFILESYSTEM", "MYMPD_COLSPLAYBACK", "MYMPD_COLSQUEUELASTPLAYED",
-        "MYMPD_LOCALPLAYER", "MYMPD_STREAMPORT", "MYMPD_HOME",
+        "MYMPD_LOCALPLAYER", "MYMPD_STREAMPORT", "MYMPD_HOME", "MYMPOD_COLSQUEUEJUKEBOX",
         "MYMPD_STREAMURL", "MYMPD_VOLUMESTEP", "MYMPD_COVERCACHEKEEPDAYS", "MYMPD_COVERCACHE",
         "MYMPD_COVERCACHEAVOID", "MYMPD_LYRICS", "MYMPD_PARTITIONS", "MYMPD_FOOTERSTOP",
+        "MYMPD_VOLUMEMIN", "MYMPD_VOLUMEMAX",
       #ifdef ENABLE_LUA
         "MYMPD_SCRIPTING", "MYMPD_REMOTESCRIPTING", "MYMPD_LUALIBS", "MYMPD_SCRIPTEDITOR",
       #endif
@@ -407,6 +418,7 @@ void mympd_free_config(t_config *config) {
     sdsfree(config->cols_browse_playlists_detail);
     sdsfree(config->cols_browse_filesystem);
     sdsfree(config->cols_playback);
+    sdsfree(config->cols_queue_jukebox);
     sdsfree(config->stream_url);
     sdsfree(config->bg_color);
     sdsfree(config->bg_css_filter);
@@ -446,7 +458,7 @@ void mympd_config_defaults(t_config *config) {
     config->varlibdir = sdsnew(VARLIB_PATH);
     config->stickers = true;
     config->mixramp = false;
-    config->taglist = sdsnew("Artist, Album, AlbumArtist, Title, Track, Genre, Date");
+    config->taglist = sdsnew("Artist, Album, AlbumArtist, Title, Track, Genre, Date, Disc");
     config->searchtaglist = sdsnew("Artist, Album, AlbumArtist, Title, Genre");
     config->browsetaglist = sdsnew("Artist, Album, AlbumArtist, Genre");
     config->smartpls = true;
@@ -455,14 +467,14 @@ void mympd_config_defaults(t_config *config) {
     config->smartpls_interval = 14400;
     config->generate_pls_tags = sdsnew("Genre");
     config->max_elements_per_page = 100;
-    config->last_played_count = 20;
+    config->last_played_count = 200;
     config->syscmds = false;
     config->loglevel = 2;
     config->love = false;
     config->love_channel = sdsempty();
     config->love_message = sdsnew("love");
     config->notification_web = false;
-    config->notification_page = false;
+    config->notification_page = true;
     config->media_session = true;
     config->auto_play = false;
     config->jukebox_mode = JUKEBOX_OFF;
@@ -477,11 +489,12 @@ void mympd_config_defaults(t_config *config) {
     config->cols_browse_playlists_detail = sdsnew("[\"Pos\",\"Title\",\"Artist\",\"Album\",\"Duration\"]");
     config->cols_browse_filesystem = sdsnew("[\"Type\",\"Title\",\"Artist\",\"Album\",\"Duration\"]");
     config->cols_playback = sdsnew("[\"Artist\",\"Album\"]");
+    config->cols_queue_jukebox = sdsnew("[\"Pos\",\"Title\",\"Artist\",\"Album\"]");
     config->localplayer = false;
-    config->stream_port = 8000;
+    config->stream_port = 8443;
     config->stream_url = sdsempty();
     config->bg_cover = true;
-    config->bg_color = sdsnew("#fff");
+    config->bg_color = sdsnew("#ccc");
     config->bg_css_filter = sdsnew("grayscale(100%) opacity(5%)");
     config->coverimage = true;
     config->coverimage_name = sdsnew("folder, cover");
@@ -490,13 +503,13 @@ void mympd_config_defaults(t_config *config) {
     config->locale = sdsnew("default");
     config->startup_time = time(NULL);
     config->readonly = false;
-    config->bookmarks = true;
+    config->bookmarks = false;
     config->volume_step = 5;
-    config->publish = false;
+    config->publish = true;
     config->webdav = false;
     config->covercache_keep_days = 7;
     config->covercache = true;
-    config->theme = sdsnew("theme-default");
+    config->theme = sdsnew("theme-dark");
     config->highlight_color = sdsnew("#28a745");
     config->custom_placeholder_images = false;
     config->regex = true;
@@ -506,15 +519,17 @@ void mympd_config_defaults(t_config *config) {
     config->booklet_name = sdsnew("booklet.pdf");
     config->mounts = true;
     config->lyrics = true;
-    config->scripting = false;
+    config->scripting = true;
     config->remotescripting = false;
     config->acl = sdsempty();
     config->scriptacl = sdsnew("-0.0.0.0/0,+127.0.0.0/8");
     config->lualibs = sdsnew("base, string, utf8, table, math, mympd");
-    config->scripteditor = false;
+    config->scripteditor = true;
     config->partitions = false;
     config->footer_stop = false;
     config->home = true;
+    config->volume_min = 0;
+    config->volume_max = 100;
     list_init(&config->syscmd_list);
 }
 
@@ -526,7 +541,7 @@ bool mympd_dump_config(void) {
     sds tmp_file = sdscat(sdsempty(), "/tmp/mympd.conf.XXXXXX");
     int fd = mkstemp(tmp_file);
     if (fd < 0) {
-        LOG_ERROR("Can't open %s for write", tmp_file);
+        LOG_ERROR("Can not open file \"%s\" for write: %s", tmp_file, strerror(errno));
         sdsfree(tmp_file);
         return false;
     }
@@ -629,6 +644,7 @@ bool mympd_dump_config(void) {
         "colsbrowseplaylistsdetail = %s\n"
         "colsbrowsefilesystem = %s\n"
         "colsplayback = %s\n"
+        "colsqueuejukebox = %s\n"
         "localplayer = %s\n"
         "streamport = %d\n"
         "#streamuri = %s\n"
@@ -641,6 +657,8 @@ bool mympd_dump_config(void) {
         "partitions = %s\n"
         "footerstop = %s\n"
         "home = %s\n"
+        "volumemine = %u\n"
+        "volumemax = %u\n"
         "\n",
         p_config->user,
         (p_config->chroot == true ? "true" : "false"),
@@ -689,6 +707,7 @@ bool mympd_dump_config(void) {
         p_config->cols_browse_playlists_detail,
         p_config->cols_browse_filesystem,
         p_config->cols_playback,
+        p_config->cols_queue_jukebox,
         (p_config->localplayer == true ? "true" : "false"),
         p_config->stream_port,
         p_config->stream_url,
@@ -700,7 +719,10 @@ bool mympd_dump_config(void) {
         (p_config->lyrics == true ? "true" : "false"),
         (p_config->partitions == true ? "true" : "false"),
         (p_config->footer_stop == true ? "true" : "false"),
-        (p_config->home == true ? "true" : "false")
+        (p_config->home == true ? "true" : "false"),
+        p_config->volume_min,
+        p_config->volume_max
+        
     );
 
     fprintf(fp, "[theme]\n"
@@ -734,7 +756,7 @@ bool mympd_dump_config(void) {
     sds conf_file = sdscat(sdsempty(), "/tmp/mympd.conf");
     int rc = rename(tmp_file, conf_file);
     if (rc == -1) {
-        LOG_ERROR("Renaming file from %s to %s failed", tmp_file, conf_file);
+        LOG_ERROR("Renaming file from %s to %s failed: %s", tmp_file, conf_file, strerror(errno));
     }
     sdsfree(tmp_file);
     sdsfree(conf_file);

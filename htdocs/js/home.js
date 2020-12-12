@@ -6,14 +6,14 @@
 */
 
 function parseHome(obj) {
-    let nrItems = obj.result.returnedEntities;
-    let cardContainer = document.getElementById('HomeCards');
-    let cols = cardContainer.getElementsByClassName('col');
+    const nrItems = obj.result.returnedEntities;
+    const cardContainer = document.getElementById('HomeCards');
+    const cols = cardContainer.getElementsByClassName('col');
     if (cols.length === 0) {
         cardContainer.innerHTML = '';
     }
     for (let i = 0; i < nrItems; i++) {
-        let col = document.createElement('div');
+        const col = document.createElement('div');
         col.classList.add('col', 'px-0', 'flex-grow-0');
         if (obj.result.data[i].AlbumArtist === '') {
             obj.result.data[i].AlbumArtist = t('Unknown artist');
@@ -21,12 +21,10 @@ function parseHome(obj) {
         if (obj.result.data[i].Album === '') {
             obj.result.data[i].Album = t('Unknown album');
         }
-        let href=JSON.stringify({"cmd": obj.result.data[i].cmd, "options": obj.result.data[i].options});
-        let html = '<div class="card home-icons clickable" draggable="true" tabindex="0" data-pos="' + i + '" data-href=\'' + 
-                   href + '\'  title="' + e(obj.result.data[i].name) + '">' +
-                   (obj.result.data[i].ligature !== '' ? 
-                       '<div class="card-body material-icons home-icons-ligature">' + e(obj.result.data[i].ligature) + '</div>' :
-                       '<div class="card-body home-icons-image"></div>')+
+        const href=JSON.stringify({"cmd": obj.result.data[i].cmd, "options": obj.result.data[i].options});
+        const html = '<div class="card home-icons clickable" draggable="true" tabindex="0" data-pos="' + i + '" data-href=\'' + 
+                   e(href) + '\'  title="' + e(obj.result.data[i].name) + '">' +
+                   '<div class="card-body material-icons">' + e(obj.result.data[i].ligature) + '</div>' +
                    '<div class="card-footer card-footer-grid p-2">' +
                    e(obj.result.data[i].name) + 
                    '</div></div>';
@@ -37,12 +35,11 @@ function parseHome(obj) {
         else {
             cardContainer.append(col);
         }
-        const hii = col.getElementsByClassName('home-icons-image')[0];
-        if (hii) {
-            hii.style.backgroundImage = 'url("' + subdir + '/browse/pics/' + obj.result.data[i].image + '")';
+        if (obj.result.data[i].image !== '') {
+            col.getElementsByClassName('card-body')[0].style.backgroundImage = 'url("' + subdir + '/browse/pics/' + obj.result.data[i].image + '")';
         }
-        else if (obj.result.data[i].bgcolor !== '') {
-            col.getElementsByClassName('home-icons-ligature')[0].style.backgroundColor = obj.result.data[i].bgcolor;
+        if (obj.result.data[i].bgcolor !== '') {
+            col.getElementsByClassName('card-body')[0].style.backgroundColor = obj.result.data[i].bgcolor;
         }
     }
     let colsLen = cols.length - 1;
@@ -51,7 +48,7 @@ function parseHome(obj) {
     }
                     
     if (nrItems === 0) {
-        cardContainer.innerHTML = '<div>You have not added any Home Icons yet. You can add views, playlists and scripts.</div>';
+        cardContainer.innerHTML = '<div class="ml-3">' + t('Homescreen welcome') + '</div>';
     }
 }
 
@@ -167,9 +164,15 @@ function _addHomeIcon(cmd, name, ligature, options) {
     document.getElementById('inputHomeIconName').value = name;
     document.getElementById('inputHomeIconLigature').value = ligature;
     document.getElementById('inputHomeIconBgcolor').value = '#28a745';
-    document.getElementById('inputHomeIconImage').value = '';
     document.getElementById('selectHomeIconCmd').value = cmd;
+    
     showHomeIconCmdOptions(options);
+    getHomeIconPictureList('');
+    
+    document.getElementById('homeIconPreview').innerText = ligature;
+    document.getElementById('homeIconPreview').style.backgroundColor = '#28a745';
+    document.getElementById('homeIconPreview').style.backgroundImage = '';
+    document.getElementById('divHomeIconLigature').classList.remove('hide');
     modalEditHomeIcon.show();
 }
 
@@ -188,12 +191,26 @@ function _editHomeIcon(pos, replace, title) {
     sendAPI("MYMPD_API_HOME_ICON_GET", {"pos": pos}, function(obj) {
         document.getElementById('inputHomeIconReplace').value = replace;
         document.getElementById('inputHomeIconOldpos').value = pos;
-        document.getElementById('inputHomeIconName').value = obj.result.data[0].name;
-        document.getElementById('inputHomeIconLigature').value = obj.result.data[0].ligature;
-        document.getElementById('inputHomeIconBgcolor').value = obj.result.data[0].bgcolor;
-        document.getElementById('inputHomeIconImage').value = obj.result.data[0].image;
-        document.getElementById('selectHomeIconCmd').value = obj.result.data[0].cmd;
-        showHomeIconCmdOptions(obj.result.data[0].options);
+        document.getElementById('inputHomeIconName').value = obj.result.data.name;
+        document.getElementById('inputHomeIconLigature').value = obj.result.data.ligature;
+        document.getElementById('inputHomeIconBgcolor').value = obj.result.data.bgcolor;
+        document.getElementById('selectHomeIconCmd').value = obj.result.data.cmd;
+
+        showHomeIconCmdOptions(obj.result.data.options);
+        getHomeIconPictureList(obj.result.data.image);
+
+        document.getElementById('homeIconPreview').innerText = obj.result.data.ligature;
+        document.getElementById('homeIconPreview').style.backgroundColor = obj.result.data.bgcolor;
+        
+        if (obj.result.data.image === '') {
+            document.getElementById('divHomeIconLigature').classList.remove('hide');
+            document.getElementById('homeIconPreview').style.backgroundImage = '';
+        }
+        else {
+            document.getElementById('divHomeIconLigature').classList.add('hide');
+            document.getElementById('homeIconPreview').style.backgroundImage = 'url(' + subdir + '"/browse/pics/' + obj.result.data.image + '")';
+        }
+        
         modalEditHomeIcon.show();
     });
 }
@@ -209,15 +226,18 @@ function saveHomeIcon() {
         let options = [];
         let optionEls = document.getElementById('divHomeIconOptions').getElementsByTagName('input');
         for (let i = 0; i < optionEls.length; i++) {
-            options.push(optionEls[i].value);
+            //workarround for parsing arrays with empty values in frozen
+            let value = optionEls[i].value !== '' ? optionEls[i].value : '!undefined!';
+            options.push(value);
         }
+        const image = getSelectValue('selectHomeIconImage');
         sendAPI("MYMPD_API_HOME_ICON_SAVE", {
             "replace": (document.getElementById('inputHomeIconReplace').value === 'true' ? true : false),
             "oldpos": parseInt(document.getElementById('inputHomeIconOldpos').value),
             "name": nameEl.value,
-            "ligature": document.getElementById('inputHomeIconLigature').value,
+            "ligature": (image === '' ? document.getElementById('inputHomeIconLigature').value : ''),
             "bgcolor": document.getElementById('inputHomeIconBgcolor').value,
-            "image": document.getElementById('inputHomeIconImage').value,
+            "image": image,
             "cmd": document.getElementById('selectHomeIconCmd').value,
             "options": options
             }, function() {
@@ -237,14 +257,29 @@ function deleteHomeIcon(pos) {
 }
 
 function showHomeIconCmdOptions(values) {
-    const options = JSON.parse(getSelectedOptionAttribute('selectHomeIconCmd', 'data-options'));
     let list = '';
-    for (let i = 0; i < options.options.length; i++) {
-        let value = values !== undefined ? values[i] !== undefined ? values[i] : '' : '';
-        list += '<div class="form-group row">' +
-            '<label class="col-sm-4 col-form-label">' + t(options.options[i]) + '</label>' +
-            '<div class="col-sm-8"><input class="form-control border-secondary" value="' + e(value) + '"></div>' +
-            '</div>';
+    const optionsText =getSelectedOptionAttribute('selectHomeIconCmd', 'data-options')
+    if (optionsText !== undefined) {    
+        const options = JSON.parse(optionsText);
+        for (let i = 0; i < options.options.length; i++) {
+            let value = values !== undefined ? values[i] !== undefined ? values[i] : '' : '';
+            list += '<div class="form-group row">' +
+                '<label class="col-sm-4 col-form-label">' + t(options.options[i]) + '</label>' +
+                '<div class="col-sm-8"><input class="form-control border-secondary" value="' + e(value) + '"></div>' +
+                '</div>';
+        }
     }
     document.getElementById('divHomeIconOptions').innerHTML = list;
+}
+
+function getHomeIconPictureList(picture) {
+    sendAPI("MYMPD_API_HOME_ICON_PICTURE_LIST", {}, function(obj) {
+        let options = '<option value="">' + t('Use ligature') + '</option>';
+        for (let i = 0; i < obj.result.returnedEntities; i++) {
+            options += '<option value="' + e(obj.result.data[i]) + '">' + e(obj.result.data[i])  + '</option>';
+        }
+        let sel = document.getElementById('selectHomeIconImage');
+        sel.innerHTML = options;
+        sel.value = picture;
+    });
 }

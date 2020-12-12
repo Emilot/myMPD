@@ -1515,11 +1515,8 @@ Details
 Port
 Port
 
-Select tag to display
-Tag für Anzeige auswählen
-
 Websocket is disconnected
-Websockt ist nicht verbunden
+Websocket ist nicht verbunden
 
 Goto playing song
 Gehe zum aktuell gespielten Lied
@@ -1563,9 +1560,6 @@ Kopieren
 Edit home icon
 Bearbeiten
 
-Execute home icon action
-Ausführen
-
 Ligature
 Ligatur
 
@@ -1574,3 +1568,84 @@ Optionen
 
 Picture
 Bild
+
+Homescreen welcome
+Du hast noch keine Homeicons hinzugefügt. Du kannst einzelne Ansichten, Wiedergabelisten und Skripte hinzufügen.
+
+Can not open directory pics
+Konnte Verzeichnis pics nicht öffnen
+
+Ligature overview
+Übersicht der Ligaturen
+
+Use ligature
+Ligatur benutzen
+
+Add and play playlist
+Spiele Wiedergabeliste ab
+
+Goto view
+Gehe zur Ansicht
+
+View
+Ansicht
+
+Could not remove song from jukebox queue
+Konnte Lied nicht aus der Jukebox Warteschlange entfernen
+
+Reset to default
+Zurücksetzen
+
+Execute Script
+Skript ausführen
+
+App
+App
+
+Tab
+Tab
+
+Offset
+Start
+
+Filter
+Filter
+
+Sort
+Sortieren
+
+Tag
+Tag
+
+Columns
+Spalten
+
+Display tags
+Tags zum Anzeigen
+
+Next
+Nächstes Lied
+
+Outputs
+Ausgabegeräte
+
+Playback settings
+Wiedergabeeinstellungen
+
+Previous
+Vorheriges Lied
+
+Select view
+Anzeige auswählen
+
+Show cover
+Cover anzeigen
+
+Toggle play
+Abspielen / Pausieren
+
+myMPD menu
+myMPD Menu
+
+Invalid volume level
+Ungültige Lautstärke

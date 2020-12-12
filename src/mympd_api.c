@@ -55,10 +55,13 @@ void *mympd_api_loop(void *arg_config) {
     
     //read myMPD states under config.varlibdir
     t_mympd_state *mympd_state = (t_mympd_state *)malloc(sizeof(t_mympd_state));
+    assert(mympd_state);
     mympd_api_read_statefiles(config, mympd_state);
 
     list_init(&mympd_state->home_list);
-    mympd_api_read_home_list(config, mympd_state);
+    if (config->home == true) {
+        mympd_api_read_home_list(config, mympd_state);
+    }
 
     //myMPD timer
     init_timerlist(&mympd_state->timer_list);
@@ -85,7 +88,9 @@ void *mympd_api_loop(void *arg_config) {
     }
 
     //cleanup
-    mympd_api_write_home_list(config, mympd_state);
+    if (config->home == true) {
+        mympd_api_write_home_list(config, mympd_state);
+    }
     if (mympd_state->timer == true) {
         timerfile_save(config, mympd_state);
     }
@@ -114,6 +119,18 @@ static void mympd_api(t_config *config, t_mympd_state *mympd_state, t_work_reque
     t_work_result *response = create_result(request);
     
     switch(request->cmd_id) {
+        case MYMPD_API_STATE_SAVE:
+            if (config->home == true) {
+                mympd_api_write_home_list(config, mympd_state);
+            }
+            if (mympd_state->timer == true) {
+                timerfile_save(config, mympd_state);
+            }
+            response->data = jsonrpc_respond_ok(response->data, request->method, request->id);
+            break;
+        case MYMPD_API_HOME_ICON_PICTURE_LIST:
+            response->data = mympd_api_put_home_picture_list(config, response->data, request->method, request->id);
+            break;
         case MYMPD_API_HOME_ICON_SAVE:
             je = json_scanf(request->data, sdslen(request->data), "{params: {replace: %B, oldpos: %u, name: %Q, ligature: %Q, bgcolor: %Q, image: %Q, cmd: %Q}}", 
                 &bool_buf1, &uint_buf1, &p_charbuf1, &p_charbuf2, &p_charbuf3, &p_charbuf4, &p_charbuf5);
@@ -468,6 +485,7 @@ static void mympd_api(t_config *config, t_mympd_state *mympd_state, t_work_reque
             break;
         case MYMPD_API_TIMER_SAVE: {
             struct t_timer_definition *timer_def = malloc(sizeof(struct t_timer_definition));
+            assert(timer_def);
             timer_def = parse_timer(timer_def, request->data, sdslen(request->data));
             je = json_scanf(request->data, sdslen(request->data), "{params: {timerid: %d}}", &int_buf1);
             if (je == 1 && timer_def != NULL) {

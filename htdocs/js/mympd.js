@@ -37,6 +37,7 @@ var scale = '1.0';
 var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 var ligatureMore = 'menu';
 var progressBarTransition = 'width 1s linear';
+var tagAlbumArtist = 'AlbumArist';
 
 var app = {};
 app.apps = { 
@@ -65,9 +66,17 @@ app.apps = {
                 "sort": "-",
                 "tag": "-",
                 "search": "",
-                "scrollPos": 0 
+                "scrollPos": 0
             },
             "LastPlayed": {
+                "page": 0,
+                "filter": "any",
+                "sort": "-",
+                "tag": "-",
+                "search": "",
+                "scrollPos": 0 
+            },
+            "Jukebox": {
                 "page": 0,
                 "filter": "any",
                 "sort": "-",
@@ -146,8 +155,6 @@ app.current = { "app": "Home", "tab": undefined, "view": undefined, "page": 0, "
 app.last = { "app": undefined, "tab": undefined, "view": undefined, "filter": "", "search": "", "sort": "", "tag": "", "scrollPos": 0 };
 
 var domCache = {};
-domCache.navbarBtns = document.getElementById('navbar-main').getElementsByTagName('div');
-domCache.navbarBtnsLen = domCache.navbarBtns.length;
 domCache.counter = document.getElementById('counter');
 domCache.volumePrct = document.getElementById('volumePrct');
 domCache.volumeControl = document.getElementById('volumeControl');
@@ -170,7 +177,7 @@ domCache.footerAlbum = document.getElementById('footerAlbum');
 domCache.footerCover = document.getElementById('footerCover');
 domCache.btnVoteUp = document.getElementById('btnVoteUp');
 domCache.btnVoteDown = document.getElementById('btnVoteDown');
-domCache.badgeQueueItems = document.getElementById('badgeQueueItems');
+domCache.badgeQueueItems = null;
 domCache.searchstr = document.getElementById('searchstr');
 domCache.searchCrumb = document.getElementById('searchCrumb');
 domCache.body = document.getElementsByTagName('body')[0];
@@ -230,6 +237,7 @@ function appPrepare(scrollPos) {
         document.getElementById('cardSearch').classList.add('hide');
         document.getElementById('cardQueueCurrent').classList.add('hide');
         document.getElementById('cardQueueLastPlayed').classList.add('hide');
+        document.getElementById('cardQueueJukebox').classList.add('hide');
         document.getElementById('cardBrowsePlaylists').classList.add('hide');
         document.getElementById('cardBrowseFilesystem').classList.add('hide');
         document.getElementById('cardBrowseDatabase').classList.add('hide');
@@ -302,7 +310,6 @@ function appGoto(card, tab, view, page, filter, sort, tag, search) {
             encodeURIComponent(sort === undefined ? app.apps[card].sort : sort) + '/' +
             encodeURIComponent(tag === undefined ? app.apps[card].tag : tag) + '/' +
             encodeURIComponent(search === undefined ? app.apps[card].search : search);
-                                 
     }
     location.hash = hash;
 }
@@ -377,6 +384,9 @@ function appRoute() {
     }
     else if (app.current.app === 'Queue' && app.current.tab === 'LastPlayed') {
         sendAPI("MPD_API_QUEUE_LAST_PLAYED", {"offset": app.current.page, "cols": settings.colsQueueLastPlayed}, parseLastPlayed);
+    }
+    else if (app.current.app === 'Queue' && app.current.tab === 'Jukebox') {
+        sendAPI("MPD_API_JUKEBOX_LIST", {"offset": app.current.page, "cols": settings.colsQueueJukebox}, parseJukeboxList);
     }
     else if (app.current.app === 'Browse' && app.current.tab === 'Playlists' && app.current.view === 'All') {
         sendAPI("MPD_API_PLAYLIST_LIST", {"offset": app.current.page, "searchstr": app.current.search}, parsePlaylists);
@@ -709,6 +719,10 @@ function appInitWait() {
 }
 
 function appInit() {
+    document.getElementById('mainMenu').addEventListener('click', function(event) {
+        event.preventDefault();
+    }, false);
+
     document.getElementById('btnChVolumeDown').addEventListener('click', function(event) {
         event.stopPropagation();
     }, false);
@@ -757,6 +771,17 @@ function appInit() {
             icon.innerText = icon.innerText === 'keyboard_arrow_right' ? 'keyboard_arrow_down' : 'keyboard_arrow_right';
         }, false);
     }    
+
+    document.getElementById('navbar-main').addEventListener('click', function(event) {
+        event.preventDefault();
+        let href = event.target.getAttribute('data-href');
+        if (href === null) {
+            href = event.target.parentNode.getAttribute('data-href');
+        }
+        if (href !== null) {
+            parseCmd(event, href);
+        }
+    }, false);
     
     document.getElementById('volumeMenu').parentNode.addEventListener('show.bs.dropdown', function () {
         sendAPI("MPD_API_PLAYER_OUTPUT_LIST", {}, parseOutputs);
@@ -879,6 +904,20 @@ function appInit() {
     
     document.getElementById('inputBgColor').addEventListener('change', function() {
         document.getElementById('bgColorPreview').style.backgroundColor = this.value;
+    }, false);
+    
+    document.getElementById('selectTheme').addEventListener('change', function() {
+        const value = getSelectValue(this);
+        if (value === 'theme-default') { 
+            document.getElementById('inputBgColor').value = '#ccc';
+        }
+        else if (value === 'theme-light') {
+            document.getElementById('inputBgColor').value = '#fff';
+        }
+        else if (value === 'theme-dark') {
+            document.getElementById('inputBgColor').value = '#000';
+        }
+        document.getElementById('bgColorPreview').style.backgroundColor = document.getElementById('inputBgColor').value;
     }, false);
     
     document.getElementById('modalAddToQueue').addEventListener('shown.bs.modal', function () {
@@ -1057,6 +1096,31 @@ function appInit() {
         showHomeIconCmdOptions();
     }, false);
 
+    document.getElementById('inputHomeIconLigature').addEventListener('change', function(event) {
+        document.getElementById('homeIconPreview').innerText = event.target.value;
+        if (event.target.value !== '') {
+            document.getElementById('selectHomeIconImage').value = '';
+            document.getElementById('homeIconPreview').style.backgroundImage = '';
+        }
+    }, false);
+    
+    document.getElementById('inputHomeIconBgcolor').addEventListener('change', function(event) {
+        document.getElementById('homeIconPreview').style.backgroundColor = event.target.value;
+    }, false);
+    
+    document.getElementById('selectHomeIconImage').addEventListener('change', function(event) {
+        const value = getSelectValue(event.target);
+        document.getElementById('homeIconPreview').style.backgroundImage = 'url("' + subdir + '/browse/pics/' + value  + '")';
+        if (value !== '') {
+            document.getElementById('divHomeIconLigature').classList.add('hide');
+            document.getElementById('homeIconPreview').innerHTML = '';
+        }
+        else {
+            document.getElementById('divHomeIconLigature').classList.remove('hide');
+            document.getElementById('homeIconPreview').innerText = document.getElementById('inputHomeIconLigature').value;
+        }
+    }, false);
+
     let pd = document.getElementsByClassName('pages');
     let pdLen = pd.length;
     for (let i = 0; i < pdLen; i++) {
@@ -1068,8 +1132,9 @@ function appInit() {
     }
 
     document.getElementById('cardPlaybackTags').addEventListener('click', function(event) {
-        if (event.target.nodeName === 'P') 
+        if (event.target.nodeName === 'P') {
             gotoBrowse();
+        }
     }, false);
 
     document.getElementById('BrowseBreadcrumb').addEventListener('click', function(event) {
@@ -1231,7 +1296,13 @@ function appInit() {
         if (event.target.nodeName === 'A') {
             showMenu(event.target, event);
         }
-    }, false);    
+    }, false);
+
+    document.getElementById('QueueJukeboxList').addEventListener('click', function(event) {
+        if (event.target.nodeName === 'A') {
+            showMenu(event.target, event);
+        }
+    }, false);
 
     document.getElementById('BrowseFilesystemList').addEventListener('click', function(event) {
         if (event.target.nodeName === 'TD') {
@@ -1327,6 +1398,26 @@ function appInit() {
         navigateGrid(event.target, event.key);
     }, false);
     
+    if (isMobile === false) {
+        document.getElementById('BrowseDatabaseCards').addEventListener('mouseover', function(event) {
+            if (event.target.classList.contains('card-body') && event.target.childNodes.length === 0) {
+                const oldEls = document.getElementById('BrowseDatabaseCards').getElementsByClassName('album-grid-mouseover');
+                if (oldEls.length > 1) {
+                    for (let i = 0; i < oldEls.length; i++) {
+                        oldEls[i].remove();
+                    }
+                }
+                addPlayButton(event.target);
+            }
+        }, false);
+
+        document.getElementById('BrowseDatabaseCards').addEventListener('mouseout', function(event) {
+            if (event.target.classList.contains('card-body') && (event.relatedTarget === null || ! event.relatedTarget.classList.contains('album-grid-mouseover'))) {
+                event.target.innerHTML = '';
+            }
+        }, false);
+    }
+    
     document.getElementById('BrowseDatabaseDetailList').addEventListener('click', function(event) {
         if (event.target.nodeName === 'TD') {
             appendQueue('song', decodeURI(event.target.parentNode.getAttribute('data-uri')), event.target.parentNode.getAttribute('data-name'));
@@ -1364,7 +1455,7 @@ function appInit() {
     document.getElementById('searchtags').addEventListener('click', function(event) {
         if (event.target.nodeName === 'BUTTON') {
             app.current.filter = event.target.getAttribute('data-tag');
-            search(domCache.searchstr.value);
+            doSearch(domCache.searchstr.value);
         }
     }, false);
     
@@ -1483,7 +1574,7 @@ function appInit() {
                 let li = document.createElement('button');
                 li.classList.add('btn', 'btn-light', 'mr-2');
                 li.setAttribute('data-filter', encodeURI(app.current.filter + ' ' + match.options[match.selectedIndex].value + ' \'' + this.value + '\''));
-                li.innerHTML = e(app.current.filter) + ' ' + match.options[match.selectedIndex].value + ' \'' + e(this.value) + '\'<span class="ml-2 badge badge-secondary">&times;</span>';
+                li.innerHTML = e(app.current.filter) + ' ' + e(match.options[match.selectedIndex].value) + ' \'' + e(this.value) + '\'<span class="ml-2 badge badge-secondary">&times;</span>';
                 this.value = '';
                 document.getElementById('searchDatabaseCrumb').appendChild(li);
             }
@@ -1535,11 +1626,11 @@ function appInit() {
                 domCache.searchCrumb.appendChild(li);
             }
             else {
-                search(this.value);
+                doSearch(this.value);
             }
         }
         else {
-            search(this.value);
+            doSearch(this.value);
         }
     }, false);
 
@@ -1548,7 +1639,7 @@ function appInit() {
         event.stopPropagation();
         if (event.target.nodeName === 'SPAN') {
             event.target.parentNode.remove();
-            search('');
+            doSearch('');
         }
         else if (event.target.nodeName === 'BUTTON') {
             let value = decodeURI(event.target.getAttribute('data-filter'));
@@ -1559,12 +1650,12 @@ function appInit() {
             match = match.substring(0, match.indexOf(' '));
             document.getElementById('searchMatch').value = match;
             event.target.remove();
-            search(domCache.searchstr.value);
+            doSearch(domCache.searchstr.value);
         }
     }, false);
 
     document.getElementById('searchMatch').addEventListener('change', function() {
-        search(domCache.searchstr.value);
+        doSearch(domCache.searchstr.value);
     }, false);
     
     document.getElementById('SearchList').getElementsByTagName('tr')[0].addEventListener('click', function(event) {
@@ -1611,8 +1702,6 @@ function appInit() {
         }
     }, false);
 
-
-
     document.getElementById('inputScriptArgument').addEventListener('keyup', function(event) {
         if (event.key === 'Enter') {
             event.preventDefault();
@@ -1635,12 +1724,11 @@ function appInit() {
     dragAndDropTable('BrowsePlaylistsDetailList');
     dragAndDropTableHeader('QueueCurrent');
     dragAndDropTableHeader('QueueLastPlayed');
+    dragAndDropTableHeader('QueueJukebox');
     dragAndDropTableHeader('Search');
     dragAndDropTableHeader('BrowseFilesystem');
     dragAndDropTableHeader('BrowsePlaylistsDetail');
     dragAndDropTableHeader('BrowseDatabaseDetail');
-
-    
 
     window.addEventListener('focus', function() {
         sendAPI("MPD_API_PLAYER_STATE", {}, parseState);

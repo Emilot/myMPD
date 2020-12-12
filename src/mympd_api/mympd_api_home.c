@@ -4,6 +4,8 @@
  https://github.com/jcorporation/mympd
 */
 
+#include <errno.h>
+#include <dirent.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -47,7 +49,12 @@ bool mympd_api_save_home_icon(t_mympd_state *mympd_state, bool replace, unsigned
         if (i++) {
             key = sdscatlen(key, ",", 1);
         }
-        key = sdscatjson(key, current->key, sdslen(current->key));
+        if (strcmp(current->key, "!undefined!") == 0) {
+            key = sdscatjson(key, "", 0);
+        }
+        else {
+            key = sdscatjson(key, current->key, sdslen(current->key));
+        }
         current = current->next;
     }    
     key = sdscatlen(key, "]}", 2);
@@ -62,7 +69,7 @@ bool mympd_api_save_home_icon(t_mympd_state *mympd_state, bool replace, unsigned
     return rc;
 }
 
-void mympd_api_read_home_list(t_config *config, t_mympd_state *mympd_state) {
+bool mympd_api_read_home_list(t_config *config, t_mympd_state *mympd_state) {
     sds home_file = sdscatfmt(sdsempty(), "%s/state/home_list", config->varlibdir);
     FILE *fp = fopen(home_file, "r");
     if (fp != NULL) {
@@ -76,27 +83,44 @@ void mympd_api_read_home_list(t_config *config, t_mympd_state *mympd_state) {
         FREE_PTR(line);    
         fclose(fp);
     }
+    else {
+        //ignore error
+        LOG_DEBUG("Can not open file \"%s\": %s", home_file, strerror(errno));
+        sdsfree(home_file);
+        return false;
+    }
     sdsfree(home_file);
+    return true;
 }
 
 bool mympd_api_write_home_list(t_config *config, t_mympd_state *mympd_state) {
+    if (config->readonly == true) {
+        return true;
+    }
+    LOG_VERBOSE("Saving home icons to disc");
     sds tmp_file = sdscatfmt(sdsempty(), "%s/state/home_list.XXXXXX", config->varlibdir);
     int fd = mkstemp(tmp_file);
     if (fd < 0 ) {
-        LOG_ERROR("Can't open %s for write", tmp_file);
+        LOG_ERROR("Can not open \"%s\" for write: %s", tmp_file, strerror(errno));
         sdsfree(tmp_file);
         return false;
     }
     FILE *fp = fdopen(fd, "w");
     struct list_node *current = mympd_state->home_list.head;
     while (current != NULL) {
-        fprintf(fp,"%s\n", current->key);
+        int rc = fprintf(fp,"%s\n", current->key);
+        if (rc < 0) {
+            LOG_ERROR("Can not write to file \"%s\"", tmp_file);
+            sdsfree(tmp_file);
+            fclose(fp);
+            return false;
+        }
         current = current->next;
     }
     fclose(fp);
     sds home_file = sdscatfmt(sdsempty(), "%s/state/home_list", config->varlibdir);
     if (rename(tmp_file, home_file) == -1) {
-        LOG_ERROR("Rename file from %s to %s failed", tmp_file, home_file);
+        LOG_ERROR("Rename file from \"%s\" to \"%s\" failed: %s", tmp_file, home_file, strerror(errno));
         sdsfree(tmp_file);
         sdsfree(home_file);
         return false;
@@ -129,9 +153,9 @@ sds mympd_api_get_home_icon(t_mympd_state *mympd_state, sds buffer, sds method, 
 
     if (current != NULL) {
         buffer = jsonrpc_start_result(buffer, method, request_id);
-        buffer = sdscat(buffer, ",\"data\":[");
+        buffer = sdscat(buffer, ",\"data\":");
         buffer = sdscat(buffer, current->key);
-        buffer = sdscatlen(buffer, "],", 2);
+        buffer = sdscatlen(buffer, ",", 1);
         buffer = tojson_long(buffer, "returnedEntities", 1, false);
         buffer = jsonrpc_end_result(buffer);
         return buffer;
@@ -142,3 +166,32 @@ sds mympd_api_get_home_icon(t_mympd_state *mympd_state, sds buffer, sds method, 
     return buffer;
 }
 
+sds mympd_api_put_home_picture_list(t_config *config, sds buffer, sds method, long request_id) {
+    sds pic_dirname = sdscatfmt(sdsempty(), "%s/pics", config->varlibdir);
+    DIR *pic_dir = opendir(pic_dirname);
+    if (pic_dir == NULL) {
+        buffer = jsonrpc_respond_message(buffer, method, request_id, "Can not open directory pics", true);
+        LOG_ERROR("Can not open directory \"%s\": %s", pic_dirname, strerror(errno));
+        sdsfree(pic_dirname);
+        return buffer;
+    }
+    
+    buffer = jsonrpc_start_result(buffer, method, request_id);
+    buffer = sdscat(buffer, ",\"data\":[");
+    int returned_entities = 0;
+    struct dirent *next_file;
+    while ((next_file = readdir(pic_dir)) != NULL ) {
+        if (next_file->d_type == DT_REG) {
+            if (returned_entities++) {
+                buffer = sdscat(buffer, ",");
+            }
+            buffer = sdscatjson(buffer, next_file->d_name, strlen(next_file->d_name));
+        }
+    }
+    closedir(pic_dir);
+    sdsfree(pic_dirname);
+    buffer = sdscatlen(buffer, "],", 2);
+    buffer = tojson_long(buffer, "returnedEntities", returned_entities, false);
+    buffer = jsonrpc_end_result(buffer);
+    return buffer;
+}

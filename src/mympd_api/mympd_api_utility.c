@@ -96,6 +96,7 @@ void free_mympd_state_sds(t_mympd_state *mympd_state) {
     sdsfree(mympd_state->cols_browse_filesystem);
     sdsfree(mympd_state->cols_playback);
     sdsfree(mympd_state->cols_queue_last_played);
+    sdsfree(mympd_state->cols_queue_jukebox);
     sdsfree(mympd_state->stream_url);
     sdsfree(mympd_state->bg_color);
     sdsfree(mympd_state->bg_css_filter);
@@ -107,6 +108,7 @@ void free_mympd_state_sds(t_mympd_state *mympd_state) {
     sdsfree(mympd_state->smartpls_sort);
     sdsfree(mympd_state->smartpls_prefix);
     sdsfree(mympd_state->booklet_name);
+    sdsfree(mympd_state->navbar_icons);
 }
 
 static const char *mympd_cols[]={"Pos", "Duration", "Type", "LastPlayed", "Filename", "Filetype", "Fileformat", "LastModified", "Lyrics", 0};

@@ -52,7 +52,8 @@ void mpd_client_api(t_config *config, t_mpd_client_state *mpd_client_state, void
     int je;
     int int_buf1;
     int int_buf2; 
-    bool bool_buf;
+    bool bool_buf1;
+    bool bool_buf2;
     bool rc;
     float float_buf;
     char *p_charbuf1 = NULL;
@@ -66,6 +67,33 @@ void mpd_client_api(t_config *config, t_mpd_client_state *mpd_client_state, void
     t_work_result *response = create_result(request);
     
     switch(request->cmd_id) {
+        case MPD_API_STATE_SAVE:
+            mpd_client_last_played_list_save(config, mpd_client_state);
+            triggerfile_save(config, mpd_client_state);
+            response->data = jsonrpc_respond_ok(response->data, request->method, request->id);
+            break;
+        case MPD_API_JUKEBOX_RM:
+            je = json_scanf(request->data, sdslen(request->data), "{params: {pos: %u}}", &uint_buf1);
+            if (je == 1) {
+                rc = mpd_client_rm_jukebox_entry(mpd_client_state, uint_buf1);
+                if (rc == true) {
+                    response->data = jsonrpc_respond_ok(response->data, request->method, request->id);
+                }
+                else {
+                    response->data = jsonrpc_respond_message(response->data, request->method, request->id, "Could not remove song from jukebox queue", true);
+                }
+            }
+            break;
+        case MPD_API_JUKEBOX_LIST: {
+            t_tags *tagcols = (t_tags *)malloc(sizeof(t_tags));
+            assert(tagcols);
+            je = json_scanf(request->data, sdslen(request->data), "{params: {offset: %u, cols: %M}}", &uint_buf1, json_to_tags, tagcols);
+            if (je == 2) {
+                response->data = mpd_client_put_jukebox_list(mpd_client_state, response->data, request->method, request->id, uint_buf1, tagcols);
+            }
+            free(tagcols);
+            break;
+        }
         case MPD_API_TRIGGER_LIST:
             response->data = trigger_list(mpd_client_state, response->data, request->method, request->id);
             break;
@@ -207,12 +235,17 @@ void mpd_client_api(t_config *config, t_mpd_client_state *mpd_client_state, void
                     response->data = jsonrpc_respond_message(response->data, request->method, request->id, "Failed to set like, invalid like value", true);
                     break;
                 }
-                if (is_streamuri(p_charbuf1) == false) {
+                if (is_streamuri(p_charbuf1) == true) {
                     response->data = jsonrpc_respond_message(response->data, request->method, request->id, "Failed to set like, invalid song uri", true);
                     break;
                 }
-                mpd_client_sticker_like(mpd_client_state, p_charbuf1, int_buf1);
-                response->data = jsonrpc_respond_ok(response->data, request->method, request->id);
+                rc = mpd_client_sticker_like(mpd_client_state, p_charbuf1, int_buf1);
+                if (rc == true) {
+                    response->data = jsonrpc_respond_ok(response->data, request->method, request->id);
+                }
+                else {
+                    response->data = jsonrpc_respond_message(response->data, request->method, request->id, "Failed to set like, unknown error", true);
+                }
             }
             break;
         case MPD_API_PLAYER_STATE:
@@ -428,8 +461,13 @@ void mpd_client_api(t_config *config, t_mpd_client_state *mpd_client_state, void
         case MPD_API_PLAYER_VOLUME_SET:
             je = json_scanf(request->data, sdslen(request->data), "{params: {volume:%u}}", &uint_buf1);
             if (je == 1) {
-                rc = mpd_run_set_volume(mpd_client_state->mpd_state->conn, uint_buf1);
-                response->data = respond_with_mpd_error_or_ok(mpd_client_state->mpd_state, response->data, request->method, request->id, rc, "mpd_run_set_volume");
+                if (uint_buf1 > config->volume_max || uint_buf1 < config->volume_min) {
+                    response->data = jsonrpc_respond_message(response->data, request->method, request->id, "Invalid volume level", true);
+                }
+                else {
+                    rc = mpd_run_set_volume(mpd_client_state->mpd_state->conn, uint_buf1);
+                    response->data = respond_with_mpd_error_or_ok(mpd_client_state->mpd_state, response->data, request->method, request->id, rc, "mpd_run_set_volume");
+                }
             }
             break;
         case MPD_API_PLAYER_VOLUME_GET:
@@ -443,9 +481,9 @@ void mpd_client_api(t_config *config, t_mpd_client_state *mpd_client_state, void
             }
             break;
         case MPD_API_PLAYER_SEEK_CURRENT:
-            je = json_scanf(request->data, sdslen(request->data), "{params: {seek: %f, relative: %B}}", &float_buf, &bool_buf);
+            je = json_scanf(request->data, sdslen(request->data), "{params: {seek: %f, relative: %B}}", &float_buf, &bool_buf1);
             if (je == 2) {
-                rc = mpd_run_seek_current(mpd_client_state->mpd_state->conn, float_buf, bool_buf);
+                rc = mpd_run_seek_current(mpd_client_state->mpd_state->conn, float_buf, bool_buf1);
                 response->data = respond_with_mpd_error_or_ok(mpd_client_state->mpd_state, response->data, request->method, request->id, rc, "mpd_run_seek_current");
             }
             break;
@@ -663,9 +701,9 @@ void mpd_client_api(t_config *config, t_mpd_client_state *mpd_client_state, void
             t_tags *tagcols = (t_tags *)malloc(sizeof(t_tags));
             assert(tagcols);
             je = json_scanf(request->data, sdslen(request->data), "{params: {searchstr:%Q, filter:%Q, plist:%Q, offset:%u, cols: %M, replace:%B}}", 
-                &p_charbuf1, &p_charbuf2, &p_charbuf3, &uint_buf1, json_to_tags, tagcols, &bool_buf);
+                &p_charbuf1, &p_charbuf2, &p_charbuf3, &uint_buf1, json_to_tags, tagcols, &bool_buf1);
             if (je == 6) {
-                if (bool_buf == true) {
+                if (bool_buf1 == true) {
                     rc = mpd_run_clear(mpd_client_state->mpd_state->conn);
                     if (rc == false) {
                         LOG_ERROR("Clearing queue failed");
@@ -682,9 +720,9 @@ void mpd_client_api(t_config *config, t_mpd_client_state *mpd_client_state, void
             t_tags *tagcols = (t_tags *)malloc(sizeof(t_tags));
             assert(tagcols);
             je = json_scanf(request->data, sdslen(request->data), "{params: {expression:%Q, sort:%Q, sortdesc:%B, plist:%Q, offset:%u, cols: %M, replace:%B}}", 
-                &p_charbuf1, &p_charbuf2, &bool_buf, &p_charbuf3, &uint_buf1, json_to_tags, tagcols, &bool_buf);
+                &p_charbuf1, &p_charbuf2, &bool_buf1, &p_charbuf3, &uint_buf1, json_to_tags, tagcols, &bool_buf2);
             if (je == 7) {
-                if (bool_buf == true) {
+                if (bool_buf2 == true) {
                     rc = mpd_run_clear(mpd_client_state->mpd_state->conn);
                     if (rc == false) {
                         LOG_ERROR("Clearing queue failed");
@@ -692,7 +730,7 @@ void mpd_client_api(t_config *config, t_mpd_client_state *mpd_client_state, void
                     check_error_and_recover(mpd_client_state->mpd_state, NULL, NULL, 0);
                 }
                 response->data = mpd_shared_search_adv(mpd_client_state->mpd_state, response->data, request->method, request->id, 
-                    p_charbuf1, p_charbuf2, bool_buf, NULL, p_charbuf3, uint_buf1, tagcols, mpd_client_state->max_elements_per_page);
+                    p_charbuf1, p_charbuf2, bool_buf1, NULL, p_charbuf3, uint_buf1, tagcols, mpd_client_state->max_elements_per_page);
             }
             free(tagcols);
             break;
@@ -721,18 +759,18 @@ void mpd_client_api(t_config *config, t_mpd_client_state *mpd_client_state, void
             break;
         case MPD_API_DATABASE_GET_ALBUMS:
             je = json_scanf(request->data, sdslen(request->data), "{params: {offset:%u, searchstr:%Q, filter:%Q, sort:%Q, sortdesc:%B}}", 
-                &uint_buf1, &p_charbuf1, &p_charbuf2, &p_charbuf3, &bool_buf);
+                &uint_buf1, &p_charbuf1, &p_charbuf2, &p_charbuf3, &bool_buf1);
             if (je == 5) {
                 response->data = mpd_client_put_firstsong_in_albums(config, mpd_client_state, response->data, request->method, request->id, 
-                    p_charbuf1, p_charbuf2, p_charbuf3, bool_buf, uint_buf1);
+                    p_charbuf1, p_charbuf2, p_charbuf3, bool_buf1, uint_buf1);
             }
             break;
         case MPD_API_DATABASE_TAG_LIST:
             je = json_scanf(request->data, sdslen(request->data), "{params: {offset: %u, searchstr: %Q, filter: %Q, sort: %Q, sortdesc: %B, tag: %Q}}", 
-                &uint_buf1, &p_charbuf1, &p_charbuf2, &p_charbuf3, &bool_buf, &p_charbuf4);
+                &uint_buf1, &p_charbuf1, &p_charbuf2, &p_charbuf3, &bool_buf1, &p_charbuf4);
             if (je == 6) {
                 response->data = mpd_client_put_db_tag2(config, mpd_client_state, response->data, request->method, request->id,
-                    p_charbuf1, p_charbuf2, p_charbuf3, bool_buf, uint_buf1, p_charbuf4);
+                    p_charbuf1, p_charbuf2, p_charbuf3, bool_buf1, uint_buf1, p_charbuf4);
             }
             break;
         case MPD_API_DATABASE_TAG_ALBUM_TITLE_LIST: {

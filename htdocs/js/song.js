@@ -33,7 +33,11 @@ function parseSongDetails(obj) {
         if (settings.tags[i] === 'Title' || obj.result[settings.tags[i]] === '-') {
             continue;
         }
-        songDetailsHTML += '<tr><th>' + t(settings.tags[i]) + '</th><td data-tag="' + settings.tags[i] + '" data-name="' + encodeURI(obj.result[settings.tags[i]]) + '">';
+        songDetailsHTML += '<tr><th>' + t(settings.tags[i]) + '</th><td data-tag="' + settings.tags[i] + '" data-name="' + encodeURI(obj.result[settings.tags[i]]) + '"';
+        if (settings.tags[i] === 'Album' && obj.result[tagAlbumArtist] !== null) {
+            songDetailsHTML += ' data-albumartist="' + encodeURI(obj.result[tagAlbumArtist]) + '"';
+        }
+        songDetailsHTML += '>';
         if (settings.browsetags.includes(settings.tags[i]) && obj.result[settings.tags[i]] !== '-') {
             songDetailsHTML += '<a class="text-success" href="#">' + e(obj.result[settings.tags[i]]) + '</a>';
         }
@@ -104,9 +108,11 @@ function parseSongDetails(obj) {
         //add uri to image list to get embedded albumart
         let images = [ subdir + '/albumart/' + obj.result.uri ];
         //add all but coverfiles to image list
-        for (let i = 0; i < obj.result.images.length; i++) {
-            if (isCoverfile(obj.result.images[i]) === false) {
-                images.push(subdir + '/browse/music/' + obj.result.images[i]);
+        if (settings.publish === true) {
+            for (let i = 0; i < obj.result.images.length; i++) {
+                if (isCoverfile(obj.result.images[i]) === false) {
+                    images.push(subdir + '/browse/music/' + obj.result.images[i]);
+                }
             }
         }
         const imgEl = document.getElementById('tabSongPics');
@@ -174,6 +180,9 @@ function voteSong(vote) {
 }
 
 function setVoteSongBtns(vote, uri) {
+    if (uri === undefined) {
+        uri = '';
+    }
     domCache.btnVoteUp2 = document.getElementById('btnVoteUp2');
     domCache.btnVoteDown2 = document.getElementById('btnVoteDown2');
 
@@ -184,7 +193,10 @@ function setVoteSongBtns(vote, uri) {
             domCache.btnVoteUp2.setAttribute('disabled', 'disabled');
             domCache.btnVoteDown2.setAttribute('disabled', 'disabled');
         }
-    } else {
+        domCache.btnVoteUp.classList.remove('highlight');
+        domCache.btnVoteDown.classList.remove('highlight');
+    }
+    else {
         domCache.btnVoteUp.removeAttribute('disabled');
         domCache.btnVoteDown.removeAttribute('disabled');
         if (domCache.btnVoteUp2) {
@@ -200,14 +212,16 @@ function setVoteSongBtns(vote, uri) {
             domCache.btnVoteUp2.classList.remove('highlight');
             domCache.btnVoteDown2.classList.add('highlight');
         }
-    } else if (vote === 1) {
+    }
+    else if (vote === 1) {
         domCache.btnVoteUp.classList.remove('highlight');
         domCache.btnVoteDown.classList.remove('highlight');
         if (domCache.btnVoteUp2) {
             domCache.btnVoteUp2.classList.remove('highlight');
             domCache.btnVoteDown2.classList.remove('highlight');
         }
-    } else if (vote === 2) {
+    }
+    else if (vote === 2) {
         domCache.btnVoteUp.classList.add('highlight');
         domCache.btnVoteDown.classList.remove('highlight');
         if (domCache.btnVoteUp2) {

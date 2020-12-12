@@ -7,12 +7,14 @@
 
 function setStateIcon() {
     if (websocketConnected === false || settings.mpdConnected === false) {
-        domCache.mainMenu.classList.add('text-light');
-        domCache.mainMenu.classList.remove('connected');
+//        domCache.mainMenu.classList.add('text-light');
+//        domCache.mainMenu.classList.remove('connected');
+        document.getElementById('logoBg').setAttribute('fill', '#6c757d');
     }
     else {
-        domCache.mainMenu.classList.add('connected');
-        domCache.mainMenu.classList.remove('text-light');
+//        domCache.mainMenu.classList.add('connected');
+//        domCache.mainMenu.classList.remove('text-light');
+        document.getElementById('logoBg').setAttribute('fill', settings.highlightColor);
     }
 }
 
@@ -29,6 +31,10 @@ function toggleAlert(alertBox, state, msg) {
 }
 
 function showNotification(notificationTitle, notificationText, notificationHtml, notificationType) {
+    if (notificationTitle === 'No current song') {
+        return;
+    }
+
     if (settings.notificationWeb === true) {
         let notification = new Notification(notificationTitle, {icon: 'assets/favicon.ico', body: notificationText});
         setTimeout(notification.close.bind(notification), 3000);
@@ -218,7 +224,7 @@ function toggleUI() {
     if (websocketConnected === true) {
         toggleAlert('alertMympdState', false, '');
     }
-    else {
+    else if (appInited === true) {
         toggleAlert('alertMympdState', true, t('Websocket is disconnected'));
         logMessage(t('Websocket is disconnected'), '', '', 'danger');
     }

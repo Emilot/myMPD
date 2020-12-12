@@ -170,12 +170,17 @@ function webSocketConnect() {
                         sendAPI("MPD_API_PLAYLIST_LIST", {"offset": app.current.page, "searchstr": app.current.search}, parsePlaylists);
                     }
                     else if (app.current.app === 'Browse' && app.current.tab === 'Playlists' && app.current.view === 'Detail') {
-                        sendAPI("MPD_API_PLAYLIST_CONTENT_LIST", {"offset": app.current.page, "searchstr": app.current.search, "uri": app.current.search, "cols": settings.colsBrowsePlaylistsDetail}, parsePlaylists);
+                        sendAPI("MPD_API_PLAYLIST_CONTENT_LIST", {"offset": app.current.page, "searchstr": app.current.search, "uri": app.current.filter, "cols": settings.colsBrowsePlaylistsDetail}, parsePlaylists);
                     }
                     break;
                 case 'update_lastplayed':
                     if (app.current.app === 'Queue' && app.current.tab === 'LastPlayed') {
                         sendAPI("MPD_API_QUEUE_LAST_PLAYED", {"offset": app.current.page, "cols": settings.colsQueueLastPlayed}, parseLastPlayed);
+                    }
+                    break;
+                case 'update_jukebox':
+                    if (app.current.app === 'Queue' && app.current.tab === 'Jukebox') {
+                        sendAPI("MPD_API_JUKEBOX_LIST", {"offset": app.current.page, "cols": settings.colsQueueJukebox}, parseJukeboxList);
                     }
                     break;
                 case 'error':
@@ -287,7 +292,10 @@ function navBrowseHandler(event) {
 }
 
 function gotoBrowse() {
-    let x = event.target;
+    if (settings.featAdvsearch === false) {
+        return;
+    }
+    const x = event.target;
     let tag = x.getAttribute('data-tag');
     let name = decodeURI(x.getAttribute('data-name'));
     if (tag === null) {
@@ -295,7 +303,24 @@ function gotoBrowse() {
         name = decodeURI(x.parentNode.getAttribute('data-name'));
     }
     if (tag !== '' && name !== '' && name !== '-' && settings.browsetags.includes(tag)) {
-        appGoto('Browse', 'Database', 'List', '0', tag, 'AlbumArtist', 'Album', name);
+        if (tag === 'Album') {
+            let artist = x.getAttribute('data-albumartist');
+            if (artist === null) {
+                artist = x.parentNode.getAttribute('data-albumartist');
+            }
+            if (artist !== null) {
+                //Show album details
+                appGoto('Browse', 'Database', 'Detail', '0', tag, tagAlbumArtist, name, decodeURI(artist));
+            }
+            else {
+                //show filtered album list
+                appGoto('Browse', 'Database', 'List', '0', tag, tagAlbumArtist, 'Album', '(' + tag + ' == \'' + name + '\')');
+            }
+        }
+        else {
+            //show filtered album list
+            appGoto('Browse', 'Database', 'List', '0', tag, tagAlbumArtist, 'Album', '(' + tag + ' == \'' + name + '\')');
+        }
     }
 }
 
@@ -348,6 +373,15 @@ function parseFilesystem(obj) {
         row.setAttribute('data-type', obj.result.data[i].Type);
         row.setAttribute('data-uri', uri);
         row.setAttribute('tabindex', 0);
+        if (app.current.app === 'Search' && settings.featTags === true && settings.featAdvsearch === true) {
+            //add artist and album information for album actions in search app
+            if (obj.result.data[i].Album !== null) {
+                row.setAttribute('data-album', encodeURI(obj.result.data[i].Album));
+            }
+            if (obj.result.data[i][tagAlbumArtist] !== null) {
+                row.setAttribute('data-albumartist', encodeURI(obj.result.data[i][tagAlbumArtist]));
+            }
+        }
         if (obj.result.data[i].Type === 'song') {
             row.setAttribute('data-name', obj.result.data[i].Title);
         }
@@ -378,7 +412,12 @@ function parseFilesystem(obj) {
                 row.innerHTML = tds;
                 break;
             case 'song':
-                obj.result.data[i].Duration = beautifySongDuration(obj.result.data[i].Duration);
+                if (obj.result.data[i].Duration !== undefined) {
+                    obj.result.data[i].Duration = beautifySongDuration(obj.result.data[i].Duration);
+                }
+                if (obj.result.data[i].LastModified !== undefined) {
+                    obj.result.data[i].LastModified = localeDate(obj.result.data[i].LastModified);
+                }
                 for (let c = 0; c < settings['cols' + list].length; c++) {
                     tds += '<td data-col="' + settings['cols' + list][c] + '">';
                     if (settings['cols' + list][c] === 'Type') {
@@ -499,7 +538,7 @@ function parseDatabase(obj) {
                        'data-type="dir" data-name="' + encodeURI(obj.result.data[i].Album) + '" ' +
                        'data-album="' + encodeURI(obj.result.data[i].Album) + '" ' +
                        'data-albumartist="' + encodeURI(obj.result.data[i].AlbumArtist) + '" tabindex="0">' +
-                   '<div class="card-body album-cover-loading album-cover-grid bg-white" id="' + id + '"></div>' +
+                   '<div class="card-body album-cover-loading album-cover-grid bg-white d-flex" id="' + id + '"></div>' +
                    '<div class="card-footer card-footer-grid p-2" title="' + e(obj.result.data[i].AlbumArtist) + ': ' + e(obj.result.data[i].Album) + '">' +
                    e(obj.result.data[i].Album) + '<br/><small>' + e(obj.result.data[i].AlbumArtist) + '</small>' +
                    '</div></div>';
@@ -537,6 +576,9 @@ function parseDatabase(obj) {
             else {
                 col.firstChild.firstChild.style.backgroundImage = picture;
             }
+            if (obj.result.tag === 'Album' && isMobile === true) {
+                addPlayButton(document.getElementById(id));
+            }
         }
     }
     let colsLen = cols.length - 1;
@@ -563,6 +605,18 @@ function setGridImage(changes, observer) {
             }
         }
     });
+}
+
+function addPlayButton(parentEl) {
+    const div = document.createElement('div');
+    div.classList.add('align-self-end', 'album-grid-mouseover', 'material-icons', 'rounded-circle', 'clickable');
+    div.innerText = 'play_arrow';
+    parentEl.appendChild(div);
+    div.addEventListener('click', function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        replaceQueue('dir', decodeURI(event.target.parentNode.parentNode.getAttribute('data-uri')), decodeURI(event.target.parentNode.parentNode.getAttribute('data-name')));
+    }, false);
 }
 
 function parseAlbumDetails(obj) {
@@ -614,7 +668,11 @@ function backToAlbumGrid() {
 function addAlbum(action) {
     const album = decodeURI(app.current.tag);
     const albumArtist = decodeURI(app.current.search);
-    const expression = '((Album == \'' + album + '\') AND (AlbumArtist == \'' + albumArtist + '\'))';
+    _addAlbum(action, albumArtist, album);
+}
+
+function _addAlbum(action, albumArtist, album) {
+    const expression = '((Album == \'' + album + '\') AND (' + tagAlbumArtist + ' == \'' + albumArtist + '\'))';
     if (action === 'appendQueue') {
         addAllFromSearchPlist('queue', expression, false);
     }
@@ -720,14 +778,14 @@ function navigateGrid(grid, keyCode) {
 */
 
 function parseHome(obj) {
-    let nrItems = obj.result.returnedEntities;
-    let cardContainer = document.getElementById('HomeCards');
-    let cols = cardContainer.getElementsByClassName('col');
+    const nrItems = obj.result.returnedEntities;
+    const cardContainer = document.getElementById('HomeCards');
+    const cols = cardContainer.getElementsByClassName('col');
     if (cols.length === 0) {
         cardContainer.innerHTML = '';
     }
     for (let i = 0; i < nrItems; i++) {
-        let col = document.createElement('div');
+        const col = document.createElement('div');
         col.classList.add('col', 'px-0', 'flex-grow-0');
         if (obj.result.data[i].AlbumArtist === '') {
             obj.result.data[i].AlbumArtist = t('Unknown artist');
@@ -735,12 +793,10 @@ function parseHome(obj) {
         if (obj.result.data[i].Album === '') {
             obj.result.data[i].Album = t('Unknown album');
         }
-        let href=JSON.stringify({"cmd": obj.result.data[i].cmd, "options": obj.result.data[i].options});
-        let html = '<div class="card home-icons clickable" draggable="true" tabindex="0" data-pos="' + i + '" data-href=\'' + 
-                   href + '\'  title="' + e(obj.result.data[i].name) + '">' +
-                   (obj.result.data[i].ligature !== '' ? 
-                       '<div class="card-body material-icons home-icons-ligature">' + e(obj.result.data[i].ligature) + '</div>' :
-                       '<div class="card-body home-icons-image"></div>')+
+        const href=JSON.stringify({"cmd": obj.result.data[i].cmd, "options": obj.result.data[i].options});
+        const html = '<div class="card home-icons clickable" draggable="true" tabindex="0" data-pos="' + i + '" data-href=\'' + 
+                   e(href) + '\'  title="' + e(obj.result.data[i].name) + '">' +
+                   '<div class="card-body material-icons">' + e(obj.result.data[i].ligature) + '</div>' +
                    '<div class="card-footer card-footer-grid p-2">' +
                    e(obj.result.data[i].name) + 
                    '</div></div>';
@@ -751,12 +807,11 @@ function parseHome(obj) {
         else {
             cardContainer.append(col);
         }
-        const hii = col.getElementsByClassName('home-icons-image')[0];
-        if (hii) {
-            hii.style.backgroundImage = 'url("' + subdir + '/browse/pics/' + obj.result.data[i].image + '")';
+        if (obj.result.data[i].image !== '') {
+            col.getElementsByClassName('card-body')[0].style.backgroundImage = 'url("' + subdir + '/browse/pics/' + obj.result.data[i].image + '")';
         }
-        else if (obj.result.data[i].bgcolor !== '') {
-            col.getElementsByClassName('home-icons-ligature')[0].style.backgroundColor = obj.result.data[i].bgcolor;
+        if (obj.result.data[i].bgcolor !== '') {
+            col.getElementsByClassName('card-body')[0].style.backgroundColor = obj.result.data[i].bgcolor;
         }
     }
     let colsLen = cols.length - 1;
@@ -765,7 +820,7 @@ function parseHome(obj) {
     }
                     
     if (nrItems === 0) {
-        cardContainer.innerHTML = '<div>You have not added any Home Icons yet. You can add views, playlists and scripts.</div>';
+        cardContainer.innerHTML = '<div class="ml-3">' + t('Homescreen welcome') + '</div>';
     }
 }
 
@@ -881,9 +936,15 @@ function _addHomeIcon(cmd, name, ligature, options) {
     document.getElementById('inputHomeIconName').value = name;
     document.getElementById('inputHomeIconLigature').value = ligature;
     document.getElementById('inputHomeIconBgcolor').value = '#28a745';
-    document.getElementById('inputHomeIconImage').value = '';
     document.getElementById('selectHomeIconCmd').value = cmd;
+    
     showHomeIconCmdOptions(options);
+    getHomeIconPictureList('');
+    
+    document.getElementById('homeIconPreview').innerText = ligature;
+    document.getElementById('homeIconPreview').style.backgroundColor = '#28a745';
+    document.getElementById('homeIconPreview').style.backgroundImage = '';
+    document.getElementById('divHomeIconLigature').classList.remove('hide');
     modalEditHomeIcon.show();
 }
 
@@ -902,12 +963,26 @@ function _editHomeIcon(pos, replace, title) {
     sendAPI("MYMPD_API_HOME_ICON_GET", {"pos": pos}, function(obj) {
         document.getElementById('inputHomeIconReplace').value = replace;
         document.getElementById('inputHomeIconOldpos').value = pos;
-        document.getElementById('inputHomeIconName').value = obj.result.data[0].name;
-        document.getElementById('inputHomeIconLigature').value = obj.result.data[0].ligature;
-        document.getElementById('inputHomeIconBgcolor').value = obj.result.data[0].bgcolor;
-        document.getElementById('inputHomeIconImage').value = obj.result.data[0].image;
-        document.getElementById('selectHomeIconCmd').value = obj.result.data[0].cmd;
-        showHomeIconCmdOptions(obj.result.data[0].options);
+        document.getElementById('inputHomeIconName').value = obj.result.data.name;
+        document.getElementById('inputHomeIconLigature').value = obj.result.data.ligature;
+        document.getElementById('inputHomeIconBgcolor').value = obj.result.data.bgcolor;
+        document.getElementById('selectHomeIconCmd').value = obj.result.data.cmd;
+
+        showHomeIconCmdOptions(obj.result.data.options);
+        getHomeIconPictureList(obj.result.data.image);
+
+        document.getElementById('homeIconPreview').innerText = obj.result.data.ligature;
+        document.getElementById('homeIconPreview').style.backgroundColor = obj.result.data.bgcolor;
+        
+        if (obj.result.data.image === '') {
+            document.getElementById('divHomeIconLigature').classList.remove('hide');
+            document.getElementById('homeIconPreview').style.backgroundImage = '';
+        }
+        else {
+            document.getElementById('divHomeIconLigature').classList.add('hide');
+            document.getElementById('homeIconPreview').style.backgroundImage = 'url(' + subdir + '"/browse/pics/' + obj.result.data.image + '")';
+        }
+        
         modalEditHomeIcon.show();
     });
 }
@@ -923,15 +998,18 @@ function saveHomeIcon() {
         let options = [];
         let optionEls = document.getElementById('divHomeIconOptions').getElementsByTagName('input');
         for (let i = 0; i < optionEls.length; i++) {
-            options.push(optionEls[i].value);
+            //workarround for parsing arrays with empty values in frozen
+            let value = optionEls[i].value !== '' ? optionEls[i].value : '!undefined!';
+            options.push(value);
         }
+        const image = getSelectValue('selectHomeIconImage');
         sendAPI("MYMPD_API_HOME_ICON_SAVE", {
             "replace": (document.getElementById('inputHomeIconReplace').value === 'true' ? true : false),
             "oldpos": parseInt(document.getElementById('inputHomeIconOldpos').value),
             "name": nameEl.value,
-            "ligature": document.getElementById('inputHomeIconLigature').value,
+            "ligature": (image === '' ? document.getElementById('inputHomeIconLigature').value : ''),
             "bgcolor": document.getElementById('inputHomeIconBgcolor').value,
-            "image": document.getElementById('inputHomeIconImage').value,
+            "image": image,
             "cmd": document.getElementById('selectHomeIconCmd').value,
             "options": options
             }, function() {
@@ -951,16 +1029,97 @@ function deleteHomeIcon(pos) {
 }
 
 function showHomeIconCmdOptions(values) {
-    const options = JSON.parse(getSelectedOptionAttribute('selectHomeIconCmd', 'data-options'));
     let list = '';
-    for (let i = 0; i < options.options.length; i++) {
-        let value = values !== undefined ? values[i] !== undefined ? values[i] : '' : '';
-        list += '<div class="form-group row">' +
-            '<label class="col-sm-4 col-form-label">' + t(options.options[i]) + '</label>' +
-            '<div class="col-sm-8"><input class="form-control border-secondary" value="' + e(value) + '"></div>' +
-            '</div>';
+    const optionsText =getSelectedOptionAttribute('selectHomeIconCmd', 'data-options')
+    if (optionsText !== undefined) {    
+        const options = JSON.parse(optionsText);
+        for (let i = 0; i < options.options.length; i++) {
+            let value = values !== undefined ? values[i] !== undefined ? values[i] : '' : '';
+            list += '<div class="form-group row">' +
+                '<label class="col-sm-4 col-form-label">' + t(options.options[i]) + '</label>' +
+                '<div class="col-sm-8"><input class="form-control border-secondary" value="' + e(value) + '"></div>' +
+                '</div>';
+        }
     }
     document.getElementById('divHomeIconOptions').innerHTML = list;
+}
+
+function getHomeIconPictureList(picture) {
+    sendAPI("MYMPD_API_HOME_ICON_PICTURE_LIST", {}, function(obj) {
+        let options = '<option value="">' + t('Use ligature') + '</option>';
+        for (let i = 0; i < obj.result.returnedEntities; i++) {
+            options += '<option value="' + e(obj.result.data[i]) + '">' + e(obj.result.data[i])  + '</option>';
+        }
+        let sel = document.getElementById('selectHomeIconImage');
+        sel.innerHTML = options;
+        sel.value = picture;
+    });
+}
+/*
+ SPDX-License-Identifier: GPL-2.0-or-later
+ myMPD (c) 2018-2020 Juergen Mang <mail@jcgames.de>
+ https://github.com/jcorporation/mympd
+*/
+
+//eslint-disable-next-line no-unused-vars
+function delQueueJukeboxSong(pos) {
+    sendAPI("MPD_API_JUKEBOX_RM", {"pos": pos}, function() {
+        sendAPI("MPD_API_JUKEBOX_LIST", {"offset": app.current.page, "cols": settings.colsQueueJukebox}, parseJukeboxList);
+    });
+}
+
+function parseJukeboxList(obj) {
+    let nrItems = obj.result.returnedEntities;
+    let table = document.getElementById('QueueJukeboxList');
+    let navigate = document.activeElement.parentNode.parentNode === table ? true : false;
+    let activeRow = 0;
+    let tbody = table.getElementsByTagName('tbody')[0];
+    let tr = tbody.getElementsByTagName('tr');
+    for (let i = 0; i < nrItems; i++) {
+        obj.result.data[i].Duration = beautifySongDuration(obj.result.data[i].Duration);
+        obj.result.data[i].LastPlayed = localeDate(obj.result.data[i].LastPlayed);
+        let row = document.createElement('tr');
+        row.setAttribute('data-uri', obj.result.data[i].uri);
+        row.setAttribute('data-name', obj.result.data[i].Title);
+        row.setAttribute('data-type', 'song');
+        row.setAttribute('data-pos', i);
+        row.setAttribute('tabindex', 0);
+        let tds = '';
+        for (let c = 0; c < settings.colsQueueJukebox.length; c++) {
+            tds += '<td data-col="' + settings.colsQueueJukebox[c] + '">' + e(obj.result.data[i][settings.colsQueueJukebox[c]]) + '</td>';
+        }
+        tds += '<td data-col="Action">';
+        if (obj.result.data[i].uri !== '') {
+            tds += '<a href="#" class="material-icons color-darkgrey">' + ligatureMore + '</a>';
+        }
+        tds += '</td>';
+        row.innerHTML = tds;
+        if (i < tr.length) {
+            activeRow = replaceTblRow(tr[i], row) === true ? i : activeRow;
+        }
+        else {
+            tbody.append(row);
+        }
+    }
+    let trLen = tr.length - 1;
+    for (let i = trLen; i >= nrItems; i --) {
+        tr[i].remove();
+    }                    
+
+    let colspan = settings['colsQueueJukebox'].length;
+    colspan--;
+    
+    if (nrItems === 0) {
+        tbody.innerHTML = '<tr><td><span class="material-icons">error_outline</span></td>' +
+            '<td colspan="' + colspan + '">' + t('Empty list') + '</td></tr>';
+    }
+
+    if (navigate === true) {
+        focusTable(activeRow);
+    }
+
+    setPagination(obj.result.totalEntities, obj.result.returnedEntities);
+    document.getElementById('QueueJukeboxList').classList.remove('opacity05');
 }
 /*
  SPDX-License-Identifier: GPL-2.0-or-later
@@ -1429,20 +1588,32 @@ function zoomPicture(el) {
         if (imgSrc !== null) {
             images = el.getAttribute('data-images').split(';;');
         }
-        else {
+        else if (lastSongObj.images) {
             images = lastSongObj.images.slice();
         }
-        if (images.length > 0) {
-            for (let i = 0; i < images.length; i++) {
-                images[i] = subdir + '/browse/music/' + images[i];
-            }
-            const imgEl = document.getElementById('modalPictureImg');
-            imgEl.style.paddingTop = 0;
-            createImgCarousel(imgEl, 'picsCarousel', images);
-            document.getElementById('modalPictureZoom').classList.add('hide');
-            modalPicture.show();
+        else {
             return;
         }
+        
+        //add uri to image list to get embedded albumart
+        let a_images = [];
+        if (el.getAttribute('data-uri')) {
+            a_images = [ subdir + '/albumart/' + el.getAttribute('data-uri') ];
+        }
+        //add all but coverfiles to image list
+        if (settings.publish === true) {
+            for (let i = 0; i < images.length; i++) {
+                if (isCoverfile(images[i]) === false) {
+                    a_images.push(subdir + '/browse/music/' + images[i]);
+                }
+            }
+        }
+        const imgEl = document.getElementById('modalPictureImg');
+        imgEl.style.paddingTop = 0;
+        createImgCarousel(imgEl, 'picsCarousel', a_images);
+        document.getElementById('modalPictureZoom').classList.add('hide');
+        modalPicture.show();
+        return;
     }
     
     if (el.style.backgroundImage !== '') {
@@ -1663,6 +1834,7 @@ var scale = '1.0';
 var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 var ligatureMore = 'menu';
 var progressBarTransition = 'width 1s linear';
+var tagAlbumArtist = 'AlbumArist';
 
 var app = {};
 app.apps = { 
@@ -1691,9 +1863,17 @@ app.apps = {
                 "sort": "-",
                 "tag": "-",
                 "search": "",
-                "scrollPos": 0 
+                "scrollPos": 0
             },
             "LastPlayed": {
+                "page": 0,
+                "filter": "any",
+                "sort": "-",
+                "tag": "-",
+                "search": "",
+                "scrollPos": 0 
+            },
+            "Jukebox": {
                 "page": 0,
                 "filter": "any",
                 "sort": "-",
@@ -1772,8 +1952,6 @@ app.current = { "app": "Home", "tab": undefined, "view": undefined, "page": 0, "
 app.last = { "app": undefined, "tab": undefined, "view": undefined, "filter": "", "search": "", "sort": "", "tag": "", "scrollPos": 0 };
 
 var domCache = {};
-domCache.navbarBtns = document.getElementById('navbar-main').getElementsByTagName('div');
-domCache.navbarBtnsLen = domCache.navbarBtns.length;
 domCache.counter = document.getElementById('counter');
 domCache.volumePrct = document.getElementById('volumePrct');
 domCache.volumeControl = document.getElementById('volumeControl');
@@ -1796,7 +1974,7 @@ domCache.footerAlbum = document.getElementById('footerAlbum');
 domCache.footerCover = document.getElementById('footerCover');
 domCache.btnVoteUp = document.getElementById('btnVoteUp');
 domCache.btnVoteDown = document.getElementById('btnVoteDown');
-domCache.badgeQueueItems = document.getElementById('badgeQueueItems');
+domCache.badgeQueueItems = null;
 domCache.searchstr = document.getElementById('searchstr');
 domCache.searchCrumb = document.getElementById('searchCrumb');
 domCache.body = document.getElementsByTagName('body')[0];
@@ -1856,6 +2034,7 @@ function appPrepare(scrollPos) {
         document.getElementById('cardSearch').classList.add('hide');
         document.getElementById('cardQueueCurrent').classList.add('hide');
         document.getElementById('cardQueueLastPlayed').classList.add('hide');
+        document.getElementById('cardQueueJukebox').classList.add('hide');
         document.getElementById('cardBrowsePlaylists').classList.add('hide');
         document.getElementById('cardBrowseFilesystem').classList.add('hide');
         document.getElementById('cardBrowseDatabase').classList.add('hide');
@@ -1928,7 +2107,6 @@ function appGoto(card, tab, view, page, filter, sort, tag, search) {
             encodeURIComponent(sort === undefined ? app.apps[card].sort : sort) + '/' +
             encodeURIComponent(tag === undefined ? app.apps[card].tag : tag) + '/' +
             encodeURIComponent(search === undefined ? app.apps[card].search : search);
-                                 
     }
     location.hash = hash;
 }
@@ -2003,6 +2181,9 @@ function appRoute() {
     }
     else if (app.current.app === 'Queue' && app.current.tab === 'LastPlayed') {
         sendAPI("MPD_API_QUEUE_LAST_PLAYED", {"offset": app.current.page, "cols": settings.colsQueueLastPlayed}, parseLastPlayed);
+    }
+    else if (app.current.app === 'Queue' && app.current.tab === 'Jukebox') {
+        sendAPI("MPD_API_JUKEBOX_LIST", {"offset": app.current.page, "cols": settings.colsQueueJukebox}, parseJukeboxList);
     }
     else if (app.current.app === 'Browse' && app.current.tab === 'Playlists' && app.current.view === 'All') {
         sendAPI("MPD_API_PLAYLIST_LIST", {"offset": app.current.page, "searchstr": app.current.search}, parsePlaylists);
@@ -2335,6 +2516,10 @@ function appInitWait() {
 }
 
 function appInit() {
+    document.getElementById('mainMenu').addEventListener('click', function(event) {
+        event.preventDefault();
+    }, false);
+
     document.getElementById('btnChVolumeDown').addEventListener('click', function(event) {
         event.stopPropagation();
     }, false);
@@ -2383,6 +2568,17 @@ function appInit() {
             icon.innerText = icon.innerText === 'keyboard_arrow_right' ? 'keyboard_arrow_down' : 'keyboard_arrow_right';
         }, false);
     }    
+
+    document.getElementById('navbar-main').addEventListener('click', function(event) {
+        event.preventDefault();
+        let href = event.target.getAttribute('data-href');
+        if (href === null) {
+            href = event.target.parentNode.getAttribute('data-href');
+        }
+        if (href !== null) {
+            parseCmd(event, href);
+        }
+    }, false);
     
     document.getElementById('volumeMenu').parentNode.addEventListener('show.bs.dropdown', function () {
         sendAPI("MPD_API_PLAYER_OUTPUT_LIST", {}, parseOutputs);
@@ -2505,6 +2701,20 @@ function appInit() {
     
     document.getElementById('inputBgColor').addEventListener('change', function() {
         document.getElementById('bgColorPreview').style.backgroundColor = this.value;
+    }, false);
+    
+    document.getElementById('selectTheme').addEventListener('change', function() {
+        const value = getSelectValue(this);
+        if (value === 'theme-default') { 
+            document.getElementById('inputBgColor').value = '#ccc';
+        }
+        else if (value === 'theme-light') {
+            document.getElementById('inputBgColor').value = '#fff';
+        }
+        else if (value === 'theme-dark') {
+            document.getElementById('inputBgColor').value = '#000';
+        }
+        document.getElementById('bgColorPreview').style.backgroundColor = document.getElementById('inputBgColor').value;
     }, false);
     
     document.getElementById('modalAddToQueue').addEventListener('shown.bs.modal', function () {
@@ -2683,6 +2893,31 @@ function appInit() {
         showHomeIconCmdOptions();
     }, false);
 
+    document.getElementById('inputHomeIconLigature').addEventListener('change', function(event) {
+        document.getElementById('homeIconPreview').innerText = event.target.value;
+        if (event.target.value !== '') {
+            document.getElementById('selectHomeIconImage').value = '';
+            document.getElementById('homeIconPreview').style.backgroundImage = '';
+        }
+    }, false);
+    
+    document.getElementById('inputHomeIconBgcolor').addEventListener('change', function(event) {
+        document.getElementById('homeIconPreview').style.backgroundColor = event.target.value;
+    }, false);
+    
+    document.getElementById('selectHomeIconImage').addEventListener('change', function(event) {
+        const value = getSelectValue(event.target);
+        document.getElementById('homeIconPreview').style.backgroundImage = 'url("' + subdir + '/browse/pics/' + value  + '")';
+        if (value !== '') {
+            document.getElementById('divHomeIconLigature').classList.add('hide');
+            document.getElementById('homeIconPreview').innerHTML = '';
+        }
+        else {
+            document.getElementById('divHomeIconLigature').classList.remove('hide');
+            document.getElementById('homeIconPreview').innerText = document.getElementById('inputHomeIconLigature').value;
+        }
+    }, false);
+
     let pd = document.getElementsByClassName('pages');
     let pdLen = pd.length;
     for (let i = 0; i < pdLen; i++) {
@@ -2694,8 +2929,9 @@ function appInit() {
     }
 
     document.getElementById('cardPlaybackTags').addEventListener('click', function(event) {
-        if (event.target.nodeName === 'P') 
+        if (event.target.nodeName === 'P') {
             gotoBrowse();
+        }
     }, false);
 
     document.getElementById('BrowseBreadcrumb').addEventListener('click', function(event) {
@@ -2857,7 +3093,13 @@ function appInit() {
         if (event.target.nodeName === 'A') {
             showMenu(event.target, event);
         }
-    }, false);    
+    }, false);
+
+    document.getElementById('QueueJukeboxList').addEventListener('click', function(event) {
+        if (event.target.nodeName === 'A') {
+            showMenu(event.target, event);
+        }
+    }, false);
 
     document.getElementById('BrowseFilesystemList').addEventListener('click', function(event) {
         if (event.target.nodeName === 'TD') {
@@ -2953,6 +3195,26 @@ function appInit() {
         navigateGrid(event.target, event.key);
     }, false);
     
+    if (isMobile === false) {
+        document.getElementById('BrowseDatabaseCards').addEventListener('mouseover', function(event) {
+            if (event.target.classList.contains('card-body') && event.target.childNodes.length === 0) {
+                const oldEls = document.getElementById('BrowseDatabaseCards').getElementsByClassName('album-grid-mouseover');
+                if (oldEls.length > 1) {
+                    for (let i = 0; i < oldEls.length; i++) {
+                        oldEls[i].remove();
+                    }
+                }
+                addPlayButton(event.target);
+            }
+        }, false);
+
+        document.getElementById('BrowseDatabaseCards').addEventListener('mouseout', function(event) {
+            if (event.target.classList.contains('card-body') && (event.relatedTarget === null || ! event.relatedTarget.classList.contains('album-grid-mouseover'))) {
+                event.target.innerHTML = '';
+            }
+        }, false);
+    }
+    
     document.getElementById('BrowseDatabaseDetailList').addEventListener('click', function(event) {
         if (event.target.nodeName === 'TD') {
             appendQueue('song', decodeURI(event.target.parentNode.getAttribute('data-uri')), event.target.parentNode.getAttribute('data-name'));
@@ -2990,7 +3252,7 @@ function appInit() {
     document.getElementById('searchtags').addEventListener('click', function(event) {
         if (event.target.nodeName === 'BUTTON') {
             app.current.filter = event.target.getAttribute('data-tag');
-            search(domCache.searchstr.value);
+            doSearch(domCache.searchstr.value);
         }
     }, false);
     
@@ -3109,7 +3371,7 @@ function appInit() {
                 let li = document.createElement('button');
                 li.classList.add('btn', 'btn-light', 'mr-2');
                 li.setAttribute('data-filter', encodeURI(app.current.filter + ' ' + match.options[match.selectedIndex].value + ' \'' + this.value + '\''));
-                li.innerHTML = e(app.current.filter) + ' ' + match.options[match.selectedIndex].value + ' \'' + e(this.value) + '\'<span class="ml-2 badge badge-secondary">&times;</span>';
+                li.innerHTML = e(app.current.filter) + ' ' + e(match.options[match.selectedIndex].value) + ' \'' + e(this.value) + '\'<span class="ml-2 badge badge-secondary">&times;</span>';
                 this.value = '';
                 document.getElementById('searchDatabaseCrumb').appendChild(li);
             }
@@ -3161,11 +3423,11 @@ function appInit() {
                 domCache.searchCrumb.appendChild(li);
             }
             else {
-                search(this.value);
+                doSearch(this.value);
             }
         }
         else {
-            search(this.value);
+            doSearch(this.value);
         }
     }, false);
 
@@ -3174,7 +3436,7 @@ function appInit() {
         event.stopPropagation();
         if (event.target.nodeName === 'SPAN') {
             event.target.parentNode.remove();
-            search('');
+            doSearch('');
         }
         else if (event.target.nodeName === 'BUTTON') {
             let value = decodeURI(event.target.getAttribute('data-filter'));
@@ -3185,12 +3447,12 @@ function appInit() {
             match = match.substring(0, match.indexOf(' '));
             document.getElementById('searchMatch').value = match;
             event.target.remove();
-            search(domCache.searchstr.value);
+            doSearch(domCache.searchstr.value);
         }
     }, false);
 
     document.getElementById('searchMatch').addEventListener('change', function() {
-        search(domCache.searchstr.value);
+        doSearch(domCache.searchstr.value);
     }, false);
     
     document.getElementById('SearchList').getElementsByTagName('tr')[0].addEventListener('click', function(event) {
@@ -3237,8 +3499,6 @@ function appInit() {
         }
     }, false);
 
-
-
     document.getElementById('inputScriptArgument').addEventListener('keyup', function(event) {
         if (event.key === 'Enter') {
             event.preventDefault();
@@ -3261,12 +3521,11 @@ function appInit() {
     dragAndDropTable('BrowsePlaylistsDetailList');
     dragAndDropTableHeader('QueueCurrent');
     dragAndDropTableHeader('QueueLastPlayed');
+    dragAndDropTableHeader('QueueJukebox');
     dragAndDropTableHeader('Search');
     dragAndDropTableHeader('BrowseFilesystem');
     dragAndDropTableHeader('BrowsePlaylistsDetail');
     dragAndDropTableHeader('BrowseDatabaseDetail');
-
-    
 
     window.addEventListener('focus', function() {
         sendAPI("MPD_API_PLAYER_STATE", {}, parseState);
@@ -3355,12 +3614,14 @@ appInitStart();
 
 function setStateIcon() {
     if (websocketConnected === false || settings.mpdConnected === false) {
-        domCache.mainMenu.classList.add('text-light');
-        domCache.mainMenu.classList.remove('connected');
+//        domCache.mainMenu.classList.add('text-light');
+//        domCache.mainMenu.classList.remove('connected');
+        document.getElementById('logoBg').setAttribute('fill', '#6c757d');
     }
     else {
-        domCache.mainMenu.classList.add('connected');
-        domCache.mainMenu.classList.remove('text-light');
+//        domCache.mainMenu.classList.add('connected');
+//        domCache.mainMenu.classList.remove('text-light');
+        document.getElementById('logoBg').setAttribute('fill', settings.highlightColor);
     }
 }
 
@@ -3377,6 +3638,10 @@ function toggleAlert(alertBox, state, msg) {
 }
 
 function showNotification(notificationTitle, notificationText, notificationHtml, notificationType) {
+    if (notificationTitle === 'No current song') {
+        return;
+    }
+
     if (settings.notificationWeb === true) {
         let notification = new Notification(notificationTitle, {icon: 'assets/favicon.ico', body: notificationText});
         setTimeout(notification.close.bind(notification), 3000);
@@ -3566,7 +3831,7 @@ function toggleUI() {
     if (websocketConnected === true) {
         toggleAlert('alertMympdState', false, '');
     }
-    else {
+    else if (appInited === true) {
         toggleAlert('alertMympdState', true, t('Websocket is disconnected'));
         logMessage(t('Websocket is disconnected'), '', '', 'danger');
     }
@@ -4277,31 +4542,54 @@ function showMenuTd(el) {
 
     let menu = '';
     if ((app.current.app === 'Browse' && app.current.tab === 'Filesystem') || app.current.app === 'Search' ||
-        (app.current.app === 'Browse' && app.current.tab === 'Database')) {
+        (app.current.app === 'Browse' && app.current.tab === 'Database' && app.current.view === 'Detail')) {
         menu += addMenuItem({"cmd": "appendQueue", "options": [type, uri, name]}, t('Append to queue')) +
             (type === 'song' ? addMenuItem({"cmd": "appendAfterQueue", "options": [type, uri, nextsongpos, name]}, t('Add after current playing song')) : '') +
             addMenuItem({"cmd": "replaceQueue", "options": [type, uri, name]}, t('Replace queue')) +
-            (type !== 'plist' && type !== 'smartpls' && settings.featPlaylists ? addMenuItem({"cmd": "showAddToPlaylist", "options": [uri, ""]}, t('Add to playlist')) : '') +
+            (type !== 'plist' && type !== 'smartpls' && settings.featPlaylists === true ? addMenuItem({"cmd": "showAddToPlaylist", "options": [uri, ""]}, t('Add to playlist')) : '') +
             (type === 'song' ? addMenuItem({"cmd": "songDetails", "options": [uri]}, t('Song details')) : '') +
             (type === 'plist' || type === 'smartpls' ? addMenuItem({"cmd": "playlistDetails", "options": [uri]}, t('View playlist')) : '') +
-            ((type === 'plist' || type === 'smartpls') && settings.featHome === true ? addMenuItem({"cmd": "addPlistToHome", "options": [uri, name]}, t('Add to homescreen')) : '') +
-            (type === 'dir' && settings.featBookmarks ? addMenuItem({"cmd": "showBookmarkSave", "options": [-1, name, uri, type]}, t('Add bookmark')) : '');
+            ((type === 'plist' || type === 'smartpls') && settings.featHome === true ? addMenuItem({"cmd": "addPlistToHome", "options": [uri, name]}, t('Add to homescreen')) : '');
+            
         if (app.current.tab === 'Filesystem') {
-            menu += (type === 'dir' ? addMenuItem({"cmd": "updateDB", "options": [dirname(uri), true]}, t('Update directory')) : '') +
+            menu += (type === 'dir' && settings.featBookmarks ? addMenuItem({"cmd": "showBookmarkSave", "options": [-1, name, uri, type]}, t('Add bookmark')) : '') +
+                (type === 'dir' ? addMenuItem({"cmd": "updateDB", "options": [dirname(uri), true]}, t('Update directory')) : '') +
                 (type === 'dir' ? addMenuItem({"cmd": "rescanDB", "options": [dirname(uri), true]}, t('Rescan directory')) : '');
         }
         if (app.current.app === 'Search') {
-            //songs must be arragend in one album per folder
-            let baseuri = dirname(uri);
-            menu += '<div class="dropdown-divider"></div>' +
-                '<a class="dropdown-item" id="advancedMenuLink" data-toggle="collapse" href="#advancedMenu"><span class="material-icons material-icons-small-left">keyboard_arrow_right</span>Album actions</a>' +
-                '<div class="collapse" id="advancedMenu">' +
-                    addMenuItem({"cmd": "appendQueue", "options": [type, baseuri, name]}, t('Append to queue')) +
-                    addMenuItem({"cmd": "appendAfterQueue", "options": [type, baseuri, nextsongpos, name]}, t('Add after current playing song')) +
-                    addMenuItem({"cmd": "replaceQueue", "options": [type, baseuri, name]}, t('Replace queue')) +
-                    (settings.featPlaylists ? addMenuItem({"cmd": "showAddToPlaylist", "options": [baseuri, ""]}, t('Add to playlist')) : '') +
-                '</div>';
+            let album = el.parentNode.parentNode.getAttribute('data-album');
+            let albumArtist = el.parentNode.parentNode.getAttribute('data-albumartist');
+            if (album !== null && albumArtist !== null) {
+                album = decodeURI(album);
+                albumArtist = decodeURI(albumArtist);
+                menu += '<div class="dropdown-divider"></div>' +
+                    '<a class="dropdown-item" id="advancedMenuLink" data-toggle="collapse" href="#advancedMenu"><span class="material-icons material-icons-left">keyboard_arrow_right</span>Album actions</a>' +
+                    '<div class="collapse" id="advancedMenu">' +
+                        addMenuItem({"cmd": "_addAlbum", "options": ["appendQueue", albumArtist, album]}, t('Append to queue')) +
+                        addMenuItem({"cmd": "_addAlbum", "options": ["replaceQueue", albumArtist, album]}, t('Replace queue')) +
+                        (settings.featPlaylists === true ? addMenuItem({"cmd": "_addAlbum", "options": ["addPlaylist", albumArtist, album]}, t('Add to playlist')) : '') +
+                    '</div>';
+            }
+            else {
+                //songs must be arragend in one album per folder
+                const baseuri = dirname(uri);
+                menu += '<div class="dropdown-divider"></div>' +
+                    '<a class="dropdown-item" id="advancedMenuLink" data-toggle="collapse" href="#advancedMenu"><span class="material-icons material-icons-left">keyboard_arrow_right</span>Folder actions</a>' +
+                    '<div class="collapse" id="advancedMenu">' +
+                        addMenuItem({"cmd": "appendQueue", "options": [type, baseuri, name]}, t('Append to queue')) +
+                        addMenuItem({"cmd": "appendAfterQueue", "options": [type, baseuri, nextsongpos, name]}, t('Add after current playing song')) +
+                        addMenuItem({"cmd": "replaceQueue", "options": [type, baseuri, name]}, t('Replace queue')) +
+                        (settings.featPlaylists === true ? addMenuItem({"cmd": "showAddToPlaylist", "options": [baseuri, ""]}, t('Add to playlist')) : '') +
+                    '</div>';
+            }
         }
+    }
+    else if (app.current.app === 'Browse' && app.current.tab === 'Database' && app.current.view === 'List') {
+        const albumArtist = decodeURI(el.parentNode.getAttribute('data-albumartist'));
+        const album = decodeURI(el.parentNode.getAttribute('data-album'));
+        menu += addMenuItem({"cmd": "_addAlbum", "options": ["appendQueue", albumArtist, album]}, t('Append to queue')) +
+            addMenuItem({"cmd": "_addAlbum", "options": ["replaceQueue", albumArtist, album]}, t('Replace queue')) +
+            (settings.featPlaylists === true ? addMenuItem({"cmd": "_addAlbum", "options": ["addPlaylist", albumArtist, album]}, t('Add to playlist')) : '');
     }
     else if (app.current.app === 'Browse' && app.current.tab === 'Playlists' && app.current.view === 'All') {
         menu += addMenuItem({"cmd": "appendQueue", "options": [type, uri, name]}, t('Append to queue')) +
@@ -4334,9 +4622,33 @@ function showMenuTd(el) {
             (settings.featPlaylists ? addMenuItem({"cmd": "showAddToPlaylist", "options": [uri, ""]}, t('Add to playlist')) : '') +
             (uri.indexOf('http') === -1 ? addMenuItem({"cmd": "songDetails", "options": [uri]}, t('Song details')) : '');
     }
+    else if (app.current.app === 'Queue' && app.current.tab === 'Jukebox') {
+        menu += addMenuItem({"cmd": "songDetails", "options": [uri]}, t('Song details')) +
+            addMenuItem({"cmd": "delQueueJukeboxSong", "options": [el.parentNode.parentNode.getAttribute('data-pos')]}, t('Remove'));
+    }
     else if (app.current.app === 'Home') {
         const pos = parseInt(el.parentNode.getAttribute('data-pos'));
-        menu += addMenuItem({"cmd": "executeHomeIcon", "options": [pos]}, t('Execute home icon action')) +
+        const href = JSON.parse(el.parentNode.getAttribute('data-href'));
+        let actionDesc = '';
+        if (href.cmd === 'replaceQueue' && href.options[0] === 'plist') {
+            type = 'plist';
+            uri = href.options[1];
+            actionDesc = t('Add and play playlist');
+            name = t('Playlist');
+        }
+        else if (href.cmd === 'appGoto') {
+            type = 'view';
+            actionDesc = t('Goto view');
+            name = t('View');
+        }
+        else if (href.cmd === 'execScriptFromOptions') {
+            type = 'script';
+            actionDesc = t('Execute script');
+            name = t('Script');
+        }
+        menu += '<h6 class="dropdown-header">' + name + '</h6>' +
+                addMenuItem({"cmd": "executeHomeIcon", "options": [pos]}, actionDesc) +
+                (type === 'plist' ? addMenuItem({"cmd": "playlistDetails", "options": [uri]}, t('View playlist')) : '') +
                 addMenuItem({"cmd": "editHomeIcon", "options": [pos]}, t('Edit home icon')) +
                 addMenuItem({"cmd": "duplicateHomeIcon", "options": [pos]}, t('Duplicate home icon')) +
                 addMenuItem({"cmd": "deleteHomeIcon", "options": [pos]}, t('Delete home icon'));
@@ -4920,7 +5232,7 @@ function parseScriptList(obj) {
 
 //eslint-disable-next-line no-unused-vars
 function execScriptFromOptions(cmd, options) {
-    let args = options !== undefined ? options.split(',') : [];
+    let args = options !== undefined && options !== '' ? options.split(',') : [];
     let script = {"script": cmd, "arguments": args};
     execScript(JSON.stringify(script));
 }
@@ -4964,7 +5276,7 @@ function execScriptArgs() {
  https://github.com/jcorporation/mympd
 */
 
-function search(x) {
+function doSearch(x) {
     if (settings.featAdvsearch) {
         let expression = '(';
         let crumbs = domCache.searchCrumb.children;
@@ -5177,6 +5489,8 @@ function parseSettings() {
             domCache.body.classList.remove(key);
         }
     });
+
+    setNavbarIcons();
     
     document.getElementById('selectTheme').value = settings.theme;
     
@@ -5371,6 +5685,9 @@ function parseSettings() {
     document.getElementById('inputSmartplsInterval').value = settings.smartplsInterval / 60 / 60;
     document.getElementById('selectSmartplsSort').value = settings.smartplsSort;
 
+    domCache.volumeBar.setAttribute('min', settings.volumeMin);
+    domCache.volumeBar.setAttribute('max', settings.volumeMax);
+
     if (settings.featLocalplayer === true) {
         setLocalPlayerUrl();
     }
@@ -5391,10 +5708,14 @@ function parseSettings() {
         document.getElementById('inputMusicDirectory').removeAttribute('readonly');
     }
 
+    //update columns
     if (app.current.app === 'Queue' && app.current.tab === 'Current') {
         getQueue();
     }
     else if (app.current.app === 'Queue' && app.current.tab === 'LastPlayed') {
+        appRoute();
+    }
+    else if (app.current.app === 'Queue' && app.current.tab === 'Jukebox') {
         appRoute();
     }
     else if (app.current.app === 'Search') {
@@ -5542,6 +5863,7 @@ function parseMPDSettings() {
     filterCols('colsSearch');
     filterCols('colsQueueCurrent');
     filterCols('colsQueueLastPlayed');
+    filterCols('colsQueueJukebox');
     filterCols('colsBrowsePlaylistsDetail');
     filterCols('colsBrowseFilesystem');
     filterCols('colsBrowseDatabaseDetail');
@@ -5549,10 +5871,12 @@ function parseMPDSettings() {
     
     if (settings.featTags === false) {
         app.apps.Browse.active = 'Filesystem';
-        app.apps.Search.state = '0/filename/-/-/';
-        app.apps.Queue.state = '0/filename/-/-/';
+        app.apps.Search.sort = 'filename';
+        app.apps.Search.filter = 'filename';
+        app.apps.Queue.tabs.Current.filter = 'filename';
         settings.colsQueueCurrent = ["Pos", "Title", "Duration"];
         settings.colsQueueLastPlayed = ["Pos", "Title", "LastPlayed"];
+        settings.colsQueueJukebox = ["Pos", "Title"];
         settings.colsSearch = ["Title", "Duration"];
         settings.colsBrowseFilesystem = ["Type", "Title", "Duration"];
         settings.colsBrowseDatabase = ["Track", "Title", "Duration"];
@@ -5562,8 +5886,13 @@ function parseMPDSettings() {
         let pbtl = '';
         for (let i = 0; i < settings.colsPlayback.length; i++) {
             pbtl += '<div id="current' + settings.colsPlayback[i]  + '" data-tag="' + settings.colsPlayback[i] + '" ' +
-                    (settings.colsPlayback[i] === 'Lyrics' ? '' : 'data-name="' + (lastSongObj[settings.colsPlayback[i]] ? encodeURI(lastSongObj[settings.colsPlayback[i]]) : '') + '"') +
-                    '>' +
+                    (settings.colsPlayback[i] === 'Lyrics' ? '' : 'data-name="' + (lastSongObj[settings.colsPlayback[i]] ? encodeURI(lastSongObj[settings.colsPlayback[i]]) : '') + '"');
+
+            if (settings.colsPlayback[i] === 'Album' && lastSongObj[tagAlbumArtist] !== null) {
+                pbtl += 'data-albumartist="' + encodeURI(lastSongObj[tagAlbumArtist]) + '"';
+            }
+
+            pbtl += '>' +
                     '<small>' + t(settings.colsPlayback[i]) + '</small>' +
                     '<p';
             if (settings.browsetags.includes(settings.colsPlayback[i])) {
@@ -5597,11 +5926,36 @@ function parseMPDSettings() {
     }
 
     if (settings.tags.includes('Title')) {
-        app.apps.Search.state = '0/any/Title/-/';
+        app.apps.Search.sort = 'Title';
     }
     
-    if (!settings.tags.includes('AlbumArtist')) {
-        app.apps.Browse.tabs.Database.state = '0/Artist/Artist/' + settings.dbDefaultTag + '/';
+    if (settings.tags.includes('AlbumArtist')) {
+        tagAlbumArtist = 'AlbumArtist';        
+    }
+    else if (settings.tags.includes('Artist')) {
+        tagAlbumArtist = 'Artist';        
+    }
+    
+    if (!settings.tags.includes('AlbumArtist') && app.apps.Browse.tabs.Database.views.List.filter === 'AlbumArtist') {
+        app.apps.Browse.tabs.Database.views.List.filter = 'Artist';
+        app.apps.Browse.tabs.Database.views.List.sort = 'Artist';
+    }
+
+    if (settings.featAdvsearch === false && app.apps.Browse.active === 'Database') {
+        app.apps.Browse.active = 'Filesystem';
+    }
+
+    if (settings.featAdvsearch === false) {
+        const tagEls = document.getElementById('cardPlaybackTags').getElementsByTagName('p');
+        for (let i = 0; i < tagEls.length; i++) {
+            tagEls[i].classList.remove('clickable');
+        }
+    }
+    else {
+        const tagEls = document.getElementById('cardPlaybackTags').getElementsByTagName('p');
+        for (let i = 0; i < tagEls.length; i++) {
+            tagEls[i].classList.add('clickable');
+        }
     }
     
     if (settings.featPlaylists === true) {
@@ -5616,6 +5970,7 @@ function parseMPDSettings() {
     setCols('QueueCurrent');
     setCols('Search');
     setCols('QueueLastPlayed');
+    setCols('QueueJukebox');
     setCols('BrowseFilesystem');
     setCols('BrowsePlaylistsDetail');
     setCols('BrowseDatabaseDetail');
@@ -5899,7 +6254,7 @@ function filterCols(x) {
         tags.push('Title');
     }
     tags.push('Duration');
-    if (x === 'colsQueueCurrent' || x === 'colsBrowsePlaylistsDetail' || x === 'colsQueueLastPlayed') {
+    if (x === 'colsQueueCurrent' || x === 'colsBrowsePlaylistsDetail' || x === 'colsQueueLastPlayed' || x === 'colsQueueJukebox') {
         tags.push('Pos');
     }
     else if (x === 'colsBrowseFilesystem') {
@@ -5907,6 +6262,9 @@ function filterCols(x) {
     }
     if (x === 'colsQueueLastPlayed') {
         tags.push('LastPlayed');
+    }
+    if (x === 'colsSearch') {
+        tags.push('LastModified');
     }
     if (x === 'colsPlayback') {
         tags.push('Filetype');
@@ -6002,6 +6360,51 @@ function savePlaySettings() {
         "jukeboxMode": parseInt(jukeboxMode)
         }, getSettings);
 }
+
+function setNavbarIcons() {
+    let oldBadgeQueueItems = document.getElementById('badgeQueueItems');
+    let oldQueueLength = 0;
+    if (oldBadgeQueueItems) {
+        oldQueueLength = oldBadgeQueueItems.innerText;
+    }
+    
+    let btns = '';
+    for (let i = 0; i < settings.navbarIcons.length; i++) {
+        let hide = '';
+        if (settings.featHome === false && settings.navbarIcons[i].title === 'Home') {
+            hide = 'hide';
+        }
+        btns += '<div id="nav' + settings.navbarIcons[i].options.join('') + '" class="nav-item flex-fill text-center ' + hide + '">' +
+          '<a data-title-phrase="' + t(settings.navbarIcons[i].title) + '" data-href="" class="nav-link text-light" href="#">' +
+            '<span class="material-icons">' + settings.navbarIcons[i].ligature + '</span>' + 
+            '<span class="navText" data-phrase="' + t(settings.navbarIcons[i].title) + '"></span>' +
+            (settings.navbarIcons[i].badge !== '' ? settings.navbarIcons[i].badge : '') +
+          '</a>' +
+        '</div>';
+    }
+    let container = document.getElementById('navbar-main');
+    container.innerHTML = btns;
+
+    domCache.navbarBtns = container.getElementsByTagName('div');
+    domCache.navbarBtnsLen = domCache.navbarBtns.length;
+    domCache.badgeQueueItems = document.getElementById('badgeQueueItems');
+    domCache.badgeQueueItems.innerText = oldQueueLength;
+
+    if (document.getElementById('nav' + app.current.app)) {
+        document.getElementById('nav' + app.current.app).classList.add('active');
+    }
+
+    for (let i = 0; i < domCache.navbarBtnsLen; i++) {
+        domCache.navbarBtns[i].firstChild.setAttribute('data-href', JSON.stringify({"cmd": "appGoto", "options": settings.navbarIcons[i].options}));
+    }
+}
+
+//eslint-disable-next-line no-unused-vars
+function resetValue(elId) {
+    const el = document.getElementById(elId);
+    el.value = el.getAttribute('data-default') !== null ? el.getAttribute('data-default') : 
+        (el.getAttribute('placeholder') !== null ? el.getAttribute('placeholder') : '');
+}
 /*
  SPDX-License-Identifier: GPL-2.0-or-later
  myMPD (c) 2018-2020 Juergen Mang <mail@jcgames.de>
@@ -6036,7 +6439,11 @@ function parseSongDetails(obj) {
         if (settings.tags[i] === 'Title' || obj.result[settings.tags[i]] === '-') {
             continue;
         }
-        songDetailsHTML += '<tr><th>' + t(settings.tags[i]) + '</th><td data-tag="' + settings.tags[i] + '" data-name="' + encodeURI(obj.result[settings.tags[i]]) + '">';
+        songDetailsHTML += '<tr><th>' + t(settings.tags[i]) + '</th><td data-tag="' + settings.tags[i] + '" data-name="' + encodeURI(obj.result[settings.tags[i]]) + '"';
+        if (settings.tags[i] === 'Album' && obj.result[tagAlbumArtist] !== null) {
+            songDetailsHTML += ' data-albumartist="' + encodeURI(obj.result[tagAlbumArtist]) + '"';
+        }
+        songDetailsHTML += '>';
         if (settings.browsetags.includes(settings.tags[i]) && obj.result[settings.tags[i]] !== '-') {
             songDetailsHTML += '<a class="text-success" href="#">' + e(obj.result[settings.tags[i]]) + '</a>';
         }
@@ -6107,9 +6514,11 @@ function parseSongDetails(obj) {
         //add uri to image list to get embedded albumart
         let images = [ subdir + '/albumart/' + obj.result.uri ];
         //add all but coverfiles to image list
-        for (let i = 0; i < obj.result.images.length; i++) {
-            if (isCoverfile(obj.result.images[i]) === false) {
-                images.push(subdir + '/browse/music/' + obj.result.images[i]);
+        if (settings.publish === true) {
+            for (let i = 0; i < obj.result.images.length; i++) {
+                if (isCoverfile(obj.result.images[i]) === false) {
+                    images.push(subdir + '/browse/music/' + obj.result.images[i]);
+                }
             }
         }
         const imgEl = document.getElementById('tabSongPics');
@@ -6177,6 +6586,9 @@ function voteSong(vote) {
 }
 
 function setVoteSongBtns(vote, uri) {
+    if (uri === undefined) {
+        uri = '';
+    }
     domCache.btnVoteUp2 = document.getElementById('btnVoteUp2');
     domCache.btnVoteDown2 = document.getElementById('btnVoteDown2');
 
@@ -6187,7 +6599,10 @@ function setVoteSongBtns(vote, uri) {
             domCache.btnVoteUp2.setAttribute('disabled', 'disabled');
             domCache.btnVoteDown2.setAttribute('disabled', 'disabled');
         }
-    } else {
+        domCache.btnVoteUp.classList.remove('highlight');
+        domCache.btnVoteDown.classList.remove('highlight');
+    }
+    else {
         domCache.btnVoteUp.removeAttribute('disabled');
         domCache.btnVoteDown.removeAttribute('disabled');
         if (domCache.btnVoteUp2) {
@@ -6203,14 +6618,16 @@ function setVoteSongBtns(vote, uri) {
             domCache.btnVoteUp2.classList.remove('highlight');
             domCache.btnVoteDown2.classList.add('highlight');
         }
-    } else if (vote === 1) {
+    }
+    else if (vote === 1) {
         domCache.btnVoteUp.classList.remove('highlight');
         domCache.btnVoteDown.classList.remove('highlight');
         if (domCache.btnVoteUp2) {
             domCache.btnVoteUp2.classList.remove('highlight');
             domCache.btnVoteDown2.classList.remove('highlight');
         }
-    } else if (vote === 2) {
+    }
+    else if (vote === 2) {
         domCache.btnVoteUp.classList.add('highlight');
         domCache.btnVoteDown.classList.remove('highlight');
         if (domCache.btnVoteUp2) {
@@ -6423,6 +6840,7 @@ function parseState(obj) {
         domCache.footerTitle.innerText = '';
         domCache.footerTitle.removeAttribute('title');
         domCache.footerTitle.classList.remove('clickable');
+        domCache.footerCover.classList.remove('clickable');
         clearCurrentCover();
         if (settings.bgCover === true) {
             clearBackgroundImage();
@@ -6536,6 +6954,7 @@ function _setCurrentCover(url, el) {
     div.classList.add('coverbg', 'carousel');
     div.style.backgroundImage = 'url("' + subdir + '/albumart/' + url + '")';
     div.style.opacity = 0;
+    div.setAttribute('data-uri', url);
     el.insertBefore(div, el.firstChild);
 
     let img = new Image();
@@ -6578,6 +6997,10 @@ function songChange(obj) {
     if (settings.bgCover === true && settings.featCoverimage === true) {
         setBackgroundImage(obj.result.uri);
     }
+    
+    domCache.footerArtist.classList.remove('clickable');
+    domCache.footerAlbum.classList.remove('clickable');
+    domCache.footerCover.classList.remove('clickable');
 
     if (obj.result.Artist !== undefined && obj.result.Artist.length > 0 && obj.result.Artist !== '-') {
         textNotification += obj.result.Artist;
@@ -6585,12 +7008,13 @@ function songChange(obj) {
         pageTitle += obj.result.Artist + ' - ';
         domCache.footerArtist.innerText = obj.result.Artist;
         domCache.footerArtist.setAttribute('data-name', encodeURI(obj.result.Artist));
-        domCache.footerArtist.classList.add('clickable');
+        if (settings.featAdvsearch === true) {
+            domCache.footerArtist.classList.add('clickable');
+        }
     }
     else {
         domCache.footerArtist.innerText = '';
         domCache.footerArtist.setAttribute('data-name', '');
-        domCache.footerArtist.classList.remove('clickable');
     }
 
     if (obj.result.Album !== undefined && obj.result.Album.length > 0 && obj.result.Album !== '-') {
@@ -6598,12 +7022,14 @@ function songChange(obj) {
         htmlNotification += '<br/>' + obj.result.Album;
         domCache.footerAlbum.innerText = obj.result.Album;
         domCache.footerAlbum.setAttribute('data-name', encodeURI(obj.result.Album));
-        domCache.footerAlbum.classList.add('clickable');
+        domCache.footerAlbum.setAttribute('data-albumartist', encodeURI(obj.result[tagAlbumArtist]));
+        if (settings.featAdvsearch === true) {
+            domCache.footerAlbum.classList.add('clickable');
+        }
     }
     else {
         domCache.footerAlbum.innerText = '';
         domCache.footerAlbum.setAttribute('data-name', '');
-        domCache.footerAlbum.classList.remove('clickable');
     }
 
     if (obj.result.Title !== undefined && obj.result.Title.length > 0) {
@@ -6612,13 +7038,15 @@ function songChange(obj) {
         domCache.currentTitle.setAttribute('data-uri', encodeURI(obj.result.uri));
         domCache.footerTitle.innerText = obj.result.Title;
         domCache.footerTitle.classList.add('clickable');
+        domCache.footerCover.classList.add('clickable');
     }
     else {
         domCache.currentTitle.innerText = '';
         domCache.currentTitle.setAttribute('data-uri', '');
         domCache.footerTitle.innerText = '';
         domCache.footerTitle.setAttribute('data-name', '');
-        domCache.footerTitle.classList.remove('clickable');        
+        domCache.footerTitle.classList.remove('clickable');
+        domCache.footerCover.classList.remove('clickable');
     }
     document.title = 'myMPD: ' + pageTitle;
     domCache.footerCover.title = pageTitle;
@@ -6631,13 +7059,16 @@ function songChange(obj) {
     }
 
     if (obj.result.uri !== undefined) {
-        if (settings.featStickers === true) {
-            setVoteSongBtns(obj.result.like, obj.result.uri);
-        }
         obj.result['Filetype'] = filetype(obj.result.uri);
+        document.getElementById('addCurrentSongToPlaylist').removeAttribute('disabled');
     }
     else {
         obj.result['Filetype'] = '';
+        document.getElementById('addCurrentSongToPlaylist').setAttribute('disabled', 'disabled');
+    }
+    
+    if (settings.featStickers === true) {
+        setVoteSongBtns(obj.result.like, obj.result.uri);
     }
     
     if (lastState) {
@@ -6665,6 +7096,9 @@ function songChange(obj) {
             }
             c.getElementsByTagName('p')[0].innerText = value;
             c.setAttribute('data-name', encodeURI(value));
+            if (settings.colsPlayback[i] === 'Album' && obj.result[tagAlbumArtist] !== null) {
+                c.setAttribute('data-albumartist', encodeURI(obj.result[tagAlbumArtist]));
+            }
         }
     }
     
@@ -6699,11 +7133,11 @@ function volumeStep(dir) {
 
 function chVolume(increment) {
     let newValue = parseInt(domCache.volumeBar.value) + increment;
-    if (newValue < 0)  {
-        newValue = 0;
+    if (newValue < settings.volumeMin)  {
+        newValue = settings.volumeMin;
     }
-    else if (newValue > 100) {
-        newValue = 100;
+    else if (newValue > settings.volumeMax) {
+        newValue = settings.volumeMax;
     }
     domCache.volumeBar.value = newValue;
     sendAPI("MPD_API_PLAYER_VOLUME_SET", {"volume": newValue});
@@ -7103,7 +7537,7 @@ function setColTags(table) {
         tags.push('Title');
     }
     tags.push('Duration');
-    if (table === 'QueueCurrent' || table === 'BrowsePlaylistsDetail' || table === 'QueueLastPlayed') {
+    if (table === 'QueueCurrent' || table === 'BrowsePlaylistsDetail' || table === 'QueueLastPlayed' || table === 'QueueJukebox') {
         tags.push('Pos');
     }
     if (table === 'BrowseFilesystem') {
@@ -7111,6 +7545,9 @@ function setColTags(table) {
     }
     if (table === 'QueueLastPlayed') {
         tags.push('LastPlayed');
+    }
+    if (table === 'Search') {
+        tags.push('LastModified');
     }
     if (table === 'Playback') {
         tags.push('Filetype');
@@ -7142,14 +7579,14 @@ function setColsChecklist(table) {
     return tagChks;
 }
 
-function setCols(table, className) {
+function setCols(table) {
     let colsChkList = document.getElementById(table + 'ColsDropdown');
     if (colsChkList) {
         colsChkList.firstChild.innerHTML = setColsChecklist(table);
     }
     let sort = app.current.sort;
     
-    if (table === 'Search' && app.apps.Search.state === '0/any/Title/-/') {
+    if (table === 'Search' && app.apps.Search.sort === 'Title') {
         if (settings.tags.includes('Title')) {
             sort = 'Title';
         }
@@ -7181,21 +7618,13 @@ function setCols(table, className) {
             heading += '</th>';
         }
         if (settings.featTags === true) {
-            heading += '<th data-col="Action"><a href="#" class="text-secondary align-middle material-icons material-icons-small">settings</a></th>';
+            heading += '<th data-col="Action"><a data-title-phrase="' +t('Columns') + '" href="#" class="text-secondary align-middle material-icons material-icons-small">settings</a></th>';
         }
         else {
             heading += '<th></th>';
         }
 
-        if (className === undefined) {
-            document.getElementById(table + 'List').getElementsByTagName('tr')[0].innerHTML = heading;
-        }
-        else {
-            let tbls = document.querySelectorAll(className);
-            for (let i = 0; i < tbls.length; i++) {
-                tbls[i].getElementsByTagName('tr')[0].innerHTML = heading;
-            }
-        }
+        document.getElementById(table + 'List').getElementsByTagName('tr')[0].innerHTML = heading;
     }
 }
 
@@ -7689,14 +8118,22 @@ function removeIsInvalid(el) {
     }
 }
 
-function getSelectValue(selectId) {
-    let el = document.getElementById(selectId);
-    return el.options[el.selectedIndex].value;
+function getSelectValue(el) {
+    if (typeof el === 'string')	{
+        el = document.getElementById(el);
+    }
+    if (el && el.selectedIndex >= 0) {
+        return el.options[el.selectedIndex].value;
+    }
+    return undefined;
 }
 
 function getSelectedOptionAttribute(selectId, attribute) {
     let el = document.getElementById(selectId);
-    return el.options[el.selectedIndex].getAttribute(attribute);
+    if (el && el.selectedIndex >= 0) {
+        return el.options[el.selectedIndex].getAttribute(attribute);
+    }
+    return undefined;
 }
 
 function alignDropdown(el) {
@@ -7803,7 +8240,12 @@ function addTagList(el, list) {
         tagList += '<button type="button" class="btn btn-secondary btn-sm btn-block" data-tag="' + settings[list][i] + '">' + t(settings[list][i]) + '</button>';
     }
     if (el === 'BrowseNavFilesystemDropdown' || el === 'BrowseNavPlaylistsDropdown') {
-        tagList = '<button type="button" class="btn btn-secondary btn-sm btn-block" data-tag="Database">Database</button>';
+        if (settings.featTags === true && settings.featAdvsearch === true) {
+            tagList = '<button type="button" class="btn btn-secondary btn-sm btn-block" data-tag="Database">' + t('Database') + '</button>';
+        }
+        else {
+            tagList = '';
+        }
     }
     if (el === 'BrowseDatabaseByTagDropdown' || el === 'BrowseNavFilesystemDropdown' || el === 'BrowseNavPlaylistsDropdown') {
         if (el === 'BrowseDatabaseByTagDropdown') {
@@ -8099,12 +8541,13 @@ function parseCmd(event, href) {
 }
 
 function gotoPage(x) {
+    console.log(app.current.page);
     switch (x) {
         case 'next':
-            app.current.page += settings.maxElementsPerPage;
+            app.current.page = parseInt(app.current.page) + parseInt(settings.maxElementsPerPage);
             break;
         case 'prev':
-            app.current.page -= settings.maxElementsPerPage;
+            app.current.page = parseInt(app.current.page) - parseInt(settings.maxElementsPerPage);
             if (app.current.page < 0) {
                 app.current.page = 0;
             }
