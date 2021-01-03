@@ -1,7 +1,7 @@
 "use strict";
 /*
  SPDX-License-Identifier: GPL-2.0-or-later
- myMPD (c) 2018-2020 Juergen Mang <mail@jcgames.de>
+ myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 */
 
@@ -25,7 +25,7 @@ function navBrowseHandler(event) {
         app.current.search = '';
         document.getElementById('searchDatabaseMatch').value = 'contains';
         appGoto(app.current.app, app.current.tab, app.current.view, 
-            '0', app.current.filter, app.current.sort, tag, app.current.search);
+            '0', app.current.limit, app.current.filter, app.current.sort, tag, app.current.search);
     }
 }
 
@@ -48,16 +48,16 @@ function gotoBrowse() {
             }
             if (artist !== null) {
                 //Show album details
-                appGoto('Browse', 'Database', 'Detail', '0', tag, tagAlbumArtist, name, decodeURI(artist));
+                appGoto('Browse', 'Database', 'Detail', '0', undefined, tag, tagAlbumArtist, name, decodeURI(artist));
             }
             else {
                 //show filtered album list
-                appGoto('Browse', 'Database', 'List', '0', tag, tagAlbumArtist, 'Album', '(' + tag + ' == \'' + name + '\')');
+                appGoto('Browse', 'Database', 'List', '0', undefined, tag, tagAlbumArtist, 'Album', '(' + tag + ' == \'' + name + '\')');
             }
         }
         else {
             //show filtered album list
-            appGoto('Browse', 'Database', 'List', '0', tag, tagAlbumArtist, 'Album', '(' + tag + ' == \'' + name + '\')');
+            appGoto('Browse', 'Database', 'List', '0', undefined, tag, tagAlbumArtist, 'Album', '(' + tag + ' == \'' + name + '\')');
         }
     }
 }
@@ -113,10 +113,10 @@ function parseFilesystem(obj) {
         row.setAttribute('tabindex', 0);
         if (app.current.app === 'Search' && settings.featTags === true && settings.featAdvsearch === true) {
             //add artist and album information for album actions in search app
-            if (obj.result.data[i].Album !== null) {
+            if (obj.result.data[i].Album !== undefined) {
                 row.setAttribute('data-album', encodeURI(obj.result.data[i].Album));
             }
-            if (obj.result.data[i][tagAlbumArtist] !== null) {
+            if (obj.result.data[i][tagAlbumArtist] !== undefined) {
                 row.setAttribute('data-albumartist', encodeURI(obj.result.data[i][tagAlbumArtist]));
             }
         }
@@ -196,14 +196,20 @@ function parseFilesystem(obj) {
     //document.getElementById('cardFooterBrowse').innerText = t('Num entries', obj.result.totalEntities);
 }
 
-function addAllFromBrowseFilesystem() {
-    sendAPI("MPD_API_QUEUE_ADD_TRACK", {"uri": app.current.search});
-    showNotification(t('Added all songs'), '', '', 'success');
+function addAllFromBrowseFilesystem(replace) {
+    if (replace === true) {
+        sendAPI("MPD_API_QUEUE_REPLACE_TRACK", {"uri": app.current.search});
+        showNotification(t('Replaced queue'), '', '', 'success');
+    }
+    else {
+        sendAPI("MPD_API_QUEUE_ADD_TRACK", {"uri": app.current.search});
+        showNotification(t('Added all songs'), '', '', 'success');
+    }
 }
 
 function addAllFromBrowseDatabasePlist(plist) {
     if (app.current.search.length >= 2) {
-        sendAPI("MPD_API_DATABASE_SEARCH", {"plist": plist, "filter": app.current.view, "searchstr": app.current.search, "offset": 0, "cols": settings.colsSearch, "replace": false});
+        sendAPI("MPD_API_DATABASE_SEARCH", {"plist": plist, "filter": app.current.view, "searchstr": app.current.search, "offset": 0, "limit": 0, "cols": settings.colsSearch, "replace": false});
     }
 }
 
@@ -327,7 +333,7 @@ function parseDatabase(obj) {
     setPagination(obj.result.totalEntities, obj.result.returnedEntities);
                     
     if (nrItems === 0) {
-        cardContainer.innerHTML = '<div><span class="material-icons">error_outline</span>&nbsp;' + t('Empty list') + '</div>';
+        cardContainer.innerHTML = '<div class="ml-3 mb-3"><span class="material-icons">error_outline</span>&nbsp;' + t('Empty list') + '</div>';
     }
     //document.getElementById('cardFooterBrowse').innerText = gtPage('Num entries', obj.result.returnedEntities, obj.result.totalEntities);
 }
@@ -361,6 +367,7 @@ function parseAlbumDetails(obj) {
     const coverEl = document.getElementById('viewDetailDatabaseCover');
     coverEl.style.backgroundImage = 'url("' + subdir + '/albumart/' + obj.result.data[0].uri + '"), url("' + subdir + '/assets/coverimage-loading.svg")';
     coverEl.setAttribute('data-images', obj.result.images.join(';;'));
+    coverEl.setAttribute('data-uri', obj.result.data[0].uri);
     const infoEl = document.getElementById('viewDetailDatabaseInfo');
     infoEl.innerHTML = '<h1>' + e(obj.result.Album) + '</h1>' +
         '<small> ' + t('AlbumArtist') + '</small><p>' + e(obj.result.AlbumArtist) + '</p>' +
@@ -443,5 +450,5 @@ function searchAlbumgrid(x) {
         expression = '';
     }
     appGoto(app.current.app, app.current.tab, app.current.view, 
-        '0', app.current.filter, app.current.sort, app.current.tag, expression);
+        '0', app.current.limit, app.current.filter, app.current.sort, app.current.tag, expression);
 }

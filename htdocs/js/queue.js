@@ -1,7 +1,7 @@
 "use strict";
 /*
  SPDX-License-Identifier: GPL-2.0-or-later
- myMPD (c) 2018-2020 Juergen Mang <mail@jcgames.de>
+ myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 */
 
@@ -20,7 +20,7 @@ function parseUpdateQueue(obj) {
     }
     else if (obj.result.state === 2) {
         for (let i = 0; i < domCache.btnsPlayLen; i++) {
-            if (settings.footerStop === true) {
+            if (settings.footerStop === 'stop') {
                 domCache.btnsPlay[i].innerText = 'stop';
             }
             else {
@@ -33,7 +33,7 @@ function parseUpdateQueue(obj) {
         for (let i = 0; i < domCache.btnsPlayLen; i++) {
             domCache.btnsPlay[i].innerText = 'play_arrow';
         }
-	playstate = 'pause';
+        playstate = 'pause';
     }
 
     if (obj.result.queueLength === 0) {
@@ -59,7 +59,7 @@ function parseUpdateQueue(obj) {
         domCache.btnNext.removeAttribute('disabled');
     }
     
-    if (obj.result.songPos <= 0) {
+    if (obj.result.songPos < 0) {
         domCache.btnPrev.setAttribute('disabled', 'disabled');
     }
     else {
@@ -69,15 +69,15 @@ function parseUpdateQueue(obj) {
 
 function getQueue() {
     if (app.current.search.length >= 2) {
-        sendAPI("MPD_API_QUEUE_SEARCH", {"filter": app.current.filter, "offset": app.current.page, "searchstr": app.current.search, "cols": settings.colsQueueCurrent}, parseQueue, false);
+        sendAPI("MPD_API_QUEUE_SEARCH", {"filter": app.current.filter, "offset": app.current.offset, "limit": app.current.limit, "searchstr": app.current.search, "cols": settings.colsQueueCurrent}, parseQueue, false);
     }
     else {
-        sendAPI("MPD_API_QUEUE_LIST", {"offset": app.current.page, "cols": settings.colsQueueCurrent}, parseQueue, false);
+        sendAPI("MPD_API_QUEUE_LIST", {"offset": app.current.offset, "limit": app.current.limit, "cols": settings.colsQueueCurrent}, parseQueue, false);
     }
 }
 
 function parseQueue(obj) {
-    if (obj.result.offset < app.current.page) {
+    if (obj.result.offset < app.current.offset) {
         gotoPage(obj.result.offset);
         return;
     }
@@ -150,7 +150,6 @@ function parseQueue(obj) {
     if (navigate === true) {
         focusTable(activeRow);
     }
-    
     setPagination(obj.result.totalEntities, obj.result.returnedEntities);
     document.getElementById('QueueCurrentList').classList.remove('opacity05');
 }
@@ -327,7 +326,19 @@ function delQueueSong(mode, start, end) {
 
 //eslint-disable-next-line no-unused-vars
 function gotoPlayingSong() {
-    let page = lastState.songPos < settings.maxElementsPerPage ? 0 : Math.floor(lastState.songPos / settings.maxElementsPerPage) * settings.maxElementsPerPage;
-    console.log(page);
-    gotoPage(page);
+    let offset = lastState.songPos < settings.maxElementsPerPage ? 0 : Math.floor(lastState.songPos / settings.maxElementsPerPage) * settings.maxElementsPerPage;
+    gotoPage(offset);
+}
+
+//eslint-disable-next-line no-unused-vars
+function playAfterCurrent(trackid, songpos) {
+    if (settings.random === 0) {
+        //not in random mode - move song after current playling song
+        let newSongPos = lastState.songPos !== undefined ? lastState.songPos + 2 : 0;
+        sendAPI("MPD_API_QUEUE_MOVE_TRACK", {"from": songpos, "to": newSongPos});
+    }
+    else {
+        //in random mode - set song priority
+        sendAPI("MPD_API_QUEUE_PRIO_SET_HIGHEST", {"trackid": trackid});
+    }
 }

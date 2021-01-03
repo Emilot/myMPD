@@ -4,7 +4,7 @@ MPD connection
 MPD 연결
 
 Add stream
-스트리밍 서비스 추가
+스트리밍 추가
 
 Update
 업데이트
@@ -103,13 +103,13 @@ Work
 작품
 
 Artists
-연주가
+연주자
 
 Artist
-연주가
+연주자
 
 ArtistSort
-연주가 정렬
+연주자 정렬
 
 Album
 음반
@@ -121,10 +121,10 @@ Duration
 길이
 
 AlbumArtist
-음반 연주가
+음반 연주자
 
 AlbumArtistSort
-음반 연주가 정렬
+음반 연주자 정렬
 
 Composer
 작곡가
@@ -212,12 +212,6 @@ Num playlists
 
 Num entries
 %{smart_count} 항목 |||| %{smart_count} 항목
-
-Add all to queue
-순서에 모두 추가
-
-Add all to playlist
-연주목록에 모두 추가
 
 Save as smart playlist
 스마트 연주목록 저장
@@ -441,9 +435,6 @@ Browser default
 Pagination
 페이지 매기기
 
-Must be a number smaller or equal 200
-200이하의 숫자여야 함
-
 Notifications
 알림
 
@@ -559,7 +550,7 @@ Database statistics
 데이터베이스 통계
 
 Artists
-연주가
+연주자
 
 Albums
 음반
@@ -1507,7 +1498,7 @@ enabled
 사용함
 
 No mixed content,  MPD stream must be served over https:
-혼합된 컨텐트는 안되며, MPD 스트리밍 서비스는 https:를 통해야 합니다.
+혼합된 컨텐트는 안되며, MPD 스트리밍은 https:를 통해야 합니다.
 
 Details
 상세
@@ -1649,3 +1640,21 @@ myMPD 메뉴
 
 Invalid volume level
 잘못된 음량 수준
+
+MaintainEnableTagsText
+최고의 사용자 경험을 위해서는 연주자, 음반 연주자, 음반, 곡, 디스크, 장르 태그를 관리하고 사용해야 합니다.
+
+Error reading metadata
+메타데이터 읽기 오류
+
+Failed to set like, unknown error
+좋아요 설정 실패, 알 수 없는 오류
+
+Invalid uri
+잘못된 URI
+
+Stop
+정지
+
+Unsupported file type
+지원되지 않는 파일 형식

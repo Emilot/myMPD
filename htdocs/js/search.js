@@ -1,7 +1,7 @@
 "use strict";
 /*
  SPDX-License-Identifier: GPL-2.0-or-later
- myMPD (c) 2018-2020 Juergen Mang <mail@jcgames.de>
+ myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 */
 
@@ -25,10 +25,10 @@ function doSearch(x) {
         if (expression.length <= 2) {
             expression = '';
         }
-        appGoto('Search', undefined, undefined, '0', app.current.filter, app.current.sort, '-', expression);
+        appGoto('Search', undefined, undefined, '0', app.current.limit, app.current.filter, app.current.sort, '-', expression);
     }
     else {
-        appGoto('Search', undefined, undefined, '0', app.current.filter, app.current.sort, '-', x);
+        appGoto('Search', undefined, undefined, '0', app.current.limit, app.current.filter, app.current.sort, '-', x);
     }
 }
 
@@ -64,7 +64,8 @@ function addAllFromSearchPlist(plist, searchstr, replace) {
             "sort": "", 
             "sortdesc": false, 
             "expression": searchstr,
-            "offset": 0, 
+            "offset": 0,
+            "limit": 0,
             "cols": settings.colsSearch, 
             "replace": replace});
     }
@@ -72,7 +73,8 @@ function addAllFromSearchPlist(plist, searchstr, replace) {
         sendAPI("MPD_API_DATABASE_SEARCH", {"plist": plist, 
             "filter": app.current.filter, 
             "searchstr": searchstr,
-            "offset": 0, 
+            "offset": 0,
+            "limit": 0, 
             "cols": settings.colsSearch, 
             "replace": replace});
     }

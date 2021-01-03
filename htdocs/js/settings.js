@@ -1,7 +1,7 @@
 "use strict";
 /*
  SPDX-License-Identifier: GPL-2.0-or-later
- myMPD (c) 2018-2020 Juergen Mang <mail@jcgames.de>
+ myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 */
 
@@ -142,6 +142,13 @@ function parseSettings() {
     });
 
     setNavbarIcons();
+
+    if (settings.footerStop === 'both') {
+        document.getElementById('btnStop').classList.remove('hide');
+    }
+    else {
+        document.getElementById('btnStop').classList.add('hide');
+    }
     
     document.getElementById('selectTheme').value = settings.theme;
     
@@ -221,14 +228,26 @@ function parseSettings() {
 
     let albumartbg = document.querySelectorAll('.albumartbg');
     for (let i = 0; i < albumartbg.length; i++) {
-	albumartbg[i].style.filter = settings.bgCssFilter;
+	    albumartbg[i].style.filter = settings.bgCssFilter;
     }
 
     toggleBtnChkCollapse('btnLoveEnable', 'collapseLove', settings.love);
     document.getElementById('inputLoveChannel').value = settings.loveChannel;
     document.getElementById('inputLoveMessage').value = settings.loveMessage;
     
-    document.getElementById('inputMaxElementsPerPage').value = settings.maxElementsPerPage;
+    document.getElementById('selectMaxElementsPerPage').value = settings.maxElementsPerPage;
+    app.apps.Home.limit = settings.maxElementsPerPage;
+    app.apps.Playback.limit = settings.maxElementsPerPage;
+    app.apps.Queue.tabs.Current.limit = settings.maxElementsPerPage;
+    app.apps.Queue.tabs.LastPlayed.limit = settings.maxElementsPerPage;
+    app.apps.Queue.tabs.Jukebox.limit = settings.maxElementsPerPage;
+    app.apps.Browse.tabs.Filesystem.limit = settings.maxElementsPerPage;
+    app.apps.Browse.tabs.Playlists.views.All.limit = settings.maxElementsPerPage;
+    app.apps.Browse.tabs.Playlists.views.Detail.limit = settings.maxElementsPerPage;
+    app.apps.Browse.tabs.Database.views.List.limit = settings.maxElementsPerPage;
+    app.apps.Browse.tabs.Database.views.Detail.limit = settings.maxElementsPerPage;
+    app.apps.Search.limit = settings.maxElementsPerPage;
+    
     toggleBtnChk('btnStickers', settings.stickers);
     document.getElementById('inputLastPlayedCount').value = settings.lastPlayedCount;
     
@@ -310,8 +329,6 @@ function parseSettings() {
     }
 
     document.getElementById('selectTimerAction').innerHTML = timerActions;
-    
-    //dropdownMainMenu = new BSN.Dropdown(document.getElementById('mainMenu'));
     
     toggleBtnGroupValueCollapse(document.getElementById('btnJukeboxModeGroup'), 'collapseJukeboxMode', settings.jukeboxMode);
     document.getElementById('selectJukeboxUniqueTag').value = settings.jukeboxUniqueTag;
@@ -559,12 +576,17 @@ function parseMPDSettings() {
             else if (settings.colsPlayback[i] === 'Fileformat') {
                 pbtl += (lastState ? fileformat(lastState.audioFormat) : '');
             }
+            else if (settings.colsPlayback[i].indexOf('MUSICBRAINZ') === 0) {
+                pbtl += (lastSongObj[settings.colsPlayback[i]] ? getMBtagLink(settings.colsPlayback[i], lastSongObj[settings.colsPlayback[i]]) : '');
+            }
+
             else {
                 pbtl += (lastSongObj[settings.colsPlayback[i]] ? e(lastSongObj[settings.colsPlayback[i]]) : '');
             }
             pbtl += '</p></div>';
         }
         document.getElementById('cardPlaybackTags').innerHTML = pbtl;
+        //click on lyrics header to expand lyrics text container
         let cl = document.getElementById('currentLyrics');
         if (cl && lastSongObj.uri) {
             let el = cl.getElementsByTagName('small')[0];
@@ -602,15 +624,9 @@ function parseMPDSettings() {
             tagEls[i].classList.remove('clickable');
         }
     }
-    else {
-        const tagEls = document.getElementById('cardPlaybackTags').getElementsByTagName('p');
-        for (let i = 0; i < tagEls.length; i++) {
-            tagEls[i].classList.add('clickable');
-        }
-    }
     
     if (settings.featPlaylists === true) {
-        sendAPI("MPD_API_PLAYLIST_LIST_ALL", {"searchstr": ""}, function(obj) {
+        sendAPI("MPD_API_PLAYLIST_LIST", {"searchstr": "", "offset": 0, "limit": 0}, function(obj) {
             getAllPlaylists(obj, 'selectJukeboxPlaylist', settings.jukeboxPlaylist);
         });
     }
@@ -711,11 +727,6 @@ function saveSettings(closeModal) {
         formOK = false;
     }
     
-    let inputMaxElementsPerPage = document.getElementById('inputMaxElementsPerPage');
-    if (!validateInt(inputMaxElementsPerPage)) {
-        formOK = false;
-    }
-    
     if (isMobile === true) {
         let inputScaleRatio = document.getElementById('inputScaleRatio');
         if (!validateFloat(inputScaleRatio)) {
@@ -727,10 +738,6 @@ function saveSettings(closeModal) {
         }
     }
 
-    if (parseInt(inputMaxElementsPerPage.value) > 200) {
-        formOK = false;
-    }
-    
     let inputLastPlayedCount = document.getElementById('inputLastPlayedCount');
     if (!validateInt(inputLastPlayedCount)) {
         formOK = false;
@@ -822,7 +829,7 @@ function saveSettings(closeModal) {
             "loveChannel": document.getElementById('inputLoveChannel').value,
             "loveMessage": document.getElementById('inputLoveMessage').value,
             "bookmarks": (document.getElementById('btnBookmarks').classList.contains('active') ? true : false),
-            "maxElementsPerPage": document.getElementById('inputMaxElementsPerPage').value,
+            "maxElementsPerPage": parseInt(getSelectValue('selectMaxElementsPerPage')),
             "stickers": (document.getElementById('btnStickers').classList.contains('active') ? true : false),
             "lastPlayedCount": document.getElementById('inputLastPlayedCount').value,
             "smartpls": (document.getElementById('btnSmartpls').classList.contains('active') ? true : false),
@@ -929,6 +936,15 @@ function filterCols(x) {
     for (let i = 0; i < settings[x].length; i++) {
         if (tags.includes(settings[x][i])) {
             cols.push(settings[x][i]);
+        }
+    }
+    if (x === 'colsSearch') {
+        //enforce albumartist and album for albumactions
+        if (cols.includes('Album') === false && tags.includes('Album')) {
+            cols.push('Album');
+        }
+        if (cols.includes(tagAlbumArtist) === false && tags.includes(tagAlbumArtist)) {
+            cols.push(tagAlbumArtist);
         }
     }
     settings[x] = cols;
