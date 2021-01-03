@@ -43,6 +43,7 @@
 #include "mpd_client_mounts.h"
 #include "mpd_client_partitions.h"
 #include "mpd_client_trigger.h"
+#include "mpd_client_lyrics.h"
 #include "mpd_client_api.h"
 
 void mpd_client_api(t_config *config, t_mpd_client_state *mpd_client_state, void *arg_request) {
@@ -67,6 +68,30 @@ void mpd_client_api(t_config *config, t_mpd_client_state *mpd_client_state, void
     t_work_result *response = create_result(request);
     
     switch(request->cmd_id) {
+        case MPD_API_LYRICS_UNSYNCED_GET:
+            je = json_scanf(request->data, sdslen(request->data), "{params: {uri: %Q}}", &p_charbuf1);
+            if (je == 1) {
+                if (p_charbuf1 == NULL || validate_uri(p_charbuf1) == false) {
+                    LOG_ERROR("Invalid URI: %s", p_charbuf1);
+                    response->data = jsonrpc_respond_message(response->data, request->method, request->id, "Invalid uri", true);
+                }
+                else {
+                    response->data = mpd_client_lyrics_unsynced(config, mpd_client_state, response->data, request->method, request->id, p_charbuf1);
+                }
+            }
+            break;
+        case MPD_API_LYRICS_SYNCED_GET:
+            je = json_scanf(request->data, sdslen(request->data), "{params: {uri: %Q}}", &p_charbuf1);
+            if (je == 1) {
+                if (p_charbuf1 == NULL || validate_uri(p_charbuf1) == false) {
+                    LOG_ERROR("Invalid URI: %s", p_charbuf1);
+                    response->data = jsonrpc_respond_message(response->data, request->method, request->id, "Invalid uri", true);
+                }
+                else {
+                    response->data = mpd_client_lyrics_synced(config, mpd_client_state, response->data, request->method, request->id, p_charbuf1);
+                }
+            }
+            break;
         case MPD_API_STATE_SAVE:
             mpd_client_last_played_list_save(config, mpd_client_state);
             triggerfile_save(config, mpd_client_state);
@@ -415,6 +440,18 @@ void mpd_client_api(t_config *config, t_mpd_client_state *mpd_client_state, void
                 }
                 rc = mpd_run_move(mpd_client_state->mpd_state->conn, uint_buf1, uint_buf2);
                 response->data = respond_with_mpd_error_or_ok(mpd_client_state->mpd_state, response->data, request->method, request->id, rc, "mpd_run_move");
+            }
+            break;
+        case MPD_API_QUEUE_PRIO_SET_HIGHEST:
+            je = json_scanf(request->data, sdslen(request->data), "{params: {trackid: %u}}", &uint_buf1);
+            if (je == 1) {
+                rc = mpd_client_queue_prio_set_highest(mpd_client_state, uint_buf1);
+                if (rc == true) {
+                    response->data = jsonrpc_respond_ok(response->data, request->method, request->id);
+                }
+                else {
+                    response->data = jsonrpc_respond_message(response->data, request->method, request->id, "Failed to set song priority", true);
+                }
             }
             break;
         case MPD_API_PLAYLIST_MOVE_TRACK:

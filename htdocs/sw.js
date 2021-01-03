@@ -4,7 +4,7 @@
  https://github.com/jcorporation/mympd
 */
 
-var CACHE = 'myMPD-cache-v6.8.3';
+var CACHE = 'myMPD-cache-v6.9.1';
 var subdir = self.location.pathname.replace('/sw.js', '').replace(/\/$/, '');
 var urlsToCache = [
     subdir + '/',
@@ -15,6 +15,7 @@ var urlsToCache = [
     subdir + '/assets/coverimage-stream.svg',
     subdir + '/assets/coverimage-notavailable.svg',
     subdir + '/assets/coverimage-loading.svg',
+	subdir + '/assets/coverimage-mympd.svg',
     subdir + '/assets/favicon.ico',
     subdir + '/assets/MaterialIcons-Regular.woff2'
 ];
@@ -25,8 +26,7 @@ var ignoreRequests = new RegExp('(' + [
   subdir + '/ws',
   subdir + '/tagpics/(.*)',
   subdir + '/albumart/(.*)',
-  subdir + '/browse/(.*)',
-  subdir + '/lyrics/(.*)'].join('(/?)|\\') + ')$')
+  subdir + '/browse/(.*)'].join('(/?)|\\') + ')$')
 
 self.addEventListener('install', function(event) {
     event.waitUntil(

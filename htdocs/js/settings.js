@@ -142,6 +142,13 @@ function parseSettings() {
     });
 
     setNavbarIcons();
+
+    if (settings.footerStop === 'both') {
+        document.getElementById('btnStop').classList.remove('hide');
+    }
+    else {
+        document.getElementById('btnStop').classList.add('hide');
+    }
     
     document.getElementById('selectTheme').value = settings.theme;
     
@@ -565,6 +572,7 @@ function parseMPDSettings() {
             pbtl += '</p></div>';
         }
         document.getElementById('cardPlaybackTags').innerHTML = pbtl;
+        //click on lyrics header to expand lyrics text container
         let cl = document.getElementById('currentLyrics');
         if (cl && lastSongObj.uri) {
             let el = cl.getElementsByTagName('small')[0];
@@ -602,12 +610,12 @@ function parseMPDSettings() {
             tagEls[i].classList.remove('clickable');
         }
     }
-    else {
-        const tagEls = document.getElementById('cardPlaybackTags').getElementsByTagName('p');
-        for (let i = 0; i < tagEls.length; i++) {
-            tagEls[i].classList.add('clickable');
-        }
-    }
+//    else {
+//        const tagEls = document.getElementById('cardPlaybackTags').getElementsByTagName('p');
+//        for (let i = 0; i < tagEls.length; i++) {
+//            tagEls[i].classList.add('clickable');
+//        }
+//    }
     
     if (settings.featPlaylists === true) {
         sendAPI("MPD_API_PLAYLIST_LIST_ALL", {"searchstr": ""}, function(obj) {
@@ -929,6 +937,15 @@ function filterCols(x) {
     for (let i = 0; i < settings[x].length; i++) {
         if (tags.includes(settings[x][i])) {
             cols.push(settings[x][i]);
+        }
+    }
+    if (x === 'colsSearch') {
+        //enforce albumartist and album for albumactions
+        if (cols.includes('Album') === false && tags.includes('Album')) {
+            cols.push('Album');
+        }
+        if (cols.includes(tagAlbumArtist) === false && tags.includes(tagAlbumArtist)) {
+            cols.push(tagAlbumArtist);
         }
     }
     settings[x] = cols;

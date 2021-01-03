@@ -123,17 +123,16 @@ function showMenuTd(el) {
                 (type === 'dir' ? addMenuItem({"cmd": "rescanDB", "options": [dirname(uri), true]}, t('Rescan directory')) : '');
         }
         if (app.current.app === 'Search') {
-            let album = el.parentNode.parentNode.getAttribute('data-album');
-            let albumArtist = el.parentNode.parentNode.getAttribute('data-albumartist');
-            if (album !== null && albumArtist !== null) {
-                album = decodeURI(album);
-                albumArtist = decodeURI(albumArtist);
+            const curTr = el.parentNode.parentNode;
+            if (curTr.hasAttribute('data-album') && curTr.hasAttribute('data-albumartist')) {
+                const vAlbum = decodeURI(curTr.getAttribute('data-album'));
+                const vAlbumArtist = decodeURI(curTr.getAttribute('data-albumartist'));
                 menu += '<div class="dropdown-divider"></div>' +
                     '<a class="dropdown-item" id="advancedMenuLink" data-toggle="collapse" href="#advancedMenu"><span class="material-icons material-icons-left">keyboard_arrow_right</span>Album actions</a>' +
                     '<div class="collapse" id="advancedMenu">' +
-                        addMenuItem({"cmd": "_addAlbum", "options": ["appendQueue", albumArtist, album]}, t('Append to queue')) +
-                        addMenuItem({"cmd": "_addAlbum", "options": ["replaceQueue", albumArtist, album]}, t('Replace queue')) +
-                        (settings.featPlaylists === true ? addMenuItem({"cmd": "_addAlbum", "options": ["addPlaylist", albumArtist, album]}, t('Add to playlist')) : '') +
+                        addMenuItem({"cmd": "_addAlbum", "options": ["appendQueue", vAlbumArtist, vAlbum]}, t('Append to queue')) +
+                        addMenuItem({"cmd": "_addAlbum", "options": ["replaceQueue", vAlbumArtist, vAlbum]}, t('Replace queue')) +
+                        (settings.featPlaylists === true ? addMenuItem({"cmd": "_addAlbum", "options": ["addPlaylist", vAlbumArtist, vAlbum]}, t('Add to playlist')) : '') +
                     '</div>';
             }
             else {
@@ -177,7 +176,9 @@ function showMenuTd(el) {
             (uri.indexOf('http') === -1 ? addMenuItem({"cmd": "songDetails", "options": [uri]}, t('Song details')) : '');
     }
     else if (app.current.app === 'Queue' && app.current.tab === 'Current') {
-        menu += addMenuItem({"cmd": "delQueueSong", "options": ["single", el.parentNode.parentNode.getAttribute('data-trackid')]}, t('Remove')) +
+        const trackid = parseInt(el.parentNode.parentNode.getAttribute('data-trackid'));
+        menu += ( trackid !== lastState.currentSongId ? addMenuItem({"cmd": "playAfterCurrent", "options": [trackid, el.parentNode.parentNode.getAttribute('data-songpos')]}, t('Play after current playing song')) : '') +
+            addMenuItem({"cmd": "delQueueSong", "options": ["single", trackid]}, t('Remove')) +
             addMenuItem({"cmd": "delQueueSong", "options": ["range", 0, el.parentNode.parentNode.getAttribute('data-songpos')]}, t('Remove all upwards')) +
             addMenuItem({"cmd": "delQueueSong", "options": ["range", (parseInt(el.parentNode.parentNode.getAttribute('data-songpos'))-1), -1]}, t('Remove all downwards')) +
             (uri.indexOf('http') === -1 ? addMenuItem({"cmd": "songDetails", "options": [uri]}, t('Song details')) : '');

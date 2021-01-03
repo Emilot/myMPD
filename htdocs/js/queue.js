@@ -20,7 +20,7 @@ function parseUpdateQueue(obj) {
     }
     else if (obj.result.state === 2) {
         for (let i = 0; i < domCache.btnsPlayLen; i++) {
-            if (settings.footerStop === true) {
+            if (settings.footerStop === 'stop') {
                 domCache.btnsPlay[i].innerText = 'stop';
             }
             else {
@@ -33,7 +33,7 @@ function parseUpdateQueue(obj) {
         for (let i = 0; i < domCache.btnsPlayLen; i++) {
             domCache.btnsPlay[i].innerText = 'play_arrow';
         }
-	playstate = 'pause';
+        playstate = 'pause';
     }
 
     if (obj.result.queueLength === 0) {
@@ -59,7 +59,7 @@ function parseUpdateQueue(obj) {
         domCache.btnNext.removeAttribute('disabled');
     }
     
-    if (obj.result.songPos <= 0) {
+    if (obj.result.songPos < 0) {
         domCache.btnPrev.setAttribute('disabled', 'disabled');
     }
     else {
@@ -150,7 +150,6 @@ function parseQueue(obj) {
     if (navigate === true) {
         focusTable(activeRow);
     }
-    
     setPagination(obj.result.totalEntities, obj.result.returnedEntities);
     document.getElementById('QueueCurrentList').classList.remove('opacity05');
 }
@@ -328,6 +327,18 @@ function delQueueSong(mode, start, end) {
 //eslint-disable-next-line no-unused-vars
 function gotoPlayingSong() {
     let page = lastState.songPos < settings.maxElementsPerPage ? 0 : Math.floor(lastState.songPos / settings.maxElementsPerPage) * settings.maxElementsPerPage;
-    console.log(page);
     gotoPage(page);
+}
+
+//eslint-disable-next-line no-unused-vars
+function playAfterCurrent(trackid, songpos) {
+    if (settings.random === 0) {
+        //not in random mode - move song after current playling song
+        let newSongPos = lastState.songPos !== undefined ? lastState.songPos + 2 : 0;
+        sendAPI("MPD_API_QUEUE_MOVE_TRACK", {"from": songpos, "to": newSongPos});
+    }
+    else {
+        //in random mode - set song priority
+        sendAPI("MPD_API_QUEUE_PRIO_SET_HIGHEST", {"trackid": trackid});
+    }
 }

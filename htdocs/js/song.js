@@ -144,17 +144,59 @@ function isCoverfile(uri) {
 }
 
 function getLyrics(uri, el) {
+    if (uri === undefined) {
+        el.innerHTML = t('No lyrics found');
+        return;
+    }
     el.classList.add('opacity05');
-    let ajaxRequest=new XMLHttpRequest();
-    
-    ajaxRequest.open('GET', subdir + '/lyrics/' + uri, true);
-    ajaxRequest.onreadystatechange = function() {
-        if (ajaxRequest.readyState === 4) {
-            el.innerText = ajaxRequest.responseText === 'No lyrics found' ? t(ajaxRequest.responseText) : ajaxRequest.responseText;
-            el.classList.remove('opacity05');
+    sendAPI("MPD_API_LYRICS_UNSYNCED_GET", {"uri": uri}, function(obj) {
+        if (obj.error) {
+            el.innerText = t(obj.error.message);
         }
-    };
-    ajaxRequest.send();
+        else if (obj.result.message) {
+            el.innerText = t(obj.result.message);
+        }
+        else {
+            let lyrics_header = '<span class="lyricsHeader" class="btn-group-toggle" data-toggle="buttons">';
+            let lyrics = '<div class="lyricsTextContainer">';
+            for (let i = 0; i < obj.result.returnedEntities; i++) {
+                let ht = obj.result.data[i].desc;
+                if (ht !== '' && obj.result.data[i].lang !== '') {
+                    ht += ' (' + obj.result.data[i].lang + ')';
+                }
+                else if (obj.result.data[i].lang !== '') {
+                    ht = obj.result.data[i].lang;
+                }
+                else {
+                    ht = i;
+                }
+                lyrics_header += '<label data-num="' + i + '" class="btn btn-sm btn-outline-secondary mr-2' + (i === 0 ? ' active' : '') + '">' + ht + '</label>';
+                lyrics += '<div class="lyricsText' + (i > 0 ? ' hide' : '') + '">' +
+                    e(obj.result.data[i].text).replace(/\n/g, "<br/>") + 
+                    '</div>';
+            }
+            lyrics_header += '</span>';
+            lyrics += '</div>';
+            el.innerHTML = (obj.result.returnedEntities > 1 ? lyrics_header : '') + lyrics;
+            el.getElementsByClassName('lyricsHeader')[0].addEventListener('click', function(event) {
+                if (event.target.nodeName === 'LABEL') {
+                   event.target.parentNode.getElementsByClassName('active')[0].classList.remove('active');
+                   event.target.classList.add('active');
+                   const nr = parseInt(event.target.getAttribute('data-num'));
+                   const tEls = el.getElementsByClassName('lyricsText');
+                   for (let i = 0; i < tEls.length; i++) {
+                       if (i === nr) {
+                           tEls[i].classList.remove('hide');
+                       }
+                       else {
+                           tEls[i].classList.add('hide');
+                       }
+                   }
+                }
+            }, false);
+        }
+        el.classList.remove('opacity05');
+    }, true);
 }
 
 //eslint-disable-next-line no-unused-vars

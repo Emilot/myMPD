@@ -277,7 +277,7 @@ static int mympd_inihandler(void *user, const char *section, const char *name, c
         p_config->partitions = strtobool(value);
     }
     else if (MATCH("mympd", "footerstop")) {
-        p_config->footer_stop = strtobool(value);
+        p_config->footer_stop = sdsreplace(p_config->footer_stop, value);
     }
     else if (MATCH("mympd", "home")) {
         p_config->home = strtobool(value);
@@ -287,6 +287,18 @@ static int mympd_inihandler(void *user, const char *section, const char *name, c
     }
     else if (MATCH("mympd", "volumemax")) {
         p_config->volume_max = strtoumax(value, &crap, 10);
+    }
+    else if (MATCH("mympd", "vorbisuslt")) {
+        p_config->vorbis_uslt = sdsreplace(p_config->vorbis_uslt, value);
+    }
+    else if (MATCH("mympd", "vorbissylt")) {
+        p_config->vorbis_sylt = sdsreplace(p_config->vorbis_sylt, value);
+    }
+    else if (MATCH("mympd", "usltext")) {
+        p_config->uslt_ext = sdsreplace(p_config->uslt_ext, value);
+    }
+    else if (MATCH("mympd", "syltext")) {
+        p_config->sylt_ext = sdsreplace(p_config->sylt_ext, value);
     }
     else if (MATCH("theme", "theme")) {
         p_config->theme = sdsreplace(p_config->theme, value);
@@ -374,7 +386,8 @@ static void mympd_get_env(struct t_config *config) {
         "MYMPD_LOCALPLAYER", "MYMPD_STREAMPORT", "MYMPD_HOME", "MYMPOD_COLSQUEUEJUKEBOX",
         "MYMPD_STREAMURL", "MYMPD_VOLUMESTEP", "MYMPD_COVERCACHEKEEPDAYS", "MYMPD_COVERCACHE",
         "MYMPD_COVERCACHEAVOID", "MYMPD_LYRICS", "MYMPD_PARTITIONS", "MYMPD_FOOTERSTOP",
-        "MYMPD_VOLUMEMIN", "MYMPD_VOLUMEMAX",
+        "MYMPD_VOLUMEMIN", "MYMPD_VOLUMEMAX", "MYMPD_VORBISUSLT", "MYMPD_VORBISSYLT",
+        "MYMPD_USLTEXT", "MYMPD_SYLTEXT",
       #ifdef ENABLE_LUA
         "MYMPD_SCRIPTING", "MYMPD_REMOTESCRIPTING", "MYMPD_LUALIBS", "MYMPD_SCRIPTEDITOR",
       #endif
@@ -433,6 +446,11 @@ void mympd_free_config(t_config *config) {
     sdsfree(config->acl);
     sdsfree(config->scriptacl);
     sdsfree(config->lualibs);
+    sdsfree(config->vorbis_uslt);
+    sdsfree(config->vorbis_sylt);
+    sdsfree(config->sylt_ext);
+    sdsfree(config->uslt_ext);
+    sdsfree(config->footer_stop);
     list_free(&config->syscmd_list);
     FREE_PTR(config);
 }
@@ -526,10 +544,14 @@ void mympd_config_defaults(t_config *config) {
     config->lualibs = sdsnew("base, string, utf8, table, math, mympd");
     config->scripteditor = true;
     config->partitions = false;
-    config->footer_stop = false;
+    config->footer_stop = sdsnew("pause");
     config->home = true;
     config->volume_min = 0;
     config->volume_max = 100;
+    config->vorbis_uslt = sdsnew("LYRICS");
+    config->vorbis_sylt = sdsnew("SYNCEDLYRICS");
+    config->uslt_ext = sdsnew("txt");
+    config->sylt_ext = sdsnew("lrc");
     list_init(&config->syscmd_list);
 }
 
@@ -659,6 +681,10 @@ bool mympd_dump_config(void) {
         "home = %s\n"
         "volumemine = %u\n"
         "volumemax = %u\n"
+        "vorbisuslt = %s\n"
+        "vorbissylt = %s\n"
+        "usltext = %s\n"
+        "syltext = %s\n"
         "\n",
         p_config->user,
         (p_config->chroot == true ? "true" : "false"),
@@ -718,10 +744,14 @@ bool mympd_dump_config(void) {
         (p_config->mounts == true ? "true" : "false"),
         (p_config->lyrics == true ? "true" : "false"),
         (p_config->partitions == true ? "true" : "false"),
-        (p_config->footer_stop == true ? "true" : "false"),
+        p_config->footer_stop,
         (p_config->home == true ? "true" : "false"),
         p_config->volume_min,
-        p_config->volume_max
+        p_config->volume_max,
+        p_config->vorbis_uslt,
+        p_config->vorbis_sylt,
+        p_config->uslt_ext,
+        p_config->sylt_ext
         
     );
 

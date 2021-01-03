@@ -37,7 +37,7 @@ var scale = '1.0';
 var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 var ligatureMore = 'menu';
 var progressBarTransition = 'width 1s linear';
-var tagAlbumArtist = 'AlbumArist';
+var tagAlbumArtist = 'AlbumArtist';
 
 var app = {};
 app.apps = { 
@@ -249,8 +249,8 @@ function appPrepare(scrollPos) {
         if (app.current.tab !== undefined) {
             document.getElementById('card' + app.current.app + app.current.tab).classList.remove('hide');
         }
-        scrollToPosY(scrollPos);
     }
+    scrollToPosY(scrollPos);
     let list = document.getElementById(app.current.app + 
         (app.current.tab === undefined ? '' : app.current.tab) + 
         (app.current.view === undefined ? '' : app.current.view) + 'List');
@@ -259,7 +259,8 @@ function appPrepare(scrollPos) {
     }
 }
 
-function appGoto(card, tab, view, page, filter, sort, tag, search) {
+function appGoto(card, tab, view, page, filter, sort, tag, search, newScrollPos) {
+    //save scrollPos of current view
     let scrollPos = 0;
     if (document.body.scrollTop) {
         scrollPos = document.body.scrollTop
@@ -278,6 +279,7 @@ function appGoto(card, tab, view, page, filter, sort, tag, search) {
         app.apps[app.current.app].tabs[app.current.tab].views[app.current.view].scrollPos = scrollPos;
     }
 
+    //build new hash
     let hash = '';
     if (app.apps[card].tabs) {
         if (tab === undefined) {
@@ -293,6 +295,9 @@ function appGoto(card, tab, view, page, filter, sort, tag, search) {
                 encodeURIComponent(sort === undefined ? app.apps[card].tabs[tab].views[view].sort : sort) + '/' +
                 encodeURIComponent(tag === undefined ? app.apps[card].tabs[tab].views[view].tag : tag) + '/' +
                 encodeURIComponent(search === undefined ? app.apps[card].tabs[tab].views[view].search : search);
+            if (newScrollPos !== undefined) {
+                app.apps[card].tabs[tab].views[view].scrollPos = newScrollPos;
+            }
         }
         else {
             hash = '/' + encodeURIComponent(card) + '/' + encodeURIComponent(tab) + '!' + 
@@ -301,6 +306,9 @@ function appGoto(card, tab, view, page, filter, sort, tag, search) {
                 encodeURIComponent(sort === undefined ? app.apps[card].tabs[tab].sort : sort) + '/' +
                 encodeURIComponent(tag === undefined ? app.apps[card].tabs[tab].tag : tag) + '/' +
                 encodeURIComponent(search === undefined ? app.apps[card].tabs[tab].search : search);
+            if (newScrollPos !== undefined) {
+                app.apps[card].tabs[tab].scrollPos = newScrollPos;
+            }
         }
     }
     else {
@@ -310,11 +318,15 @@ function appGoto(card, tab, view, page, filter, sort, tag, search) {
             encodeURIComponent(sort === undefined ? app.apps[card].sort : sort) + '/' +
             encodeURIComponent(tag === undefined ? app.apps[card].tag : tag) + '/' +
             encodeURIComponent(search === undefined ? app.apps[card].search : search);
+        if (newScrollPos !== undefined) {
+            app.apps[card].scrollPos = newScrollPos;
+        }
     }
     location.hash = hash;
 }
 
 function appRoute() {
+    //called on hash change
     if (settingsParsed === false) {
         appInitStart();
         return;
@@ -369,7 +381,6 @@ function appRoute() {
         }
         return;
     }
-
     appPrepare(app.current.scrollPos);
 
     if (app.current.app === 'Home') {
@@ -430,9 +441,7 @@ function appRoute() {
         }
         document.getElementById('BrowseBreadcrumb').innerHTML = breadcrumbs;
         const searchFilesystemStrEl = document.getElementById('searchFilesystemStr');
-        if (searchFilesystemStrEl.value === '' && app.current.filter !== '-') {
-            searchFilesystemStrEl.value = app.current.filter;
-        }
+        searchFilesystemStrEl.value = app.current.filter === '-' ? '' :  app.current.filter;
     }
     else if (app.current.app === 'Browse' && app.current.tab === 'Database' && app.current.view === 'List') {
         document.getElementById('viewListDatabase').classList.remove('hide');
@@ -1309,6 +1318,7 @@ function appInit() {
             switch(event.target.parentNode.getAttribute('data-type')) {
                 case 'parentDir':
                 case 'dir':
+                    app.current.filter = '-';
                     appGoto('Browse', 'Filesystem', undefined, '0', app.current.filter, app.current.sort, '-', decodeURI(event.target.parentNode.getAttribute("data-uri")));
                     break;
                 case 'song':
@@ -1384,6 +1394,11 @@ function appInit() {
             }
             else if (event.target.classList.contains('card-footer')){
                 showMenu(event.target, event);
+                const selCards = document.getElementById('BrowseDatabaseCards').getElementsByClassName('selected');
+                for (let i = 0; i < selCards.length; i++) {
+                    selCards[i].classList.remove('selected');
+                }
+                event.target.parentNode.classList.add('selected');
             }
         }
         else {
@@ -1635,13 +1650,15 @@ function appInit() {
     }, false);
 
     domCache.searchCrumb.addEventListener('click', function(event) {
-        event.preventDefault();
-        event.stopPropagation();
         if (event.target.nodeName === 'SPAN') {
+            event.preventDefault();
+            event.stopPropagation();
             event.target.parentNode.remove();
             doSearch('');
         }
         else if (event.target.nodeName === 'BUTTON') {
+            event.preventDefault();
+            event.stopPropagation();
             let value = decodeURI(event.target.getAttribute('data-filter'));
             domCache.searchstr.value = value.substring(value.indexOf('\'') + 1, value.length - 1);
             let filter = value.substring(0, value.indexOf(' '));
