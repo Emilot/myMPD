@@ -1,6 +1,6 @@
 /*
  SPDX-License-Identifier: GPL-2.0-or-later
- myMPD (c) 2018-2020 Juergen Mang <mail@jcgames.de>
+ myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 */
 
@@ -36,7 +36,6 @@
     X(MPD_API_PLAYLIST_RM_TRACK) \
     X(MPD_API_PLAYLIST_RM_ALL) \
     X(MPD_API_PLAYLIST_RM) \
-    X(MPD_API_PLAYLIST_LIST_ALL) \
     X(MPD_API_PLAYLIST_LIST) \
     X(MPD_API_PLAYLIST_CONTENT_LIST) \
     X(MPD_API_PLAYLIST_SHUFFLE) \
@@ -99,6 +98,7 @@
     X(MPD_API_STATE_SAVE) \
     X(MPD_API_LYRICS_UNSYNCED_GET) \
     X(MPD_API_LYRICS_SYNCED_GET) \
+    X(MPD_API_LYRICS_GET) \
     X(MYMPD_API_COLS_SAVE) \
     X(MYMPD_API_SYSCMD) \
     X(MYMPD_API_SETTINGS_GET) \

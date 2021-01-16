@@ -1,6 +1,6 @@
 /*
  SPDX-License-Identifier: GPL-2.0-or-later
- myMPD (c) 2018-2020 Juergen Mang <mail@jcgames.de>
+ myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 */
 
@@ -127,7 +127,6 @@ void default_mpd_client_state(t_mpd_client_state *mpd_client_state) {
     mpd_client_state->smartpls_interval = 14400;
     mpd_client_state->booklet_name = sdsnew("booklet.pdf");
     mpd_client_state->stickers = false;
-    mpd_client_state->max_elements_per_page = 100;
     mpd_client_state->feat_coverimage = false;
     mpd_client_state->auto_play = false;
     reset_t_tags(&mpd_client_state->search_tag_types);

@@ -1,7 +1,7 @@
 "use strict";
 /*
  SPDX-License-Identifier: GPL-2.0-or-later
- myMPD (c) 2018-2020 Juergen Mang <mail@jcgames.de>
+ myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 */
 
@@ -101,7 +101,7 @@ function gtPage(phrase, returnedEntities, totalEntities) {
     if (totalEntities > -1) {
         return t(phrase, totalEntities);
     }
-    else if (returnedEntities + app.current.page < settings.maxElementsPerPage) {
+    else if (returnedEntities + app.current.offset < settings.maxElementsPerPage) {
         return t(phrase, returnedEntities);
     }
     else {

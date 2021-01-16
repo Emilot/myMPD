@@ -1,6 +1,6 @@
 /*
  SPDX-License-Identifier: GPL-2.0-or-later
- myMPD (c) 2018-2020 Juergen Mang <mail@jcgames.de>
+ myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 */
 
@@ -87,7 +87,6 @@ typedef struct t_mpd_client_state {
     sds smartpls_prefix;
     time_t smartpls_interval;
     unsigned last_played_count;
-    int max_elements_per_page;
     sds music_directory;
     sds music_directory_value;
     sds booklet_name;

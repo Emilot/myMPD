@@ -1,7 +1,7 @@
 "use strict";
 /*
  SPDX-License-Identifier: GPL-2.0-or-later
- myMPD (c) 2018-2020 Juergen Mang <mail@jcgames.de>
+ myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 */
 
@@ -10,14 +10,16 @@ function doSearch(x) {
         let expression = '(';
         let crumbs = domCache.searchCrumb.children;
         for (let i = 0; i < crumbs.length; i++) {
-            expression += '(' + decodeURI(crumbs[i].getAttribute('data-filter')) + ')';
+            expression += '(' + decodeURI(crumbs[i].getAttribute('data-filter-tag')) + ' ' + 
+                decodeURI(crumbs[i].getAttribute('data-filter-op')) + ' \'' + 
+                escapeMPD(decodeURI(crumbs[i].getAttribute('data-filter-value'))) + '\')';
             if (x !== '') {
                 expression += ' AND ';
             }
         }
         if (x !== '') {
             let match = document.getElementById('searchMatch');
-            expression += '(' + app.current.filter + ' ' + match.options[match.selectedIndex].value + ' \'' + x +'\'))';
+            expression += '(' + app.current.filter + ' ' + match.options[match.selectedIndex].value + ' \'' + escapeMPD(x) +'\'))';
         }
         else {
             expression += ')';
@@ -25,10 +27,10 @@ function doSearch(x) {
         if (expression.length <= 2) {
             expression = '';
         }
-        appGoto('Search', undefined, undefined, '0', app.current.filter, app.current.sort, '-', expression);
+        appGoto('Search', undefined, undefined, '0', app.current.limit, app.current.filter, app.current.sort, '-', expression);
     }
     else {
-        appGoto('Search', undefined, undefined, '0', app.current.filter, app.current.sort, '-', x);
+        appGoto('Search', undefined, undefined, '0', app.current.limit, app.current.filter, app.current.sort, '-', x);
     }
 }
 
@@ -47,6 +49,7 @@ function parseSearch(obj) {
     parseFilesystem(obj);
 }
 
+//eslint-disable-next-line no-unused-vars
 function saveSearchAsSmartPlaylist() {
     parseSmartPlaylist({"jsonrpc":"2.0","id":0,"result":{"method":"MPD_API_SMARTPLS_GET", 
         "playlist":"",
@@ -64,7 +67,8 @@ function addAllFromSearchPlist(plist, searchstr, replace) {
             "sort": "", 
             "sortdesc": false, 
             "expression": searchstr,
-            "offset": 0, 
+            "offset": 0,
+            "limit": 0,
             "cols": settings.colsSearch, 
             "replace": replace});
     }
@@ -72,7 +76,8 @@ function addAllFromSearchPlist(plist, searchstr, replace) {
         sendAPI("MPD_API_DATABASE_SEARCH", {"plist": plist, 
             "filter": app.current.filter, 
             "searchstr": searchstr,
-            "offset": 0, 
+            "offset": 0,
+            "limit": 0, 
             "cols": settings.colsSearch, 
             "replace": replace});
     }

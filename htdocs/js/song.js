@@ -1,7 +1,7 @@
 "use strict";
 /*
  SPDX-License-Identifier: GPL-2.0-or-later
- myMPD (c) 2018-2020 Juergen Mang <mail@jcgames.de>
+ myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 */
 
@@ -17,6 +17,32 @@ function parseFingerprint(obj) {
     let fpTd = document.getElementById('fingerprint');
     fpTd.innerHTML = '';
     fpTd.appendChild(textarea);
+}
+
+function getMBtagLink(tag, value) {
+    let MBentity = '';
+    switch (tag) {
+        case 'MUSICBRAINZ_ALBUMARTISTID':
+        case 'MUSICBRAINZ_ARTISTID':
+            MBentity = 'artist';
+            break;
+        case 'MUSICBRAINZ_ALBUMID':
+            MBentity = 'release';
+            break;
+        case 'MUSICBRAINZ_RELEASETRACKID':
+            MBentity = 'track';
+            break;
+        case 'MUSICBRAINZ_TRACKID':
+            MBentity = 'recording';
+            break;
+    }
+    if (MBentity === '') {
+        return e(value);
+    }
+    else {
+        return '<a title="' + t('Lookup at musicbrainz') + '" class="text-success external" target="_musicbrainz" href="https://musicbrainz.org/' + MBentity + '/' + encodeURI(value) + '">' +
+            '<span class="material-icons">open_in_browser</span>&nbsp;' + value + '</a>';
+    }
 }
 
 function parseSongDetails(obj) {
@@ -40,6 +66,9 @@ function parseSongDetails(obj) {
         songDetailsHTML += '>';
         if (settings.browsetags.includes(settings.tags[i]) && obj.result[settings.tags[i]] !== '-') {
             songDetailsHTML += '<a class="text-success" href="#">' + e(obj.result[settings.tags[i]]) + '</a>';
+        }
+        else if (settings.tags[i].indexOf('MUSICBRAINZ') === 0) {
+            songDetailsHTML += getMBtagLink(settings.tags[i], obj.result[settings.tags[i]]);
         }
         else {
             songDetailsHTML += obj.result[settings.tags[i]];
@@ -149,7 +178,7 @@ function getLyrics(uri, el) {
         return;
     }
     el.classList.add('opacity05');
-    sendAPI("MPD_API_LYRICS_UNSYNCED_GET", {"uri": uri}, function(obj) {
+    sendAPI("MPD_API_LYRICS_GET", {"uri": uri}, function(obj) {
         if (obj.error) {
             el.innerText = t(obj.error.message);
         }
@@ -157,7 +186,7 @@ function getLyrics(uri, el) {
             el.innerText = t(obj.result.message);
         }
         else {
-            let lyrics_header = '<span class="lyricsHeader" class="btn-group-toggle" data-toggle="buttons">';
+            let lyricsHeader = '<span class="lyricsHeader" class="btn-group-toggle" data-toggle="buttons">';
             let lyrics = '<div class="lyricsTextContainer">';
             for (let i = 0; i < obj.result.returnedEntities; i++) {
                 let ht = obj.result.data[i].desc;
@@ -170,33 +199,62 @@ function getLyrics(uri, el) {
                 else {
                     ht = i;
                 }
-                lyrics_header += '<label data-num="' + i + '" class="btn btn-sm btn-outline-secondary mr-2' + (i === 0 ? ' active' : '') + '">' + ht + '</label>';
+                lyricsHeader += '<label data-num="' + i + '" class="btn btn-sm btn-outline-secondary mr-2' + (i === 0 ? ' active' : '') + '">' + ht + '</label>';
                 lyrics += '<div class="lyricsText' + (i > 0 ? ' hide' : '') + '">' +
-                    e(obj.result.data[i].text).replace(/\n/g, "<br/>") + 
+                    (obj.result.synced === true ? parseSyncedLyrics(obj.result.data[i].text) : e(obj.result.data[i].text).replace(/\n/g, "<br/>")) + 
                     '</div>';
             }
-            lyrics_header += '</span>';
+            lyricsHeader += '</span>';
             lyrics += '</div>';
-            el.innerHTML = (obj.result.returnedEntities > 1 ? lyrics_header : '') + lyrics;
-            el.getElementsByClassName('lyricsHeader')[0].addEventListener('click', function(event) {
-                if (event.target.nodeName === 'LABEL') {
-                   event.target.parentNode.getElementsByClassName('active')[0].classList.remove('active');
-                   event.target.classList.add('active');
-                   const nr = parseInt(event.target.getAttribute('data-num'));
-                   const tEls = el.getElementsByClassName('lyricsText');
-                   for (let i = 0; i < tEls.length; i++) {
-                       if (i === nr) {
-                           tEls[i].classList.remove('hide');
-                       }
-                       else {
-                           tEls[i].classList.add('hide');
-                       }
-                   }
-                }
-            }, false);
+            showSyncedLyrics = obj.result.synced;
+            if (obj.result.returnedEntities > 1) {
+                el.innerHTML = lyricsHeader + lyrics;
+                el.getElementsByClassName('lyricsHeader')[0].addEventListener('click', function(event) {
+                    if (event.target.nodeName === 'LABEL') {
+                        event.target.parentNode.getElementsByClassName('active')[0].classList.remove('active');
+                        event.target.classList.add('active');
+                        const nr = parseInt(event.target.getAttribute('data-num'));
+                        const tEls = el.getElementsByClassName('lyricsText');
+                        for (let i = 0; i < tEls.length; i++) {
+                            if (i === nr) {
+                                tEls[i].classList.remove('hide');
+                            }
+                            else {
+                                tEls[i].classList.add('hide');
+                            }
+                        }
+                    }
+                }, false);
+            }
+            else {
+                el.innerHTML = lyrics;
+            }
         }
         el.classList.remove('opacity05');
     }, true);
+}
+
+function parseSyncedLyrics(text) {
+    let html = '';
+    const lines = text.split('\r\n');
+    for (let i = 0; i < lines.length; i++) {
+        //line must start with timestamp
+        let line = lines[i].match(/^\[(\d+):(\d+)\.(\d+)\](.*)$/);
+        if (line) {
+            let sec = parseInt(line[1]) * 60 + parseInt(line[2]);
+            //line[3] are hundreths of a seconde - ignore it for the moment
+            html += '<p><span data-sec="' + sec + '">';
+            //support of extended lrc format - timestamps for words
+            html += line[4].replace(/<(\d+):(\d+)\.\d+>/g, function(m0, m1, m2) {
+                //hundreths of a secondes are ignored
+                let wsec = parseInt(m1) * 60 + parseInt(m2);
+                return '</span><span data-sec="' + wsec + '">';
+            });
+            html += '</span></p>';
+        }
+    }
+    html += '';
+    return html;
 }
 
 //eslint-disable-next-line no-unused-vars

@@ -1,6 +1,6 @@
 <!--
  SPDX-License-Identifier: GPL-2.0-or-later
- myMPD (c) 2018-2020 Juergen Mang <mail@jcgames.de>
+ myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 -->
 <!DOCTYPE html>
@@ -230,14 +230,7 @@
           <div class="btn-group mr-2 featHome">
             <button data-title-phrase="Add to homescreen" data-href='{"cmd": "addViewToHome", "options": []}'  type="button" class="btn btn-secondary"><span class="material-icons">add_to_home_screen</span></button>
           </div>
-          <div id="QueueCurrentPaginationTop" class="btn-group mr-2 hide">
-            <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
-              <div class="btn-group">
-                <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"></button>
-                <div class="dropdown-menu bg-lite-dark px-2 pages">
-                </div>
-              </div>            
-            <button data-title-phrase="Next page" data-href='{"cmd": "gotoPage", "options": ["next"]}' type="button" class="btn btn-secondary btn-group-append">&raquo;</button>
+          <div id="QueueCurrentPaginationTop" class="btn-group mr-2 pagination hide">
           </div>
         </div>
 
@@ -255,21 +248,11 @@
             </thead>
             <tbody class="clickable">
             </tbody>
+            <tfoot>
+            </tfoot>
           </table>
         </div>
-        <div class="btn-toolbar hide" id="QueueCurrentButtonsBottom">
-          <div class="btn-group mr-2">
-            <button type="button" class="btn btn-secondary material-icons" data-href='{"cmd": "scrollToPosY", "options: [0]}' data-title-phrase="To top">keyboard_arrow_up</button>
-          </div>
-          <div id="QueueCurrentPaginationBottom" class="btn-group mr-2 dropup">
-            <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
-              <div class="btn-group">
-                <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"></button>
-                <div class="dropdown-menu bg-lite-dark px-2 pages">
-                </div>
-              </div>            
-            <button data-title-phrase="Next page" data-href='{"cmd": "gotoPage", "options": ["next"]}' type="button" class="btn btn-secondary btn-group-append">&raquo;</button>
-          </div>
+        <div class="btn-toolbar hide justify-content-between" id="QueueCurrentButtonsBottom">
         </div>
       </div>
 
@@ -286,14 +269,7 @@
           <div class="btn-group mr-2 featHome">
             <button data-title-phrase="Add to homescreen" data-href='{"cmd": "addViewToHome", "options": []}'  type="button" class="btn btn-secondary"><span class="material-icons">add_to_home_screen</span></button>
           </div>
-          <div id="QueueLastPlayedPaginationTop" class="btn-group hide">
-            <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
-              <div class="btn-group">
-                <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"></button>
-                <div class="dropdown-menu bg-lite-dark px-2 pages">
-                </div>
-              </div>            
-            <button data-title-phrase="Next page" data-href='{"cmd": "gotoPage", "options": ["next"]}' type="button" class="btn btn-secondary btn-group-append">&raquo;</button>
+          <div id="QueueLastPlayedPaginationTop" class="btn-group mr-2 pagination hide">
           </div>
         </div>
 
@@ -313,19 +289,7 @@
             </tbody>
           </table>
         </div>
-        <div class="btn-toolbar hide" id="QueueLastPlayedButtonsBottom">
-          <div class="btn-group mr-2">
-            <button type="button" class="btn btn-secondary material-icons" data-href='{"cmd": "scrollToPosY", "options: [0]}' data-title-phrase="To top">keyboard_arrow_up</button>
-          </div>        
-          <div id="QueueLastPlayedPaginationBottom" class="btn-group mr-2 dropup">
-            <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
-              <div class="btn-group">
-                <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"></button>
-                <div class="dropdown-menu bg-lite-dark px-2 pages">
-                </div>
-              </div>            
-            <button data-title-phrase="Next page" data-href='{"cmd": "gotoPage", "options": ["next"]}' type="button" class="btn btn-secondary btn-group-append">&raquo;</button>
-          </div>
+        <div class="btn-toolbar hide justify-content-between" id="QueueLastPlayedButtonsBottom">
         </div>
       </div>
 
@@ -342,14 +306,7 @@
           <div class="btn-group mr-2 featHome">
             <button data-title-phrase="Add to homescreen" data-href='{"cmd": "addViewToHome", "options": []}'  type="button" class="btn btn-secondary"><span class="material-icons">add_to_home_screen</span></button>
           </div>
-          <div id="QueueJukeboxPaginationTop" class="btn-group hide">
-            <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
-              <div class="btn-group">
-                <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"></button>
-                <div class="dropdown-menu bg-lite-dark px-2 pages">
-                </div>
-              </div>            
-            <button data-title-phrase="Next page" data-href='{"cmd": "gotoPage", "options": ["next"]}' type="button" class="btn btn-secondary btn-group-append">&raquo;</button>
+          <div id="QueueJukeboxPaginationTop" class="btn-group mr-2 pagination hide">
           </div>
         </div>
 
@@ -369,19 +326,7 @@
             </tbody>
           </table>
         </div>
-        <div class="btn-toolbar hide" id="QueueJukeboxButtonsBottom">
-          <div class="btn-group mr-2">
-            <button type="button" class="btn btn-secondary material-icons" data-href='{"cmd": "scrollToPosY", "options: [0]}' data-title-phrase="To top">keyboard_arrow_up</button>
-          </div>        
-          <div id="QueueJukeboxPaginationBottom" class="btn-group mr-2 dropup">
-            <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
-              <div class="btn-group">
-                <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"></button>
-                <div class="dropdown-menu bg-lite-dark px-2 pages">
-                </div>
-              </div>            
-            <button data-title-phrase="Next page" data-href='{"cmd": "gotoPage", "options": ["next"]}' type="button" class="btn btn-secondary btn-group-append">&raquo;</button>
-          </div>
+        <div class="btn-toolbar hide justify-content-between" id="QueueJukeboxButtonsBottom">
         </div>
       </div>
       
@@ -433,14 +378,7 @@
           <div class="btn-group mr-2 featHome">
             <button data-title-phrase="Add to homescreen" data-href='{"cmd": "addViewToHome", "options": []}'  type="button" class="btn btn-secondary"><span class="material-icons">add_to_home_screen</span></button>
           </div>
-          <div id="BrowsePlaylistsPaginationTop" class="btn-group mr-2 hide">
-            <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
-              <div class="btn-group">
-                <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"></button>
-                <div class="dropdown-menu bg-lite-dark px-2 pages">
-                </div>
-              </div>            
-            <button data-title-phrase="Next page" data-href='{"cmd": "gotoPage", "options": ["next"]}' type="button" class="btn btn-secondary btn-group-append">&raquo;</button>
+          <div id="BrowsePlaylistsPaginationTop" class="btn-group mr-2 pagination hide">
           </div>
         </div>
         <div class="table-responsive-md">
@@ -470,23 +408,11 @@
             </thead>
             <tbody class="clickable">
             </tbody>
+            <tfoot>
+            </tfoot>
           </table>          
         </div>
-        <div class="btn-toolbar hide" id="BrowsePlaylistsButtonsBottom">
-          <div class="btn-group mr-2">
-            <button type="button" class="btn btn-secondary material-icons" data-href='{"cmd": "scrollToPosY", "options": [0]}' data-title-phrase="To top">
-              keyboard_arrow_up
-            </button>
-          </div>        
-          <div id="BrowsePlaylistsPaginationBottom" class="btn-group mr-2 dropup">
-            <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
-              <div class="btn-group">
-                <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"></button>
-                <div class="dropdown-menu bg-lite-dark px-2 pages">
-                </div>
-              </div>            
-            <button data-title-phrase="Next page" data-href='{"cmd": "gotoPage", "options": ["next"]}' type="button" class="btn btn-secondary btn-group-append">&raquo;</button>
-          </div>
+        <div class="btn-toolbar hide justify-content-between" id="BrowsePlaylistsButtonsBottom">
         </div>
       </div>
 
@@ -538,14 +464,7 @@
             <div class="btn-group mr-2 featHome">
               <button data-title-phrase="Add to homescreen" data-href='{"cmd": "addViewToHome", "options": []}'  type="button" class="btn btn-secondary"><span class="material-icons">add_to_home_screen</span></button>              
             </div>
-            <div id="BrowseDatabasePaginationTop" class="btn-group hide mr-2">
-              <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
-                <div class="btn-group">
-                  <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"></button>
-                  <div class="dropdown-menu bg-lite-dark px-2 pages">
-                  </div>
-                </div>            
-              <button data-title-phrase="Next page" data-href='{"cmd": "gotoPage", "options": ["next"]}' type="button" class="btn btn-secondary btn-group-append">&raquo;</button>
+            <div id="BrowseDatabasePaginationTop" class="btn-group mr-2 pagination hide">
             </div>
           </div>
           <ol class="featAdvsearch breadcrumb hide" id="searchDatabaseCrumb"></ol>
@@ -553,19 +472,7 @@
             <div id="BrowseDatabaseCards" class="row">
             </div>
           </div>
-          <div class="btn-toolbar hide" id="BrowseDatabaseButtonsBottom">
-            <div class="btn-group mr-2">
-              <button data-title-phrase="To top" type="button" class="btn btn-secondary material-icons" data-href='{"cmd": "scrollToPosY", "options": [0]}'>keyboard_arrow_up</button>
-            </div>        
-            <div id="BrowseDatabasePaginationBottom" class="btn-group dropup">
-              <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
-              <div class="btn-group">
-                <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"></button>
-                <div class="dropdown-menu bg-lite-dark px-2 pages">
-                </div>
-              </div>            
-              <button data-title-phrase="Next page" data-href='{"cmd": "gotoPage", "options": ["next"]}' type="button" class="btn btn-secondary btn-group-append">&raquo;</button>
-            </div>
+          <div class="btn-toolbar hide justify-content-between" id="BrowseDatabaseButtonsBottom">
           </div>
         </div>
         <div id="viewDetailDatabase">
@@ -603,6 +510,8 @@
             </thead>
             <tbody class="clickable">
             </tbody>
+            <tfoot>
+            </tfoot>
           </table>          
         </div>
       </div>
@@ -616,11 +525,12 @@
           </div>
           <div class="input-group mr-2">
             <div class="input-group-prepend">
-              <button data-title-phrase="Add all to queue" data-href='{"cmd": "addAllFromBrowseFilesystem", "options": []}' id="BrowseFilesystemAddAllSongs" class="btn btn-secondary material-icons">library_add</button>
+              <button data-title-phrase="Append to queue" data-href='{"cmd": "addAllFromBrowseFilesystem", "options": []}' id="BrowseFilesystemAddAllSongs" class="btn btn-secondary material-icons">library_add</button>
               <button id="BrowseFilesystemAddAllSongsBtn" class="btn btn-secondary dropdown-toggle dropdown-toggle-split rounded-right" type="button" data-toggle="dropdown"></button>
               <div class="dropdown-menu bg-lite-dark px-2" id="BrowseFilesystemAddAllSongsDropdown">
-                <button data-phrase="Add all to queue" type="button" class="btn btn-secondary btn-sm btn-block"></button>
-                <button data-phrase="Add all to playlist" type="button" class="btn btn-secondary btn-sm btn-block featPlaylists"></button>
+                <button data-href='{"cmd": "addAllFromBrowseFilesystem", "options": [false]}' data-phrase="Append to queue" type="button" class="btn btn-secondary btn-sm btn-block"></button>
+                <button data-href='{"cmd": "addAllFromBrowseFilesystem", "options": [true]}' data-phrase="Replace queue" type="button" class="btn btn-secondary btn-sm btn-block"></button>
+                <button data-href='{"cmd": "showAddToPlaylistCurrentSearch", "options": []}' data-phrase="Add to playlist" type="button" class="btn btn-secondary btn-sm btn-block featPlaylists"></button>
               </div>
             </div>
           </div>
@@ -640,14 +550,7 @@
           <div class="btn-group mr-2 featHome">
             <button data-title-phrase="Add to homescreen" data-href='{"cmd": "addViewToHome", "options": []}'  type="button" class="btn btn-secondary"><span class="material-icons">add_to_home_screen</span></button>              
           </div>
-          <div id="BrowseFilesystemPaginationTop" class="btn-group mr-2 hide">
-            <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
-              <div class="btn-group">
-                <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"></button>
-                <div class="dropdown-menu bg-lite-dark px-2 pages">
-                </div>
-              </div>            
-            <button data-title-phrase="Next page" data-href='{"cmd": "gotoPage", "options": ["next"]}' type="button" class="btn btn-secondary btn-group-append">&raquo;</button>
+          <div id="BrowseFilesystemPaginationTop" class="btn-group mr-2 pagination hide">
           </div>
         </div>
         <ol id="BrowseBreadcrumb" class="breadcrumb"></ol>
@@ -668,19 +571,7 @@
             </tbody>
           </table>
         </div>
-        <div class="btn-toolbar hide" id="BrowseFilesystemButtonsBottom">
-          <div class="btn-group mr-2">
-            <button data-title-phrase="To top" type="button" class="btn btn-secondary material-icons" data-href='{"cmd": "scrollToPosY", "options": [0]}'>keyboard_arrow_up</button>
-          </div>        
-          <div id="BrowseFilesystemPaginationBottom" class="btn-group mr-2 dropup">
-            <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
-              <div class="btn-group">
-                <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"></button>
-                <div class="dropdown-menu bg-lite-dark px-2 pages">
-                </div>
-              </div>            
-            <button data-title-phrase="Next page" data-href='{"cmd": "gotoPage", "options": ["next"]}' type="button" class="btn btn-secondary btn-group-append">&raquo;</button>
-          </div>
+        <div class="btn-toolbar hide justify-content-between" id="BrowseFilesystemButtonsBottom">
         </div>
       </div>
     </div>        
@@ -712,26 +603,20 @@
           </form>
           <div class="input-group mr-2">
             <div class="input-group-prepend">
-              <button data-title-phrase="Add all to queue" id="searchAddAllSongs" class="btn btn-secondary material-icons" data-href='{"cmd": "addAllFromSearchPlist", "options": ["queue", null, false]}'>library_add</button>
+              <button data-title-phrase="Append to queue" id="searchAddAllSongs" class="btn btn-secondary material-icons" data-href='{"cmd": "addAllFromSearchPlist", "options": ["queue", null, false]}'>library_add</button>
               <button id="searchAddAllSongsBtn" class="btn btn-secondary dropdown-toggle dropdown-toggle-split rounded-right" type="button" data-toggle="dropdown"></button>
               <div class="dropdown-menu bg-lite-dark px-2" id="searchAddAllSongsDropdown">
-                  <button data-phrase="Add all to queue" type="button" class="btn btn-secondary btn-sm btn-block"></button>
-                  <button data-phrase="Add all to playlist" type="button" class="btn btn-secondary btn-sm btn-block featPlaylists"></button>
-                  <button data-phrase="Save as smart playlist" type="button" class="btn btn-secondary btn-sm btn-block featSmartpls"></button>
+                  <button data-href='{"cmd": "addAllFromSearchPlist", "options": ["queue", null, false]}' data-phrase="Append to queue" type="button" class="btn btn-secondary btn-sm btn-block"></button>
+                  <button data-href='{"cmd": "addAllFromSearchPlist", "options": ["queue", null, true]}' data-phrase="Replace queue" type="button" class="btn btn-secondary btn-sm btn-block"></button>
+                  <button data-href='{"cmd": "showAddToPlaylist", "options": ["SEARCH", ""]}' data-phrase="Add to playlist" type="button" class="btn btn-secondary btn-sm btn-block featPlaylists"></button>
+                  <button data-href='{"cmd": "saveSearchAsSmartPlaylist", "options": []}' data-phrase="Save as smart playlist" type="button" class="btn btn-secondary btn-sm btn-block featSmartpls"></button>
               </div>
             </div>
           </div>
           <div class="btn-group mr-2 featHome">
             <button data-title-phrase="Add to homescreen" data-href='{"cmd": "addViewToHome", "options": []}'  type="button" class="btn btn-secondary"><span class="material-icons">add_to_home_screen</span></button>              
           </div>
-          <div id="SearchPaginationTop" class="btn-group mr-2 hide">
-            <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
-              <div class="btn-group">
-                <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"></button>
-                <div class="dropdown-menu bg-lite-dark px-2 pages">
-                </div>
-              </div>            
-            <button data-title-phrase="Next page" data-href='{"cmd": "gotoPage", "options": ["next"]}' type="button" class="btn btn-secondary btn-group-append">&raquo;</button>
+          <div id="SearchPaginationTop" class="btn-group mr-2 pagination hide">
           </div>
         </div>
         <ol class="featAdvsearch breadcrumb" id="searchCrumb"></ol>
@@ -752,19 +637,7 @@
             </tbody>
           </table>
         </div>
-        <div class="btn-toolbar hide" id="SearchButtonsBottom">
-          <div class="btn-group mr-2">
-            <button data-title-phrase="To top" type="button" class="btn btn-secondary material-icons" data-href='{"cmd": "scrollToPosY", "options": [0]}'>keyboard_arrow_up</button>
-          </div>        
-          <div id="SearchPaginationBottom" class="btn-group mr-2 dropup">
-            <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
-              <div class="btn-group">
-                <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"></button>
-                <div class="dropdown-menu bg-lite-dark px-2 pages">
-                </div>
-              </div>            
-            <button data-title-phrase="Next page" data-href='{"cmd": "gotoPage", "options": ["next"]}' type="button" class="btn btn-secondary btn-group-append">&raquo;</button>
-          </div>
+        <div class="btn-toolbar hide justify-content-between" id="SearchButtonsBottom">
         </div>
       </div>
     </div>    
@@ -1197,22 +1070,16 @@
                 </div>                
                 <div class="form-group row">
                   <label class="col-sm-4 col-form-label" for="inputBgColor" data-phrase="Background color"></label>
-                  <div class="col-sm-4">
-                    <input id="inputBgColor" type="text" class="form-control border-secondary" value="" placeholder="#888">
+                  <div class="col-sm-8">
+                    <input id="inputBgColor" type="color" class="form-control border-secondary" value="" placeholder="#888">
                     <div class="invalid-feedback" data-phrase="Invalid color"></div>
-                  </div>
-                  <div class="col-sm-4">
-                    <button id="bgColorPreview" type="button" class="btn border-secondary btn-block" data-phrase="Preview"></button>
                   </div>
                 </div>
                 <div class="form-group row">
                   <label class="col-sm-4 col-form-label" for="inputHighlightColor" data-phrase="Highlight color"></label>
-                  <div class="col-sm-4">
-                    <input id="inputHighlightColor" type="text" class="form-control border-secondary" value="" placeholder="#28a745">
+                  <div class="col-sm-8">
+                    <input id="inputHighlightColor" type="color" class="form-control border-secondary" value="" placeholder="#28a745">
                     <div class="invalid-feedback" data-phrase="Invalid color"></div>
-                  </div>
-                  <div class="col-sm-4">
-                    <button id="highlightColorPreview" type="button" class="btn border-secondary btn-block" data-phrase="Preview"></button>
                   </div>
                 </div>
                 <div class="form-group row featMobile">
@@ -1310,10 +1177,15 @@
                 <hr/>
                 <h4 data-phrase="Pagination"></h4>
                 <div class="form-group row">
-                  <label class="col-sm-4 col-form-label" for="inputMaxElementsPerPage" data-phrase="Pagination"></label>
+                  <label class="col-sm-4 col-form-label" for="selectMaxElementsPerPage" data-phrase="Elements per page"></label>
                   <div class="col-sm-8 ">
-                    <input id="inputMaxElementsPerPage" type="text" class="form-control border-secondary" value="">
-                    <div class="invalid-feedback" data-phrase="Must be a number smaller or equal 200"></div>
+                    <select id="selectMaxElementsPerPage" class="form-control custom-select border-secondary">
+                      <option value="25">25</option>
+                      <option value="50">50</option>
+                      <option value="100">100</option>
+                      <option value="200">200</option>
+                      <option value="0" data-phrase="All"></option>
+                    </select>
                   </div>
                 </div>
               </form>
@@ -2349,7 +2221,7 @@
               <div class="form-group row">
                 <label class="col-sm-4 col-form-label" for="inputHomeIconBgcolor" data-phrase="Background color"></label>
                 <div class="col-sm-8">
-                  <input id="inputHomeIconBgcolor" class="form-control border-secondary" type="text"/>
+                  <input id="inputHomeIconBgcolor" class="form-control border-secondary" type="color"/>
                 </div>
               </div>
             </div>
@@ -2364,7 +2236,7 @@
               <label class="col-sm-4 col-form-label" for="selectHomeIconCmd" data-phrase="Action"></label>
               <div class="col-sm-8">
                 <select id="selectHomeIconCmd" class="form-control custom-select border-secondary">
-                  <option value="appGoto" data-options='{"options":["App","Tab","View","Offset","Filter","Sort","Tag","Search"]}' data-phrase="Goto view"></option>
+                  <option value="appGoto" data-options='{"options":["App","Tab","View","Offset","Limit","Filter","Sort","Tag","Search"]}' data-phrase="Goto view"></option>
                   <option value="replaceQueue" data-options='{"options":["Type","Uri","Name"]}' data-phrase="Replace queue"></option>
                   <option value="execScriptFromOptions" data-options='{"options":["Script","Arguments"]}' data-phrase="Execute Script"></option>
                 </select>

@@ -1,7 +1,7 @@
 "use strict";
 /*
  SPDX-License-Identifier: GPL-2.0-or-later
- myMPD (c) 2018-2020 Juergen Mang <mail@jcgames.de>
+ myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 */
 
@@ -25,7 +25,7 @@ function navBrowseHandler(event) {
         app.current.search = '';
         document.getElementById('searchDatabaseMatch').value = 'contains';
         appGoto(app.current.app, app.current.tab, app.current.view, 
-            '0', app.current.filter, app.current.sort, tag, app.current.search);
+            '0', app.current.limit, app.current.filter, app.current.sort, tag, app.current.search);
     }
 }
 
@@ -48,16 +48,16 @@ function gotoBrowse() {
             }
             if (artist !== null) {
                 //Show album details
-                appGoto('Browse', 'Database', 'Detail', '0', tag, tagAlbumArtist, name, decodeURI(artist));
+                appGoto('Browse', 'Database', 'Detail', '0', undefined, tag, tagAlbumArtist, name, decodeURI(artist));
             }
             else {
                 //show filtered album list
-                appGoto('Browse', 'Database', 'List', '0', tag, tagAlbumArtist, 'Album', '(' + tag + ' == \'' + name + '\')');
+                appGoto('Browse', 'Database', 'List', '0', undefined, tag, tagAlbumArtist, 'Album', '(' + tag + ' == \'' + name + '\')');
             }
         }
         else {
             //show filtered album list
-            appGoto('Browse', 'Database', 'List', '0', tag, tagAlbumArtist, 'Album', '(' + tag + ' == \'' + name + '\')');
+            appGoto('Browse', 'Database', 'List', '0', undefined, tag, tagAlbumArtist, 'Album', '(' + tag + ' == \'' + name + '\')');
         }
     }
 }
@@ -67,7 +67,6 @@ function parseFilesystem(obj) {
     let table = document.getElementById(app.current.app + (app.current.tab === undefined ? '' : app.current.tab) + 'List');
     let tbody = table.getElementsByTagName('tbody')[0];
     let colspan = settings['cols' + list].length;
-    colspan--;
 
     if (obj.error) {
         tbody.innerHTML = '<tr><td><span class="material-icons">error_outline</span></td>' +
@@ -196,14 +195,21 @@ function parseFilesystem(obj) {
     //document.getElementById('cardFooterBrowse').innerText = t('Num entries', obj.result.totalEntities);
 }
 
-function addAllFromBrowseFilesystem() {
-    sendAPI("MPD_API_QUEUE_ADD_TRACK", {"uri": app.current.search});
-    showNotification(t('Added all songs'), '', '', 'success');
+//eslint-disable-next-line no-unused-vars
+function addAllFromBrowseFilesystem(replace) {
+    if (replace === true) {
+        sendAPI("MPD_API_QUEUE_REPLACE_TRACK", {"uri": app.current.search});
+        showNotification(t('Replaced queue'), '', '', 'success');
+    }
+    else {
+        sendAPI("MPD_API_QUEUE_ADD_TRACK", {"uri": app.current.search});
+        showNotification(t('Added all songs'), '', '', 'success');
+    }
 }
 
 function addAllFromBrowseDatabasePlist(plist) {
     if (app.current.search.length >= 2) {
-        sendAPI("MPD_API_DATABASE_SEARCH", {"plist": plist, "filter": app.current.view, "searchstr": app.current.search, "offset": 0, "cols": settings.colsSearch, "replace": false});
+        sendAPI("MPD_API_DATABASE_SEARCH", {"plist": plist, "filter": app.current.view, "searchstr": app.current.search, "offset": 0, "limit": 0, "cols": settings.colsSearch, "replace": false});
     }
 }
 
@@ -327,7 +333,7 @@ function parseDatabase(obj) {
     setPagination(obj.result.totalEntities, obj.result.returnedEntities);
                     
     if (nrItems === 0) {
-        cardContainer.innerHTML = '<div><span class="material-icons">error_outline</span>&nbsp;' + t('Empty list') + '</div>';
+        cardContainer.innerHTML = '<div class="ml-3 mb-3"><span class="material-icons">error_outline</span>&nbsp;' + t('Empty list') + '</div>';
     }
     //document.getElementById('cardFooterBrowse').innerText = gtPage('Num entries', obj.result.returnedEntities, obj.result.totalEntities);
 }
@@ -361,6 +367,7 @@ function parseAlbumDetails(obj) {
     const coverEl = document.getElementById('viewDetailDatabaseCover');
     coverEl.style.backgroundImage = 'url("' + subdir + '/albumart/' + obj.result.data[0].uri + '"), url("' + subdir + '/assets/coverimage-loading.svg")';
     coverEl.setAttribute('data-images', obj.result.images.join(';;'));
+    coverEl.setAttribute('data-uri', obj.result.data[0].uri);
     const infoEl = document.getElementById('viewDetailDatabaseInfo');
     infoEl.innerHTML = '<h1>' + e(obj.result.Album) + '</h1>' +
         '<small> ' + t('AlbumArtist') + '</small><p>' + e(obj.result.AlbumArtist) + '</p>' +
@@ -393,7 +400,9 @@ function parseAlbumDetails(obj) {
         lastDisc = obj.result.data[i].Disc;
     }
     tbody.innerHTML = titleList;
-    //document.getElementById('cardFooterBrowse').innerHTML = t('Num songs', obj.result.totalEntities) + ' &ndash; ' + beautifyDuration(obj.result.totalTime);
+    const tfoot = table.getElementsByTagName('tfoot')[0];
+    let colspan = settings.colsBrowseDatabaseDetail.length;
+    tfoot.innerHTML = '<tr><td colspan="' + (colspan + 1) + '"><small>' + t('Num songs', obj.result.totalEntities) + '&nbsp;&ndash;&nbsp;' + beautifyDuration(obj.result.totalTime) + '</small></td></tr>';
     document.getElementById('BrowseDatabaseDetailList').classList.remove('opacity05');
 }
 
@@ -410,7 +419,7 @@ function addAlbum(action) {
 }
 
 function _addAlbum(action, albumArtist, album) {
-    const expression = '((Album == \'' + album + '\') AND (' + tagAlbumArtist + ' == \'' + albumArtist + '\'))';
+    const expression = '((Album == \'' + escapeMPD(album) + '\') AND (' + tagAlbumArtist + ' == \'' + escapeMPD(albumArtist) + '\'))';
     if (action === 'appendQueue') {
         addAllFromSearchPlist('queue', expression, false);
     }
@@ -429,19 +438,21 @@ function searchAlbumgrid(x) {
         if (i > 0) {
             expression += ' AND ';
         }
-        expression += '(' + decodeURI(crumbs[i].getAttribute('data-filter')) + ')';
+        expression += '(' + decodeURI(crumbs[i].getAttribute('data-filter-tag')) + ' ' + 
+            decodeURI(crumbs[i].getAttribute('data-filter-op')) + ' \'' + 
+            escapeMPD(decodeURI(crumbs[i].getAttribute('data-filter-value'))) + '\')';
     }
     if (x !== '') {
         if (expression !== '') {
             expression += ' AND ';
         }
         let match = document.getElementById('searchDatabaseMatch');
-        expression += '(' + app.current.filter + ' ' + match.options[match.selectedIndex].value + ' \'' + x +'\')';
+        expression += '(' + app.current.filter + ' ' + match.options[match.selectedIndex].value + ' \'' + escapeMPD(x) +'\')';
     }
     
     if (expression.length <= 2) {
         expression = '';
     }
     appGoto(app.current.app, app.current.tab, app.current.view, 
-        '0', app.current.filter, app.current.sort, app.current.tag, expression);
+        '0', app.current.limit, app.current.filter, app.current.sort, app.current.tag, expression);
 }

@@ -1,14 +1,14 @@
 "use strict";
 /*
  SPDX-License-Identifier: GPL-2.0-or-later
- myMPD (c) 2018-2020 Juergen Mang <mail@jcgames.de>
+ myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 */
 
 //eslint-disable-next-line no-unused-vars
 function delQueueJukeboxSong(pos) {
     sendAPI("MPD_API_JUKEBOX_RM", {"pos": pos}, function() {
-        sendAPI("MPD_API_JUKEBOX_LIST", {"offset": app.current.page, "cols": settings.colsQueueJukebox}, parseJukeboxList);
+        sendAPI("MPD_API_JUKEBOX_LIST", {"offset": app.current.offset, "cols": settings.colsQueueJukebox}, parseJukeboxList);
     });
 }
 
@@ -51,7 +51,6 @@ function parseJukeboxList(obj) {
     }                    
 
     let colspan = settings['colsQueueJukebox'].length;
-    colspan--;
     
     if (nrItems === 0) {
         tbody.innerHTML = '<tr><td><span class="material-icons">error_outline</span></td>' +

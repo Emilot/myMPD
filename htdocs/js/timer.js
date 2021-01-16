@@ -1,7 +1,7 @@
 "use strict";
 /*
  SPDX-License-Identifier: GPL-2.0-or-later
- myMPD (c) 2018-2020 Juergen Mang <mail@jcgames.de>
+ myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 */
 
@@ -101,7 +101,7 @@ function showEditTimer(timerid) {
         sendAPI("MYMPD_API_TIMER_GET", {"timerid": timerid}, parseEditTimer);
     }
     else {
-        sendAPI("MPD_API_PLAYLIST_LIST_ALL", {"searchstr":""}, function(obj2) { 
+        sendAPI("MPD_API_PLAYLIST_LIST", {"searchstr":"", "offset": 0, "limit": 0}, function(obj2) { 
             getAllPlaylists(obj2, 'selectTimerPlaylist', 'Database');
         });
         document.getElementById('inputTimerId').value = '0';
@@ -126,7 +126,7 @@ function showEditTimer(timerid) {
 
 function parseEditTimer(obj) {
     let playlistValue = obj.result.playlist;
-    sendAPI("MPD_API_PLAYLIST_LIST_ALL", {"searchstr":""}, function(obj2) { 
+    sendAPI("MPD_API_PLAYLIST_LIST", {"searchstr":"", "offset": 0, "limit": 0}, function(obj2) { 
         getAllPlaylists(obj2, 'selectTimerPlaylist', playlistValue);
     });
     document.getElementById('inputTimerId').value = obj.result.timerid;

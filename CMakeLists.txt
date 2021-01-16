@@ -1,6 +1,6 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-# myMPD (c) 2018-2020 Juergen Mang <mail@jcgames.de>
+# myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
 # https://github.com/jcorporation/mympd
 #
 
@@ -11,8 +11,8 @@ include(GNUInstallDirs)
 project (mympd C)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/")
 set(CPACK_PACKAGE_VERSION_MAJOR "6")
-set(CPACK_PACKAGE_VERSION_MINOR "9")
-set(CPACK_PACKAGE_VERSION_PATCH "1")
+set(CPACK_PACKAGE_VERSION_MINOR "10")
+set(CPACK_PACKAGE_VERSION_PATCH "0")
 
 if(EXISTS "/etc/arch-release")
   set(WEBAPPS "/webapps/${PROJECT_NAME}")
