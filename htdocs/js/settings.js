@@ -220,15 +220,12 @@ function parseSettings() {
     document.getElementById('inputBgColor').value = settings.bgColor;
     document.getElementsByTagName('body')[0].style.backgroundColor = settings.bgColor;
     
-    document.getElementById('highlightColorPreview').style.backgroundColor = settings.highlightColor;
-    document.getElementById('bgColorPreview').style.backgroundColor = settings.bgColor;
-
     toggleBtnChkCollapse('btnBgCover', 'collapseBackground', settings.bgCover);
     document.getElementById('inputBgCssFilter').value = settings.bgCssFilter;    
 
     let albumartbg = document.querySelectorAll('.albumartbg');
     for (let i = 0; i < albumartbg.length; i++) {
-	    albumartbg[i].style.filter = settings.bgCssFilter;
+        albumartbg[i].style.filter = settings.bgCssFilter;
     }
 
     toggleBtnChkCollapse('btnLoveEnable', 'collapseLove', settings.love);

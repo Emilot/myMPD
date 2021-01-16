@@ -10,14 +10,16 @@ function doSearch(x) {
         let expression = '(';
         let crumbs = domCache.searchCrumb.children;
         for (let i = 0; i < crumbs.length; i++) {
-            expression += '(' + decodeURI(crumbs[i].getAttribute('data-filter')) + ')';
+            expression += '(' + decodeURI(crumbs[i].getAttribute('data-filter-tag')) + ' ' + 
+                decodeURI(crumbs[i].getAttribute('data-filter-op')) + ' \'' + 
+                escapeMPD(decodeURI(crumbs[i].getAttribute('data-filter-value'))) + '\')';
             if (x !== '') {
                 expression += ' AND ';
             }
         }
         if (x !== '') {
             let match = document.getElementById('searchMatch');
-            expression += '(' + app.current.filter + ' ' + match.options[match.selectedIndex].value + ' \'' + x +'\'))';
+            expression += '(' + app.current.filter + ' ' + match.options[match.selectedIndex].value + ' \'' + escapeMPD(x) +'\'))';
         }
         else {
             expression += ')';
@@ -47,6 +49,7 @@ function parseSearch(obj) {
     parseFilesystem(obj);
 }
 
+//eslint-disable-next-line no-unused-vars
 function saveSearchAsSmartPlaylist() {
     parseSmartPlaylist({"jsonrpc":"2.0","id":0,"result":{"method":"MPD_API_SMARTPLS_GET", 
         "playlist":"",

@@ -5,6 +5,22 @@
  https://github.com/jcorporation/mympd
 */
 
+function escapeMPD(x) {
+    return x.replace(/(["'])/g, function(m0, m1) {
+        if (m1 === '"') return '\\"';
+        else if (m1 === '\'') return '\\\'';
+        else if (m1 === '\\') return '\\\\';
+    });
+}
+
+function unescapeMPD(x) {
+    return x.replace(/(\\'|\\"|\\\\)/g, function(m0, m1) {
+        if (m1 === '\\"') return '"';
+        else if (m1 === '\\\'') return '\'';
+        else if (m1 === '\\\\') return '\\';
+    });
+}
+
 function removeIsInvalid(el) {
     let els = el.querySelectorAll('.is-invalid');
     for (let i = 0; i < els.length; i++) {
@@ -149,7 +165,7 @@ function addTagList(el, list) {
             '<button type="button" class="btn btn-secondary btn-sm btn-block' + (el === 'BrowseNavFilesystemDropdown' ? ' active' : '') + '" data-tag="Filesystem">' + t('Filesystem') + '</button>'
     }
     else if (el === 'databaseSortTagsList') {
-        if (settings.tags.includes('Date')) {
+        if (settings.tags.includes('Date') === true && settings[list].includes('Date') === false) {
             tagList += '<button type="button" class="btn btn-secondary btn-sm btn-block" data-tag="Date">' + t('Date') + '</button>';
         }
         tagList += '<button type="button" class="btn btn-secondary btn-sm btn-block" data-tag="Last-Modified">' + t('Last modified') + '</button>';
@@ -347,26 +363,27 @@ function setPagination(total, returned) {
     }
     let curPage = app.current.limit > 0 ? app.current.offset / app.current.limit + 1 : 1;
     
-    const paginationHTML = '   <button title="' + t('Previous page') + '" type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>' +
-          '   <div class="btn-group">' +
-          '     <button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"></button>' +
-          '     <div class="dropdown-menu bg-lite-dark px-2 pages dropdown-menu-right"></div>' +
-          '   </div>' +
-          '   <button title="' + t('Next page') + '" type="button" class="btn btn-secondary btn-group-append">&raquo;</button>';
+    const paginationHTML = '<button title="' + t('First page') + '" type="button" class="btn btn-group-prepend btn-secondary material-icons">first_page</button>' +
+          '<button title="' + t('Previous page') + '" type="button" class="btn btn-group-prepend btn-secondary material-icons">navigate_before</button>' +
+          '<div class="btn-group">' +
+            '<button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"></button>' +
+            '<div class="dropdown-menu bg-lite-dark px-2 pages dropdown-menu-right"></div>' +
+          '</div>' +
+          '<button title="' + t('Next page') + '" type="button" class="btn btn-secondary btn-group-append material-icons">navigate_next</button>' +
+          '<button title="' + t('Last page') + '" type="button" class="btn btn-secondary btn-group-append material-icons">last_page</button>';
 
     let bottomBarHTML = '<button type="button" class="btn btn-secondary material-icons" title="' + t('To top') + '">keyboard_arrow_up</button>' +
-          ' <div>' +
-          '  <select class="form-control custom-select border-secondary" title="' + t('Elements per page') + '">';
+          '<div>' +
+          '<select class="form-control custom-select border-secondary" title="' + t('Elements per page') + '">';
     let nrEls = [25, 50, 100, 200, 0];
     for (let i of nrEls) {
         bottomBarHTML += '<option value="' + i + '"' + (app.current.limit === i ? ' selected' : '') + '>' + (i > 0 ? i : t('All')) + '</option>';
     }
-    
-    bottomBarHTML += '  </select>' +
-          ' </div>' +
-          ' <div id="' + cat + 'PaginationBottom" class="btn-group dropup">' +
+    bottomBarHTML += '</select>' +
+          '</div>' +
+          '<div id="' + cat + 'PaginationBottom" class="btn-group dropup pagination">' +
           paginationHTML +
-          ' </div>' +
+          '</div>' +
           '</div>';
 
     const bottomBar = document.getElementById(cat + 'ButtonsBottom');
@@ -391,10 +408,12 @@ function setPagination(total, returned) {
     let p = [ document.getElementById(cat + 'PaginationTop'), document.getElementById(cat + 'PaginationBottom') ];
     
     for (let i = 0; i < p.length; i++) {
-        let prev = p[i].children[0];
-        let page = p[i].children[1].children[0];
-        let pages = p[i].children[1].children[1];
-        let next = p[i].children[2];
+        const first = p[i].children[0];
+        const prev = p[i].children[1];
+        const page = p[i].children[2].children[0];
+        const pages = p[i].children[2].children[1];
+        const next = p[i].children[3];
+        const last = p[i].children[4];
     
         page.innerText = curPage + ' / ' + totalPages;
         if (totalPages > 1) {
@@ -402,7 +421,7 @@ function setPagination(total, returned) {
             let pl = '';
             for (let j = 0; j < totalPages; j++) {
                 let o = j * app.current.limit;
-                pl += '<button data-offset="' + o + '" type="button" class="mr-1 mb-1 btn-sm btn btn-secondary' +
+                pl += '<button data-offset="' + o + '" type="button" class="btn-sm btn btn-secondary' +
                       ( o === app.current.offset ? ' active' : '') + '">' +
                       ( j + 1) + '</button>';
             }
@@ -413,17 +432,35 @@ function setPagination(total, returned) {
                     gotoPage(event.target.getAttribute('data-offset'));
                 }
             }, false);
-
+            //eslint-disable-next-line no-unused-vars
             const pagesDropdown = new BSN.Dropdown(page);
+            
+            let lastPageOffset = (totalPages - 1) * app.current.limit;
+            if (lastPageOffset === app.current.offset) {
+                last.setAttribute('disabled', 'disabled');
+            }
+            else {
+                last.removeAttribute('disabled');
+                last.classList.remove('hide');
+                next.classList.remove('rounded-right');
+                last.addEventListener('click', function() {
+                    event.preventDefault();
+                    gotoPage(lastPageOffset);
+                }, false);
+            }
         }
         else if (total === -1) {
             page.setAttribute('disabled', 'disabled');
             page.innerText = curPage;
             page.classList.add('nodropdown');
+            last.setAttribute('disabled', 'disabled');
+            last.classList.add('hide');
+            next.classList.add('rounded-right');
         }
         else {
             page.setAttribute('disabled', 'disabled');
             page.classList.add('nodropdown');
+            last.setAttribute('disabled', 'disabled');
         }
         
         if ((total > offsetLast && offsetLast > 0 ) || (total === -1 && returned >= app.current.limit)) {
@@ -448,17 +485,24 @@ function setPagination(total, returned) {
                 event.preventDefault();
                 gotoPage('prev');
             }, false);
+            first.removeAttribute('disabled');
+            first.addEventListener('click', function() {
+                event.preventDefault();
+                gotoPage(0);
+            }, false);
         }
         else {
             prev.setAttribute('disabled', 'disabled');
+            first.setAttribute('disabled', 'disabled');
         }
     }
     
-    if (total !== 0) {
-        document.getElementById(cat + 'ButtonsBottom').classList.remove('hide');
+    //hide bottom pagination bar if returned < limit
+    if (returned < app.current.limit) {
+        document.getElementById(cat + 'ButtonsBottom').classList.add('hide');
     }
     else {
-        document.getElementById(cat + 'ButtonsBottom').classList.add('hide');
+        document.getElementById(cat + 'ButtonsBottom').classList.remove('hide');
     }
 }
 
