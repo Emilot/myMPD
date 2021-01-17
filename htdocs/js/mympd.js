@@ -121,6 +121,7 @@ app.apps = {
         "tabs":  { 
             "Filesystem": {
                 "page": 0, 
+            "Filesystem": {
                 "offset": 0,
                 "limit": 100,
                 "filter": "-",
@@ -167,7 +168,7 @@ app.apps = {
                         "search": "",
                         "scrollPos": 0
                     },
-                    "Detail": { 
+                    "Detail": {
                         "page": 0,
                         "offset": 0,
                         "limit": 100,
@@ -181,7 +182,7 @@ app.apps = {
             }
         }
     },
-    "Search": { 
+    "Search": {
         "page": 0,
         "offset": 0,
         "limit": 100,
@@ -287,15 +288,23 @@ function appPrepare(scrollPos) {
         //show active card
         setGridPlayback();
         document.getElementById('card' + app.current.app).classList.remove('hide');
-        if (document.getElementById('nav' + app.current.app)) {
-            document.getElementById('nav' + app.current.app).classList.add('active');
-        }
         if (app.current.tab !== undefined) {
             if (app.current.app === 'Playback') {
                 document.getElementById('cardBrowseDatabase').classList.remove('hide');
             }
             else {
                 document.getElementById('card' + app.current.app + app.current.tab).classList.remove('hide');
+            }
+        }
+        //show active navbar icon
+        let nav = document.getElementById('nav' + app.current.app + app.current.tab);
+        if (nav) {
+            nav.classList.add('active');
+        }
+        else {
+            nav = document.getElementById('nav' + app.current.app);
+            if (nav) {
+                document.getElementById('nav' + app.current.app).classList.add('active');
             }
         }
     }
@@ -468,9 +477,10 @@ function appRoute() {
     if (app.current.app === 'Home') {
         sendAPI("MYMPD_API_HOME_LIST", {}, parseHome);
     }
+	
     // else if (app.current.app === 'Playback') {
     //     sendAPI("MPD_API_PLAYER_CURRENT_SONG", {}, songChange);
-    // }    
+    // }
     else if (app.current.app === 'Queue' && app.current.tab === 'Current' ) {
         selectTag('searchqueuetags', 'searchqueuetagsdesc', app.current.filter);
         getQueue();
@@ -526,6 +536,7 @@ function appRoute() {
         if (searchFilesystemStrEl.value === '' && app.current.filter !== '-') {
             searchFilesystemStrEl.value = app.current.filter;
         }
+        searchFilesystemStrEl.value = app.current.filter === '-' ? '' :  app.current.filter;
     }
     else if ((app.current.app === 'Browse' || app.current.app === 'Playback') && app.current.tab === 'Database' && app.current.view === 'List') {
         if (app.current.app === 'Playback') {
@@ -1276,8 +1287,52 @@ function appInit() {
             if (event.target.nodeName === 'BUTTON') {
                 gotoPage(event.target.getAttribute('data-page'));
             }
-        }, false);
-    }
+        }
+        else if (event.target.classList.contains('card-footer')){
+            let sels = document.getElementById('HomeCards').getElementsByClassName('selected');
+            for (let i = 0; i < sels.length; i++) {
+                sels[i].classList.remove('selected');
+            }
+            event.target.parentNode.classList.add('selected');
+            showMenu(event.target, event);
+            event.stopPropagation();
+        }
+    }, false);
+    
+    document.getElementById('HomeCards').addEventListener('keydown', function(event) {
+        navigateGrid(event.target, event.key);
+    }, false);
+    
+    dragAndDropHome();
+    
+    document.getElementById('selectHomeIconCmd').addEventListener('change', function() {
+        showHomeIconCmdOptions();
+    }, false);
+
+    document.getElementById('inputHomeIconLigature').addEventListener('change', function(event) {
+        document.getElementById('homeIconPreview').innerText = event.target.value;
+        if (event.target.value !== '') {
+            document.getElementById('selectHomeIconImage').value = '';
+            document.getElementById('homeIconPreview').style.backgroundImage = '';
+        }
+    }, false);
+    
+    document.getElementById('inputHomeIconBgcolor').addEventListener('change', function(event) {
+        document.getElementById('homeIconPreview').style.backgroundColor = event.target.value;
+    }, false);
+    
+    document.getElementById('selectHomeIconImage').addEventListener('change', function(event) {
+        const value = getSelectValue(event.target);
+        document.getElementById('homeIconPreview').style.backgroundImage = 'url("' + subdir + '/browse/pics/' + value  + '")';
+        if (value !== '') {
+            document.getElementById('divHomeIconLigature').classList.add('hide');
+            document.getElementById('homeIconPreview').innerHTML = '';
+        }
+        else {
+            document.getElementById('divHomeIconLigature').classList.remove('hide');
+            document.getElementById('homeIconPreview').innerText = document.getElementById('inputHomeIconLigature').value;
+        }
+    }, false);
 
     document.getElementById('cardPlaybackTags').addEventListener('click', function(event) {
         if (event.target.nodeName === 'P') {
@@ -1454,7 +1509,7 @@ function appInit() {
             showMenu(event.target, event);
         }
     }, false);
-
+	
     document.getElementById('QueueMiniList').addEventListener('click', function (event) {
         if (event.target.nodeName === 'TD') {
             sendAPI("MPD_API_PLAYER_PLAY_TRACK", { "track": event.target.parentNode.getAttribute('data-trackid') });

@@ -501,7 +501,7 @@
             </div>
             <div class="btn-group mr-2 featHome">
               <button data-title-phrase="Add to homescreen" data-href='{"cmd": "addViewToHome", "options": []}'  type="button" class="btn btn-secondary"><span class="material-icons">add_to_home_screen</span></button>              
-            </div>
+			</div>
              <div id="BrowseDatabasePaginationTop" class="btn-group hide mr-2">
               <button data-title-phrase="Previous page" data-href='{"cmd": "gotoPage", "options": ["prev"]}' type="button" class="btn btn-group-prepend btn-secondary">&laquo;</button>
                 <div class="btn-group">
@@ -547,6 +547,15 @@
               </div>            
               <button data-title-phrase="Next page" data-href='{"cmd": "gotoPage", "options": ["next"]}' type="button" class="btn btn-secondary btn-group-append">&raquo;</button>
             </div>
+            <div id="BrowseDatabasePaginationTop" class="btn-group mr-2 pagination hide">
+            </div>
+          </div>
+          <ol class="featAdvsearch breadcrumb hide" id="searchDatabaseCrumb"></ol>
+          <div class="container BrowseDatabaseCardsContainer">
+            <div id="BrowseDatabaseCards" class="row">
+            </div>
+          </div>
+          <div class="btn-toolbar hide justify-content-between" id="BrowseDatabaseButtonsBottom">
           </div>
         </div>
         <div id="viewDetailDatabase">
@@ -569,6 +578,7 @@
               <button data-title-phrase="Add to homescreen" data-href='{"cmd": "addViewToHome", "options": []}'  type="button" class="btn btn-secondary"><span class="material-icons">add_to_home_screen</span></button>              
             </div>
           </div>
+
           <!-- wip tds only -->
         <div id="viewDetailDatabaseBox" class="scrollable">
           <div id="viewDetailDatabaseCover" class="featCoverimage album-cover-small album-cover-loading clickable carousel" data-href='{"cmd": "zoomPicture", "options": []}'></div>
@@ -590,6 +600,7 @@
             </tfoot>
           </table>
         </div>
+          </table>          
         </div>
       </div>
 
