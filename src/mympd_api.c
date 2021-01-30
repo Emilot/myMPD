@@ -545,6 +545,9 @@ static void mympd_api(t_config *config, t_mympd_state *mympd_state, t_work_reque
                 response->data = jsonrpc_respond_ok(response->data, request->method, request->id);
             }
             break;
+        case MYMPD_API_NS_SERVER_LIST:
+            response->data = collybia_ns_server_list(response->data, request->method, request->id);
+            break;
         case MYMPD_API_UPDATE_CHECK:
             response->data = collybia_update_check(response->data, request->method, request->id);
             break;

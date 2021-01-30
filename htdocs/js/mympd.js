@@ -259,6 +259,7 @@ var dropdownLocalPlayer = new BSN.Dropdown(document.getElementById('localPlaybac
 var dropdownPlay = new BSN.Dropdown(document.getElementById('btnPlayDropdown'));
 var dropdownDatabaseSort = new BSN.Dropdown(document.getElementById('btnDatabaseSortDropdown'));
 var dropdownNeighbors = new BSN.Dropdown(document.getElementById('btnDropdownNeighbors'));
+var dropdownServers = new BSN.Dropdown(document.getElementById('btnDropdownServers'));
 
 var collapseDBupdate = new BSN.Collapse(document.getElementById('navDBupdate'));
 var collapseSettings = new BSN.Collapse(document.getElementById('navSettings'));
@@ -1074,6 +1075,17 @@ function appInit() {
             saveIdeonSettings();
             event.stopPropagation();
             event.preventDefault();
+        }
+    });
+
+    document.getElementById('btnDropdownServers').parentNode.addEventListener('show.bs.dropdown', function () {
+        sendAPI("MYMPD_API_NS_SERVER_LIST", {}, parseServers, true);
+    });
+
+    document.getElementById('dropdownServers').children[0].addEventListener('click', function (event) {
+        event.preventDefault();
+        if (event.target.nodeName === 'A') {
+            document.getElementById('inputNsServer').value = event.target.getAttribute('data-value');
         }
     });
 
