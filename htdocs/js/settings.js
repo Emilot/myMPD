@@ -1,9 +1,7 @@
 "use strict";
-/*
- SPDX-License-Identifier: GPL-2.0-or-later
- myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
- https://github.com/jcorporation/mympd
-*/
+// SPDX-License-Identifier: GPL-2.0-or-later
+// myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
+// https://github.com/jcorporation/mympd
 
 var advancedSettingsDefault = {
     "clickSong": { 
@@ -496,6 +494,9 @@ function parseSettings() {
     else {
         document.getElementById('syscmds').innerHTML = '';
     }
+    //reinit mainmenu -> change of syscmd list
+    dropdownMainMenu.dispose();
+    dropdownMainMenu = new BSN.Dropdown(document.getElementById('mainMenu'));
 
     if (settings.featScripting === true) {
         getScriptList(true);
