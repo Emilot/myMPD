@@ -1,9 +1,7 @@
 "use strict";
-/*
- SPDX-License-Identifier: GPL-2.0-or-later
- myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
- https://github.com/jcorporation/mympd
-*/
+// SPDX-License-Identifier: GPL-2.0-or-later
+// myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
+// https://github.com/jcorporation/mympd
 
 //warning dialog
 function showReally(action, text) {
@@ -203,13 +201,15 @@ function fileformat(audioformat) {
 }
 
 function scrollToPosY(pos) {
-    document.body.scrollTop = pos; // For Safari
-    document.documentElement.scrollTop = pos; // For Chrome, Firefox, IE and Opera
+    // For Safari
+    document.body.scrollTop = pos;
+    // For Chrome, Firefox, IE and Opera
+    document.documentElement.scrollTop = pos;
 }
 
 function selectTag(btnsEl, desc, setTo) {
     let btns = document.getElementById(btnsEl);
-    let aBtn = btns.querySelector('.active')
+    let aBtn = btns.querySelector('.active');
     if (aBtn) {
         aBtn.classList.remove('active');
     }
@@ -233,6 +233,9 @@ function addTagList(el, list) {
             tagList += '<button type="button" class="btn btn-secondary btn-sm btn-block" data-tag="any">' + t('Any Tag') + '</button>';
         }
         tagList += '<button type="button" class="btn btn-secondary btn-sm btn-block" data-tag="filename">' + t('Filename') + '</button>';
+    }
+    if (el === 'searchDatabaseTags') {
+        tagList += '<button type="button" class="btn btn-secondary btn-sm btn-block" data-tag="any">' + t('Any Tag') + '</button>';
     }
     for (let i = 0; i < settings[list].length; i++) {
         tagList += '<button type="button" class="btn btn-secondary btn-sm btn-block" data-tag="' + settings[list][i] + '">' + t(settings[list][i]) + '</button>';

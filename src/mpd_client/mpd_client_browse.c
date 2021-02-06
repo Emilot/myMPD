@@ -40,7 +40,7 @@
 #include "mpd_client_browse.h"
 
 //private definitions
-static bool _search_song(struct mpd_song *song, struct list *expr_list);
+static bool _search_song(struct mpd_song *song, struct list *expr_list, t_tags *browse_tag_types);
 static pcre *_compile_regex(const char *regex_str);
 static bool _cmp_regex(pcre *re_compiled, const char *value);
 
@@ -439,13 +439,17 @@ sds mpd_client_put_firstsong_in_albums(t_mpd_client_state *mpd_client_state, sds
         for (; i < sdslen(tokens[j]) - 1; i++, p++) {
             value = sdscatprintf(value, "%.*s", 1, p);
         }
+        int tag_type = mpd_tag_name_parse(tag);
+        if (tag_type == -1 && strcmp(tag, "any") == 0) {
+            tag_type = -2;
+        }
         if (strcmp(op, "=~") == 0 || strcmp(op, "!~") == 0) {
             //is regex, compile
             pcre *re_compiled = _compile_regex(value);
-            list_push(&expr_list, value, mpd_tag_name_parse(tag), op , re_compiled);
+            list_push(&expr_list, value, tag_type, op , re_compiled);
         }
         else {
-            list_push(&expr_list, value, mpd_tag_name_parse(tag), op , NULL);
+            list_push(&expr_list, value, tag_type, op , NULL);
         }
         LOG_DEBUG("Parsed expression tag: \"%s\", op: \"%s\", value:\"%s\"", tag, op, value);
         sdsfree(tag);
@@ -463,7 +467,7 @@ sds mpd_client_put_firstsong_in_albums(t_mpd_client_state *mpd_client_state, sds
     sds key = sdsempty();
     while (raxNext(&iter)) {
         song = (struct mpd_song *)iter.data;
-        if (_search_song(song, &expr_list) == true) {
+        if (_search_song(song, &expr_list, &mpd_client_state->browse_tag_types) == true) {
             if (sort_by_last_modified == true) {
                 key = sdscatlen(key, iter.key, iter.key_len);
                 list_insert_sorted_by_value_i(&album_list, key, mpd_song_get_last_modified(song), NULL, iter.data, sortdesc);
@@ -474,8 +478,14 @@ sds mpd_client_put_firstsong_in_albums(t_mpd_client_state *mpd_client_state, sds
                 if (sort_value != NULL) {
                     list_insert_sorted_by_key(&album_list, sort_value, 0, NULL, iter.data, sortdesc);
                 }
+                else if (sort_tag == MPD_TAG_ALBUM_ARTIST) {
+                    //fallback to artist tag if albumartist tag is not set
+                    sort_value = mpd_song_get_tag(song, MPD_TAG_ARTIST, 0);
+                    list_insert_sorted_by_key(&album_list, sort_value, 0, NULL, iter.data, sortdesc);
+                }
                 else {
-                    LOG_WARN("Skip entry: %.*s", iter.key_len, iter.key); 
+                    //sort tag not present, append to end of the list
+                    list_push(&album_list, "zzzzzzzzzz", 0, NULL, iter.data);
                 }
             }
         }
@@ -611,32 +621,53 @@ sds mpd_client_put_db_tag2(t_config *config, t_mpd_client_state *mpd_client_stat
 }
 
 //private functions
-static bool _search_song(struct mpd_song *song, struct list *expr_list) {
+static bool _search_song(struct mpd_song *song, struct list *expr_list, t_tags *browse_tag_types) {
     struct list_node *current = expr_list->head;
     sds value = sdsempty();
+    (void) browse_tag_types;
     while (current != NULL) {
-        value = mpd_shared_get_tags(song, current->value_i, value);
-        if (strcmp(current->value_p, "contains") == 0 && strcasestr(value, current->key) == NULL) {
-            sdsfree(value);
-            return false;
+        struct t_tags *tags;
+        if (current->value_i == -2) {
+            //any - use all browse tags
+            tags = browse_tag_types;
         }
-        if (strcmp(current->value_p, "starts_with") == 0 && strncasecmp(current->key, value, strlen(current->key)) != 0) {
-            sdsfree(value);
-            return false;
+        else {
+            //use selected tag only
+            tags = malloc(sizeof(struct t_tags));
+            tags->tags[0] = current->value_i;
+            tags->len = 1;
         }
-        if (strcmp(current->value_p, "==") == 0 && strcasecmp(value, current->key) != 0) {
-            sdsfree(value);
-            return false;
+        bool rc;
+        for (unsigned i = 0; i < tags->len; i++) {
+            rc = true;
+            value = mpd_shared_get_tags(song, tags->tags[i], value);
+            if (strcmp(current->value_p, "contains") == 0 && strcasestr(value, current->key) == NULL) {
+                rc = false;
+            }
+            else if (strcmp(current->value_p, "starts_with") == 0 && strncasecmp(current->key, value, strlen(current->key)) != 0) {
+                rc = false;
+            }
+            else if (strcmp(current->value_p, "==") == 0 && strcasecmp(value, current->key) != 0) {
+                rc = false;
+            }
+            else if (strcmp(current->value_p, "!=") == 0 && strcasecmp(value, current->key) == 0) {
+                rc = false;
+            }
+            else if (strcmp(current->value_p, "=~") == 0 && _cmp_regex((pcre *)current->user_data, value) == false) {
+                rc = false;
+            }
+            else if (strcmp(current->value_p, "!~") == 0 && _cmp_regex((pcre *)current->user_data, value) == true) {
+                rc = false;
+            }
+            else {
+                //tag value matched
+                break;
+            }
         }
-        if (strcmp(current->value_p, "!=") == 0 && strcasecmp(value, current->key) == 0) {
-            sdsfree(value);
-            return false;
+        if (current->value_i > -2) {
+            free(tags);
         }
-        if (strcmp(current->value_p, "=~") == 0 && _cmp_regex((pcre *)current->user_data, value) == false) {
-            sdsfree(value);
-            return false;
-        }
-        if (strcmp(current->value_p, "!~") == 0 && _cmp_regex((pcre *)current->user_data, value) == true) {
+        if (rc == false) {
             sdsfree(value);
             return false;
         }

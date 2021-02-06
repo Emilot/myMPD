@@ -4,15 +4,17 @@
 # (c) 2018-2021 Juergen Mang <mail@jcgames.de>
 
 Name:           mympd
-Version:        6.11.1
+Version:        6.11.2
 Release:        0 
 License:        GPL-2.0-or-later
 Group:          Productivity/Multimedia/Sound/Players
-Summary:        A standalone and mobile friendly web-based MPD client.
+Summary:        A standalone and mobile friendly web-based MPD client
 Url:            https://jcorporation.github.io/myMPD/
+Packager:       Juergen Mang <mail@jcgames.de>
 Source:         mympd-%{version}.tar.gz
 BuildRequires:  gcc
 BuildRequires:  cmake
+BuildRequires:  perl
 BuildRequires:  unzip
 BuildRequires:  pkgconfig
 BuildRequires:  openssl-devel
@@ -59,13 +61,17 @@ fi
 
 %files 
 %defattr(-,root,root,-)
-%doc README.md LICENSE
+%doc README.md
 /usr/bin/mympd
 /usr/bin/mympd-config
 /usr/bin/mympd-script
 /usr/lib/systemd/system/mympd.service
+%{_mandir}/man1/mympd.1.gz
+%{_mandir}/man1/mympd-config.1.gz
+%{_mandir}/man1/mympd-script.1.gz
+%license LICENSE
 %config(noreplace) /etc/mympd.conf
 
 %changelog
-* Sat Jan 30 2021 Juergen Mang <mail@jcgames.de> 6.11.1-0
+* Fri Feb 05 2021 Juergen Mang <mail@jcgames.de> 6.11.2-0
 - Version from master
