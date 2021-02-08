@@ -177,6 +177,10 @@ function updateDBstats() {
     sendAPI("MPD_API_DATABASE_STATS", {}, parseDBstats);
 }
 
+function parseDBstats(obj) {
+    // document.getElementById('panel-heading-browse').innerHTML = 'Library total: Tracks ' + obj.result.songs + ' &bull; Time ' + beautifyDuration(obj.result.dbPlaytime);
+}
+
 //eslint-disable-next-line no-unused-vars
 function zoomPicture(el) {
     if (el.classList.contains('booklet')) {

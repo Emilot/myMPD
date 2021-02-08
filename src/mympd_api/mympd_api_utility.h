@@ -115,6 +115,8 @@ typedef struct t_mympd_state {
     sds tidal_password;
     sds tidal_audioquality;
     sds samba_version;
+    bool wifi;
+    sds wifi_password;
 } t_mympd_state;
 
 void free_mympd_state(t_mympd_state *mympd_state);

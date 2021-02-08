@@ -173,7 +173,7 @@ static int ns_set(int type, const char *server, const char *share, const char *v
 }
 
 int collybia_settings_set(t_mympd_state *mympd_state, bool mpd_conf_changed,
-                       bool ns_changed, bool apmode_changed, bool airplay_changed, bool roon_changed, bool spotify_changed, bool dac_changed, bool ffmpeg_changed)
+                       bool ns_changed, bool apmode_changed, bool airplay_changed, bool roon_changed, bool spotify_changed, bool dac_changed, bool ffmpeg_changed, bool wifi_changed)
 {
     // TODO: error checking, revert to old values on fail
     bool rc = true;
@@ -229,6 +229,40 @@ int collybia_settings_set(t_mympd_state *mympd_state, bool mpd_conf_changed,
         }
         sdsfree(conf);
         sdsfree(cmdline);
+    }
+
+    if (wifi_changed == true)
+    {
+     if (mympd_state->wifi == true)
+     {
+        const char *wifi = mympd_state->wifi == true ? "yes" : "no";
+        sds conf = sdsnew("/boot/config.txt");
+        sds cmdline = sdscatfmt(sdsempty(), "sed -i 's/^dtoverlay=pi3-disable-wifi.*/#dtoverlay=pi3-disable-wifi %S /' %S",
+                            wifi, conf);
+        rc = syscmd(cmdline);
+        if (rc == true && dc == 0)
+        {
+            dc = 3;
+        }
+        syscmd("reboot");
+
+        sdsfree(conf);
+        sdsfree(cmdline);
+     }
+     else
+     {
+        const char *wifi = mympd_state->wifi == true ? "yes" : "no";
+        sds conf = sdsnew("/boot/config.txt");
+        sds cmdline = sdscatfmt(sdsempty(), "sed -i 's/^#dtoverlay=pi3-disable-wifi.*/dtoverlay=pi3-disable-wifi %S /' %S",
+                            wifi, conf);
+        rc = syscmd(cmdline);
+        if (rc == true && dc == 0)
+        {
+            dc = 3;
+        }
+        sdsfree(conf);
+        sdsfree(cmdline);
+     }
     }
 
     if (apmode_changed == true)
@@ -292,7 +326,7 @@ int collybia_settings_set(t_mympd_state *mympd_state, bool mpd_conf_changed,
 
 sds collybia_ns_server_list(sds buffer, sds method, int request_id)
 {
-    FILE *fp = popen("/usr/bin/nmblookup -S \'*\' | grep \"<00>\" | awk \'{print $1}\'", "r");
+    FILE *fp = popen("/usr/bin/nmblookup -S '*' | grep \"<00>\" | awk '{print $1}'", "r");
     // returns three lines per server found - 1st line ip address 2nd line name 3rd line workgroup
     if (fp == NULL)
     {
@@ -437,5 +471,48 @@ sds collybia_update_install(sds buffer, sds method, int request_id)
     buffer = sdscat(buffer, ",");
     buffer = tojson_bool(buffer, "service", service, false);
     buffer = jsonrpc_end_result(buffer);
+    return buffer;
+}
+
+sds collybia_wifi_server_list(sds buffer, sds method, int request_id)
+{
+    sds command = sdscatfmt(sdsempty(), "/usr/bin/iw dev wlan0 scan | grep \"SSID\" | awk '{print $2}'");
+    FILE *fp = popen(command, "r");
+    if (fp == NULL)
+    {
+        LOG_ERROR("Failed to get server list");
+        buffer = jsonrpc_respond_message(buffer, method, request_id, "Failed to get wifi net list", true);
+    }
+    else
+    {
+        buffer = jsonrpc_start_result(buffer, method, request_id);
+        buffer = sdscat(buffer, ",\"data\":[");
+        unsigned entity_count = 0;
+        char *line = NULL;
+        size_t n = 0;
+        sds wifi_net = sdsempty();
+        while (getline(&line, &n, fp) > 0)
+        {
+            wifi_net = sdsreplace(wifi_net, line);
+            if (entity_count++)
+            {
+                buffer = sdscat(buffer, ",");
+            }
+            buffer = sdscat(buffer, "{");
+            buffer = tojson_char(buffer, "wifiSSID", wifi_net, false);
+            buffer = sdscat(buffer, "}");
+        }
+        buffer = sdscat(buffer, "],");
+        buffer = tojson_long(buffer, "totalEntities", entity_count, true);
+        buffer = tojson_long(buffer, "returnedEntities", entity_count, false);
+        buffer = jsonrpc_end_result(buffer);
+        if (line != NULL)
+        {
+            free(line);
+        }
+        fclose(fp);
+        sdsfree(wifi_net);
+    }
+    sdsfree(command);
     return buffer;
 }

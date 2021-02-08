@@ -260,6 +260,7 @@ var dropdownPlay = new BSN.Dropdown(document.getElementById('btnPlayDropdown'));
 var dropdownDatabaseSort = new BSN.Dropdown(document.getElementById('btnDatabaseSortDropdown'));
 var dropdownNeighbors = new BSN.Dropdown(document.getElementById('btnDropdownNeighbors'));
 var dropdownServers = new BSN.Dropdown(document.getElementById('btnDropdownServers'));
+var dropdownServers = new BSN.Dropdown(document.getElementById('btnDropdownWifi'));
 
 var collapseDBupdate = new BSN.Collapse(document.getElementById('navDBupdate'));
 var collapseSettings = new BSN.Collapse(document.getElementById('navSettings'));
@@ -1086,6 +1087,17 @@ function appInit() {
         event.preventDefault();
         if (event.target.nodeName === 'A') {
             document.getElementById('inputNsServer').value = event.target.getAttribute('data-value');
+        }
+    });
+
+    document.getElementById('btnDropdownWifi').parentNode.addEventListener('show.bs.dropdown', function () {
+        sendAPI("MYMPD_API_WIFI_SERVER_LIST", {}, parseWifi, true);
+    });
+
+    document.getElementById('dropdownWifi').children[0].addEventListener('click', function (event) {
+        event.preventDefault();
+        if (event.target.nodeName === 'A') {
+            document.getElementById('inputWifiSSID').value = event.target.getAttribute('data-value');
         }
     });
 

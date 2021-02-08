@@ -157,7 +157,7 @@ bool mympd_api_cols_save(t_config *config, t_mympd_state *mympd_state, const cha
 
 bool mympd_api_settings_set(t_config *config, t_mympd_state *mympd_state, struct json_token *key,
                             struct json_token *val, bool *mpd_conf_changed, bool *ns_changed,
-                            bool *apmode_changed, bool *airplay_changed, bool *roon_changed, bool *spotify_changed, bool *dac_changed, bool *ffmpeg_changed) {
+                            bool *apmode_changed, bool *airplay_changed, bool *roon_changed, bool *spotify_changed, bool *dac_changed, bool *ffmpeg_changed, bool *wifi_changed) {
     sds settingname = sdsempty();
     sds settingvalue = sdscatlen(sdsempty(), val->ptr, val->len);
     char *crap;
@@ -489,6 +489,19 @@ bool mympd_api_settings_set(t_config *config, t_mympd_state *mympd_state, struct
         mympd_state->lyrics = val->type == JSON_TYPE_TRUE ? true : false;
         settingname = sdscat(settingname, "lyrics");
     }
+    else if (strncmp(key->ptr, "wifi", key->len) == 0) {
+        if ((mympd_state->wifi == true && val->type == JSON_TYPE_FALSE) ||
+            (mympd_state->wifi == false && val->type == JSON_TYPE_TRUE))
+            *wifi_changed = true;
+        mympd_state->wifi = val->type == JSON_TYPE_TRUE ? true : false;
+        settingname = sdscat(settingname, "wifi");
+    }
+    else if (strncmp(key->ptr, "wifiPassword", key->len) == 0) {
+        if (sdscmp(mympd_state->wifi_password, settingvalue) != 0)
+            *wifi_changed = true;
+        mympd_state->wifi_password = sdsreplacelen(mympd_state->wifi_password, settingvalue, sdslen(settingvalue));
+        settingname = sdscat(settingname, "wifi_password");
+    }
     else {
         sdsfree(settingname);
         sdsfree(settingvalue);
@@ -579,6 +592,8 @@ void mympd_api_read_statefiles(t_config *config, t_mympd_state *mympd_state) {
     mympd_state->tidal_username = state_file_rw_string(config, "tidal_username", config->tidal_username, false);
     mympd_state->tidal_password = state_file_rw_string(config, "tidal_password", config->tidal_password, false);
     mympd_state->tidal_audioquality = state_file_rw_string(config, "tidal_audioquality", config->tidal_audioquality, false);
+    mympd_state->wifi = state_file_rw_bool(config, "wifi", config->wifi, false);
+    mympd_state->wifi_password = state_file_rw_string(config, "wifi_password", config->wifi_password, false);
     if (config->readonly == true) {
         mympd_state->bookmarks = false;
         mympd_state->smartpls = false;
@@ -667,6 +682,8 @@ sds mympd_api_settings_put(t_config *config, t_mympd_state *mympd_state, sds buf
     buffer = tojson_char(buffer, "tidalUsername", mympd_state->tidal_username, true);
     buffer = tojson_char(buffer, "tidalPassword", mympd_state->tidal_password, true);
     buffer = tojson_char(buffer, "tidalAudioquality", mympd_state->tidal_audioquality, true);
+    buffer = tojson_bool(buffer, "wifi", mympd_state->wifi, true);
+    buffer = tojson_char(buffer, "wifiPassword", mympd_state->wifi_password, true);
     buffer = sdscatfmt(buffer, "\"colsQueueCurrent\":%s,", mympd_state->cols_queue_current);
     buffer = sdscatfmt(buffer, "\"colsSearch\":%s,", mympd_state->cols_search);
     buffer = sdscatfmt(buffer, "\"colsBrowseDatabaseDetail\":%s,", mympd_state->cols_browse_database);

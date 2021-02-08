@@ -732,6 +732,40 @@ function searchAlbumgrid(x) {
         '0', app.current.limit, app.current.filter, app.current.sort, app.current.tag, expression);
 }
 
+function parseServers(obj) {
+    let list = '';
+    if (obj.error) {
+        list = '<div class="list-group-item"><span class="material-icons">error_outline</span> ' + t(obj.error.message) + '</div>';
+    }
+    else {
+        for (let i = 0; i < obj.result.returnedEntities; i++) {
+            list += '<a href="#" class="list-group-item list-group-item-action" data-value="' + obj.result.data[i].ipAddress + '">' +
+                obj.result.data[i].ipAddress + '<br/><small>' + obj.result.data[i].name + '</small></a>';
+        }
+        if (obj.result.returnedEntities === 0) {
+            list = '<div class="list-group-item"><span class="material-icons">error_outline</span>&nbsp;' + t('Empty list') + '</div>';
+        }
+    }
+    document.getElementById('dropdownServers').children[0].innerHTML = list;
+}
+
+function parseWifi(obj) {
+    let list = '';
+    if (obj.error) {
+        list = '<div class="list-group-item"><span class="material-icons">error_outline</span> ' + t(obj.error.message) + '</div>';
+    }
+    else {
+        for (let i = 0; i < obj.result.returnedEntities; i++) {
+            list += '<a href="#" class="list-group-item list-group-item-action" data-value="' + obj.result.data[i].wifiSSID + '">' +
+                obj.result.data[i].wifiSSID + '<br/></a>';
+        }
+        if (obj.result.returnedEntities === 0) {
+            list = '<div class="list-group-item"><span class="material-icons">error_outline</span>&nbsp;' + t('Empty list') + '</div>';
+        }
+    }
+    document.getElementById('dropdownWifi').children[0].innerHTML = list;
+}
+
 function checkForUpdates() {
     sendAPI("MYMPD_API_UPDATE_CHECK", {}, parseCheck);
 
@@ -826,6 +860,8 @@ function parseCollybiaSettings() {
     toggleBtnChk('btnAirplay', settings.airplay);
     toggleBtnChk('btnRoon', settings.roon);
     toggleBtnChk('btnSpotify', settings.spotify);
+    toggleBtnChk('btnWifiEnabled', settings.wifi);
+    document.getElementById('inputWifiPassword').value = settings.wifiPassword;
     toggleBtnChkCollapse('btnTidalEnabled', 'collapseTidal', settings.tidalEnabled);
     document.getElementById('inputTidalUsername').value = settings.tidalUsername;
     document.getElementById('inputTidalPassword').value = settings.tidalPassword;
@@ -843,12 +879,7 @@ function saveCollybiaSettings() {
     let inputNsPassword = document.getElementById('inputNsPassword');
 
     if (selectNsTypeValue !== '0') {
-        /* if (inputNsServer.value.indexOf('/') !== 0) {
-            if (!validateHost(inputNsServer)) {
-                formOK = false;
-            }
-        } */
-        if (!validateIPAddress(inputNsServer)) {
+        if (!validateNotBlank(inputNsServer)) {
             formOK = false;
         }
         if (!validatePath(inputNsShare)) {
@@ -865,6 +896,13 @@ function saveCollybiaSettings() {
     let inputTidalPassword = document.getElementById('inputTidalPassword');
     if (document.getElementById('btnTidalEnabled').classList.contains('active')) {
         if (!validateNotBlank(inputTidalUsername) || !validateNotBlank(inputTidalPassword)) {
+            formOK = false;
+        }
+    }
+
+    let inputWifiPassword = document.getElementById('inputWifiPassword');
+    if (document.getElementById('btnWifiEnabled').classList.contains('active')) {
+        if (!validateNotBlank(inputWifiPassword)) {
             formOK = false;
         }
     }
@@ -889,6 +927,8 @@ function saveCollybiaSettings() {
             "airplay": (document.getElementById('btnAirplay').classList.contains('active') ? true : false),
             "roon": (document.getElementById('btnRoon').classList.contains('active') ? true : false),
             "spotify": (document.getElementById('btnSpotify').classList.contains('active') ? true : false),
+            "wifi": (document.getElementById('btnWifiEnabled').classList.contains('active') ? true : false),
+            "wifiPassword": inputWifiPassword.value,
             "tidalEnabled": (document.getElementById('btnTidalEnabled').classList.contains('active') ? true : false),
             "tidalUsername": inputTidalUsername.value,
             "tidalPassword": inputTidalPassword.value,
@@ -1782,6 +1822,10 @@ function updateDBstats() {
     sendAPI("MPD_API_DATABASE_STATS", {}, parseDBstats);
 }
 
+function parseDBstats(obj) {
+    // document.getElementById('panel-heading-browse').innerHTML = 'Library total: Tracks ' + obj.result.songs + ' &bull; Time ' + beautifyDuration(obj.result.dbPlaytime);
+}
+
 //eslint-disable-next-line no-unused-vars
 function zoomPicture(el) {
     if (el.classList.contains('booklet')) {
@@ -2263,6 +2307,8 @@ var dropdownLocalPlayer = new BSN.Dropdown(document.getElementById('localPlaybac
 var dropdownPlay = new BSN.Dropdown(document.getElementById('btnPlayDropdown'));
 var dropdownDatabaseSort = new BSN.Dropdown(document.getElementById('btnDatabaseSortDropdown'));
 var dropdownNeighbors = new BSN.Dropdown(document.getElementById('btnDropdownNeighbors'));
+var dropdownServers = new BSN.Dropdown(document.getElementById('btnDropdownServers'));
+var dropdownServers = new BSN.Dropdown(document.getElementById('btnDropdownWifi'));
 
 var collapseDBupdate = new BSN.Collapse(document.getElementById('navDBupdate'));
 var collapseSettings = new BSN.Collapse(document.getElementById('navSettings'));
@@ -3078,6 +3124,28 @@ function appInit() {
             saveIdeonSettings();
             event.stopPropagation();
             event.preventDefault();
+        }
+    });
+
+    document.getElementById('btnDropdownServers').parentNode.addEventListener('show.bs.dropdown', function () {
+        sendAPI("MYMPD_API_NS_SERVER_LIST", {}, parseServers, true);
+    });
+
+    document.getElementById('dropdownServers').children[0].addEventListener('click', function (event) {
+        event.preventDefault();
+        if (event.target.nodeName === 'A') {
+            document.getElementById('inputNsServer').value = event.target.getAttribute('data-value');
+        }
+    });
+
+    document.getElementById('btnDropdownWifi').parentNode.addEventListener('show.bs.dropdown', function () {
+        sendAPI("MYMPD_API_WIFI_SERVER_LIST", {}, parseWifi, true);
+    });
+
+    document.getElementById('dropdownWifi').children[0].addEventListener('click', function (event) {
+        event.preventDefault();
+        if (event.target.nodeName === 'A') {
+            document.getElementById('inputWifiSSID').value = event.target.getAttribute('data-value');
         }
     });
 
@@ -9645,6 +9713,17 @@ function validateStream(el) {
 
 function validateHost(el) {
     if (el.value.match(/^([\w-.]+)$/) !== null) {
+        el.classList.remove('is-invalid');
+        return true;
+    }
+    else {
+        el.classList.add('is-invalid');
+        return false;
+    }
+}
+
+function validateIPAddress(el) {
+    if (el.value.match(/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/) !== null) {
         el.classList.remove('is-invalid');
         return true;
     }

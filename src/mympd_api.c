@@ -386,15 +386,16 @@ static void mympd_api(t_config *config, t_mympd_state *mympd_state, t_work_reque
             bool roon_changed = false;
             bool spotify_changed = false;
             bool ffmpeg_changed = false;
+            bool wifi_changed = false;
             while ((h = json_next_key(request->data, sdslen(request->data), h, ".params", &key, &val)) != NULL) {
-                rc = mympd_api_settings_set(config, mympd_state, &key, &val,  &mpd_conf_changed, &ns_changed, &apmode_changed, &airplay_changed, &roon_changed, &spotify_changed, &dac_changed, &ffmpeg_changed);
+                rc = mympd_api_settings_set(config, mympd_state, &key, &val,  &mpd_conf_changed, &ns_changed, &apmode_changed, &airplay_changed, &roon_changed, &spotify_changed, &dac_changed, &ffmpeg_changed, &wifi_changed);
                 if (rc == false) {
                     break;
                 }
             }
             if (rc == true) {
                 //set collybia settings
-                int dc = collybia_settings_set(mympd_state, mpd_conf_changed, ns_changed, apmode_changed, airplay_changed, roon_changed, spotify_changed, dac_changed, ffmpeg_changed);
+                int dc = collybia_settings_set(mympd_state, mpd_conf_changed, ns_changed, apmode_changed, airplay_changed, roon_changed, spotify_changed, dac_changed, ffmpeg_changed, wifi_changed);
                 sdsrange(request->data, 0, -3);
                 request->data = sdscatfmt(request->data, ",\"dc\":%i}}", dc);
                 //forward request to mpd_client queue            
@@ -544,6 +545,10 @@ static void mympd_api(t_config *config, t_mympd_state *mympd_state, t_work_reque
                 toggle_timer(&mympd_state->timer_list, int_buf1);
                 response->data = jsonrpc_respond_ok(response->data, request->method, request->id);
             }
+            break;
+        case MYMPD_API_WIFI_SERVER_LIST:
+            ideon_test();
+            response->data = collybia_wifi_server_list(response->data, request->method, request->id);
             break;
         case MYMPD_API_NS_SERVER_LIST:
             response->data = collybia_ns_server_list(response->data, request->method, request->id);

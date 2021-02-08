@@ -395,6 +395,12 @@ static int mympd_inihandler(void *user, const char *section, const char *name, c
     else if (MATCH("tidal", "audioquality")) {
         p_config->tidal_audioquality = sdsreplace(p_config->tidal_audioquality, value);
     }
+    else if (MATCH("collybia", "wifi")) {
+        p_config->wifi = strcmp(value, "true") == 0 ? true : false;
+    }
+    else if (MATCH("collybia", "wifiPassword")) {
+        p_config->wifi_password = sdsreplace(p_config->wifi_password, value);
+    }
     else {
         LOG_WARN("Unkown config option: %s - %s", section, name);
         return 0;  
@@ -453,7 +459,7 @@ static void mympd_get_env(struct t_config *config) {
         "THEME_BGCOVER", "THEME_BGCOLOR", "THEME_BGCSSFILTER", "THEME_COVERIMAGESIZESMALL",
         "THEME_COVERIMAGE", "THEME_COVERIMAGENAME", "THEME_COVERIMAGESIZE",
         "THEME_LOCALE", "THEME_HIGHLIGHTCOLOR",	"COLLYBIA_MIXERTYPE", "COLLYBIA_DAC", "COLLYBIA_DOP", "COLLYBIA_FFMPEG", "COLLYBIA_NSTYPE", "COLLYBIA_NSSERVER", 
-	"COLLYBIA_SAMBAVERSION", "COLLYBIA_NSSHARE", "COLLYBIA_NSUSERNAME", "COLLYBIA_NSPASSWORD", 
+	"COLLYBIA_SAMBAVERSION", "COLLYBIA_NSSHARE", "COLLYBIA_NSUSERNAME", "COLLYBIA_NSPASSWORD", "COLLYBIA_WIFI", "COLLYBIA_WIFIPASSWORD",
 	"COLLYBIA_AIRPLAY", "COLLYBIA_APMODE", "COLLYBIA_ROON", "COLLYBIA_SPOTIFY", "COLLYBIA_INIT",
         "TIDAL_ENABLED", "TIDAL_USERNAME", "TIDAL_PASSWORD", "TIDAL_AUDIOQUALITY", 0};
     const char** ptr = env_vars;
@@ -640,6 +646,8 @@ void mympd_config_defaults(t_config *config) {
     config->tidal_username = sdsempty();
     config->tidal_password = sdsempty();
     config->tidal_audioquality = sdsnew("HIGH");
+    config->wifi = false;
+    config->wifi_password = sdsempty();
     list_init(&config->syscmd_list);
 }
 

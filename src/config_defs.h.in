@@ -163,6 +163,8 @@ typedef struct t_config {
     bool airplay;
     bool roon;
     bool spotify;
+    bool wifi;
+    sds wifi_password;
     bool tidal_enabled;
     sds tidal_token;
     sds tidal_username;

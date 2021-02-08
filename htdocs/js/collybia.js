@@ -17,6 +17,23 @@ function parseServers(obj) {
     document.getElementById('dropdownServers').children[0].innerHTML = list;
 }
 
+function parseWifi(obj) {
+    let list = '';
+    if (obj.error) {
+        list = '<div class="list-group-item"><span class="material-icons">error_outline</span> ' + t(obj.error.message) + '</div>';
+    }
+    else {
+        for (let i = 0; i < obj.result.returnedEntities; i++) {
+            list += '<a href="#" class="list-group-item list-group-item-action" data-value="' + obj.result.data[i].wifiSSID + '">' +
+                obj.result.data[i].wifiSSID + '<br/></a>';
+        }
+        if (obj.result.returnedEntities === 0) {
+            list = '<div class="list-group-item"><span class="material-icons">error_outline</span>&nbsp;' + t('Empty list') + '</div>';
+        }
+    }
+    document.getElementById('dropdownWifi').children[0].innerHTML = list;
+}
+
 function checkForUpdates() {
     sendAPI("MYMPD_API_UPDATE_CHECK", {}, parseCheck);
 
@@ -111,6 +128,8 @@ function parseCollybiaSettings() {
     toggleBtnChk('btnAirplay', settings.airplay);
     toggleBtnChk('btnRoon', settings.roon);
     toggleBtnChk('btnSpotify', settings.spotify);
+    toggleBtnChk('btnWifiEnabled', settings.wifi);
+    document.getElementById('inputWifiPassword').value = settings.wifiPassword;
     toggleBtnChkCollapse('btnTidalEnabled', 'collapseTidal', settings.tidalEnabled);
     document.getElementById('inputTidalUsername').value = settings.tidalUsername;
     document.getElementById('inputTidalPassword').value = settings.tidalPassword;
@@ -149,6 +168,13 @@ function saveCollybiaSettings() {
         }
     }
 
+    let inputWifiPassword = document.getElementById('inputWifiPassword');
+    if (document.getElementById('btnWifiEnabled').classList.contains('active')) {
+        if (!validateNotBlank(inputWifiPassword)) {
+            formOK = false;
+        }
+    }
+
     if (formOK === true) {
         let selectDac = document.getElementById('selectDac');
         let selectMixerType = document.getElementById('selectMixerType');
@@ -169,6 +195,8 @@ function saveCollybiaSettings() {
             "airplay": (document.getElementById('btnAirplay').classList.contains('active') ? true : false),
             "roon": (document.getElementById('btnRoon').classList.contains('active') ? true : false),
             "spotify": (document.getElementById('btnSpotify').classList.contains('active') ? true : false),
+            "wifi": (document.getElementById('btnWifiEnabled').classList.contains('active') ? true : false),
+            "wifiPassword": inputWifiPassword.value,
             "tidalEnabled": (document.getElementById('btnTidalEnabled').classList.contains('active') ? true : false),
             "tidalUsername": inputTidalUsername.value,
             "tidalPassword": inputTidalPassword.value,
