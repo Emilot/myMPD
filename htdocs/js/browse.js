@@ -19,7 +19,7 @@ function initBrowse() {
             app.current.search = '';
             document.getElementById('searchDatabaseStr').value = '';
             appGoto(app.current.app, app.current.card, undefined, 0, undefined, 'Album', 'AlbumArtist', 'Album', 
-                '(' + app.current.tag + ' == \'' + escapeMPD(getAttDec(event.target.parentNode, 'data-tag')) + '\')');
+                '((' + app.current.tag + ' == \'' + escapeMPD(getAttDec(event.target.parentNode, 'data-tag')) + '\'))');
         }
     }, false);
     
@@ -170,18 +170,21 @@ function initBrowse() {
 
     document.getElementById('searchDatabaseCrumb').addEventListener('click', function(event) {
         if (event.target.nodeName === 'SPAN') {
+            //remove search expression
             event.preventDefault();
             event.stopPropagation();
             event.target.parentNode.remove();
             searchAlbumgrid('');
         }
         else if (event.target.nodeName === 'BUTTON') {
+            //edit search expression
             event.preventDefault();
             event.stopPropagation();
             selectTag('searchDatabaseTags', 'searchDatabaseTagsDesc', getAttDec(event.target,'data-filter-tag'));
             document.getElementById('searchDatabaseStr').value = unescapeMPD(getAttDec(event.target, 'data-filter-value'));
             document.getElementById('searchDatabaseMatch').value = getAttDec(event.target, 'data-filter-op');
             event.target.remove();
+            app.current.filter = getAttDec(event.target,'data-filter-tag');
             searchAlbumgrid(document.getElementById('searchDatabaseStr').value);
             if (document.getElementById('searchDatabaseCrumb').childElementCount === 0) {
                 document.getElementById('searchDatabaseCrumb').classList.add('hide');
@@ -310,13 +313,13 @@ function gotoBrowse(event) {
             else {
                 //show filtered album list
                 document.getElementById('searchDatabaseStr').value = '';
-                appGoto('Browse', 'Database', 'List', '0', undefined, tag, tagAlbumArtist, 'Album', '(' + tag + ' == \'' + escapeMPD(name) + '\')');
+                appGoto('Browse', 'Database', 'List', '0', undefined, tag, tagAlbumArtist, 'Album', '((' + tag + ' == \'' + escapeMPD(name) + '\'))');
             }
         }
         else {
             //show filtered album list
             document.getElementById('searchDatabaseStr').value = '';
-            appGoto('Browse', 'Database', 'List', '0', undefined, tag, tagAlbumArtist, 'Album', '(' + tag + ' == \'' + escapeMPD(name) + '\')');
+            appGoto('Browse', 'Database', 'List', '0', undefined, tag, tagAlbumArtist, 'Album', '((' + tag + ' == \'' + escapeMPD(name) + '\'))');
         }
     }
 }
