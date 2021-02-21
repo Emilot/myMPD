@@ -547,7 +547,6 @@ static void mympd_api(t_config *config, t_mympd_state *mympd_state, t_work_reque
             }
             break;
         case MYMPD_API_WIFI_SERVER_LIST:
-            ideon_test();
             response->data = collybia_wifi_server_list(response->data, request->method, request->id);
             break;
         case MYMPD_API_NS_SERVER_LIST:

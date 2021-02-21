@@ -476,7 +476,7 @@ sds collybia_update_install(sds buffer, sds method, int request_id)
 
 sds collybia_wifi_server_list(sds buffer, sds method, int request_id)
 {
-    sds command = sdscatfmt(sdsempty(), "/usr/bin/iw dev wlan0 scan | grep \"SSID\" | awk '{print $2}'");
+    sds command = sdscatfmt(sdsempty(), "ifconfig up wlan0;/usr/bin/iw dev wlan0 scan | grep \"SSID\" | awk '{print $2}'");
     FILE *fp = popen(command, "r");
     if (fp == NULL)
     {
