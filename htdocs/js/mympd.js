@@ -1,12 +1,7 @@
 "use strict";
-/*
- SPDX-License-Identifier: GPL-2.0-or-later
- myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
- https://github.com/jcorporation/mympd
-*/
-
-/* Disable eslint warnings */
-/* global BSN, phrases, locales */
+// SPDX-License-Identifier: GPL-2.0-or-later
+// myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
+// https://github.com/jcorporation/mympd
 
 var socket = null;
 var websocketConnected = false;
@@ -161,7 +156,7 @@ app.apps = {
                         "page": 0,
                         "offset": 0,
                         "limit": 100,
-                        "filter": "AlbumArtist",
+                        "filter": "any",
                         "sort": "AlbumArtist",
                         "tag": "Album",
                         "search": "",
@@ -207,10 +202,9 @@ domCache.btnPrev = document.getElementById('btnPrev');
 domCache.btnNext = document.getElementById('btnNext');
 domCache.progress = document.getElementById('footerProgress');
 domCache.progressBar = document.getElementById('footerProgressBar');
-domCache.progressPos = document.getElementById('footerProgressPos')
+domCache.progressPos = document.getElementById('footerProgressPos');
 domCache.volumeBar = document.getElementById('volumeBar');
 domCache.outputs = document.getElementById('outputs');
-domCache.btnA2HS = document.getElementById('nav-add2homescreen');
 domCache.currentCover = document.getElementById('currentCover');
 domCache.currentTitle = document.getElementById('currentTitle');
 domCache.footerTitle = document.getElementById('footerTitle');
@@ -251,6 +245,7 @@ var modalOutputAttributes = new BSN.Modal(document.getElementById('modalOutputAt
 var modalPicture = new BSN.Modal(document.getElementById('modalPicture'));
 var modalEditHomeIcon = new BSN.Modal(document.getElementById('modalEditHomeIcon'));
 var modalCollybia = new BSN.Modal(document.getElementById('modalCollybia'));
+var modalReally = new BSN.Modal(document.getElementById('modalReally'));
 
 var dropdownMainMenu = new BSN.Dropdown(document.getElementById('mainMenu'));
 var dropdownVolumeMenu = new BSN.Dropdown(document.getElementById('volumeMenu'));
@@ -261,6 +256,7 @@ var dropdownDatabaseSort = new BSN.Dropdown(document.getElementById('btnDatabase
 var dropdownNeighbors = new BSN.Dropdown(document.getElementById('btnDropdownNeighbors'));
 var dropdownServers = new BSN.Dropdown(document.getElementById('btnDropdownServers'));
 var dropdownServers = new BSN.Dropdown(document.getElementById('btnDropdownWifi'));
+var dropdownHomeIconLigature = new BSN.Dropdown(document.getElementById('btnHomeIconLigature'));
 
 var collapseDBupdate = new BSN.Collapse(document.getElementById('navDBupdate'));
 var collapseSettings = new BSN.Collapse(document.getElementById('navSettings'));
@@ -511,15 +507,15 @@ function appRoute() {
             "searchstr": (app.current.filter !== '-' ? app.current.filter : ''), "cols": settings.colsBrowseFilesystem}, parseFilesystem, true);
         // Don't add all songs from root
         if (app.current.search) {
-            document.getElementById('BrowseFilesystemAddAllSongs').removeAttribute('disabled');
-            document.getElementById('BrowseFilesystemAddAllSongsBtn').removeAttribute('disabled');
+            enableEl('BrowseFilesystemAddAllSongs');
+            enableEl('BrowseFilesystemAddAllSongsBtn');
         }
         else {
-            document.getElementById('BrowseFilesystemAddAllSongs').setAttribute('disabled', 'disabled');
-            document.getElementById('BrowseFilesystemAddAllSongsBtn').setAttribute('disabled', 'disabled');
+            disableEl('BrowseFilesystemAddAllSongs');
+            disableEl('BrowseFilesystemAddAllSongsBtn');
         }
         // Create breadcrumb
-        let breadcrumbs='<li class="breadcrumb-item"><a data-uri="" class="text-body material-icons">home</a></li>';
+        let breadcrumbs='<li class="breadcrumb-item"><a data-uri="" class="text-body mi">home</a></li>';
         let pathArray = app.current.search.split('/');
         let pathArrayLen = pathArray.length;
         let fullPath = '';
@@ -559,42 +555,18 @@ function appRoute() {
         }
         selectTag('databaseSortTags', undefined, sort);
         if (app.current.tag === 'Album') {
-            const crumbEl = document.getElementById('searchDatabaseCrumb');
-            const searchEl = document.getElementById('searchDatabaseStr');
-            
-            let crumbs = '';
-            let elements = app.current.search.split(' AND ');
-            for (let i = 0; i < elements.length - 1 ; i++) {
-                let expression = elements[i].substring(1, elements[i].length - 1);
-                let fields = expression.match(/^(\w+)\s+(\S+)\s+'(.*)'$/);
-                crumbs += '<button data-filter-tag="' + encodeURI(fields[1]) + '" ' +
-                    'data-filter-op="' + encodeURI(fields[2]) + '" ' +
-                    'data-filter-value="' + encodeURI(unescapeMPD(fields[3])) + '" class="btn btn-light mr-2">' + e(expression) + '<span class="badge badge-secondary">&times</span></button>';
-            }
-            crumbEl.innerHTML = crumbs;
-            if (searchEl.value === '' && elements.length >= 1) {
-                let lastEl = elements[elements.length - 1].substring(1, elements[elements.length - 1].length - 1);
-                let lastElValue = lastEl.substring(lastEl.indexOf('\'') + 1, lastEl.length - 1);
-                if (searchEl.value !== lastElValue) {
-                    let fields = lastEl.match(/^(\w+)\s+(\S+)\s+'(.*)'$/);
-                    crumbEl.innerHTML += '<button data-filter-tag="' + encodeURI(fields[1]) + '" ' +
-                        'data-filter-op="' + encodeURI(fields[2]) + '" ' +
-                        'data-filter-value="' + encodeURI(unescapeMPD(fields[3])) + '" class="btn btn-light mr-2">' + e(lastEl) + '<span class="badge badge-secondary">&times</span></button>';
-                }
-                document.getElementById('searchDatabaseMatch').value = 'contains';
-            }
-            crumbEl.classList.remove('hide');
+            createSearchCrumbs(app.current.search, document.getElementById('searchDatabaseStr'), document.getElementById('searchDatabaseCrumb'));
             document.getElementById('searchDatabaseMatch').classList.remove('hide');
-            document.getElementById('btnDatabaseSortDropdown').removeAttribute('disabled');
-            document.getElementById('btnDatabaseSearchDropdown').removeAttribute('disabled');
+            enableEl('btnDatabaseSortDropdown');
+            enableEl('btnDatabaseSearchDropdown');
             sendAPI("MPD_API_DATABASE_GET_ALBUMS", {"offset": app.current.offset, "limit": app.current.limit, "searchstr": app.current.search, 
                 "filter": app.current.filter, "sort": sort, "sortdesc": sortdesc}, parseDatabase);
         }
         else {
             document.getElementById('searchDatabaseCrumb').classList.add('hide');
             document.getElementById('searchDatabaseMatch').classList.add('hide');
-            document.getElementById('btnDatabaseSortDropdown').setAttribute('disabled', 'disabled');
-            document.getElementById('btnDatabaseSearchDropdown').setAttribute('disabled', 'disabled');
+            disableEl('btnDatabaseSortDropdown');
+            disableEl('btnDatabaseSearchDropdown');
             document.getElementById('searchDatabaseStr').value = app.current.search;
             sendAPI("MPD_API_DATABASE_TAG_LIST", {"offset": app.current.offset, "limit": app.current.limit, "searchstr": app.current.search, 
                 "filter": app.current.filter, "sort": sort, "sortdesc": sortdesc, "tag": app.current.tag}, parseDatabase);
@@ -619,45 +591,17 @@ function appRoute() {
     else if (app.current.app === 'Search') {
         domCache.searchstr.focus();
         if (settings.featAdvsearch) {
-            let crumbs = '';
-            let elements = app.current.search.substring(1, app.current.search.length - 1).split(' AND ');
-            for (let i = 0; i < elements.length - 1 ; i++) {
-                let expression = elements[i].substring(1, elements[i].length - 1);
-                let fields = expression.match(/^(\w+)\s+(\S+)\s+'(.*)'$/);
-                crumbs += '<button data-filter-tag="' + encodeURI(fields[1]) + '" ' +
-                    'data-filter-op="' + encodeURI(fields[2]) + '" ' +
-                    'data-filter-value="' + encodeURI(unescapeMPD(fields[3])) + '" class="btn btn-light mr-2">' + e(expression) + '<span class="badge badge-secondary">&times</span></button>';
-            }
-            domCache.searchCrumb.innerHTML = crumbs;
-            if (domCache.searchstr.value === '' && elements.length >= 1) {
-                let lastEl = elements[elements.length - 1].substring(1,  elements[elements.length - 1].length - 1);
-                let lastElValue = lastEl.substring(lastEl.indexOf('\'') + 1, lastEl.length - 1);
-                if (domCache.searchstr.value !== lastElValue) {
-                    let fields = lastEl.match(/^(\w+)\s+(\S+)\s+'(.*)'$/);
-                    domCache.searchCrumb.innerHTML += '<button data-filter-tag="' + encodeURI(fields[1]) + '" ' +
-                        'data-filter-op="' + encodeURI(fields[2]) + '" ' +
-                        'data-filter-value="' + encodeURI(unescapeMPD(fields[3])) + '" class="btn btn-light mr-2">' + e(lastEl) + '<span class="badge badge-secondary">&times</span></button>';
-                }
-                let match = lastEl.substring(lastEl.indexOf(' ') + 1);
-                match = match.substring(0, match.indexOf(' '));
-                if (match === '') {
-                    match = 'contains';
-                }
-                document.getElementById('searchMatch').value = match;
-            }
+            createSearchCrumbs(app.current.search, domCache.searchstr, domCache.searchCrumb);
         }
-        else {
-            if (domCache.searchstr.value === '' && app.current.search !== '') {
+        else if (domCache.searchstr.value === '' && app.current.search !== '') {
                 domCache.searchstr.value = app.current.search;
-            }
         }
-        if (app.last.app !== app.current.app) {
-            if (app.current.search !== '') {
-                let colspan = settings['cols' + app.current.app].length;
-                document.getElementById('SearchList').getElementsByTagName('tbody')[0].innerHTML=
-                    '<tr><td><span class="material-icons">search</span></td>' +
-                    '<td colspan="' + colspan + '">' + t('Searching...') + '</td></tr>';
-            }
+        
+        if (app.last.app !== app.current.app && app.current.search !== '') {
+            let colspan = settings['cols' + app.current.app].length;
+            document.getElementById('SearchList').getElementsByTagName('tbody')[0].innerHTML=
+                '<tr><td><span class="mi">search</span></td>' +
+                '<td colspan="' + colspan + '">' + t('Searching...') + '</td></tr>';
         }
 
         if (domCache.searchstr.value.length >= 2 || domCache.searchCrumb.children.length > 0) {
@@ -671,13 +615,11 @@ function appRoute() {
                     else {
                         sort = '-';
                     }
-                    document.getElementById('SearchList').setAttribute('data-sort', sort);
+                    setAttEnc(document.getElementById('SearchList'), 'data-sort', sort);
                 }
-                else {
-                    if (sort.indexOf('-') === 0) {
-                        sortdesc = true;
-                        sort = sort.substring(1);
-                    }
+                else if (sort.indexOf('-') === 0) {
+                    sortdesc = true;
+                    sort = sort.substring(1);
                 }
                 sendAPI("MPD_API_DATABASE_SEARCH_ADV", {"plist": "", "offset": app.current.offset, "limit": app.current.limit, "sort": sort, "sortdesc": sortdesc, "expression": app.current.search, "cols": settings.colsSearch, "replace": false}, parseSearch);
             }
@@ -687,8 +629,8 @@ function appRoute() {
         }
         else {
             document.getElementById('SearchList').getElementsByTagName('tbody')[0].innerHTML = '';
-            document.getElementById('searchAddAllSongs').setAttribute('disabled', 'disabled');
-            document.getElementById('searchAddAllSongsBtn').setAttribute('disabled', 'disabled');
+            disableEl('searchAddAllSongs');
+            disableEl('searchAddAllSongsBtn');
             document.getElementById('SearchList').classList.remove('opacity05');
             setPagination(0, 0);
         }
@@ -731,12 +673,12 @@ function a2hsInit() {
         // Stash the event so it can be triggered later
         deferredA2HSprompt = event;
         // Update UI notify the user they can add to home screen
-        domCache.btnA2HS.classList.remove('hide');
+        document.getElementById('nav-add2homescreen').classList.remove('hide');
     });
 
-    domCache.btnA2HS.addEventListener('click', function() {
+    document.getElementById('nav-add2homescreen').addEventListener('click', function(event) {
         // Hide our user interface that shows our A2HS button
-        domCache.btnA2HS.classList.add('hide');
+        event.target.classList.add('hide');
         // Show the prompt
         deferredA2HSprompt.prompt();
         // Wait for the user to respond to the prompt
@@ -803,7 +745,7 @@ function appInitStart() {
 
     appInited = false;
     document.getElementById('splashScreen').classList.remove('hide');
-    document.getElementsByTagName('body')[0].classList.add('overflow-hidden');
+    domCache.body.classList.add('overflow-hidden');
     document.getElementById('splashScreenAlert').innerText = t('Fetch myMPD settings');
 
     a2hsInit();
@@ -821,7 +763,7 @@ function appInitWait() {
             setTimeout(function() {
                 document.getElementById('splashScreen').classList.add('hide');
                 document.getElementById('splashScreen').classList.remove('hide-fade');
-                document.getElementsByTagName('body')[0].classList.remove('overflow-hidden');
+                domCache.body.classList.remove('overflow-hidden');
             }, 500);
             appInit();
             appInited = true;
@@ -841,6 +783,192 @@ function appInitWait() {
 }
 
 function appInit() {
+    //collaps arrows for submenus
+    let collapseArrows = document.querySelectorAll('.subMenu');
+    let collapseArrowsLen = collapseArrows.length;
+    for (let i = 0; i < collapseArrowsLen; i++) {
+        collapseArrows[i].addEventListener('click', function(event) {
+            event.stopPropagation();
+            event.preventDefault();
+            let icon = this.getElementsByTagName('span')[0];
+            icon.innerText = icon.innerText === 'keyboard_arrow_right' ? 'keyboard_arrow_down' : 'keyboard_arrow_right';
+        }, false);
+    }    
+    //align dropdowns
+    let dropdowns = document.querySelectorAll('.dropdown-toggle');
+    for (let i = 0; i < dropdowns.length; i++) {
+        dropdowns[i].parentNode.addEventListener('show.bs.dropdown', function () {
+            alignDropdown(this);
+        });
+    }
+    //init links
+    let hrefs = document.querySelectorAll('[data-href]');
+    let hrefsLen = hrefs.length;
+    for (let i = 0; i < hrefsLen; i++) {
+        if (hrefs[i].classList.contains('notclickable') === false) {
+            hrefs[i].classList.add('clickable');
+        }
+        let parentInit = hrefs[i].parentNode.classList.contains('noInitChilds') ? true : false;
+        if (parentInit === false) {
+            parentInit = hrefs[i].parentNode.parentNode.classList.contains('noInitChilds') ? true : false;
+        }
+        if (parentInit === true) {
+            //handler on parentnode
+            continue;
+        }
+        hrefs[i].addEventListener('click', function(event) {
+            parseCmd(event, getAttDec(this, 'data-href'));
+        }, false);
+    }
+    //do not submit forms
+    const noFormSubmit = ['search', 'searchqueue', 'searchdatabase'];
+    for (let i = 0; i < noFormSubmit.length; i++) {
+        document.getElementById(noFormSubmit[i]).addEventListener('submit', function(event) {
+            event.preventDefault();
+        }, false);
+    }
+    //hide popover
+    domCache.body.addEventListener('click', function() {
+        hideMenu();
+    }, false);
+    //init moduls
+    initGlobalModals();
+    initSong();
+    initHome();
+    initBrowse();
+    initQueue();
+    initSearch();
+    initScripts();
+    initTrigger();
+    initTimer();
+    initPartitions();
+    initMounts();
+    initLocalplayer();
+    initSettings();
+    initPlayback();
+    initNavs();
+    initPlaylists();
+    //init drag and drop
+    dragAndDropTable('QueueCurrentList');
+    dragAndDropTable('BrowsePlaylistsDetailList');
+    dragAndDropTableHeader('QueueCurrent');
+    dragAndDropTableHeader('QueueLastPlayed');
+    dragAndDropTableHeader('QueueJukebox');
+    dragAndDropTableHeader('Search');
+    dragAndDropTableHeader('BrowseFilesystem');
+    dragAndDropTableHeader('BrowsePlaylistsDetail');
+    dragAndDropTableHeader('BrowseDatabaseDetail');
+    //update state on window focus - browser pauses javascript
+    window.addEventListener('focus', function() {
+        sendAPI("MPD_API_PLAYER_STATE", {}, parseState);
+    }, false);
+    //global keymap
+    document.addEventListener('keydown', function(event) {
+        if (event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT' ||
+            event.target.tagName === 'TEXTAREA' || event.ctrlKey || event.altKey) {
+            return;
+        }
+        let cmd = keymap[event.key];
+        if (cmd && typeof window[cmd.cmd] === 'function') {
+            if (keymap[event.key].req === undefined || settings[keymap[event.key].req] === true)
+                parseCmd(event, cmd);
+        }        
+        
+    }, false);
+    //make tables navigateable by keyboard
+    let tables = document.getElementsByTagName('table');
+    for (let i = 0; i < tables.length; i++) {
+        tables[i].setAttribute('tabindex', 0);
+        tables[i].addEventListener('keydown', function(event) {
+            navigateTable(this, event.key);
+        }, false);
+    }
+    //contextmenu for tables
+    tables = ['BrowseFilesystemList', 'BrowseDatabaseDetailList', 'QueueCurrentList', 'QueueLastPlayedList', 
+        'QueueJukeboxList', 'SearchList', 'BrowsePlaylistsAllList', 'BrowsePlaylistsDetailList'];
+    for (let i = 0; i < tables.length; i++) {
+        document.getElementById(tables[i]).getElementsByTagName('tbody')[0].addEventListener('long-press', function(event) {
+            if (event.target.parentNode.classList.contains('not-clickable') || getAttDec(event.target.parentNode, 'data-type') === 'parentDir') {
+                return;
+            }
+            showMenu(event.target, event);
+            event.preventDefault();
+            event.stopPropagation();
+        }, false);
+    
+        document.getElementById(tables[i]).getElementsByTagName('tbody')[0].addEventListener('contextmenu', function(event) {
+            if (event.target.parentNode.classList.contains('not-clickable') || getAttDec(event.target.parentNode, 'data-type') === 'parentDir') {
+                return;
+            }
+            showMenu(event.target, event);
+            event.preventDefault();
+            event.stopPropagation();
+        }, false);
+    }
+
+    //websocket
+    window.addEventListener('beforeunload', function() {
+        webSocketClose();
+    });
+}
+
+function initGlobalModals() {
+    document.getElementById('modalAbout').addEventListener('shown.bs.modal', function () {
+        sendAPI("MPD_API_DATABASE_STATS", {}, parseStats);
+        getServerinfo();
+        let list = '';
+        let i = 0;
+        for (let key in keymap) {
+            if (i === 0 || i % 2 === 0) {
+                if (i > 0) {
+                    list += '</div>';
+                }
+                list += '<div class="row row-keymap">';
+            }
+            if (keymap[key].req === undefined || settings[keymap[key].req] === true) {
+                list += '<div class="col col-keymap mb-1 d-flex"><div class="align-self-center key' + (keymap[key].key && keymap[key].key.length > 1 ? ' mi mi-small' : '') + 
+                       '">' + (keymap[key].key !== undefined ? keymap[key].key : key ) + '</div><div class="align-self-center">' + t(keymap[key].desc) + '</div></div>';
+                i++;
+            }
+        }
+        document.getElementById('shortcutList').innerHTML = list + '</div>';
+    });
+    
+    document.getElementById('modalUpdateDB').addEventListener('hidden.bs.modal', function () {
+        document.getElementById('updateDBprogress').classList.remove('updateDBprogressAnimate');
+    });
+}
+
+function initPlayback() {
+    let colDropdowns = ['PlaybackColsDropdown'];
+    for (let i = 0; i < colDropdowns.length; i++) {
+        document.getElementById(colDropdowns[i]).addEventListener('click', function(event) {
+            if (event.target.nodeName === 'BUTTON' && event.target.classList.contains('mi')) {
+                event.stopPropagation();
+                event.preventDefault();
+                toggleBtnChk(event.target);
+            }
+        }, false);
+    }
+
+    document.getElementById('cardPlaybackTags').addEventListener('click', function(event) {
+        if (event.target.nodeName === 'P') {
+            gotoBrowse(event);
+        }
+    }, false);
+    
+    //quick plaback settings dropdown
+    document.getElementById('playDropdown').parentNode.addEventListener('show.bs.dropdown', function () {
+        showPlayDropdown();
+    });
+
+    document.getElementById('playDropdown').addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    });
+}
+
+function initNavs() {
     document.getElementById('mainMenu').addEventListener('click', function(event) {
         event.preventDefault();
     }, false);
@@ -865,11 +993,12 @@ function appInit() {
             domCache.progressBar.style.width = event.clientX + 'px';
             setTimeout(function() {
                 domCache.progressBar.style.transition = progressBarTransition;
-            }, 10)
-            const seekVal = Math.ceil((currentSong.totalTime * event.clientX) / event.target.offsetWidth);
+            }, 10);
+            const seekVal = Math.ceil((currentSong.totalTime * event.clientX) / domCache.progress.offsetWidth);
             sendAPI("MPD_API_PLAYER_SEEK", {"songid": currentSong.currentSongId, "seek": seekVal});
         }
     }, false);
+
     domCache.progress.addEventListener('mousemove', function(event) {
         if ((playstate === 'pause' || playstate === 'play') && currentSong.totalTime > 0) {
             domCache.progressPos.innerText = beautifySongDuration(Math.ceil((currentSong.totalTime / event.target.offsetWidth) * event.clientX));
@@ -879,26 +1008,15 @@ function appInit() {
             domCache.progressPos.style.left = posX + 'px';
         }
     }, false);
+
     domCache.progress.addEventListener('mouseout', function() {
         domCache.progressPos.style.display = 'none';
     }, false);
-
-    let collapseArrows = document.querySelectorAll('.subMenu');
-    let collapseArrowsLen = collapseArrows.length;
-    for (let i = 0; i < collapseArrowsLen; i++) {
-        collapseArrows[i].addEventListener('click', function(event) {
-            event.stopPropagation();
-            event.preventDefault();
-            let icon = this.getElementsByTagName('span')[0];
-            icon.innerText = icon.innerText === 'keyboard_arrow_right' ? 'keyboard_arrow_down' : 'keyboard_arrow_right';
-        }, false);
-    }    
-
     document.getElementById('navbar-main').addEventListener('click', function(event) {
         event.preventDefault();
-        let href = event.target.getAttribute('data-href');
+        let href = getAttDec(event.target, 'data-href');
         if (href === null) {
-            href = event.target.parentNode.getAttribute('data-href');
+            href = getAttDec(event.target.parentNode, 'data-href');
         }
         if (href !== null) {
             parseCmd(event, href);
@@ -908,87 +1026,39 @@ function appInit() {
     document.getElementById('volumeMenu').parentNode.addEventListener('show.bs.dropdown', function () {
         sendAPI("MPD_API_PLAYER_OUTPUT_LIST", {}, parseOutputs);
     });
-    
-    document.getElementById('btnDropdownNeighbors').parentNode.addEventListener('show.bs.dropdown', function () {
-        if (settings.featNeighbors === true) {
-            sendAPI("MPD_API_MOUNT_NEIGHBOR_LIST", {}, parseNeighbors, true);
+
+    document.getElementById('outputs').addEventListener('click', function(event) {
+        if (event.target.nodeName === 'BUTTON') {
+            event.stopPropagation();
+            event.preventDefault();
+            sendAPI("MPD_API_PLAYER_TOGGLE_OUTPUT", {"output": getAttDec(event.target, 'data-output-id'), "state": (event.target.classList.contains('active') ? 0 : 1)});
+            toggleBtn(event.target.id);
         }
-        else {
-            document.getElementById('dropdownNeighbors').children[0].innerHTML = 
-                '<div class="list-group-item"><span class="material-icons">warning</span> ' + t('Neighbors are disabled') + '</div>';
+        else if (event.target.nodeName === 'A') {
+            event.preventDefault();
+            showListOutputAttributes(getAttDec(event.target.parentNode, 'data-output-name'));
         }
-    });
-    
-    document.getElementById('dropdownNeighbors').children[0].addEventListener('click', function (event) {
-        event.preventDefault();
+    }, false);
+
+    document.getElementById('syscmds').addEventListener('click', function(event) {
         if (event.target.nodeName === 'A') {
-            let c = event.target.getAttribute('data-value').match(/^(\w+:\/\/)(.+)$/);
-            document.getElementById('selectMountUrlhandler').value = c[1];
-            document.getElementById('inputMountUrl').value = c[2];
+            parseCmd(event, getAttDec(event.target, 'data-href'));
         }
-    });
+    }, false);
     
-    document.getElementById('BrowseFilesystemBookmark').parentNode.addEventListener('show.bs.dropdown', function () {
-        sendAPI("MYMPD_API_BOOKMARK_LIST", {"offset": 0, "limit": 0}, parseBookmarks);
-    });
-    
-    document.getElementById('playDropdown').parentNode.addEventListener('show.bs.dropdown', function () {
-        showPlayDropdown();
-    });
-
-    document.getElementById('playDropdown').addEventListener('click', function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-    });
-    
-    let dropdowns = document.querySelectorAll('.dropdown-toggle');
-    for (let i = 0; i < dropdowns.length; i++) {
-        dropdowns[i].parentNode.addEventListener('show.bs.dropdown', function () {
-            alignDropdown(this);
-        });
-    }
-    
-    document.getElementById('modalTimer').addEventListener('shown.bs.modal', function () {
-        showListTimer();
-    });
-
-    document.getElementById('modalMounts').addEventListener('shown.bs.modal', function () {
-        showListMounts();
-    });
-    
-    document.getElementById('modalScripts').addEventListener('shown.bs.modal', function () {
-        showListScripts();
-    });
-    
-    document.getElementById('modalTrigger').addEventListener('shown.bs.modal', function () {
-        showListTrigger();
-    });
-    
-    document.getElementById('modalPartitions').addEventListener('shown.bs.modal', function () {
-        showListPartitions();
-    });
-    
-    document.getElementById('modalPartitionOutputs').addEventListener('shown.bs.modal', function () {
-        sendAPI("MPD_API_PLAYER_OUTPUT_LIST", {"partition": "default"}, parsePartitionOutputsList, false);
-    });
-    
-    document.getElementById('modalAbout').addEventListener('shown.bs.modal', function () {
-        sendAPI("MPD_API_DATABASE_STATS", {}, parseStats);
-        getServerinfo();
-        let trs = '';
-        for (let key in keymap) {
-            if (keymap[key].req === undefined || settings[keymap[key].req] === true) {
-                trs += '<tr><td><div class="key' + (keymap[key].key && keymap[key].key.length > 1 ? ' material-icons material-icons-small' : '') + 
-                       '">' + (keymap[key].key !== undefined ? keymap[key].key : key ) + '</div></td><td>' + t(keymap[key].desc) + '</td></tr>';
-            }
+    document.getElementById('scripts').addEventListener('click', function(event) {
+        if (event.target.nodeName === 'A') {
+            execScript(getAttDec(event.target, 'data-href'));
         }
-        document.getElementById('tbodyShortcuts').innerHTML = trs;
-    });
-    
-    document.getElementById('modalAddToPlaylist').addEventListener('shown.bs.modal', function () {
-        if (!document.getElementById('addStreamFrm').classList.contains('hide')) {
-            document.getElementById('streamUrl').focus();
-            document.getElementById('streamUrl').value = '';
+    }, false);
+}
+
+//Handle javascript errors
+window.onerror = function(msg, url, line) {
+    logError('JavaScript error: ' + msg + ' (' + url + ': ' + line + ')');
+    if (settings.loglevel >= 4) {
+        if (appInited === true) {
+            showNotification(t('JavaScript error'), msg + ' (' + url + ': ' + line + ')', '', 'danger');
         }
         else {
             document.getElementById('addToPlaylistPlaylist').focus();
@@ -2067,4 +2137,5 @@ window.onresize = function () {
     }
 };
 
+//Start app
 appInitStart();

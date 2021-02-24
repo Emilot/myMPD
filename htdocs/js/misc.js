@@ -1,9 +1,7 @@
 "use strict";
-/*
- SPDX-License-Identifier: GPL-2.0-or-later
- myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
- https://github.com/jcorporation/mympd
-*/
+// SPDX-License-Identifier: GPL-2.0-or-later
+// myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
+// https://github.com/jcorporation/mympd
 
 //eslint-disable-next-line no-unused-vars
 function openFullscreen() {
@@ -184,15 +182,15 @@ function parseDBstats(obj) {
 //eslint-disable-next-line no-unused-vars
 function zoomPicture(el) {
     if (el.classList.contains('booklet')) {
-        window.open(el.getAttribute('data-href'));
+        window.open(getAttDec(el, 'data-href'));
         return;
     }
     
     if (el.classList.contains('carousel')) {
-        let imgSrc = el.getAttribute('data-images');
+        let imgSrc = getAttDec(el, 'data-images');
         let images;
         if (imgSrc !== null) {
-            images = el.getAttribute('data-images').split(';;');
+            images = getAttDec(el, 'data-images').split(';;');
         }
         else if (lastSongObj.images) {
             images = lastSongObj.images.slice();
@@ -203,8 +201,9 @@ function zoomPicture(el) {
         
         //add uri to image list to get embedded albumart
         let a_images = [];
-        if (el.getAttribute('data-uri')) {
-            a_images = [ subdir + '/albumart/' + el.getAttribute('data-uri') ];
+        const uri = getAttDec(el, 'data-uri');
+        if (uri) {
+            a_images = [ subdir + '/albumart/' + uri ];
         }
         //add all but coverfiles to image list
         if (settings.publish === true) {
@@ -237,7 +236,6 @@ function zoomZoomPicture() {
     window.open(document.getElementById('modalPictureImg').style.backgroundImage.match(/^url\(["']?([^"']*)["']?\)/)[1]);
 }
 
-
 function createImgCarousel(imgEl, name, images) {
     let carousel = '<div id="' + name + '" class="carousel slide" data-ride="carousel">' +
         '<ol class="carousel-indicators">';
@@ -269,4 +267,8 @@ function createImgCarousel(imgEl, name, images) {
         interval: false,
         pause: false
     });
+}
+
+function ucFirst(string) {
+    return string[0].toUpperCase() + string.slice(1);
 }

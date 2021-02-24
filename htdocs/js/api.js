@@ -1,9 +1,9 @@
 "use strict";
-/*
- SPDX-License-Identifier: GPL-2.0-or-later
- myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
- https://github.com/jcorporation/mympd
-*/
+// SPDX-License-Identifier: GPL-2.0-or-later
+// myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
+// https://github.com/jcorporation/mympd
+
+var ignoreMessages = ['No current song', 'No lyrics found'];
 
 function sendAPI(method, params, callback, onerror) {
     let request = {"jsonrpc": "2.0", "id": 0, "method": method, "params": params};
@@ -20,7 +20,9 @@ function sendAPI(method, params, callback, onerror) {
                 }
                 else if (obj.result && obj.result.message && obj.result.message !== 'ok') {
                     logDebug('Got API response: ' + JSON.stringify(obj.result));
-                    showNotification(t(obj.result.message, obj.result.data), '', '', 'success');
+                    if (ignoreMessages.includes(obj.result.message) === false) {
+                        showNotification(t(obj.result.message, obj.result.data), '', '', 'success');
+                    }
                 }
                 else if (obj.result && obj.result.message && obj.result.message === 'ok') {
                     logDebug('Got API response: ' + JSON.stringify(obj.result));
@@ -97,7 +99,7 @@ function webSocketConnect() {
                 clearTimeout(websocketTimer);
                 websocketTimer = null;
             }
-        }
+        };
 
         socket.onmessage = function got_packet(msg) {
             var obj;
@@ -206,7 +208,7 @@ function webSocketConnect() {
                 default:
                     break;
             }
-        }
+        };
 
         socket.onclose = function(){
             logError('Websocket is disconnected');
@@ -231,7 +233,7 @@ function webSocketConnect() {
                 webSocketConnect();
             }, 3000);
             socket = null;
-        }
+        };
 
     } catch(error) {
         logError(error);
@@ -244,7 +246,8 @@ function webSocketClose() {
         websocketTimer = null;
     }
     if (socket !== null) {
-        socket.onclose = function () {}; // disable onclose handler first
+        // disable onclose handler first
+        socket.onclose = function () {}; 
         socket.close();
         socket = null;
     }

@@ -59,16 +59,13 @@ void *mympd_api_loop(void *arg_config) {
     assert(mympd_state);
     mympd_api_read_statefiles(config, mympd_state);
 
+    //home icons
     list_init(&mympd_state->home_list);
-    if (config->home == true) {
-        mympd_api_read_home_list(config, mympd_state);
-    }
+    mympd_api_read_home_list(config, mympd_state);
 
     //myMPD timer
     init_timerlist(&mympd_state->timer_list);
-    if (mympd_state->timer == true) {
-        timerfile_read(config, mympd_state);
-    }
+    timerfile_read(config, mympd_state);
     
     //set timers
     if (config->covercache == true) {
@@ -89,12 +86,8 @@ void *mympd_api_loop(void *arg_config) {
     }
 
     //cleanup
-    if (config->home == true) {
-        mympd_api_write_home_list(config, mympd_state);
-    }
-    if (mympd_state->timer == true) {
-        timerfile_save(config, mympd_state);
-    }
+    mympd_api_write_home_list(config, mympd_state);
+    timerfile_save(config, mympd_state);
     free_mympd_state(mympd_state);
     sdsfree(thread_logname);
     return NULL;
@@ -369,7 +362,7 @@ static void mympd_api(t_config *config, t_mympd_state *mympd_state, t_work_reque
             break;
         }
         case MYMPD_API_SETTINGS_RESET:
-            //ToDo: error checking
+            //TODO: error checking
             mympd_api_settings_reset(config, mympd_state);
             response->data = jsonrpc_respond_ok(response->data, request->method, request->id);
             break;

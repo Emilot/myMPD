@@ -55,6 +55,9 @@ static int mympd_inihandler(void *user, const char *section, const char *name, c
     else if (MATCH("mpd", "regex")) {
         p_config->regex = strtobool(value);
     }
+    else if (MATCH("mpd", "binarylimit")) {
+        p_config->binarylimit = strtoumax(value, &crap, 10);
+    }
     else if (MATCH("webserver", "webport")) {
         p_config->webport = sdsreplace(p_config->webport, value);
     }
@@ -426,8 +429,8 @@ static void mympd_parse_env(struct t_config *config, const char *envvar) {
 
 static void mympd_get_env(struct t_config *config) {
     const char *env_vars[]={"MPD_HOST", "MPD_PORT", "MPD_PASS", "MPD_MUSICDIRECTORY",
-        "MPD_PLAYLISTDIRECTORY", "MPD_REGEX", "WEBSERVER_WEBPORT", "WEBSERVER_PUBLISH",
-        "WEBSERVER_WEBDAV", "WEBSERVER_ACL", 
+        "MPD_PLAYLISTDIRECTORY", "MPD_REGEX", "MPD_BINARYLIMIT",
+        "WEBSERVER_WEBPORT", "WEBSERVER_PUBLISH", "WEBSERVER_WEBDAV", "WEBSERVER_ACL", 
       #ifdef ENABLE_LUA
         "WEBSERVER_SCRIPTACL",
       #endif
@@ -536,6 +539,8 @@ void mympd_config_defaults(t_config *config) {
     config->mpd_host = sdsnew("/run/mpd/socket");
     config->mpd_port = 6600;
     config->mpd_pass = sdsempty();
+    config->regex = true;
+    config->binarylimit = 16384;
     config->music_directory = sdsnew("auto");
     config->playlist_directory = sdsnew("/var/lib/mpd/playlists");
     config->webport = sdsnew("80");
@@ -607,7 +612,6 @@ void mympd_config_defaults(t_config *config) {
     config->theme = sdsnew("theme-dark");
     config->highlight_color = sdsnew("#28a745");
     config->custom_placeholder_images = false;
-    config->regex = true;
     config->timer = true;
     config->sticker_cache = true;
     config->booklet_name = sdsnew("booklet.pdf");
@@ -618,7 +622,13 @@ void mympd_config_defaults(t_config *config) {
     config->acl = sdsempty();
     config->scriptacl = sdsnew("-0.0.0.0/0,+127.0.0.0/8");
     config->lualibs = sdsnew("base, string, utf8, table, math, mympd");
+    #ifdef ENABLE_LUA
+    config->scripting = true;
     config->scripteditor = true;
+    #else
+    config->scripting = false;
+    config->scripteditor = false;
+    #endif
     config->partitions = false;
     config->footer_stop = sdsnew("pause");
     config->home = true;
@@ -671,12 +681,15 @@ bool mympd_dump_config(void) {
         "#pass = \n"
         "musicdirectory = %s\n"
         "playlistdirectory = %s\n"
-        "regex = %s\n\n",
+        "regex = %s\n"
+        "binarylimit = %u\n"
+        "\n",
         p_config->mpd_host,
         p_config->mpd_port,
         p_config->music_directory,
         p_config->playlist_directory,
-        (p_config->regex == true ? "true" : "false")
+        (p_config->regex == true ? "true" : "false"),
+        p_config->binarylimit
     );
     
     fprintf(fp, "[webserver]\n"
@@ -723,7 +736,7 @@ bool mympd_dump_config(void) {
         "smartpls = %s\n"
         "smartplssort = %s\n"
         "smartplsprefix = %s\n"
-        "smartplsinterval = %ld\n"
+        "smartplsinterval = %llu\n"
         "generateplstags = %s\n"
         "mixramp = %s\n"
         "taglist = %s\n"
@@ -789,7 +802,7 @@ bool mympd_dump_config(void) {
         (p_config->smartpls == true ? "true" : "false"),
         p_config->smartpls_sort,
         p_config->smartpls_prefix,
-        p_config->smartpls_interval,
+        (unsigned long long)p_config->smartpls_interval, //cast for 32 bit compatibility
         p_config->generate_pls_tags,
         (p_config->mixramp == true ? "true" : "false"),
         p_config->taglist,

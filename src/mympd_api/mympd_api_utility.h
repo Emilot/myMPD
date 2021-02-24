@@ -117,6 +117,9 @@ typedef struct t_mympd_state {
     sds samba_version;
     bool wifi;
     sds wifi_password;
+    sds advanced;
+    sds footer_stop;
+    bool home;
 } t_mympd_state;
 
 void free_mympd_state(t_mympd_state *mympd_state);
