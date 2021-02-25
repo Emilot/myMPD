@@ -501,6 +501,7 @@ bool mympd_api_settings_set(t_config *config, t_mympd_state *mympd_state, struct
             *wifi_changed = true;
         mympd_state->wifi_password = sdsreplacelen(mympd_state->wifi_password, settingvalue, sdslen(settingvalue));
         settingname = sdscat(settingname, "wifi_password");
+    }
     else if (strncmp(key->ptr, "advanced", key->len) == 0) {
         mympd_state->advanced = sdsreplacelen(mympd_state->advanced, settingvalue, sdslen(settingvalue));
         settingname = sdscat(settingname, "advanced");
