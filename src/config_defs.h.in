@@ -164,6 +164,7 @@ typedef struct t_config {
     bool roon;
     bool spotify;
     bool wifi;
+    sds wifi_ssid;
     sds wifi_password;
     bool tidal_enabled;
     sds tidal_token;

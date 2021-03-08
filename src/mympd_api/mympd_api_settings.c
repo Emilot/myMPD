@@ -496,6 +496,12 @@ bool mympd_api_settings_set(t_config *config, t_mympd_state *mympd_state, struct
         mympd_state->wifi = val->type == JSON_TYPE_TRUE ? true : false;
         settingname = sdscat(settingname, "wifi");
     }
+    else if (strncmp(key->ptr, "wifissid", key->len) == 0) {
+        if (sdscmp(mympd_state->wifi_ssid, settingvalue) != 0)
+            *wifi_changed = true;
+        mympd_state->wifi_ssid= sdsreplacelen(mympd_state->wifi_ssid, settingvalue, sdslen(settingvalue));
+        settingname = sdscat(settingname, "wifi_ssid");
+    }
     else if (strncmp(key->ptr, "wifiPassword", key->len) == 0) {
         if (sdscmp(mympd_state->wifi_password, settingvalue) != 0)
             *wifi_changed = true;
@@ -593,6 +599,7 @@ void mympd_api_read_statefiles(t_config *config, t_mympd_state *mympd_state) {
     mympd_state->tidal_password = state_file_rw_string(config, "tidal_password", config->tidal_password, false);
     mympd_state->tidal_audioquality = state_file_rw_string(config, "tidal_audioquality", config->tidal_audioquality, false);
     mympd_state->wifi = state_file_rw_bool(config, "wifi", config->wifi, false);
+    mympd_state->wifi_ssid = state_file_rw_string(config, "wifi_ssid", config->wifi_ssid, false);
     mympd_state->wifi_password = state_file_rw_string(config, "wifi_password", config->wifi_password, false);
     if (config->readonly == true) {
         mympd_state->bookmarks = false;
@@ -683,6 +690,7 @@ sds mympd_api_settings_put(t_config *config, t_mympd_state *mympd_state, sds buf
     buffer = tojson_char(buffer, "tidalPassword", mympd_state->tidal_password, true);
     buffer = tojson_char(buffer, "tidalAudioquality", mympd_state->tidal_audioquality, true);
     buffer = tojson_bool(buffer, "wifi", mympd_state->wifi, true);
+    buffer = tojson_char(buffer, "wifissid", mympd_state->wifi_ssid, true);
     buffer = tojson_char(buffer, "wifiPassword", mympd_state->wifi_password, true);
     buffer = sdscatfmt(buffer, "\"colsQueueCurrent\":%s,", mympd_state->cols_queue_current);
     buffer = sdscatfmt(buffer, "\"colsSearch\":%s,", mympd_state->cols_search);

@@ -244,7 +244,7 @@ int collybia_settings_set(t_mympd_state *mympd_state, bool mpd_conf_changed,
         {
             dc = 3;
         }
-        syscmd("reboot");
+        syscmd("/home/collybia/net_wifi");
 
         sdsfree(conf);
         sdsfree(cmdline);
@@ -260,6 +260,8 @@ int collybia_settings_set(t_mympd_state *mympd_state, bool mpd_conf_changed,
         {
             dc = 3;
         }
+        syscmd("/home/collybia/net_wired");
+
         sdsfree(conf);
         sdsfree(cmdline);
      }
@@ -476,7 +478,7 @@ sds collybia_update_install(sds buffer, sds method, int request_id)
 
 sds collybia_wifi_server_list(sds buffer, sds method, int request_id)
 {
-    sds command = sdscatfmt(sdsempty(), "ifconfig up wlan0;/usr/bin/iw dev wlan0 scan | grep \"SSID\" | awk '{print $2}'");
+    sds command = sdscatfmt(sdsempty(), "ifconfig wlan0 up;/usr/bin/iw dev wlan0 scan | grep \"SSID\" | awk '{print $2}'");
     FILE *fp = popen(command, "r");
     if (fp == NULL)
     {
@@ -516,3 +518,5 @@ sds collybia_wifi_server_list(sds buffer, sds method, int request_id)
     sdsfree(command);
     return buffer;
 }
+
+

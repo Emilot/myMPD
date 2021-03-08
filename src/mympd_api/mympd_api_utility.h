@@ -116,6 +116,7 @@ typedef struct t_mympd_state {
     sds tidal_audioquality;
     sds samba_version;
     bool wifi;
+    sds wifi_ssid;
     sds wifi_password;
 } t_mympd_state;
 
