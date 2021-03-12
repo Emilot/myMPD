@@ -861,6 +861,7 @@ function parseCollybiaSettings() {
     toggleBtnChk('btnRoon', settings.roon);
     toggleBtnChk('btnSpotify', settings.spotify);
     toggleBtnChk('btnWifiEnabled', settings.wifi);
+    document.getElementById('inputWifiSSID').value = settings.wifissid;
     document.getElementById('inputWifiPassword').value = settings.wifiPassword;
     toggleBtnChkCollapse('btnTidalEnabled', 'collapseTidal', settings.tidalEnabled);
     document.getElementById('inputTidalUsername').value = settings.tidalUsername;
@@ -901,6 +902,7 @@ function saveCollybiaSettings() {
     }
 
     let inputWifiPassword = document.getElementById('inputWifiPassword');
+    let inputWifiSSID = document.getElementById('inputWifiSSID');
     if (document.getElementById('btnWifiEnabled').classList.contains('active')) {
         if (!validateNotBlank(inputWifiPassword)) {
             formOK = false;
@@ -929,6 +931,7 @@ function saveCollybiaSettings() {
             "spotify": (document.getElementById('btnSpotify').classList.contains('active') ? true : false),
             "wifi": (document.getElementById('btnWifiEnabled').classList.contains('active') ? true : false),
             "wifiPassword": inputWifiPassword.value,
+            "wifissid": inputWifiSSID.value,
             "tidalEnabled": (document.getElementById('btnTidalEnabled').classList.contains('active') ? true : false),
             "tidalUsername": inputTidalUsername.value,
             "tidalPassword": inputTidalPassword.value,
@@ -3121,7 +3124,7 @@ function appInit() {
 
     document.getElementById('modalCollybia').addEventListener('keydown', function (event) {
         if (event.key === 'Enter') {
-            saveIdeonSettings();
+            saveCollybiaSettings();
             event.stopPropagation();
             event.preventDefault();
         }
