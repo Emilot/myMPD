@@ -1073,7 +1073,7 @@ function appInit() {
 
     document.getElementById('modalCollybia').addEventListener('keydown', function (event) {
         if (event.key === 'Enter') {
-            saveIdeonSettings();
+            saveCollybiaSettings();
             event.stopPropagation();
             event.preventDefault();
         }
