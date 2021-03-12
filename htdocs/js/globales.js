@@ -22,6 +22,7 @@ let deferredA2HSprompt;
 let dragSrc;
 let dragEl;
 let showSyncedLyrics = false;
+let scrollSyncedLyrics = true;
 let appInited = false;
 let subdir = '';
 let uiEnabled = true;
@@ -294,6 +295,12 @@ const advancedSettingsDefault = {
         },
         "inputType": "select",
         "title": "Elements per page",
+        "form": "AdvancedSettingsFrm"
+    },
+    "uiStickyTables": {
+        "defaultValue": false,
+        "inputType": "checkbox",
+        "title": "Sticky table headers",
         "form": "AdvancedSettingsFrm"
     }
 };

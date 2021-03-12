@@ -211,6 +211,9 @@ function getLyrics(uri, el) {
         else if (obj.result.message) {
             el.innerText = t(obj.result.message);
         }
+        else if (obj.result.returnedEntities === 0) {
+            el.innerHTML = t('No lyrics found');
+        }
         else {
             let lyricsHeader = '<span class="lyricsHeader" class="btn-group-toggle" data-toggle="buttons">';
             let lyrics = '<div class="lyricsTextContainer">';
@@ -238,8 +241,10 @@ function getLyrics(uri, el) {
             }
             lyricsHeader += '</span>';
             lyrics += '</div>';
+            const lyricsScroll = showSyncedLyrics === false || clickable === false ? '' :
+                '<button class="btn btn-sm mi mr-2 active" id="lyricsScroll">autorenew</button>';
             if (obj.result.returnedEntities > 1) {
-                el.innerHTML = lyricsHeader + lyrics;
+                el.innerHTML = lyricsScroll + lyricsHeader + lyrics;
                 el.getElementsByClassName('lyricsHeader')[0].addEventListener('click', function(event) {
                     if (event.target.nodeName === 'LABEL') {
                         event.target.parentNode.getElementsByClassName('active')[0].classList.remove('active');
@@ -258,11 +263,16 @@ function getLyrics(uri, el) {
                 }, false);
             }
             else {
-                el.innerHTML = lyrics;
+                el.innerHTML = lyricsScroll + lyrics;
             }
             if (showSyncedLyrics === true && clickable === true) {
+                document.getElementById('lyricsScroll').addEventListener('click', function(event) {
+                    toggleBtn(event.target);
+                    scrollSyncedLyrics = event.target.classList.contains('active');
+                }, false);
                 const textEls = el.getElementsByClassName('lyricsSyncedText');
                 for (let i = 0; i < textEls.length; i++) {
+                    //seek to songpos in click
                     textEls[i].addEventListener('click', function(event) {
                         const sec = event.target.getAttribute('data-sec');
                         if (sec !== null) {
@@ -287,11 +297,16 @@ function parseSyncedLyrics(text, clickable) {
             //line[3] are hundreths of a seconde - ignore it for the moment
             html += '<p><span class="' + (clickable === true ? 'clickable' : '') + '" data-sec="' + sec + '">';
             //support of extended lrc format - timestamps for words
-            html += line[4].replace(/<(\d+):(\d+)\.\d+>/g, function(m0, m1, m2) {
-                //hundreths of a secondes are ignored
-                const wsec = parseInt(m1) * 60 + parseInt(m2);
-                return '</span><span class="' + (clickable === true ? 'clickable' : '') + '" data-sec="' + wsec + '">';
-            });
+            if (line[4] === '') {
+                html += '&nbsp;';
+            }
+            else {
+                html += line[4].replace(/<(\d+):(\d+)\.\d+>/g, function(m0, m1, m2) {
+                    //hundreths of a secondes are ignored
+                    const wsec = parseInt(m1) * 60 + parseInt(m2);
+                    return '</span><span class="' + (clickable === true ? 'clickable' : '') + '" data-sec="' + wsec + '">';
+                });
+            }
             html += '</span></p>';
         }
     }
