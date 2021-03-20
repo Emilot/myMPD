@@ -5,6 +5,23 @@
  https://github.com/jcorporation/mympd
 */
 
+function logLog(loglevel, line) {
+    if (settings.loglevel >= loglevel) {
+        if (loglevel === 0) {
+            console.error(line);
+        }
+        else if (loglevel === 1) {
+            console.warn(line);
+        }
+        else if (loglevel === 4) {
+            console.debug(line);
+        }
+        else {
+            console.log(line);
+        }
+    }
+}
+
 //eslint-disable-next-line no-unused-vars
 function logError(line) {
     logLog(0, 'ERROR: ' + line);
@@ -28,21 +45,4 @@ function logVerbose(line) {
 //eslint-disable-next-line no-unused-vars
 function logDebug(line) {
     logLog(4, 'DEBUG: ' + line);
-}
-
-function logLog(loglevel, line) {
-    if (settings.loglevel >= loglevel) {
-        if (loglevel === 0) {
-            console.error(line);
-        }
-        else if (loglevel === 1) {
-            console.warn(line);
-        }
-        else if (loglevel === 4) {
-            console.debug(line);
-        }
-        else {
-            console.log(line);
-        }
-    }
 }

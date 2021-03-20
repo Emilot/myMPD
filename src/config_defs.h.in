@@ -47,6 +47,11 @@
     "{\"ligature\":\"library_music\",\"title\":\"Browse\",\"options\":[\"Browse\"],\"badge\":\"\"},"\
     "{\"ligature\":\"search\",\"title\":\"Search\",\"options\":[\"Search\"],\"badge\":\"\"}]"
 
+//measure time
+#define MEASURE_START clock_t measure_start = clock();
+#define MEASURE_END clock_t measure_end = clock();
+#define MEASURE_PRINT(X) MYMPD_LOG_DEBUG("Execution time for %s: %lf", X, ((double) (measure_end - measure_start)) / CLOCKS_PER_SEC);
+
 enum jukebox_modes {
     JUKEBOX_OFF,
     JUKEBOX_ADD_SONG,
@@ -79,7 +84,6 @@ typedef struct t_config {
     sds smartpls_prefix;
     time_t smartpls_interval;
     sds varlibdir;
-    int max_elements_per_page;
     bool syscmds;
     bool chroot;
     int last_played_count;
@@ -130,7 +134,6 @@ typedef struct t_config {
     bool custom_placeholder_images;
     bool regex;
     bool timer;
-    bool sticker_cache;
     sds generate_pls_tags;
     sds booklet_name;
     bool mounts;
@@ -142,7 +145,6 @@ typedef struct t_config {
     sds lualibs;
     bool scripteditor;
     bool partitions;
-    sds footer_stop;
     bool home;
     unsigned volume_min;
     unsigned volume_max;
@@ -172,6 +174,9 @@ typedef struct t_config {
     sds tidal_password;
     sds tidal_audioquality;
     sds samba_version;
+    unsigned binarylimit;
+    sds bg_image;
+    bool syslog;
     //system commands
     struct list syscmd_list;
 } t_config;

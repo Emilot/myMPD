@@ -28,7 +28,7 @@ struct t_timer_node {
     struct t_timer_definition *definition;
     void *user_data;
     unsigned int timeout;
-    unsigned int interval;
+    int interval;
     int timer_id;
     struct t_timer_node *next;
 };
@@ -53,7 +53,6 @@ typedef struct t_mympd_state {
     sds smartpls_prefix;
     time_t smartpls_interval;
     sds generate_pls_tags;
-    int max_elements_per_page;
     int last_played_count;
     bool love;
     sds love_channel;
@@ -118,6 +117,9 @@ typedef struct t_mympd_state {
     bool wifi;
     sds wifi_ssid;
     sds wifi_password;
+    sds advanced;
+    bool home;
+    sds bg_image;
 } t_mympd_state;
 
 void free_mympd_state(t_mympd_state *mympd_state);

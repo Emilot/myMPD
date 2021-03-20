@@ -1,9 +1,156 @@
 "use strict";
-/*
- SPDX-License-Identifier: GPL-2.0-or-later
- myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
- https://github.com/jcorporation/mympd
-*/
+// SPDX-License-Identifier: GPL-2.0-or-later
+// myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
+// https://github.com/jcorporation/mympd
+
+function initHome() {
+    //home screen
+    document.getElementById('HomeCards').addEventListener('click', function(event) {
+        if (event.target.classList.contains('card-body')) {
+            const href = event.target.parentNode.getAttribute('data-href');
+            if (href !== null) {
+               parseCmd(event, href);
+            }
+        }
+        else if (event.target.classList.contains('card-footer')){
+            popoverMenuHome(event);
+        }
+    }, false);
+    
+    document.getElementById('HomeCards').addEventListener('contextmenu', function(event) {
+        popoverMenuHome(event);
+    }, false);
+
+    document.getElementById('HomeCards').addEventListener('long-press', function(event) {
+        popoverMenuHome(event);
+    }, false);
+    
+    document.getElementById('HomeCards').addEventListener('keydown', function(event) {
+        navigateGrid(event.target, event.key);
+    }, false);
+    
+    dragAndDropHome();
+
+    //modals
+    document.getElementById('selectHomeIconCmd').addEventListener('change', function() {
+        showHomeIconCmdOptions();
+    }, false);
+
+    document.getElementById('inputHomeIconBgcolor').addEventListener('change', function(event) {
+        document.getElementById('homeIconPreview').style.backgroundColor = event.target.value;
+    }, false);
+
+    document.getElementById('selectHomeIconImage').addEventListener('change', function(event) {
+        const value = getSelectValue(event.target);
+        document.getElementById('homeIconPreview').style.backgroundImage = 'url("' + subdir + '/browse/pics/' + value  + '")';
+        if (value !== '') {
+            document.getElementById('divHomeIconLigature').classList.add('hide');
+            document.getElementById('homeIconPreview').innerHTML = '';
+        }
+        else {
+            document.getElementById('divHomeIconLigature').classList.remove('hide');
+            document.getElementById('homeIconPreview').innerText = document.getElementById('inputHomeIconLigature').value;
+        }
+    }, false);
+    
+    document.getElementById('btnHomeIconLigature').parentNode.addEventListener('show.bs.dropdown', function () {
+        const selLig = document.getElementById('inputHomeIconLigature').value;
+        if (selLig !== '') {
+            document.getElementById('searchHomeIconLigature').value = selLig;
+            filterHomeIconLigatures();
+        }
+    }, false);
+    
+    let ligatureList = '';
+    let catList = '<option value="all">' + t('All') + '</option>';
+    Object.keys(materialIcons).forEach(function(cat) {
+        ligatureList += '<h5 class="ml-1 mt-2">' + e(ucFirst(cat)) + '</h5>';
+        catList += '<option value="' + cat + '">' + e(ucFirst(cat)) + '</option>';
+        for (let i = 0; i < materialIcons[cat].length; i++) {
+            ligatureList += '<button title="' + materialIcons[cat][i] + '" data-cat="' + cat + '" class="btn btn-sm mi m-1">' + materialIcons[cat][i] + '</button>';
+        }
+    });
+    document.getElementById('listHomeIconLigature').innerHTML = ligatureList;
+    document.getElementById('searchHomeIconCat').innerHTML = catList;
+
+    document.getElementById('listHomeIconLigature').addEventListener('click', function(event) {
+        if (event.target.nodeName === 'BUTTON') {
+            event.preventDefault();
+            selectHomeIconLigature(event.target);
+        }
+    });
+    
+    document.getElementById('searchHomeIconLigature').addEventListener('click', function(event) {
+        event.stopPropagation();
+    }, false);
+
+    document.getElementById('searchHomeIconCat').addEventListener('click', function(event) {
+        event.stopPropagation();
+    }, false);
+    
+    document.getElementById('searchHomeIconCat').addEventListener('change', function() {
+        filterHomeIconLigatures();
+    }, false);
+    
+    document.getElementById('searchHomeIconLigature').addEventListener('keydown', function(event) {
+        event.stopPropagation();
+        if (event.key === 'Enter') {
+            event.preventDefault();
+        }
+    }, false);
+    
+    document.getElementById('searchHomeIconLigature').addEventListener('keyup', function(event) {
+        if (event.key === 'Enter') {
+            const sel = document.getElementById('listHomeIconLigature').getElementsByClassName('active')[0];
+            if (sel !== undefined) {
+                selectHomeIconLigature(sel);
+                uiElements.dropdownHomeIconLigature.toggle();
+            }
+        }
+        else {
+            filterHomeIconLigatures();
+        }
+    }, false);
+}
+
+function selectHomeIconLigature(x) {
+    document.getElementById('inputHomeIconLigature').value = x.getAttribute('title');
+    document.getElementById('homeIconPreview').innerText = x.getAttribute('title');
+    document.getElementById('homeIconPreview').style.backgroundImage = '';
+    document.getElementById('selectHomeIconImage').value = '';
+}
+
+function filterHomeIconLigatures() {
+    const str = document.getElementById('searchHomeIconLigature').value.toLowerCase();
+    const cat = getSelectValue('searchHomeIconCat');
+    const els = document.getElementById('listHomeIconLigature').getElementsByTagName('button');
+    for (let i = 0; i < els.length; i++) {
+        if ((str === '' || els[i].getAttribute('title').indexOf(str) > -1) && (cat === 'all' || els[i].getAttribute('data-cat') === cat)) {
+            els[i].classList.remove('hide');
+            if (els[i].getAttribute('title') === str) {
+                els[i].classList.add('active');
+            }
+            else {
+                els[i].classList.remove('active');
+            }
+        }
+        else {
+            els[i].classList.add('hide');
+            els[i].classList.remove('active' );
+        }
+    }
+    const catTitles = document.getElementById('listHomeIconLigature').getElementsByTagName('h5');
+    if (cat === '') {
+        for (let i = 0; i < catTitles.length; i++) {
+            catTitles[i].classList.remove('hide');
+        }
+    }
+    else {
+        for (let i = 0; i < catTitles.length; i++) {
+            catTitles[i].classList.add('hide');
+        }
+    }
+}
 
 function parseHome(obj) {
     const nrItems = obj.result.returnedEntities;
@@ -24,7 +171,7 @@ function parseHome(obj) {
         //Workarround for 6.10 change (add limit parameter)
         if (obj.result.data[i].cmd === 'appGoto') {
             if (obj.result.data[i].options.length === 8) {
-                obj.result.data[i].options.splice(4, 0, settings.maxElementsPerPage);
+                obj.result.data[i].options.splice(4, 0, parseInt(settings.advanced.uiMaxElementsPerPage));
             }
         }
         
@@ -49,8 +196,7 @@ function parseHome(obj) {
             col.getElementsByClassName('card-body')[0].style.backgroundColor = obj.result.data[i].bgcolor;
         }
     }
-    let colsLen = cols.length - 1;
-    for (let i = colsLen; i >= nrItems; i --) {
+    for (let i = cols.length - 1; i >= nrItems; i --) {
         cols[i].remove();
     }
                     
@@ -84,10 +230,9 @@ function dragAndDropHome() {
         if (dragEl.classList.contains('home-icons') === false) {
             return;
         }
-        let th = homeCards.getElementsByClassName('dragover-icon');
-        let thLen = th.length;
-        for (let i = 0; i < thLen; i++) {
-            th[i].classList.remove('dragover-icon');
+        const ths = homeCards.getElementsByClassName('dragover-icon');
+        for (const th of ths) {
+            th.classList.remove('dragover-icon');
         }
         if (event.target.nodeName === 'DIV' && event.target.classList.contains('home-icons')) {
             event.target.classList.add('dragover-icon');
@@ -102,10 +247,9 @@ function dragAndDropHome() {
         if (dragEl.classList.contains('home-icons') === false) {
             return;
         }
-        let th = homeCards.getElementsByClassName('dragover-icon');
-        let thLen = th.length;
-        for (let i = 0; i < thLen; i++) {
-            th[i].classList.remove('dragover-icon');
+        const ths = homeCards.getElementsByClassName('dragover-icon');
+        for (const th of ths) {
+            th.classList.remove('dragover-icon');
         }
         dragSrc.classList.remove('opacity05');
     }, false);
@@ -131,10 +275,9 @@ function dragAndDropHome() {
                 }
             }
         }
-        let th = homeCards.getElementsByClassName('dragover-icon');
-        let thLen = th.length;
-        for (let i = 0; i < thLen; i++) {
-            th[i].classList.remove('dragover-icon');
+        const ths = homeCards.getElementsByClassName('dragover-icon');
+        for (const th of ths) {
+            th.classList.remove('dragover-icon');
         }
 
     }, false);
@@ -153,9 +296,9 @@ function addViewToHome() {
 }
 
 //eslint-disable-next-line no-unused-vars
-function addScriptToHome(name, script_def) {
-    let script = JSON.parse(script_def);
-    let options = [script.script, script.arguments.join(',')];
+function addScriptToHome(name, scriptDef) {
+    const script = JSON.parse(scriptDef);
+    const options = [script.script, script.arguments.join(',')];
     _addHomeIcon('execScriptFromOptions', name, 'description', options);
 }
 
@@ -180,7 +323,7 @@ function _addHomeIcon(cmd, name, ligature, options) {
     document.getElementById('homeIconPreview').style.backgroundColor = '#28a745';
     document.getElementById('homeIconPreview').style.backgroundImage = '';
     document.getElementById('divHomeIconLigature').classList.remove('hide');
-    modalEditHomeIcon.show();
+    uiElements.modalEditHomeIcon.show();
 }
 
 //eslint-disable-next-line no-unused-vars
@@ -206,7 +349,7 @@ function _editHomeIcon(pos, replace, title) {
         //Workarround for 6.10 change (add limit parameter)
         if (obj.result.data.cmd === 'appGoto') {
             if (obj.result.data.options.length === 8) {
-                obj.result.data.options.splice(4, 0, settings.maxElementsPerPage);
+                obj.result.data.options.splice(4, 0, parseInt(settings.advanced.uiMaxElementsPerPage));
             }
         }
 
@@ -224,25 +367,28 @@ function _editHomeIcon(pos, replace, title) {
             document.getElementById('divHomeIconLigature').classList.add('hide');
             document.getElementById('homeIconPreview').style.backgroundImage = 'url(' + subdir + '"/browse/pics/' + obj.result.data.image + '")';
         }
-        
-        modalEditHomeIcon.show();
+        //reset ligature selection
+        document.getElementById('searchHomeIconLigature').value = '';
+        document.getElementById('searchHomeIconCat').value = 'all';
+        filterHomeIconLigatures();
+        //show modal
+        uiElements.modalEditHomeIcon.show();
     });
 }
 
 //eslint-disable-next-line no-unused-vars
 function saveHomeIcon() {
     let formOK = true;
-    let nameEl = document.getElementById('inputHomeIconName');
+    const nameEl = document.getElementById('inputHomeIconName');
     if (!validateNotBlank(nameEl)) {
         formOK = false;
     }
     if (formOK === true) {
-        let options = [];
-        let optionEls = document.getElementById('divHomeIconOptions').getElementsByTagName('input');
-        for (let i = 0; i < optionEls.length; i++) {
+        const options = [];
+        const optionEls = document.getElementById('divHomeIconOptions').getElementsByTagName('input');
+        for (const optionEl of optionEls) {
             //workarround for parsing arrays with empty values in frozen
-            let value = optionEls[i].value !== '' ? optionEls[i].value : '!undefined!';
-            options.push(value);
+            options.push(optionEl.value !== '' ? optionEl.value : '!undefined!');
         }
         const image = getSelectValue('selectHomeIconImage');
         sendAPI("MYMPD_API_HOME_ICON_SAVE", {
@@ -255,7 +401,7 @@ function saveHomeIcon() {
             "cmd": document.getElementById('selectHomeIconCmd').value,
             "options": options
             }, function() {
-                modalEditHomeIcon.hide();
+                uiElements.modalEditHomeIcon.hide();
                 sendAPI("MYMPD_API_HOME_LIST", {}, function(obj) {
                     parseHome(obj);
                 });
@@ -276,10 +422,10 @@ function showHomeIconCmdOptions(values) {
     if (optionsText !== undefined) {    
         const options = JSON.parse(optionsText);
         for (let i = 0; i < options.options.length; i++) {
-            let value = values !== undefined ? values[i] !== undefined ? values[i] : '' : '';
             list += '<div class="form-group row">' +
                 '<label class="col-sm-4 col-form-label">' + t(options.options[i]) + '</label>' +
-                '<div class="col-sm-8"><input class="form-control border-secondary" value="' + e(value) + '"></div>' +
+                '<div class="col-sm-8"><input class="form-control border-secondary" value="' + 
+                e(values !== undefined ? values[i] !== undefined ? values[i] : '' : '') + '"></div>' +
                 '</div>';
         }
     }
@@ -287,13 +433,5 @@ function showHomeIconCmdOptions(values) {
 }
 
 function getHomeIconPictureList(picture) {
-    sendAPI("MYMPD_API_HOME_ICON_PICTURE_LIST", {}, function(obj) {
-        let options = '<option value="">' + t('Use ligature') + '</option>';
-        for (let i = 0; i < obj.result.returnedEntities; i++) {
-            options += '<option value="' + e(obj.result.data[i]) + '">' + e(obj.result.data[i])  + '</option>';
-        }
-        let sel = document.getElementById('selectHomeIconImage');
-        sel.innerHTML = options;
-        sel.value = picture;
-    });
+    getImageList('selectHomeIconImage', picture, [{"value":"","text":"Use ligature"}]);
 }
