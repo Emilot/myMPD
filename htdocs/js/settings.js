@@ -268,6 +268,9 @@ function parseSettings() {
     advSettingsKeys.sort();
     for (let i = 0; i < advSettingsKeys.length; i++) {
         const key = advSettingsKeys[i];
+        if (advancedSettingsDefault[key] === undefined) {
+            continue;
+        }
         const form = advancedSettingsDefault[key].form;
         if (advFrm[form] === undefined) {
             advFrm[form] = '';
@@ -330,13 +333,6 @@ function parseSettings() {
     }
     else {
         document.getElementById('btnStop').classList.add('hide');
-    }
-
-    if (settings.advanced.uiStickyTables === true) {
-        domCache.body.classList.add('stickyTables');
-    }
-    else {
-        domCache.body.classList.remove('stickyTables');
     }
     
     //parse mpd settings if connected
