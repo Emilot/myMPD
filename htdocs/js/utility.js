@@ -86,7 +86,13 @@ function clickFolder(uri, name) {
     switch (settings.advanced.clickFolder) {
         case 'append': return appendQueue('dir', uri, name);
         case 'replace': return replaceQueue('dir', uri, name);
-        case 'view': 
+        case 'view':
+            //remember offset for current browse uri
+            browseFilesystemHistory[app.current.search] = {
+                "offset":  app.current.offset,
+                "scrollPos": document.body.scrollTop ? document.body.scrollTop : document.documentElement.scrollTop
+            };
+            //reset filter and open folder
             app.current.filter = '-';
             appGoto('Browse', 'Filesystem', undefined, '0', app.current.limit, app.current.filter, app.current.sort, '-', uri);
             break;
@@ -223,7 +229,7 @@ function filetype(uri) {
         case 'AAC':  return ext + ' - Advancded Audio Coding';
         case 'MPC':  return ext + ' - Musepack';
         case 'MP4':  return ext + ' - MPEG-4';
-        case 'APE':  return ext + ' - Monkey Audio ';
+        case 'APE':  return ext + ' - Monkey Audio';
         case 'WMA':  return ext + ' - Windows Media Audio';
         default:     return ext;
     }
@@ -791,6 +797,7 @@ function printValue(key, value) {
         case 'Duration':
             return beautifySongDuration(value);
         case 'LastModified': 
+        case 'LastPlayed':
         case 'stickerLastPlayed':
         case 'stickerLastSkipped':
             return value === 0 ? t('never') : localeDate(value);

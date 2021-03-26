@@ -188,10 +188,13 @@ function initBrowse() {
             const name = getAttDec(event.target.parentNode, 'data-name');
             const dataType = getAttDec(event.target.parentNode, 'data-type');
             switch(dataType) {
-                case 'parentDir':
+                case 'parentDir': {
+                    const offset = browseFilesystemHistory[uri] !== undefined ? browseFilesystemHistory[uri].offset : 0;
+                    const scrollPos = browseFilesystemHistory[uri] !== undefined ? browseFilesystemHistory[uri].scrollPos : 0;
                     app.current.filter = '-';
-                    appGoto('Browse', 'Filesystem', undefined, '0', app.current.limit, app.current.filter, app.current.sort, '-', uri);
+                    appGoto('Browse', 'Filesystem', undefined, offset, app.current.limit, app.current.filter, app.current.sort, '-', uri, scrollPos);
                     break;
+                }
                 case 'dir':
                     clickFolder(uri, name);
                     break;
@@ -235,7 +238,10 @@ function initBrowse() {
     document.getElementById('BrowseBreadcrumb').addEventListener('click', function(event) {
         if (event.target.nodeName === 'A') {
             event.preventDefault();
-            appGoto('Browse', 'Filesystem', undefined, '0', app.current.limit, app.current.filter, app.current.sort, '-', getAttDec(event.target, 'data-uri'));
+            const uri = getAttDec(event.target, 'data-uri');
+            const offset = browseFilesystemHistory[uri] !== undefined ? browseFilesystemHistory[uri].offset : 0;
+            const scrollPos = browseFilesystemHistory[uri] !== undefined ? browseFilesystemHistory[uri].scrollPos : 0;
+            appGoto('Browse', 'Filesystem', undefined, offset, app.current.limit, app.current.filter, app.current.sort, '-', uri, scrollPos);
         }
     }, false);
 
@@ -355,6 +361,7 @@ function parseFilesystem(obj) {
         row.setAttribute('title', t(data.Type === 'song' ? rowTitleSong : 
                 data.Type === 'dir' ? rowTitleFolder : rowTitlePlaylist));
     });
+    scrollToPosY(app.current.scrollPos);
 }
 
 //eslint-disable-next-line no-unused-vars
@@ -453,7 +460,7 @@ function parseDatabase(obj) {
         }
         else {
             id = genId('database' + obj.result.data[i].value);
-            picture = subdir + '/tagpics/' + obj.result.tag + '/' + encodeURI(obj.result.data[i].value);
+            picture = subdir + '/pics/' + obj.result.tag + '/' + encodeURI(obj.result.data[i].value);
             html = '<div class="card card-grid clickable" data-picture="' + encodeURI(picture) + '" data-tag="' + encodeURI(obj.result.data[i].value) + '" tabindex="0">' +
                    (obj.result.pics === true ? '<div class="card-body album-cover-loading album-cover-grid bg-white" id="' + id + '"></div>' : '') +
                    '<div class="card-footer card-footer-grid p-2" title="' + e(obj.result.data[i].value) + '">' +
