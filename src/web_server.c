@@ -27,6 +27,7 @@
 #include "utility.h"
 #include "tiny_queue.h"
 #include "global.h"
+#include "http_client.h"
 #include "web_server/web_server_utility.h"
 #include "web_server/web_server_albumart.h"
 #include "web_server.h"
@@ -65,7 +66,19 @@ bool web_server_init(void *arg_mgr, t_config *config, t_mg_user_data *mg_user_da
     mg_mgr_init(mgr);
     mgr->userdata = mg_user_data;
     mgr->product_name = "myMPD "MYMPD_VERSION;
-    
+    //set dns server
+    sds dns_uri = get_dnsserver();
+    if (strlen(dns_uri) > 0) {
+        mgr->dns4.url = strdup(dns_uri);
+    }
+    else {
+        dns_uri = sdscat(dns_uri, "udp://8.8.8.8:53");
+        mgr->dns4.url = strdup(dns_uri);
+        MYMPD_LOG_WARN("Error reading dns server settings");
+    }
+    MYMPD_LOG_DEBUG("Setting dns server to %s", dns_uri);
+    sdsfree(dns_uri);
+  
     //bind to http_port
     struct mg_connection *nc_http;
     sds http_url = sdscatfmt(sdsempty(), "http://%s:%s", config->http_host, config->http_port);
@@ -220,7 +233,7 @@ static void send_api_response(struct mg_mgr *mgr, t_work_result *response) {
                 send_albumart(nc, response->data, response->binary);
             }
             else {
-                mg_http_reply(nc, 200, "Content-Type: application/json\r\n", response->data);
+                http_send_data(nc, response->data, sdslen(response->data), "Content-Type: application/json\r\n");
             }
             break;
         }
@@ -351,7 +364,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data, void *fn
                     MYMPD_LOG_ERROR("Invalid script API request");
                     sds response = jsonrpc_respond_message(sdsempty(), "", 0, true,
                         "script", "error", "Invalid script API request");
-                    mg_http_reply(nc, 200, "Content-Type: application/json\r\n", response);
+                    http_send_data(nc, response, sdslen(response), "Content-Type: application/json\r\n");
                     sdsfree(response);
                 }
             }
@@ -363,18 +376,18 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data, void *fn
                     response = tojson_char(response, "version", MG_VERSION, true);
                     response = tojson_char(response, "ip", inet_ntoa(localip.sin_addr), false);
                     response = jsonrpc_result_end(response);
-                    mg_http_reply(nc, 200, "Content-Type: application/json\r\n", response);
+                    http_send_data(nc, response, sdslen(response), "Content-Type: application/json\r\n");
                     sdsfree(response);
                 }
             }
-            else if (mg_http_match_uri(hm, "/api")) {
+            else if (mg_http_match_uri(hm, "/api/")) {
                 //api request
                 bool rc = handle_api((long long)nc->id, hm);
                 if (rc == false) {
                     MYMPD_LOG_ERROR("Invalid API request");
                     sds response = jsonrpc_respond_message(sdsempty(), "", 0, true,
                         "general", "error", "Invalid API request");
-                    mg_http_reply(nc, 200, "Content-Type: application/json\r\n", response);
+                    http_send_data(nc, response, sdslen(response), "Content-Type: application/json\r\n");
                     sdsfree(response);
                 }
             }

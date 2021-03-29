@@ -7,7 +7,7 @@
 project (mympd C)
 set(CPACK_PACKAGE_VERSION_MAJOR "7")
 set(CPACK_PACKAGE_VERSION_MINOR "0")
-set(CPACK_PACKAGE_VERSION_PATCH "0")
+set(CPACK_PACKAGE_VERSION_PATCH "1")
 
 cmake_minimum_required(VERSION 3.4)
 include(GNUInstallDirs)
@@ -186,6 +186,7 @@ set(SOURCES
   src/utility.c
   src/random.c
   src/sds_extras.c
+  src/http_client.c
   src/lua_mympd_state.c
   src/mpd_shared.c
   src/mpd_shared/mpd_shared_search.c
