@@ -474,15 +474,6 @@ Tags für die Datenbankanzeige
 Local playback
 Lokale Wiedergabe
 
-URI
-URL
-
-HTTPS Port
-HTTPS Port
-
-HTTP Port
-HTTP Port
-
 Statistics
 Statistiken
 
@@ -1506,15 +1497,6 @@ deaktiviert
 enabled
 aktiviert
 
-No mixed content,  MPD stream must be served over https:
-Mixed Content: MPD stream muss über https ausgeliefert werden:
-
-Details
-Details
-
-Port
-Port
-
 Websocket is disconnected
 Websocket ist nicht verbunden
 
@@ -1851,3 +1833,6 @@ Synchronisierter Liedtext
 
 Unsynced lyrics
 Liedtext
+
+Can not open script directory
+Skriptverzeichnis konnte nicht geöffnet werden

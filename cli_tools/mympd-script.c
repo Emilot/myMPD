@@ -4,6 +4,8 @@
  https://github.com/jcorporation/mympd
 */
 
+#define _GNU_SOURCE
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <inttypes.h>
@@ -12,41 +14,16 @@
 #include "../dist/src/sds/sds.h"
 #include "../src/sds_extras.h"
 
-static int s_exit_flag = 0;
+#include "../src/http_client.h"
+#include "log.h"
 
 static void print_usage(char **argv) {
     fprintf(stderr, "Usage: %s <URL> <scriptname> key=val ...\n"
                     "myMPD script utility\n"
                     "If scriptname is -, the script is read from stdin.\n"
+                    "<URL>: e.g. https://localhost\n"
                     "For further details look at https://github.com/jcorporation/myMPD/wiki/Scripting\n\n",
             argv[0]);
-}
-
-static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
-    struct http_message *hm = (struct http_message *) ev_data;
-
-    switch (ev) {
-        case MG_EV_CONNECT:
-            if (*(int *) ev_data != 0) {
-                fprintf(stderr, "Connection failed: %s\n", strerror(*(int *) ev_data));
-                s_exit_flag = 1;
-            }
-            break;
-        case MG_EV_HTTP_REPLY:
-            nc->flags |= MG_F_CLOSE_IMMEDIATELY;
-            fwrite(hm->body.p, 1, hm->body.len, stdout);
-            putchar('\n');
-            s_exit_flag = 1;
-            break;
-        case MG_EV_CLOSE:
-            if (s_exit_flag == 0) {
-                printf("Server closed connection\n");
-                s_exit_flag = 1;
-            }
-            break;
-        default:
-            break;
-    }
 }
 
 static sds parse_arguments(sds post_data, char **argv, int argc) {
@@ -77,10 +54,12 @@ int main(int argc, char **argv) {
         print_usage(argv);
         return EXIT_FAILURE;
     }
-    
-    sds post_data = sdsempty();
+
+    set_loglevel(5);
+
     sds uri = sdsnew(argv[1]);
-    
+    sds post_data = sdsempty();
+
     if (strlen(argv[2]) == 1 && argv[2][0] == '-') {
         uri = sdscat(uri, "/api/script");
         int c;
@@ -88,7 +67,6 @@ int main(int argc, char **argv) {
         while ((c = getchar()) != EOF) {
             script_data = sdscatlen(script_data, &c, 1);
         }
-
         post_data = sdscat(post_data, "{\"jsonrpc\":\"2.0\",\"id\":0,\"method\":\"MYMPD_API_SCRIPT_POST_EXECUTE\",\"params\":{\"script\":");
         post_data = sdscatjson(post_data, script_data, sdslen(script_data));
         post_data = sdscat(post_data, ",arguments:{");
@@ -97,7 +75,7 @@ int main(int argc, char **argv) {
         sdsfree(script_data);
     }
     else {
-        uri = sdscat(uri, "/api");
+        uri = sdscat(uri, "/api/");
         post_data = sdscat(post_data, "{\"jsonrpc\":\"2.0\",\"id\":0,\"method\":\"MYMPD_API_SCRIPT_EXECUTE\",\"params\":{\"script\":");
         post_data = sdscatjson(post_data, argv[2], strlen(argv[2]));
         post_data = sdscat(post_data, ",arguments:{");
@@ -105,16 +83,28 @@ int main(int argc, char **argv) {
         post_data = sdscat(post_data, "}}}");
     }
 
-    struct mg_mgr mgr;
-    mg_mgr_init(&mgr, NULL);
-    mg_connect_http(&mgr, ev_handler, uri, "Content-Type: application/json\r\n", post_data);
-    while (s_exit_flag == 0) {
-        mg_mgr_poll(&mgr, 1000);
-    }
-    mg_mgr_free(&mgr);
+    struct mg_client_request_t request = {
+        .method = "POST",
+        .uri = uri,
+        .extra_headers = "Content-type: application/json\r\n",
+        .post_data = post_data
+    };
 
+    struct mg_client_response_t response = {
+        .rc = -1,
+        .response = sdsempty(),
+        .header = sdsempty(),
+        .body = sdsempty()
+    };
+
+    http_client_request(&request, &response);
+    MYMPD_LOG_NOTICE("Response: \"%s\"", response.response);
+
+    sdsfree(response.response);
+    sdsfree(response.header);
+    sdsfree(response.body);
     sdsfree(uri);
     sdsfree(post_data);
-
-    return EXIT_SUCCESS;
+    
+    return response.rc;
 }
