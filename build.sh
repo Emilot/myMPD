@@ -5,26 +5,37 @@
 # https://github.com/jcorporation/mympd
 #
 
-if [ "${ENABLE_SSL}" = "" ]
+#exit on error
+set -e
+
+#exit on undefined variable
+set -u
+
+#print out commands
+[ -z "${DEBUG+x}" ] || set -x
+
+#default compile settings
+if [ -z "${ENABLE_SSL+x}" ]
 then
   export ENABLE_SSL="ON"
 fi
 
-if [ "${ENABLE_LIBID3TAG}" = "" ]
+if [ -z "${ENABLE_LIBID3TAG+x}" ]
 then
   export ENABLE_LIBID3TAG="ON"
 fi
 
-if [ "${ENABLE_FLAC}" = "" ]
+if [ -z "${ENABLE_FLAC+x}" ]
 then
   export ENABLE_FLAC="ON"
 fi
 
-if [ "${ENABLE_LUA}" = "" ]
+if [ -z "${ENABLE_LUA+x}" ]
 then
   export ENABLE_LUA="ON"
 fi
 
+#save startpath
 STARTPATH=$(pwd)
 
 #set umask
@@ -32,18 +43,45 @@ umask 0022
 
 #get myMPD version
 VERSION=$(grep CPACK_PACKAGE_VERSION_ CMakeLists.txt | cut -d\" -f2 | tr '\n' '.' | sed 's/\.$//')
+#get Collybia version
+COLLYBIAVERSION=$(grep CPACK_PACKAGE_COLLYBIAVERSION_ CMakeLists.txt | cut -d\" -f2 | tr '\n' '.' | sed 's/\.$//')
 
-if [ "$1" != "installdeps" ]
+#check for command
+check_cmd() {
+  for DEPENDENCY in "$@"
+  do
+    if ! check_cmd_silent "$@"
+    then
+      echo "ERROR: ${DEPENDENCY} not found"
+      return 1
+    fi
+  done
+  return 0
+}
+
+check_cmd_silent() {
+  for DEPENDENCY in "$@"
+  do
+    if ! command -v "${DEPENDENCY}" > /dev/null
+    then
+      return 1
+    fi
+  done
+  return 0
+}
+
+#get action
+if [ -z "${1+x}" ]
 then
-  #gzip is needed to compress assets for release
-  GZIPBIN=$(command -v gzip)
-  if [ "$GZIPBIN" = "" ]
-  then
-    echo "ERROR: gzip not found"
-    exit 1
-  fi
-  GZIP="$GZIPBIN -f -v -9"
-  GZIPCAT="$GZIPBIN -f -v -9 -c"
+  ACTION=""
+else
+  ACTION="$1"
+fi
+
+if [ "$ACTION" != "installdeps" ] && [ "$ACTION" != "" ]
+then
+  check_cmd gzip perl
+
   GZIP="gzip -n -f -v -9"
   GZIPCAT="gzip -n -v -9 -c"
 fi
@@ -58,7 +96,8 @@ setversion() {
   echo "Setting version to ${VERSION} and date to ${DATE_F2}"
 
   for F in htdocs/sw.js contrib/packaging/alpine/APKBUILD contrib/packaging/arch/PKGBUILD \
-  		   contrib/packaging/rpm/mympd.spec contrib/packaging/debian/changelog
+  		   contrib/packaging/rpm/mympd.spec contrib/packaging/debian/changelog contrib/man/mympd.1 \
+  		   contrib/man/mympd-config.1 contrib/man/mympd-script.1
   do
   	echo "$F"
   	sed -e "s/__VERSION__/${VERSION}/g" -e "s/__DATE_F1__/$DATE_F1/g" -e "s/__DATE_F2__/$DATE_F2/g" \
@@ -82,15 +121,13 @@ minify() {
   if [ "$TYPE" = "html" ]
   then
     #shellcheck disable=SC2016
-    $PERLBIN -pe 's/^<!--debug-->.*\n//gm; s/<!--release\s+(.+)-->/$1/g; s/<!--(.+)-->//g; s/^\s*//gm; s/\s*$//gm' "$SRC" > "${DST}.tmp"
-    ERROR="$?"
-    if [ "$ERROR" = "1" ]
+    if ! perl -pe 's/^<!--debug-->.*\n//gm; s/<!--release\s+(.+)-->/$1/g; s/<!--(.+)-->//g; s/^\s*//gm; s/\s*$//gm' "$SRC" > "${DST}.tmp"
     then
       rm -f "${DST}.tmp"
       echo "Error minifying $SRC"
       exit 1
     fi
-  elif [ "$TYPE" = "js" ] && [ "$JAVABIN" != "" ]
+  elif [ "$TYPE" = "js" ]
   then
     #shellcheck disable=SC2016
     if ! perl -pe 's/^\s*//gm; s/^\/\/.+$//g; s/^logDebug\(.*$//g; s/\s*$//gm;' "$SRC" > "${DST}.tmp"
@@ -101,26 +138,18 @@ minify() {
     fi
   elif [ "$TYPE" = "css" ]
   then
-    $JAVABIN -jar dist/buildtools/closure-stylesheets.jar --allow-unrecognized-properties "$SRC" > "${DST}.tmp"
-    ERROR="$?"
-  else
-    ERROR="1"
+    #shellcheck disable=SC2016
+    if ! perl -pe 's/^\s*//gm; s/\s*$//gm; s/: /:/g;' "$SRC" | perl -pe 's/\/\*[^*]+\*\///g;' > "${DST}.tmp"
+    then
+      rm -f "${DST}.tmp"
+      echo "Error minifying $SRC"
+      exit 1
+    fi
   fi
 
-  if [ "$ERROR" = "1" ]
-  then
-    if [ "$JAVABIN" = "" ]
-    then
-      echo "Java not found, copy $SRC to $DST"
-    else
-      echo "Error minifying $SRC, copy $SRC to $DST"
-    fi
-    rm -f "${DST}.tmp"
-    cp "$SRC" "$DST"
-  else
-    mv "${DST}.tmp" "$DST"
-  fi
-  #successfull minified or copied file
+  #successfull minified file
+  echo "" >> "${DST}.tmp"
+  mv "${DST}.tmp" "$DST"
   return 0
 }
 
@@ -134,15 +163,17 @@ createi18n() {
 }
 
 createassets() {
-  echo "Creating assets"
+  [ -z "${MYMPD_BUILDDIR+x}" ] && MYMPD_BUILDDIR="release"
+
+  echo "Creating assets in $MYMPD_BUILDDIR"
   #Recreate asset directories
-  rm -fr release/htdocs
-  install -d release/htdocs/js
-  install -d release/htdocs/css
-  install -d release/htdocs/assets
+  rm -fr "$MYMPD_BUILDDIR/htdocs"
+  install -d "$MYMPD_BUILDDIR/htdocs/js"
+  install -d "$MYMPD_BUILDDIR/htdocs/css"
+  install -d "$MYMPD_BUILDDIR/htdocs/assets"
 
   #Create translation phrases file
-  createi18n ../../release/htdocs/js/i18n.min.js ""
+  createi18n "../../$MYMPD_BUILDDIR/htdocs/js/i18n.min.js" ""
   
   echo "Minifying javascript"
   JSSRCFILES=""
@@ -163,13 +194,13 @@ createassets() {
   echo "Creating mympd.js"
   # shellcheck disable=SC2086
   # shellcheck disable=SC2002
-  cat $JSSRCFILES | grep -v "\"use strict\";" > release/htdocs/js/mympd.js
-  minify js htdocs/sw.js release/htdocs/sw.min.js
-  minify js release/htdocs/js/mympd.js release/htdocs/js/mympd.min.js
+  cat $JSSRCFILES | grep -v "\"use strict\";" > "$MYMPD_BUILDDIR/htdocs/js/mympd.js"
+  minify js htdocs/sw.js "$MYMPD_BUILDDIR/htdocs/sw.min.js"
+  minify js "$MYMPD_BUILDDIR/htdocs/js/mympd.js" "$MYMPD_BUILDDIR/htdocs/js/mympd.min.js"
   
   echo "Combining and compressing javascript"
-  echo "//myMPD ${VERSION} | (c) 2018-2021 Juergen Mang <mail@jcgames.de> | SPDX-License-Identifier: GPL-2.0-or-later | https://github.com/jcorporation/mympd" > release/htdocs/js/copyright.min.js
-  JSFILES="dist/htdocs/js/*.min.js release/htdocs/js/*.min.js"
+  echo "//myMPD ${VERSION} | (c) 2018-2021 Juergen Mang <mail@jcgames.de> | SPDX-License-Identifier: GPL-2.0-or-later | https://github.com/jcorporation/mympd" > "$MYMPD_BUILDDIR/htdocs/js/copyright.min.js"
+  JSFILES="dist/htdocs/js/*.min.js $MYMPD_BUILDDIR/htdocs/js/*.min.js"
   for F in $JSFILES
   do
     if tail -1 "$F" | perl -npe 'exit 1 if m/\n/; exit 0'
@@ -178,14 +209,14 @@ createassets() {
       exit 1
     fi
   done
-  echo "\"use strict\";" > release/htdocs/js/combined.js
+  echo "\"use strict\";" > "$MYMPD_BUILDDIR/htdocs/js/combined.js"
   # shellcheck disable=SC2086
   # shellcheck disable=SC2002
-  cat $JSFILES >> release/htdocs/js/combined.js
-  $GZIP release/htdocs/js/combined.js
+  cat $JSFILES >> "$MYMPD_BUILDDIR/htdocs/js/combined.js"
+  $GZIP "$MYMPD_BUILDDIR/htdocs/js/combined.js"
   
   #serviceworker
-  $GZIPCAT release/htdocs/sw.min.js > release/htdocs/sw.js.gz
+  $GZIPCAT "$MYMPD_BUILDDIR/htdocs/sw.min.js" > "$MYMPD_BUILDDIR/htdocs/sw.js.gz"
  
   echo "Minifying stylesheets"
   for F in htdocs/css/*.css
@@ -194,26 +225,26 @@ createassets() {
     #skip symbolic links
     if [ -f "$F" ] && [ ! -L "$F" ]
     then
-      minify css "$F" "release/htdocs/css/${DST}.min.css"
+      minify css "$F" "$MYMPD_BUILDDIR/htdocs/css/${DST}.min.css"
     fi
   done
   
   echo "Combining and compressing stylesheets"
-  echo "/* myMPD ${VERSION} | (c) 2018-2021 Juergen Mang <mail@jcgames.de> | SPDX-License-Identifier: GPL-2.0-or-later | https://github.com/jcorporation/mympd */" > release/htdocs/css/copyright.min.css
-  CSSFILES="dist/htdocs/css/*.min.css release/htdocs/css/*.min.css"
+  echo "/* myMPD ${VERSION} | (c) 2018-2021 Juergen Mang <mail@jcgames.de> | SPDX-License-Identifier: GPL-2.0-or-later | https://github.com/jcorporation/mympd */" > "$MYMPD_BUILDDIR/htdocs/css/copyright.min.css"
+  CSSFILES="dist/htdocs/css/*.min.css $MYMPD_BUILDDIR/htdocs/css/*.min.css"
   # shellcheck disable=SC2086
-  cat $CSSFILES > release/htdocs/css/combined.css
-  $GZIP release/htdocs/css/combined.css
+  cat $CSSFILES > "$MYMPD_BUILDDIR/htdocs/css/combined.css"
+  $GZIP "$MYMPD_BUILDDIR/htdocs/css/combined.css"
   
   echo "Minifying and compressing html"
-  minify html htdocs/index.html release/htdocs/index.html
-  $GZIPCAT release/htdocs/index.html > release/htdocs/index.html.gz
+  minify html htdocs/index.html "$MYMPD_BUILDDIR/htdocs/index.html"
+  $GZIPCAT "$MYMPD_BUILDDIR/htdocs/index.html" > "$MYMPD_BUILDDIR/htdocs/index.html.gz"
 
   echo "Creating other compressed assets"
   ASSETS="htdocs/mympd.webmanifest htdocs/assets/*.svg"
   for ASSET in $ASSETS
   do
-    $GZIPCAT "$ASSET" > "release/${ASSET}.gz"
+    $GZIPCAT "$ASSET" > "$MYMPD_BUILDDIR/${ASSET}.gz"
   done
   return 0
 }
@@ -226,7 +257,6 @@ buildrelease() {
   cd release || exit 1
   #force rebuild of web_server with embedded assets
   rm -vf CMakeFiles/mympd.dir/src/web_server/web_server_utility.c.o
-
   #set INSTALL_PREFIX and build myMPD
   export INSTALL_PREFIX="${MYMPD_INSTALL_PREFIX:-/usr}"
   cmake -DCMAKE_INSTALL_PREFIX:PATH="$INSTALL_PREFIX" -DCMAKE_BUILD_TYPE=RELEASE \
@@ -272,6 +302,7 @@ addmympduser() {
 installrelease() {
   echo "Installing myMPD"
   cd release || exit 1  
+  [ -z "${DESTDIR+x}" ] && DESTDIR=""
   make install DESTDIR="$DESTDIR"
   addmympduser
   echo "myMPD installed"
@@ -310,7 +341,9 @@ buildtest() {
 }
 
 cleanup() {
+  [ -z "${MYMPD_BUILDDIR+x}" ] && MYMPD_BUILDDIR="release"
   #build directories
+  rm -rf "$MYMPD_BUILDDIR"
   rm -rf release
   rm -rf debug
   rm -rf package
@@ -318,15 +351,14 @@ cleanup() {
   
   #htdocs
   rm -f htdocs/js/bootstrap-native.js
+  rm -f htdocs/js/long-press-event.js
   rm -f htdocs/js/i18n.js
   rm -f htdocs/css/bootstrap.css
   rm -f htdocs/assets/MaterialIcons-Regular.woff2
 
-  #tmp files
-  find ./ -name \*~ -delete
-  
   #compilation database
   rm -f src/compile_commands.json
+
   #clang tidy
   rm -f clang-tidy.out
 }
@@ -336,27 +368,25 @@ cleanuposc() {
 }
 
 check() {
-  CPPCHECKBIN=$(command -v cppcheck)
-  [ "$CPPCHECKOPTS" = "" ] && CPPCHECKOPTS="--enable=warning"
-  if [ "$CPPCHECKBIN" != "" ]
+  if check_cmd cppcheck
   then
     echo "Running cppcheck"
-    $CPPCHECKBIN $CPPCHECKOPTS src/*.c src/*.h
-    $CPPCHECKBIN $CPPCHECKOPTS src/mpd_client/*.c src/mpd_client/*.h
-    $CPPCHECKBIN $CPPCHECKOPTS src/mympd_api/*.c src/mympd_api/*.h
-    $CPPCHECKBIN $CPPCHECKOPTS src/web_server/*.c src/web_server/*.h
-    $CPPCHECKBIN $CPPCHECKOPTS cli_tools/*.c
+    [ -z "${CPPCHECKOPTS+z}" ] && CPPCHECKOPTS="--enable=warning"
+    cppcheck $CPPCHECKOPTS src/*.c src/*.h
+    cppcheck $CPPCHECKOPTS src/mpd_client/*.c src/mpd_client/*.h
+    cppcheck $CPPCHECKOPTS src/mympd_api/*.c src/mympd_api/*.h
+    cppcheck $CPPCHECKOPTS src/web_server/*.c src/web_server/*.h
+    cppcheck $CPPCHECKOPTS cli_tools/*.c
   else
     echo "cppcheck not found"
   fi
   
-  FLAWFINDERBIN=$(command -v flawfinder)
-  [ "$FLAWFINDEROPTS" = "" ] && FLAWFINDEROPTS="-m3"
-  if [ "$FLAWFINDERBIN" != "" ]
+  if check_cmd flawfinder
   then
     echo "Running flawfinder"
-    $FLAWFINDERBIN $FLAWFINDEROPTS src
-    $FLAWFINDERBIN $FLAWFINDEROPTS cli_tools
+    [ -z "${FLAWFINDEROPTS+z}" ] && FLAWFINDEROPTS="-m3"
+    flawfinder $FLAWFINDEROPTS src
+    flawfinder $FLAWFINDEROPTS cli_tools
   else
     echo "flawfinder not found"
   fi
@@ -368,14 +398,13 @@ check() {
     exit 1
   fi
   
-  CLANGTIDYBIN=$(command -v clang-tidy)
-  if [ "$CLANGTIDYBIN" != "" ]
+  if check_cmd clang-tidy
   then
     echo "Running clang-tidy, output goes to clang-tidy.out"
     rm -f clang-tidy.out
     cd src || exit 1
     find ./ -name '*.c' -exec clang-tidy \
-    	--checks="*,-llvmlibc-restrict-system-libc-headers,-bugprone-reserved-identifier,-cert-dcl37-c,-cert-dcl51-cpp,-readability-isolate-declaration,-hicpp-multiway-paths-covered,-readability-uppercase-literal-suffix,-hicpp-uppercase-literal-suffix,-cert-msc51-cpp,-cert-msc32-c,-hicpp-no-assembler,-android*,-cert-env33-c,-cert-msc50-cpp,-bugprone-branch-clone,-misc-misplaced-const,-readability-non-const-parameter,-cert-msc30-c,-hicpp-signed-bitwise,-readability-magic-numbers,-readability-avoid-const-params-in-decls,-llvm-include-order,-bugprone-macro-parentheses,-modernize*,-cppcoreguidelines*,-llvm-header-guard,-clang-analyzer-optin.performance.Padding,-clang-diagnostic-embedded-directive" \
+    	--checks="*,-google-readability-todo,-llvmlibc-restrict-system-libc-headers,-bugprone-reserved-identifier,-cert-dcl37-c,-cert-dcl51-cpp,-readability-isolate-declaration,-hicpp-multiway-paths-covered,-readability-uppercase-literal-suffix,-hicpp-uppercase-literal-suffix,-cert-msc51-cpp,-cert-msc32-c,-hicpp-no-assembler,-android*,-cert-env33-c,-cert-msc50-cpp,-bugprone-branch-clone,-misc-misplaced-const,-readability-non-const-parameter,-cert-msc30-c,-hicpp-signed-bitwise,-readability-magic-numbers,-readability-avoid-const-params-in-decls,-llvm-include-order,-bugprone-macro-parentheses,-modernize*,-cppcoreguidelines*,-llvm-header-guard,-clang-analyzer-optin.performance.Padding,-clang-diagnostic-embedded-directive" \
     	-header-filter='.*' {}  \; >> ../clang-tidy.out
   else
     echo "clang-tidy not found"  
@@ -390,12 +419,13 @@ prepare() {
   for F in $SRC
   do
     [ "$F" = "$STARTPATH/osc" ] && continue
+    [ "$F" = "$STARTPATH/builder" ] && continue
     cp -a "$F" .
   done
-  rm -r dist/buildtools
 }
 
 pkgdebian() {
+  check_cmd dpkg-buildpackage
   prepare
   cp -a contrib/packaging/debian .
   export LC_TIME="en_GB.UTF-8"
@@ -418,40 +448,24 @@ pkgdebian() {
     echo "Can't find package"
   fi
 
-  if [ "$SIGN" = "TRUE" ]
-  then  
-    DPKGSIG=$(command -v dpkg-sig)
-    if [ "$DPKGSIG" != "" ]
-    then
-      if [ "$GPGKEYID" != "" ]
-      then
-        echo "Signing package with key $GPGKEYID"
-        dpkg-sig -k "$GPGKEYID" --sign builder "$PACKAGE"
-      else
-        echo "WARNING: GPGKEYID not set, can't sign package"
-      fi
-    else
-      echo "WARNING: dpkg-sig not found, can't sign package"
-    fi
-  fi
-  
-  LINTIAN=$(command -v lintian)
-  if [ "$LINTIAN" != "" ]
+  if check_cmd lintian
   then
     echo "Checking package with lintian"
-    $LINTIAN "$PACKAGE"
+    lintian "$PACKAGE"
   else
     echo "WARNING: lintian not found, can't check package"
   fi
 }
 
 pkgdocker() {
-  [ "$DOCKERFILE" = "" ] && DOCKERFILE="Dockerfile.alpine"
+  check_cmd docker
+  [ -z "${DOCKERFILE+x}" ] && DOCKERFILE="Dockerfile.alpine"
   prepare
   docker build -t mympd -f "contrib/packaging/docker/$DOCKERFILE" .
 }
 
 pkgbuildx() {
+  check_cmd docker
   if [ ! -x ~/.docker/cli-plugins/docker-buildx ]
   then
     echo "Docker buildx not found"
@@ -463,27 +477,44 @@ pkgbuildx() {
     echo "More info: https://www.docker.com/blog/getting-started-with-docker-for-arm-on-linux/"
     exit 1
   fi
-  [ "$DOCKERFILE" = "" ] && DOCKERFILE="Dockerfile.alpine"
-  [ "$PLATFORMS" = "" ] && PLATFORMS="linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6"
+  [ -z "${DOCKERFILE+x}" ] && DOCKERFILE="Dockerfile.alpine"
+  [ -z "${PLATFORMS+x}" ] && PLATFORMS="linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6"
   prepare
   cp contrib/packaging/docker/"$DOCKERFILE" Dockerfile
   docker run --rm --privileged docker/binfmt:820fdd95a9972a5308930a2bdfb8573dd4447ad3
-  docker buildx create --name mympdbuilder
+  if ! docker buildx ls | grep -q mympdbuilder
+  then
+    docker buildx create --name mympdbuilder
+  fi
   docker buildx use mympdbuilder
   docker buildx inspect --bootstrap
   docker buildx build -t mympd --platform "$PLATFORMS" .
 }
 
 pkgalpine() {
+  if [ -z "${1+x}" ]
+  then
+    TARONLY=""
+  else
+    TARONLY=$1
+  fi
+  check_cmd abuild
   prepare
   tar -czf "mympd_${VERSION}.orig.tar.gz" -- *
-  [ "$1" = "taronly" ] && return 0
+  [ "$TARONLY" = "taronly" ] && return 0
   cp contrib/packaging/alpine/* .
   abuild checksum
   abuild -r
 }
 
 pkgrpm() {
+  if [ -z "${1+x}" ]
+  then
+    TARONLY=""
+  else
+    TARONLY=$1
+  fi
+  check_cmd rpmbuild
   prepare
   SRC=$(ls)
   mkdir "mympd-${VERSION}"
@@ -492,23 +523,23 @@ pkgrpm() {
     mv "$F" "mympd-${VERSION}"
   done
   tar -czf "mympd-${VERSION}.tar.gz" "mympd-${VERSION}"
-  [ "$1" = "taronly" ] && return 0
+  [ "$TARONLY" = "taronly" ] && return 0
   install -d "$HOME/rpmbuild/SOURCES"
   mv "mympd-${VERSION}.tar.gz" ~/rpmbuild/SOURCES/
   cp ../../contrib/packaging/rpm/mympd.spec .
   rpmbuild -ba mympd.spec
-  RPMLINT=$(command -v rpmlint)
-  if [ "$RPMLINT" != "" ]
+  if check_cmd rpmlint
   then
     echo "Checking package with rpmlint"
     ARCH=$(uname -p)
-    $RPMLINT "$HOME/rpmbuild/RPMS/${ARCH}/mympd-${VERSION}-0.${ARCH}.rpm"
+    rpmlint "$HOME/rpmbuild/RPMS/${ARCH}/mympd-${VERSION}-0.${ARCH}.rpm"
   else
     echo "WARNING: rpmlint not found, can't check package"
   fi
 }
 
 pkgarch() {
+  check_cmd makepkg
   prepare
   tar -czf "mympd_${VERSION}.orig.tar.gz" -- *
   cp contrib/packaging/arch/* .
@@ -520,25 +551,18 @@ pkgarch() {
     #shellcheck disable=SC2086
     makepkg --sign $KEYARG mympd-*.pkg.tar.xz
   fi
-  NAMCAP=$(command -v namcap)
-  if [ "$NAMCAP" != "" ]
+  if check_cmd namcap
   then
     echo "Checking package with namcap"
-    $NAMCAP PKGBUILD
-    $NAMCAP mympd-*.pkg.tar.xz
+    namcap PKGBUILD
+    namcap mympd-*.pkg.tar.xz
   else
     echo "WARNING: namcap not found, can't check package"
   fi
 }
 
 pkgosc() {
-  OSCBIN=$(command -v osc)
-  if [ "$OSCBIN" = "" ]
-  then
-    echo "ERROR: osc not found"
-    exit 1
-  fi
-  
+  check_cmd osc
   cleanup
   cleanuposc
   if [ -z "${OSC_REPO+x}" ]
@@ -593,72 +617,54 @@ installdeps() {
   if [ -f /etc/debian_version ]
   then
     #debian
-    JAVADEB="default-jre-headless"
-    #issue 234
-    [ "$(uname -m)" = "armv6l" ] && JAVADEB="openjdk-8-jre-headless"
     apt-get update
     apt-get install -y --no-install-recommends \
 	gcc cmake perl libssl-dev libid3tag0-dev libflac-dev \
-	build-essential liblua5.3-dev pkg-config $JAVADEB libcurl4-gnutls-dev
+	build-essential liblua5.3-dev pkg-config libpcre3-dev
   elif [ -f /etc/arch-release ]
   then
     #arch
-    pacman -S gcc cmake perl openssl libid3tag flac jre-openjdk-headless lua pkgconf curl
+    pacman -S gcc cmake perl openssl libid3tag flac lua pkgconf pcre
   elif [ -f /etc/alpine-release ]
   then
     #alpine
-    JAVADEB="openjdk11-jre-headless"
-    #issue 234
-    [ "$(uname -m)" = "armv7l" ] && JAVADEB="java-common"
     apk add cmake perl openssl-dev libid3tag-dev flac-dev lua5.3-dev \
-    	alpine-sdk linux-headers pkgconf $JAVADEB curl-dev
+    	alpine-sdk linux-headers pkgconf pcre-dev
   elif [ -f /etc/SuSE-release ]
   then
     #suse
     zypper install gcc cmake pkgconfig perl openssl-devel libid3tag-devel flac-devel \
-	lua-devel java-11-openjdk-headless unzip libcurl-devel
+	lua-devel unzip pcre-devel
   elif [ -f /etc/redhat-release ]
   then  
     #fedora 	
     yum install gcc cmake pkgconfig perl openssl-devel libid3tag-devel flac-devel \
-	lua-devel java-11-openjdk-headless unzip libcurl-devel
+	lua-devel unzip pcre-devel
   else 
     echo "Unsupported distribution detected."
     echo "You should manually install:"
     echo "  - gcc"
     echo "  - cmake"
     echo "  - perl"
-    echo "  - java"
     echo "  - openssl (devel)"
     echo "  - flac (devel)"
     echo "  - libid3tag (devel)"
     echo "  - lua53 (devel)"
-    echo "  - curl (devel)"
+    echo "  - libpcre3 (devel)"
   fi
 }
 
 updatelibmympdclient() {
-  GITBIN=$(command -v git)
-  if [ "$GITBIN" = "" ]
-  then
-    echo "ERROR: git not found"
-    exit 1
-  fi
-  MESONBIN=$(command -v meson)
-  if [ "$MESONBIN" = "" ]
-  then
-    echo "ERROR: meson not found"
-    exit 1
-  fi
+  check_cmd git meson
 
   cd dist/src/libmpdclient || exit 1
   STARTDIR=$(pwd)
 
   TMPDIR=$(mktemp -d)
   cd "$TMPDIR" || exit 1
-  $GITBIN clone -b libmympdclient https://github.com/jcorporation/libmpdclient.git
+  git clone -b libmympdclient https://github.com/jcorporation/libmpdclient.git
   cd libmpdclient || exit 1
-  $MESONBIN . output
+  meson . output
 
   cd "$STARTDIR" || exit 1
   install -d src
@@ -686,7 +692,7 @@ uninstall() {
   then
     xargs rm < release/install_manifest.txt
   fi
-
+  [ -z "${DESTDIR+x}" ] && DESTDIR=""
   #MYMPD_INSTALL_PREFIX="/usr"
   rm -f "$DESTDIR/usr/bin/mympd"
   rm -f "$DESTDIR/usr/bin/mympd-config"
@@ -694,7 +700,6 @@ uninstall() {
   rm -f "$DESTDIR/usr/share/man/man1/mympd.1.gz"
   rm -f "$DESTDIR/usr/share/man/man1/mympd-config.1.gz"
   rm -f "$DESTDIR/usr/share/man/man1/mympd-script.1.gz"
-
   #MYMPD_INSTALL_PREFIX="/usr/local"
   rm -f "$DESTDIR/usr/local/bin/mympd"
   rm -f "$DESTDIR/usr/local/bin/mympd-config"
@@ -702,7 +707,6 @@ uninstall() {
   rm -f "$DESTDIR/usr/local/share/man/man1/mympd.1.gz"
   rm -f "$DESTDIR/usr/local/share/man/man1/mympd-config.1.gz"
   rm -f "$DESTDIR/usr/local/share/man/man1/mympd-script.1.gz"
-
   #MYMPD_INSTALL_PREFIX="/opt/mympd/"
   rm -rf "$DESTDIR/opt/mympd"
   #systemd
@@ -718,6 +722,7 @@ uninstall() {
 }
 
 purge() {
+  [ -z "${DESTDIR+x}" ] && DESTDIR=""
   #MYMPD_INSTALL_PREFIX="/usr"
   rm -rf "$DESTDIR/var/lib/mympd"
   rm -f "$DESTDIR/etc/mympd.conf"
@@ -774,7 +779,110 @@ transstatus() {
 
 translate() {
   cd src/i18n || exit 1
-  $PERLBIN ./tojson.pl pretty > ../../htdocs/js/i18n.js
+  perl ./tojson.pl pretty > ../../htdocs/js/i18n.js
+}
+
+materialicons() {
+  TMPDIR=$(mktemp -d)
+  cd "$TMPDIR" || exit 1
+  if ! wget -q https://raw.githubusercontent.com/google/material-design-icons/master/update/current_versions.json \
+	-O current_version.json
+  then
+    echo "Error downloading json file"
+    exit 1
+  fi
+  EXCLUDE="face_unlock|battery_\\d|battery_charging_\\d|signal_cellular_|signal_wifi_\\d_bar"
+  printf "const materialIcons={" > "$STARTPATH/htdocs/js/ligatures.js"
+  I=0
+  #shellcheck disable=SC2013
+  for CAT in $(grep "^\\s" current_version.json | cut -d\" -f2 | cut -d: -f1 | sort -u)
+  do
+    [ "$I" -gt 0 ] && printf "," >> "$STARTPATH/htdocs/js/ligatures.js"
+    printf "\"%s\": [" "$CAT" >> "$STARTPATH/htdocs/js/ligatures.js"
+	J=0
+	#shellcheck disable=SC2013
+	for MI in $(cut -d\" -f2 current_version.json | grep "$CAT::" | cut -d: -f3 | grep -v -P "$EXCLUDE")
+	do
+	  [ "$J" -gt 0 ] && printf "," >> "$STARTPATH/htdocs/js/ligatures.js"
+	  printf "\"%s\"" "$MI" >> "$STARTPATH/htdocs/js/ligatures.js"
+	  J=$((J+1))	
+	done
+	printf "]" >> "$STARTPATH/htdocs/js/ligatures.js"
+	I=$((I+1))
+  done 
+  printf "};\\n"  >> "$STARTPATH/htdocs/js/ligatures.js"
+  cd / || exit 1
+  rm -fr "$TMPDIR"
+}
+
+sbuild_chroots() {
+  if [ "$(id -u)" != "0" ]
+  then
+    echo "Must be run as root: "
+    echo "  sudo -E ./build.sh sbuild_chroots"
+  	exit 1
+  fi
+  [ -z "${WORKDIR+x}" ] && WORKDIR="$STARTPATH/builder"
+  [ -z "${DISTROS+x}" ] && DISTROS="buster stretch"
+  [ -z "${TARGETS+x}" ] && TARGETS="armhf armel"
+  [ -z "${DEBIAN_MIRROR+x}" ] && DEBIAN_MIRROR="http://ftp.de.debian.org/debian"
+
+  check_cmd sbuild qemu-debootstrap
+
+  mkdir -p "${WORKDIR}/chroot"
+  mkdir -p "${WORKDIR}/cache"
+
+  for DIST in ${DISTROS}
+  do
+    for ARCH in ${TARGETS}
+    do
+      CHROOT="${DIST}-${ARCH}"
+      echo "Creating chroot for $CHROOT"
+      [ -d "${WORKDIR}/chroot/${CHROOT}" ] && echo "chroot ${CHROOT} already exists... skipping." && continue
+      qemu-debootstrap --arch="${ARCH}" --variant=buildd --cache-dir="${WORKDIR}/cache" --include=fakeroot,build-essential "${DIST}" "${WORKDIR}/chroot/${CHROOT}/" "${DEBIAN_MIRROR}"
+
+      grep "${CHROOT}" /etc/schroot/schroot.conf || cat << EOF >> /etc/schroot/schroot.conf
+
+[${CHROOT}]
+description=Debian ${DIST} ${ARCH}
+directory=${WORKDIR}/chroot/${CHROOT}
+groups=sbuild-security
+EOF
+    done
+  done
+}
+
+sbuild_build() {
+  if [ "$(id -u)" != "0" ]
+  then
+    echo "Must be run as root: "
+    echo "  sudo -E ./build.sh sbuild_build"
+  	exit 1
+  fi
+  [ -z "${WORKDIR+x}" ] && WORKDIR="$STARTPATH/builder"
+  [ -z "${DISTROS+x}" ] && DISTROS="buster stretch"
+  [ -z "${TARGETS+x}" ] && TARGETS="armhf armel"
+
+  check_cmd sbuild qemu-debootstrap
+
+  prepare
+  cp -a contrib/packaging/debian .
+  export LC_TIME="en_GB.UTF-8"
+  tar -czf "../mympd_${VERSION}.orig.tar.gz" -- *
+  cd ..
+  # Compile for target distro/arch
+  for DIST in ${DISTROS}
+  do
+    for ARCH in ${TARGETS}
+    do
+      CHROOT="${DIST}-${ARCH}"
+      echo "Building ${DIST} for ${ARCH}"
+      mkdir -p "${WORKDIR}/builds/${CHROOT}"
+      sbuild --arch="${ARCH}" -d unstable --chroot="${CHROOT}" build --build-dir="${WORKDIR}/builds/${CHROOT}"
+    done
+  done
+  #cleanup package dir
+  rm -rf "$STARTPATH/package"
 }
 
 sbuild_cleanup() {
@@ -929,6 +1037,8 @@ case "$ACTION" in
 	  echo "  test:             builds the unit testing files in test/build"
 	  echo "  installdeps:      installs build and run dependencies"
 	  echo "  createassets:     creates the minfied and compressed dist files"
+	  echo "                    following environment variables are respected"
+	  echo "                      - MYMPD_BUILDDIR=\"release\""
       echo ""
 	  echo "Translation options:"
 	  echo "  translate:        builds the translation file for debug builds"
@@ -964,21 +1074,38 @@ case "$ACTION" in
 	  echo "                      - SIGN=\"FALSE\""
 	  echo "                      - GPGKEYID=\"\""
 	  echo "  pkgdocker:        creates the docker image (debian based)"
-          echo "                    following environment variables are respected"
-          echo "                      - DOCKERFILE=\"Dockerfile.alpine\""
-          echo "  pkgbuildx:        creates a multiarch docker image with buildx"
-          echo "                    following environment variables are respected"
-          echo "                      - DOCKERFILE=\"Dockerfile.alpine\""
-          echo "                      - PLATFORMS=\"linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6\""
+      echo "                    following environment variables are respected"
+      echo "                      - DOCKERFILE=\"Dockerfile.alpine\""
+      echo "  pkgbuildx:        creates a multiarch docker image with buildx"
+      echo "                    following environment variables are respected"
+      echo "                      - DOCKERFILE=\"Dockerfile.alpine\""
+      echo "                      - PLATFORMS=\"linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6\""
 	  echo "  pkgrpm:           creates the rpm package"
 	  echo "  pkgosc:           updates the open build service repository"
 	  echo "                    following environment variables are respected"
 	  echo "                      - OSC_REPO=\"home:jcorporation/myMPD\""
+	  echo "  sbuild_chroots:   creates chroots for debian crosscompile"
+	  echo "                    must be run as root"
+	  echo "                    following environment variables are respected"
+      echo "                      - WORKDIR=\"$STARTPATH/builder\""
+      echo "                      - DISTROS=\"buster stretch\""
+      echo "                      - TARGETS=\"armhf armel\""
+      echo "                      - DEBIAN_MIRROR=\"http://ftp.de.debian.org/debian\""
+	  echo "  sbuild_build:     builds the packages for targets and distros"
+	  echo "                    must be run as root"
+	  echo "                    following environment variables are respected"
+      echo "                      - WORKDIR=\"$STARTPATH/builder\""
+      echo "                      - DISTROS=\"buster stretch\""
+      echo "                      - TARGETS=\"armhf armel\""
+	  echo "  sbuild_cleanup:   removes the builder and package directory"
+	  echo "                    must be run as root"
+	  echo "                    following environment variables are respected"
+      echo "                      - WORKDIR=\"$STARTPATH/builder\""
 	  echo ""
 	  echo "Misc options:"
 	  echo "  setversion:       sets version and date in packaging files from CMakeLists.txt"
 	  echo "  addmympduser:     adds mympd group and user"
-	  echo "  libmympdclient:   updates libmpdclient"
+	  echo "  libmympdclient:   updates libmympdclient (fork of libmpdclient)"
 	  echo ""
 	  echo "Environment variables for building"
 	  echo "  - MYMPD_INSTALL_PREFIX=\"/usr\""
@@ -986,6 +1113,7 @@ case "$ACTION" in
 	  echo "  - ENABLE_LIBID3TAG=\"ON\""
 	  echo "  - ENABLE_FLAC=\"ON\""
 	  echo "  - ENABLE_LUA=\"ON\""
+	  echo "  - MANPAGES=\"ON\""
 	  echo ""
 	  exit 1
 	;;
