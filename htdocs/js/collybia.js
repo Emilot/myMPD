@@ -1,5 +1,61 @@
 "use strict";
 
+function initCollybia() {
+    document.getElementById('modalCollybia').addEventListener('shown.bs.modal', function () {
+        getSettings();
+        removeIsInvalid(document.getElementById('modalCollybia'));
+    });
+
+    document.getElementById('modalCollybia').addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+            saveIdeonSettings();
+            event.stopPropagation();
+            event.preventDefault();
+        }
+    });
+
+    document.getElementById('selectNsType').addEventListener('change', function () {
+        let value = this.options[this.selectedIndex].value;
+        if (value === '0') {
+            document.getElementById('nsServerShare').classList.add('hide');
+            document.getElementById('sambaVersion').classList.add('hide');
+            document.getElementById('nsCredentials').classList.add('hide');
+            document.getElementById('inputNsServer').value = '';
+            document.getElementById('inputNsShare').value = '';
+            document.getElementById('inputNsUsername').value = '';
+            document.getElementById('inputNsPassword').value = '';
+        }
+        else if (value === '2') {
+            document.getElementById('nsServerShare').classList.remove('hide');
+            document.getElementById('sambaVersion').classList.remove('hide');
+            document.getElementById('nsCredentials').classList.remove('hide');
+        }
+        else {
+            document.getElementById('nsServerShare').classList.remove('hide');
+            if (value === '1') {
+                document.getElementById('sambaVersion').classList.remove('hide');
+            }
+            else {
+                document.getElementById('sambaVersion').classList.add('hide');
+            }
+            document.getElementById('nsCredentials').classList.add('hide');
+            document.getElementById('inputNsUsername').value = '';
+            document.getElementById('inputNsPassword').value = '';
+        }
+    });
+
+    document.getElementById('btnDropdownServers').parentNode.addEventListener('show.bs.dropdown', function () {
+        sendAPI("MYMPD_API_NS_SERVER_LIST", {}, parseServers, true);
+    });
+
+    document.getElementById('dropdownServers').children[0].addEventListener('click', function (event) {
+        event.preventDefault();
+        if (event.target.nodeName === 'A') {
+            document.getElementById('inputNsServer').value = event.target.getAttribute('data-value');
+        }
+    });
+}
+
 function parseServers(obj) {
     let list = '';
     if (obj.error) {
@@ -103,17 +159,13 @@ function parseCollybiaSettings() {
         document.getElementById('nsServerShare').classList.add('hide');
         document.getElementById('sambaVersion').classList.add('hide');
         document.getElementById('nsCredentials').classList.add('hide');
-        /* document.getElementById('inputNsServer').setAttribute('disabled', 'disabled');
-        document.getElementById('inputNsShare').setAttribute('disabled', 'disabled');
-        document.getElementById('inputNsUsername').setAttribute('disabled', 'disabled');
-        document.getElementById('inputNsPassword').setAttribute('disabled', 'disabled'); */
     }
     else if (settings.nsType === 2) {
         document.getElementById('nsServerShare').classList.remove('hide');
         document.getElementById('sambaVersion').classList.remove('hide');
         document.getElementById('nsCredentials').classList.remove('hide');
     }
-    else { // 1 or 3
+    else {
         document.getElementById('nsServerShare').classList.remove('hide');
         if (settings.nsType === 1) {
             document.getElementById('sambaVersion').classList.remove('hide');

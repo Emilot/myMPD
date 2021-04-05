@@ -1,9 +1,7 @@
 "use strict";
-/*
- SPDX-License-Identifier: GPL-2.0-or-later
- myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
- https://github.com/jcorporation/mympd
-*/
+// SPDX-License-Identifier: GPL-2.0-or-later
+// myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
+// https://github.com/jcorporation/mympd
 
 function initSearch() {
     document.getElementById('SearchList').addEventListener('click', function(event) {
@@ -123,16 +121,13 @@ function doSearch(x) {
 }
 
 function parseSearch(obj) {
-    //document.getElementById('panel-heading-search').innerText = gtPage('Num songs', obj.result.returnedEntities, obj.result.totalEntities);
-    //document.getElementById('cardFooterSearch').innerText = gtPage('Num songs', obj.result.returnedEntities, obj.result.totalEntities);
-    
     if (obj.result.returnedEntities > 0) {
-        document.getElementById('searchAddAllSongs').removeAttribute('disabled');
-        document.getElementById('searchAddAllSongsBtn').removeAttribute('disabled');
+        enableEl('searchAddAllSongs');
+        enableEl('searchAddAllSongsBtn');
     } 
     else {
-        document.getElementById('searchAddAllSongs').setAttribute('disabled', 'disabled');
-        document.getElementById('searchAddAllSongsBtn').setAttribute('disabled', 'disabled');
+        disableEl('searchAddAllSongs');
+        disableEl('searchAddAllSongsBtn');
     }
 
     const rowTitle = advancedSettingsDefault.clickSong.validValues[settings.advanced.clickSong];
@@ -153,13 +148,15 @@ function parseSearch(obj) {
         }
         setAttEnc(row, 'data-name', data.Title);
     });
+
+    scrollToPosY(app.current.scrollPos);
 }
 
 //eslint-disable-next-line no-unused-vars
 function saveSearchAsSmartPlaylist() {
-    parseSmartPlaylist({"jsonrpc":"2.0","id":0,"result":{"method":"MPD_API_SMARTPLS_GET", 
-        "playlist":"",
-        "type":"search",
+    parseSmartPlaylist({"jsonrpc":"2.0","id":0,"result":{"method": "MPD_API_SMARTPLS_GET", 
+        "playlist": "",
+        "type": "search",
         "tag": settings.featAdvsearch === true ? 'expression' : app.current.filter,
         "searchstr": app.current.search}});
 }

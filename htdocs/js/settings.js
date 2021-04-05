@@ -268,6 +268,9 @@ function parseSettings() {
     advSettingsKeys.sort();
     for (let i = 0; i < advSettingsKeys.length; i++) {
         const key = advSettingsKeys[i];
+        if (advancedSettingsDefault[key] === undefined) {
+            continue;
+        }
         const form = advancedSettingsDefault[key].form;
         if (advFrm[form] === undefined) {
             advFrm[form] = '';
@@ -585,6 +588,9 @@ function parseSettings() {
     else if (app.current.app === 'Browse' && app.current.tab === 'Database' && app.current.search !== '') {
         appRoute();
     }
+    else if (app.current.app === 'Playback' && app.current.tab === 'Database' && app.current.search !== '') {
+        appRoute();
+    }
 
     i18nHtml(domCache.body);
 
@@ -753,10 +759,10 @@ function parseMPDSettings() {
         //construct playback view
         let pbtl = '';
         for (let i = 0; i < settings.colsPlayback.length; i++) {
-            pbtl += '<div id="current' + settings.colsPlayback[i]  + '" data-tag="' + 
+            pbtl += '<div id="current' + settings.colsPlayback[i] + '" data-tag="' +
                 settings.colsPlayback[i] + '">' +
-                '<small>' + t(settings.colsPlayback[i]) + '</small>' +
-                '<p></p></div>';
+                '<small>' + t(settings.colsPlayback[i]) + ' &bull; </small>' +
+                '<span></span></div>';
         }
         document.getElementById('cardPlaybackTags').innerHTML = pbtl;
         //fill blank card with lastSongObj
@@ -785,7 +791,7 @@ function parseMPDSettings() {
     }
 
     if (settings.featAdvsearch === false) {
-        const tagEls = document.getElementById('cardPlaybackTags').getElementsByTagName('p');
+        const tagEls = document.getElementById('cardPlaybackTags').getElementsByTagName('span');
         for (let i = 0; i < tagEls.length; i++) {
             tagEls[i].classList.remove('clickable');
         }

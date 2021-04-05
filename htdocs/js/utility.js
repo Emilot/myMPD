@@ -1,25 +1,52 @@
 "use strict";
-/*
- SPDX-License-Identifier: GPL-2.0-or-later
- myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
- https://github.com/jcorporation/mympd
-*/
+// SPDX-License-Identifier: GPL-2.0-or-later
+// myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
+// https://github.com/jcorporation/mympd
 
 //warning dialog
-function showConfirm(text, callback) {
-    document.getElementById('modalConfirmText').innerText = text;
+function showConfirm(text, btnText, callback) {
+    document.getElementById('modalConfirmText').innerHTML = text;
     const yesBtn = document.createElement('button');
     yesBtn.setAttribute('id', 'modalConfirmYesBtn');
-    yesBtn.classList.add('btn', 'btn-success');
+    yesBtn.classList.add('btn', 'btn-danger');
     yesBtn.addEventListener('click', function() {
         if (callback !== undefined && typeof(callback) === 'function') {
             callback();
         }
         uiElements.modalConfirm.hide();        
     }, false);
-    yesBtn.innerHTML = t('Yes');
+    yesBtn.innerText = btnText;
     document.getElementById('modalConfirmYesBtn').replaceWith(yesBtn);
     uiElements.modalConfirm.show();
+}
+
+function showConfirmInline(el, text, btnText, callback) {
+    const confirm = document.createElement('div');
+    confirm.classList.add('alert', 'alert-danger', 'mt-2');
+
+    const p = document.createElement('p');
+    p.innerHTML = text;
+    confirm.appendChild(p);
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.classList.add('btn', 'btn-secondary');
+    cancelBtn.addEventListener('click', function() {
+        this.parentNode.remove();
+    }, false);
+    cancelBtn.innerText = t('Cancel');
+    confirm.appendChild(cancelBtn);
+
+    const yesBtn = document.createElement('button');
+    yesBtn.classList.add('btn', 'btn-danger', 'float-right');
+    yesBtn.addEventListener('click', function() {
+        if (callback !== undefined && typeof(callback) === 'function') {
+            callback();
+        }
+    }, false);
+    yesBtn.innerText = btnText;
+    confirm.appendChild(yesBtn);
+    
+    el.appendChild(confirm);
 }
 
 //functions to get custom actions
@@ -83,11 +110,38 @@ function unescapeMPD(x) {
     });
 }
 
-function removeIsInvalid(el) {
-    let els = el.querySelectorAll('.is-invalid');
-    for (let i = 0; i < els.length; i++) {
-        els[i].classList.remove('is-invalid');
+//get and set attributes url encoded
+function setAttEnc(el, attribute, value) {
+    if (typeof el === 'string') {
+        el = document.getElementById(el);
     }
+    el.setAttribute(attribute, encodeURI(value));
+}
+
+function getAttDec(el, attribute) {
+    if (typeof el === 'string') {
+        el = document.getElementById(el);
+    }
+    let value = el.getAttribute(attribute);
+    if (value) {
+        value = decodeURI(value);
+    }
+    return value;
+}
+
+//utility functions
+function disableEl(el) {
+    if (typeof el === 'string') {
+        el = document.getElementById(el);
+    }
+    el.setAttribute('disabled', 'disabled');
+}
+
+function enableEl(el) {
+    if (typeof el === 'string') {
+        el = document.getElementById(el);
+    }
+    el.removeAttribute('disabled');
 }
 
 function getSelectValue(el) {
@@ -95,7 +149,7 @@ function getSelectValue(el) {
         el = document.getElementById(el);
     }
     if (el && el.selectedIndex >= 0) {
-        return el.options[el.selectedIndex].value;
+        return getAttDec(el.options[el.selectedIndex], 'value');
     }
     return undefined;
 }
@@ -103,7 +157,7 @@ function getSelectValue(el) {
 function getSelectedOptionAttribute(selectId, attribute) {
     const el = document.getElementById(selectId);
     if (el && el.selectedIndex >= 0) {
-        return el.options[el.selectedIndex].getAttribute(attribute);
+        return getAttDec(el.options[el.selectedIndex], attribute);
     }
     return undefined;
 }
@@ -180,8 +234,10 @@ function fileformat(audioformat) {
 }
 
 function scrollToPosY(pos) {
-    document.body.scrollTop = pos; // For Safari
-    document.documentElement.scrollTop = pos; // For Chrome, Firefox, IE and Opera
+    // For Safari
+    document.body.scrollTop = pos;
+    // For Chrome, Firefox, IE and Opera
+    document.documentElement.scrollTop = pos;
 }
 
 function selectTag(btnsEl, desc, setTo) {
@@ -194,8 +250,11 @@ function selectTag(btnsEl, desc, setTo) {
     if (aBtn) {
         aBtn.classList.add('active');
         if (desc !== undefined) {
-            document.getElementById(desc).innerText = aBtn.innerText;
-            document.getElementById(desc).setAttribute('data-phrase', aBtn.innerText);
+            const descEl = document.getElementById(desc);
+            if (descEl !== null) {
+                descEl.innerText = aBtn.innerText;
+                descEl.setAttribute('data-phrase', aBtn.innerText);
+            }
         }
     }
 }
@@ -207,6 +266,9 @@ function addTagList(el, list) {
             tagList += '<button type="button" class="btn btn-secondary btn-sm btn-block" data-tag="any">' + t('Any Tag') + '</button>';
         }
         tagList += '<button type="button" class="btn btn-secondary btn-sm btn-block" data-tag="filename">' + t('Filename') + '</button>';
+    }
+    if (el === 'searchDatabaseTags') {
+        tagList += '<button type="button" class="btn btn-secondary btn-sm btn-block" data-tag="any">' + t('Any Tag') + '</button>';
     }
     for (let i = 0; i < settings[list].length; i++) {
         tagList += '<button type="button" class="btn btn-secondary btn-sm btn-block" data-tag="' + settings[list][i] + '">' + t(settings[list][i]) + '</button>';
@@ -284,10 +346,10 @@ function btnWaiting(btn, waiting) {
         const spinner = document.createElement('span');
         spinner.classList.add('spinner-border', 'spinner-border-sm', 'mr-2');
         btn.insertBefore(spinner, btn.firstChild);
-        btn.setAttribute('disabled', 'disabled');
+        disableEl(btn);
     }
     else {
-        btn.removeAttribute('disabled');
+        enableEl(btn);
         if (btn.firstChild.nodeName === 'SPAN') {
             btn.firstChild.remove();
         }
@@ -302,7 +364,7 @@ function toggleBtnGroupValue(btngrp, value) {
         valuestr = value.toString();
     }
     for (let i = 0; i < btns.length; i++) {
-        if (btns[i].getAttribute('data-value') === valuestr) {
+        if (getAttDec(btns[i], 'data-value') === valuestr) {
             btns[i].classList.add('active');
             b = btns[i];
         }
@@ -345,7 +407,7 @@ function getBtnGroupValue(btnGroup) {
     if (activeBtn.length === 0) {
         activeBtn = document.getElementById(btnGroup).getElementsByTagName('button');    
     }
-    return activeBtn[0].getAttribute('data-value');
+    return getAttDec(activeBtn[0], 'data-value');
 }
 
 //eslint-disable-next-line no-unused-vars
@@ -418,8 +480,8 @@ function toggleBtnChkCollapse(btn, collapse, state) {
 }
 
 function setPagination(total, returned) {
-    const cat = (app.current.app === 'Playback' ? 'Browse' : app.current.tab) + app.current.view === undefined ? '' : app.current.view);
-	
+    const cat = (app.current.app === 'Playback' ? 'Browse' : app.current.app) + (app.current.tab === undefined ? '' : app.current.tab) + (app.current.view === undefined ? '' : app.current.view);
+
     if (document.getElementById(cat + 'PaginationTop') === null) {
         return;
     }
@@ -430,16 +492,16 @@ function setPagination(total, returned) {
     }
     const curPage = app.current.limit > 0 ? app.current.offset / app.current.limit + 1 : 1;
     
-    const paginationHTML = '<button title="' + t('First page') + '" type="button" class="btn btn-group-prepend btn-secondary material-icons">first_page</button>' +
-          '<button title="' + t('Previous page') + '" type="button" class="btn btn-group-prepend btn-secondary material-icons">navigate_before</button>' +
+    const paginationHTML = '<button title="' + t('First page') + '" type="button" class="btn btn-group-prepend btn-secondary mi">first_page</button>' +
+          '<button title="' + t('Previous page') + '" type="button" class="btn btn-group-prepend btn-secondary mi">navigate_before</button>' +
           '<div class="btn-group">' +
             '<button class="btn btn-secondary dropdown-toggle" type="button" data-toggle="dropdown"></button>' +
             '<div class="dropdown-menu bg-lite-dark px-2 pages dropdown-menu-right"></div>' +
           '</div>' +
-          '<button title="' + t('Next page') + '" type="button" class="btn btn-secondary btn-group-append material-icons">navigate_next</button>' +
-          '<button title="' + t('Last page') + '" type="button" class="btn btn-secondary btn-group-append material-icons">last_page</button>';
+          '<button title="' + t('Next page') + '" type="button" class="btn btn-secondary btn-group-append mi">navigate_next</button>' +
+          '<button title="' + t('Last page') + '" type="button" class="btn btn-secondary btn-group-append mi">last_page</button>';
 
-    let bottomBarHTML = '<button type="button" class="btn btn-secondary material-icons" title="' + t('To top') + '">keyboard_arrow_up</button>' +
+    let bottomBarHTML = '<button type="button" class="btn btn-secondary mi" title="' + t('To top') + '">keyboard_arrow_up</button>' +
           '<div>' +
           '<select class="form-control custom-select border-secondary" title="' + t('Elements per page') + '">';
     for (const i of [25, 50, 100, 200, 0]) {
@@ -483,7 +545,7 @@ function setPagination(total, returned) {
     
         page.innerText = curPage + ' / ' + totalPages;
         if (totalPages > 1) {
-            page.removeAttribute('disabled');
+            enableEl(page);
             let pl = '';
             for (let j = 0; j < totalPages; j++) {
                 const o = j * app.current.limit;
@@ -495,7 +557,7 @@ function setPagination(total, returned) {
             page.classList.remove('nodropdown');
             pages.addEventListener('click', function(event) {
                 if (event.target.nodeName === 'BUTTON') {
-                    gotoPage(event.target.getAttribute('data-offset'));
+                    gotoPage(getAttDec(event.target, 'data-offset'));
                 }
             }, false);
             //eslint-disable-next-line no-unused-vars
@@ -503,10 +565,10 @@ function setPagination(total, returned) {
             
             const lastPageOffset = (totalPages - 1) * app.current.limit;
             if (lastPageOffset === app.current.offset) {
-                last.setAttribute('disabled', 'disabled');
+                disableEl(last);
             }
             else {
-                last.removeAttribute('disabled');
+                enableEl(last);
                 last.classList.remove('hide');
                 next.classList.remove('rounded-right');
                 last.addEventListener('click', function() {
@@ -516,21 +578,21 @@ function setPagination(total, returned) {
             }
         }
         else if (total === -1) {
-            page.setAttribute('disabled', 'disabled');
+            disableEl(page);
             page.innerText = curPage;
             page.classList.add('nodropdown');
-            last.setAttribute('disabled', 'disabled');
+            disableEl(last);
             last.classList.add('hide');
             next.classList.add('rounded-right');
         }
         else {
-            page.setAttribute('disabled', 'disabled');
+            disableEl(page);
             page.classList.add('nodropdown');
-            last.setAttribute('disabled', 'disabled');
+            disableEl(last);
         }
         
-        if ((total > offsetLast && offsetLast > 0 ) || (total === -1 && returned >= app.current.limit)) {
-            next.removeAttribute('disabled');
+        if (app.current.limit > 0 && ((total > offsetLast && offsetLast > 0) || (total === -1 && returned >= app.current.limit))) {
+            enableEl(next);
             p[i].classList.remove('hide');
             next.addEventListener('click', function() {
                 event.preventDefault();
@@ -538,28 +600,28 @@ function setPagination(total, returned) {
             }, false);
         }
         else {
-            next.setAttribute('disabled', 'disabled');
+            disableEl(next);
             if (i === 0) {
                 p[i].classList.add('hide');
             }
         }
-
+        
         if (app.current.offset > 0) {
-            prev.removeAttribute('disabled');
+            enableEl(prev);
             p[i].classList.remove('hide');
             prev.addEventListener('click', function() {
                 event.preventDefault();
                 gotoPage('prev');
             }, false);
-            first.removeAttribute('disabled');
+            enableEl(first);
             first.addEventListener('click', function() {
                 event.preventDefault();
                 gotoPage(0);
             }, false);
         }
         else {
-            prev.setAttribute('disabled', 'disabled');
-            first.setAttribute('disabled', 'disabled');
+            disableEl(prev);
+            disableEl(first);
         }
     }
     
@@ -577,7 +639,7 @@ function genId(x) {
 }
 
 function parseCmd(event, href) {
-    if (event !== null) {
+    if (event !== null && event !== undefined) {
         event.preventDefault();
     }
     let cmd = href;
@@ -586,6 +648,11 @@ function parseCmd(event, href) {
     }
 
     if (typeof window[cmd.cmd] === 'function') {
+        for (let i = 0; i < cmd.options.length; i++) {
+            if (cmd.options[i] === 'event') {
+                cmd.options[i] = event;
+            }
+        }
         switch(cmd.cmd) {
             case 'sendAPI':
                 sendAPI(cmd.options[0].cmd, {}); 
@@ -612,6 +679,9 @@ function parseCmd(event, href) {
 }
 
 function gotoPage(x, limit) {
+    if (app.current.app === 'Playback' && app.current.view === 'List') {
+        document.getElementById('viewListDatabaseBox').scrollTop = 0;
+    }
     switch (x) {
         case 'next':
             app.current.offset = app.current.offset + app.current.limit;

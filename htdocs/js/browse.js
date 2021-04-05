@@ -235,6 +235,7 @@ function initBrowse() {
     document.getElementById('BrowseBreadcrumb').addEventListener('click', function(event) {
         if (event.target.nodeName === 'A') {
             event.preventDefault();
+            const uri = getAttDec(event.target, 'data-uri');
             appGoto('Browse', 'Filesystem', undefined, '0', app.current.limit, app.current.filter, app.current.sort, '-', getAttDec(event.target, 'data-uri'));
         }
     }, false);
@@ -246,7 +247,7 @@ function initBrowse() {
 
 function navBrowseHandler(event) {
     if (event.target.nodeName === 'BUTTON') {
-        const tag = event.target.getAttribute('data-tag');
+        const tag = getAttDec(event.target, 'data-tag');
         if (tag === 'Playlists' || tag === 'Filesystem') {
             appGoto('Browse', tag, undefined);
             return;
@@ -285,32 +286,34 @@ function gotoBrowse(event) {
     if (settings.featAdvsearch === false) {
         return;
     }
-    let card = app.current.app === 'Playback' ? 'Playback' : 'Browse';
+    const card = app.current.app === 'Playback' ? 'Playback' : 'Browse';
     const x = event.target;
-    let tag = x.getAttribute('data-tag');
-    let name = decodeURI(x.getAttribute('data-name'));
+    let tag = getAttDec(x, 'data-tag');
+    let name = getAttDec(x, 'data-name');
     if (tag === null) {
-        tag = x.parentNode.getAttribute('data-tag');
-        name = decodeURI(x.parentNode.getAttribute('data-name'));
+        tag = getAttDec(x.parentNode, 'data-tag');
+        name = getAttDec(x.parentNode, 'data-name');
     }
     if (tag !== '' && name !== '' && name !== '-' && settings.browsetags.includes(tag)) {
         if (tag === 'Album') {
-            let artist = x.getAttribute('data-albumartist');
+            let artist = getAttDec(x, 'data-albumartist');
             if (artist === null) {
-                artist = x.parentNode.getAttribute('data-albumartist');
+                artist = getAttDec(x.parentNode, 'data-albumartist');
             }
             if (artist !== null) {
                 //Show album details
-                appGoto(card, 'Database', 'Detail', '0', tag, tagAlbumArtist, name, decodeURI(artist));
+                appGoto(card, 'Database', 'Detail', '0', undefined, tag, tagAlbumArtist, name, artist);
             }
             else {
                 //show filtered album list
-                appGoto(card, 'Database', 'List', '0', tag, tagAlbumArtist, 'Album', '(' + tag + ' == \'' + name + '\')');
+                document.getElementById('searchDatabaseStr').value = '';
+                appGoto(card, 'Database', 'List', '0', undefined, tag, tagAlbumArtist, 'Album', '((' + tag + ' == \'' + escapeMPD(name) + '\'))');
             }
         }
         else {
             //show filtered album list
-            appGoto(card, 'Database', 'List', '0', tag, tagAlbumArtist, 'Album', '(' + tag + ' == \'' + name + '\')');
+            document.getElementById('searchDatabaseStr').value = '';
+            appGoto(card, 'Database', 'List', '0', undefined, tag, tagAlbumArtist, 'Album', '((' + tag + ' == \'' + escapeMPD(name) + '\'))');
         }
     }
 }
@@ -354,6 +357,7 @@ function parseFilesystem(obj) {
         row.setAttribute('title', t(data.Type === 'song' ? rowTitleSong : 
                 data.Type === 'dir' ? rowTitleFolder : rowTitlePlaylist));
     });
+    scrollToPosY(app.current.scrollPos);
 }
 
 //eslint-disable-next-line no-unused-vars
@@ -380,8 +384,8 @@ function parseBookmarks(obj) {
         list += '<tr data-id="' + obj.result.data[i].id + '" data-type="' + obj.result.data[i].type + '" ' +
                 'data-uri="' + encodeURI(obj.result.data[i].uri) + '">' +
                 '<td class="nowrap"><a class="text-light" href="#" data-href="goto">' + e(obj.result.data[i].name) + '</a></td>' +
-                '<td><a class="text-light material-icons material-icons-small" href="#" data-href="edit">edit</a></td><td>' +
-                '<a class="text-light material-icons material-icons-small" href="#" data-href="delete">delete</a></td></tr>';
+                '<td><a class="text-light mi mi-small" href="#" data-href="edit">edit</a></td><td>' +
+                '<a class="text-light mi mi-small" href="#" data-href="delete">delete</a></td></tr>';
     }
     if (obj.result.returnedEntities === 0) {
         list += '<tr><td class="text-light nowrap">' + t('No bookmarks found') + '</td></tr>';
@@ -391,7 +395,7 @@ function parseBookmarks(obj) {
 }
 
 function showBookmarkSave(id, name, uri, type) {
-    document.getElementById('saveBookmarkName').classList.remove('is-invalid');
+    removeIsInvalid(document.getElementById('modalSaveBookmark'));
     document.getElementById('saveBookmarkId').value = id;
     document.getElementById('saveBookmarkName').value = name;
     document.getElementById('saveBookmarkUri').value = uri;
@@ -420,6 +424,8 @@ function parseDatabase(obj) {
     const cols = cardContainer.getElementsByClassName('col');
     const hasIO = 'IntersectionObserver' in window ? true : false;
 
+    document.getElementById('BrowseDatabaseListList').classList.remove('opacity05');
+
     if (cols.length === 0) {
         cardContainer.innerHTML = '';
     }
@@ -437,12 +443,12 @@ function parseDatabase(obj) {
         let picture = '';
         if (obj.result.tag === 'Album') {
             id = genId('database' + obj.result.data[i].Album + obj.result.data[i].AlbumArtist);
-            picture = subdir + '/albumart/' + encodeURI(obj.result.data[i].FirstSongUri);
-            html = '<div class="card card-grid clickable" data-picture="' + picture  + '" ' + 
-                       'data-uri="' + encodeURI(obj.result.data[i].FirstSongUri.replace(/\/[^/]+$/, '')) + '" ' +
-                       'data-type="dir" data-name="' + encodeURI(obj.result.data[i].Album) + '" ' +
-                       'data-album="' + encodeURI(obj.result.data[i].Album) + '" ' +
-                       'data-albumartist="' + encodeURI(obj.result.data[i].AlbumArtist) + '" tabindex="0">' +
+            picture = subdir + '/albumart/' + obj.result.data[i].FirstSongUri;
+            html = '<div class="card card-grid clickable" data-picture="' + encodeURI(picture)  + '" ' + 
+                   'data-uri="' + encodeURI(obj.result.data[i].FirstSongUri.replace(/\/[^/]+$/, '')) + '" ' +
+                   'data-type="dir" data-name="' + encodeURI(obj.result.data[i].Album) + '" ' +
+                   'data-album="' + encodeURI(obj.result.data[i].Album) + '" ' +
+                   'data-albumartist="' + encodeURI(obj.result.data[i].AlbumArtist) + '" tabindex="0">' +
                    '<div class="card-body album-cover-loading album-cover-grid bg-white d-flex" id="' + id + '"></div>' +
                    '<div class="card-footer card-footer-grid p-2" title="' + e(obj.result.data[i].AlbumArtist) + ': ' + e(obj.result.data[i].Album) + '">' +
                    e(obj.result.data[i].Album) + '<br/><small>' + e(obj.result.data[i].AlbumArtist) + '</small>' +
@@ -451,7 +457,7 @@ function parseDatabase(obj) {
         else {
             id = genId('database' + obj.result.data[i].value);
             picture = subdir + '/tagpics/' + obj.result.tag + '/' + encodeURI(obj.result.data[i].value);
-            html = '<div class="card card-grid clickable" data-picture="' + picture + '" data-tag="' + encodeURI(obj.result.data[i].value) + '" tabindex="0">' +
+            html = '<div class="card card-grid clickable" data-picture="' + encodeURI(picture) + '" data-tag="' + encodeURI(obj.result.data[i].value) + '" tabindex="0">' +
                    (obj.result.pics === true ? '<div class="card-body album-cover-loading album-cover-grid bg-white" id="' + id + '"></div>' : '') +
                    '<div class="card-footer card-footer-grid p-2" title="' + e(obj.result.data[i].value) + '">' +
                    e(obj.result.data[i].value) + '<br/>' +
@@ -495,17 +501,13 @@ function parseDatabase(obj) {
     if (nrItems === 0) {
         cardContainer.innerHTML = '<div class="ml-3 mb-3 not-clickable"><span class="mi">info</span>&nbsp;&nbsp;' + t('Empty list') + '</div>';
     }
-    if (app.current.app === 'Playback') {
-        calcBoxHeight();
-    }
-    scrollToPosY(app.current.scrollPos);
 }
 
 function setGridImage(changes, observer) {
     changes.forEach(change => {
         if (change.intersectionRatio > 0) {
             observer.unobserve(change.target);
-            const uri = decodeURI(change.target.firstChild.getAttribute('data-picture'));
+            const uri = getAttDec(change.target.firstChild, 'data-picture');
             const body = change.target.firstChild.getElementsByClassName('card-body')[0];
             if (body) {
                 body.style.backgroundImage = 'url("' + uri + '"), url("' + subdir + '/assets/coverimage-loading.svg")';
@@ -516,26 +518,27 @@ function setGridImage(changes, observer) {
 
 function addPlayButton(parentEl) {
     const div = document.createElement('div');
-    div.classList.add('align-self-end', 'album-grid-mouseover', 'material-icons', 'rounded-circle', 'clickable');
+    div.classList.add('align-self-end', 'album-grid-mouseover', 'mi', 'rounded-circle', 'clickable');
     div.innerText = 'play_arrow';
+    div.title = t(advancedSettingsDefault.clickAlbumPlay.validValues[settings.advanced.clickAlbumPlay]);
     parentEl.appendChild(div);
     div.addEventListener('click', function(event) {
         event.preventDefault();
         event.stopPropagation();
-        replaceQueue('dir', decodeURI(event.target.parentNode.parentNode.getAttribute('data-uri')), decodeURI(event.target.parentNode.parentNode.getAttribute('data-name')));
+        clickAlbumPlay(getAttDec(event.target.parentNode.parentNode, 'data-albumartist'), getAttDec(event.target.parentNode.parentNode, 'data-album'));
     }, false);
 }
 
 function parseAlbumDetails(obj) {
     const coverEl = document.getElementById('viewDetailDatabaseCover');
     coverEl.style.backgroundImage = 'url("' + subdir + '/albumart/' + obj.result.data[0].uri + '"), url("' + subdir + '/assets/coverimage-loading.svg")';
-    coverEl.setAttribute('data-images', obj.result.images.join(';;'));
-    coverEl.setAttribute('data-uri', obj.result.data[0].uri);
+    setAttEnc(coverEl, 'data-images', obj.result.images.join(';;'));
+    setAttEnc(coverEl, 'data-uri', obj.result.data[0].uri);
     const infoEl = document.getElementById('viewDetailDatabaseInfo');
     infoEl.innerHTML = '<h1>' + e(obj.result.Album) + '</h1>' +
         '<small> ' + t('AlbumArtist') + '</small><p>' + e(obj.result.AlbumArtist) + '</p>' +
         (obj.result.bookletPath === '' || settings.featBrowse === false ? '' : 
-            '<span class="text-light material-icons">description</span>&nbsp;<a class="text-light" target="_blank" href="' + subdir + '/browse/music/' + 
+            '<span class="text-light mi">description</span>&nbsp;<a class="text-light" target="_blank" href="' + subdir + '/browse/music/' + 
             e(obj.result.bookletPath) + '">' + t('Download booklet') + '</a>') +
         '</p>';
 
@@ -557,7 +560,7 @@ function parseAlbumDetails(obj) {
 
 //eslint-disable-next-line no-unused-vars
 function backToAlbumGrid() {
-    appGoto('Browse', 'Database', 'List');
+    appGoto(app.current.app, 'Database', 'List');
 }  
 
 //eslint-disable-next-line no-unused-vars
@@ -581,27 +584,7 @@ function _addAlbum(action, albumArtist, album) {
 }
 
 function searchAlbumgrid(x) {
-    let expression = '';
-    let crumbs = document.getElementById('searchDatabaseCrumb').children;
-    for (let i = 0; i < crumbs.length; i++) {
-        if (i > 0) {
-            expression += ' AND ';
-        }
-        expression += '(' + decodeURI(crumbs[i].getAttribute('data-filter-tag')) + ' ' + 
-            decodeURI(crumbs[i].getAttribute('data-filter-op')) + ' \'' + 
-            escapeMPD(decodeURI(crumbs[i].getAttribute('data-filter-value'))) + '\')';
-    }
-    if (x !== '') {
-        if (expression !== '') {
-            expression += ' AND ';
-        }
-        let match = document.getElementById('searchDatabaseMatch');
-        expression += '(' + app.current.filter + ' ' + match.options[match.selectedIndex].value + ' \'' + escapeMPD(x) +'\')';
-    }
-    
-    if (expression.length <= 2) {
-        expression = '';
-    }
+    const expression = createSearchExpression(document.getElementById('searchDatabaseCrumb'), app.current.filter, getSelectValue('searchDatabaseMatch'), x);
     appGoto(app.current.app, app.current.tab, app.current.view, 
         '0', app.current.limit, app.current.filter, app.current.sort, app.current.tag, expression);
 }

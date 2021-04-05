@@ -1,4 +1,3 @@
-
 /*
  SPDX-License-Identifier: GPL-2.0-or-later
  myMPD (c) 2018-2021 Juergen Mang <mail@jcgames.de>
@@ -142,11 +141,6 @@ td[data-col=Action] {
     height: 100vw;
     width: 4rem;
     flex-flow: column;
-/*    padding-top: 0.6rem */
-    padding-top: 1.2rem;
-    padding-left: 0;
-    padding-right: 0;
-    padding-bottom: 6.5rem;
     padding: 1.2rem 0 6.5rem 0;
     justify-content: normal !important;
   }
@@ -186,12 +180,11 @@ td[data-col=Action] {
   .navText {
     display: none;
   }
-  #counter {
-    display: none;
-  }
+
   .footerCounter {
     display: none;
   }
+
   .ml-3 {
     margin-left: 1rem !important;
   }
@@ -444,7 +437,6 @@ th {
 }
 
 .album-cover-loading {
-/*  background-image: url("../assets/coverimage-loading.svg");*/
   background-image: url("../assets/coverimage-mympd.svg");
 }
 
@@ -494,7 +486,7 @@ th {
   src: url(../assets/MaterialIcons-Regular.woff2) format('woff2');
 }
 
-.material-icons {
+.mi {
   font-family: 'Material Icons';
   font-weight: normal;
   font-style: normal;
@@ -510,30 +502,21 @@ th {
   font-feature-settings: 'liga';
 }
 
-.material-icons:hover {
+.mi:hover {
   text-decoration: none;
 }
 
-.material-icons-left {
-/*  font-size: 1rem; */
+.mi-left {
   margin-left: -1em;
-/*  vertical-align: middle; */
 }
 
-.material-icons-small {
+.mi-small {
   font-size: 1rem;
 }
 
-.material-icons-lg {
+.mi-lg {
   font-size: 2.4rem;
 }
-
-/*
-.material-icons-small-left {
-  font-size: 1rem;
-  margin-left: -1em;
-}
-*/
 
 .btn-sm-big-icon {
   font-size: 1.4rem !important;
@@ -692,6 +675,16 @@ div.key {
   height: 2rem;
   text-align: center;
   line-height: 2rem;
+  margin-right: 1rem;
+  flex-shrink: 0;
+}
+
+div.row-keymap {
+  overflow: hidden;
+}
+
+div.col-keymap {
+  min-width: 20rem;
 }
 
 ol#searchCrumb,
@@ -705,15 +698,6 @@ ol#searchDatabaseCrumb {
 
 .dropdown-header-lx {
   font-size: 1.2rem;
-}
-
-#mainMenu img {
-  /* width: 2.5rem;
-  height: 2.5rem;
-  font-size: 2.5rem;
-  margin-right: 5px;
-  height: 1.25rem; */
-  filter: invert(100%);
 }
 
 .connected,
@@ -915,6 +899,10 @@ a.text-success:focus {
   scroll-margin: 3rem;
 }
 
+.lyricsSyncedText > p {
+  margin-bottom: 0;
+}
+
 .rounded-right-0 {
   border-top-right-radius: 0 !important;
   border-bottom-right-radius: 0 !important;
@@ -948,6 +936,10 @@ a.text-success:focus {
   #currentCover {
     width: 26rem;
     height: 26rem;
+  }
+
+  .coverPanel {
+    width: 26rem;
   }
 } */
 
@@ -1055,78 +1047,41 @@ div.album-grid-mouseover {
   max-height: none;
 }
 
-.pages button {
-  min-width: 2rem;
-  margin: 0.1rem;
-}
-
-tfoot td {
-  text-align: right;
-}
-
-#cardQueueMiniList tr > td {
-  white-space: nowrap;
+.lyricsChangeButton {
+  max-width: 10rem;
   overflow: hidden;
+  white-space: nowrap;
   text-overflow: ellipsis;
 }
- 
-#BrowseDatabaseAlbumListCaption {
-  margin-left: 15px;
-  margin-right: 15px;
-  width: 100%;
+
+#splashScreenLogo img {
+  filter: invert(100%);
+  vertical-align: text-bottom !important;
 }
 
-#BrowseDatabaseAlbumListCaption h2 {
-  display: inline;
+#mainMenu img {
+  filter: invert(100%);
 }
-
-#BrowseDatabaseAlbumListCaption small {
-  padding-top: 0.8rem;
-}
-
-@media only screen and (max-width: 576px) {
-  .btnText {
-    display: none !important;
-  }
-}
-
-#cardHeaderBrowse > ul, #cardHeaderQueue > ul {
-  float: left;
-}
-
-#cardHeaderQueueMini {
-  height: 32px;
-  padding-top: 0;
-  padding-bottom: 0;
-}
-
-#cardHeaderQueueMini > span {
-  vertical-align: middle;
-}
-
-#tabPlaybackSettings .btn, #tabGeneralSettings .btn, #tabInterfaceSettings .btn,
-#tabPlaybackSettings .btn-group {
-    float: right !important;
-}
-*/
 
 #cardQueueMini {
-  /* height: 378px; */
-  height: 23.6rem;
+  height: 23rem;
 }
 
 #cardFooterQueueMini {
-  /* height: 49px; */
   height: 3rem;
 }
 
+#QueueCurrentList td {
+  vertical-align: middle;
+}
+
 .noselect {
-  -webkit-touch-callout: none; /* iOS Safari */
-  -webkit-user-select: none; /* Chrome/Safari/Opera */
-  -khtml-user-select: none; /* Konqueror */
-  -moz-user-select: none; /* Firefox */
-  -ms-user-select: none; /* Internet Explorer/Edge */
-  user-select: none; /* Non-prefixed version, currently not supported by any browser */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
   cursor: default;
 }
 
@@ -1137,6 +1092,13 @@ tfoot td {
 
 .tab {
   display: none;
+}
+
+.warningIcon {
+  float: left;
+  font-size: 3rem;
+  margin-right: 1.25rem;
+  margin-bottom: 1.25rem;
 }
 
 [data-col=Img] {
@@ -1150,15 +1112,3 @@ img.covergrid-header {
   float: left;
   margin-right: 1rem;
 }
-
-#QueueCurrentList td {
-  vertical-align: middle;
-}
-
-.warningIcon {
-  float: left;
-  font-size: 3rem;
-  margin-right: 1.25rem;
-  margin-bottom: 1.25rem;
-}
-

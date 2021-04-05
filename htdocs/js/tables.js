@@ -341,12 +341,13 @@ function setColTags(table) {
     }
     if (table === 'BrowseFilesystem') {
         tags.push('Type');
+        tags.push('Filename');
     }
     if (table === 'Playback') {
         tags.push('Filetype');
         tags.push('Fileformat');
         if (settings.featLyrics === true) {
-            tags.push('Lyrics');
+            // tags.push('Lyrics');
         }
     }
     if (table === 'QueueLastPlayed') {
@@ -490,7 +491,7 @@ function saveColsPlayback(table) {
         } 
         else if (!th) {
             th = document.createElement('div');
-            th.innerHTML = '<small>' + t(colInputs[i].name) + '</small><p></p>';
+            th.innerHTML = '<small>' + t(colInputs[i].name) + ' &bull; </small><span></span>';
             th.setAttribute('id', 'current' + colInputs[i].name);
             setAttEnc(th, 'data-tag', colInputs[i].name);
             header.appendChild(th);

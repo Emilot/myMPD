@@ -20,12 +20,24 @@ function initQueue() {
         }
     }, false);
 
-    document.getElementById('QueueCurrentList').addEventListener('click', function(event) {
-        if (event.target.nodeName === 'TD') {
+    document.getElementById('QueueCurrentList').addEventListener('click', function (event) {
+        if (event.target.parentNode.parentNode.nodeName === 'TFOOT') {
+            return;
+        }
+        else if (event.target.nodeName === 'TD') {
             clickQueueSong(getAttDec(event.target.parentNode, 'data-trackid'), getAttDec(event.target.parentNode, 'data-uri'));
+        }
+        else if (event.target.nodeName === 'IMG') {
+            clickQueueSong(getAttDec(event.target.parentNode.parentNode, 'data-trackid'), getAttDec(event.target.parentNode.parentNode, 'data-uri'));
         }
         else if (event.target.nodeName === 'A') {
             showMenu(event.target, event);
+        }
+    }, false);
+
+    document.getElementById('QueueMiniList').addEventListener('click', function (event) {
+        if (event.target.nodeName === 'TD') {
+            sendAPI("MPD_API_PLAYER_PLAY_TRACK", { "track": getAttDec(event.target.parentNode, 'data-trackid') });
         }
     }, false);
     
@@ -191,10 +203,10 @@ function queueSelectedItem(append) {
             return;
         }
         if (append === true) {
-            appendQueue(item.getAttribute('data-type'), item.getAttribute('data-uri'), item.getAttribute('data-name'));
+            appendQueue(getAttDec(item, 'data-type'), getAttDec(item, 'data-uri'), getAttDec(item, 'data-name'));
         }
         else {
-            replaceQueue(item.getAttribute('data-type'), item.getAttribute('data-uri'), item.getAttribute('data-name'));
+            replaceQueue(getAttDec(item, 'data-type'), getAttDec(item, 'data-uri'), getAttDec(item, 'data-name'));
         }
     }
 }
@@ -206,7 +218,7 @@ function dequeueSelectedItem() {
         if (item.parentNode.parentNode.id !== 'QueueCurrentList') {
             return;
         }
-        delQueueSong('single', item.getAttribute('data-trackid'));
+        delQueueSong('single', getAttDec(item, 'data-trackid'));
     }
 }
 
@@ -252,16 +264,13 @@ function replaceQueue(type, uri, name) {
 //eslint-disable-next-line no-unused-vars
 function addToQueue() {
     let formOK = true;
-    let inputAddToQueueQuantityEl = document.getElementById('inputAddToQueueQuantity');
+    const inputAddToQueueQuantityEl = document.getElementById('inputAddToQueueQuantity');
     if (!validateInt(inputAddToQueueQuantityEl)) {
         formOK = false;
     }
     
-    let selectAddToQueueMode = document.getElementById('selectAddToQueueMode');
-    let jukeboxMode = selectAddToQueueMode.options[selectAddToQueueMode.selectedIndex].value
-
-    let selectAddToQueuePlaylist = document.getElementById('selectAddToQueuePlaylist');
-    let jukeboxPlaylist = selectAddToQueuePlaylist.options[selectAddToQueuePlaylist.selectedIndex].value;
+    const jukeboxMode = getSelectValue('selectAddToQueueMode');
+    const jukeboxPlaylist = getSelectValue('selectAddToQueuePlaylist');
     
     if (jukeboxMode === '1' && settings.featSearchwindow === false && jukeboxPlaylist === 'Database') {
         document.getElementById('warnJukeboxPlaylist2').classList.remove('hide');
@@ -324,8 +333,7 @@ function playAfterCurrent(trackid, songpos) {
 
 //eslint-disable-next-line no-unused-vars
 function clearQueue() {
-    showConfirm(t('Do you really want to clear the queue?'), function() {
+    showConfirm(t('Do you really want to clear the queue?'), "Yes, clear it", function() {
         sendAPI("MPD_API_QUEUE_CROP_OR_CLEAR", {});
     });
 }
-

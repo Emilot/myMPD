@@ -173,12 +173,19 @@ function parseHome(obj) {
             if (obj.result.data[i].options.length === 8) {
                 obj.result.data[i].options.splice(4, 0, parseInt(settings.advanced.uiMaxElementsPerPage));
             }
+            //workarround for 6.11.2 change
+            if (obj.result.data[i].options[8].indexOf('((') === -1 && obj.result.data[i].options[8].length > 0) {
+                obj.result.data[i].options[8] = '(' + obj.result.data[i].options[8] + ')';
+            }
         }
+        
+        const homeType = obj.result.data[i].cmd === 'replaceQueue' ? 'Playlist' :
+            obj.result.data[i].cmd === 'appGoto' ? 'View' : 'Script';
         
         const href = JSON.stringify({"cmd": obj.result.data[i].cmd, "options": obj.result.data[i].options});
         const html = '<div class="card home-icons clickable" draggable="true" tabindex="0" data-pos="' + i + '" data-href=\'' + 
-                   e(href) + '\'  title="' + e(obj.result.data[i].name) + '">' +
-                   '<div class="card-body material-icons">' + e(obj.result.data[i].ligature) + '</div>' +
+                   e(href) + '\'  title="' + t(homeType) +': ' + e(obj.result.data[i].name) + '">' +
+                   '<div class="card-body mi">' + e(obj.result.data[i].ligature) + '</div>' +
                    '<div class="card-footer card-footer-grid p-2">' +
                    e(obj.result.data[i].name) + 
                    '</div></div>';
@@ -201,12 +208,29 @@ function parseHome(obj) {
     }
                     
     if (nrItems === 0) {
-        cardContainer.innerHTML = '<div class="ml-3">' + t('Homescreen welcome') + '</div>';
+        cardContainer.innerHTML = '<div class="ml-3"><h3>' + t('Homescreen') + '</h3><p>' + t('Homescreen welcome') + '</p>' +
+            '<ul>' +
+            '<li><b>' + t('View') + '</b>: ' + t('Homescreen help view') + '</li>' + 
+            '<li><b>' + t('Playlist') + '</b>: ' + t('Homescreen help playlist') + '</li>' +
+            (settings.featScripting === true ? '<li><b>' + t('Script') + '</b>: ' + t('Homescreen help script') + '</li>' : '') +
+            '</div>';
     }
+}
+
+function popoverMenuHome(event) {
+    const sels = document.getElementById('HomeCards').getElementsByClassName('selected');
+    for (let i = 0; i < sels.length; i++) {
+        sels[i].classList.remove('selected');
+    }
+    event.target.parentNode.classList.add('selected');
+    showMenu(event.target, event);
+    event.preventDefault();
+    event.stopPropagation();
 }
 
 function dragAndDropHome() {
     const homeCards = document.getElementById('HomeCards');
+
     homeCards.addEventListener('dragstart', function(event) {
         if (event.target.classList.contains('home-icons')) {
             event.target.classList.add('opacity05');
@@ -216,6 +240,7 @@ function dragAndDropHome() {
             dragEl = event.target.cloneNode(true);
         }
     }, false);
+
     homeCards.addEventListener('dragleave', function(event) {
         event.preventDefault();
         if (dragEl.classList.contains('home-icons') === false) {
@@ -225,6 +250,7 @@ function dragAndDropHome() {
             event.target.classList.remove('dragover-icon');
         }
     }, false);
+
     homeCards.addEventListener('dragover', function(event) {
         event.preventDefault();
         if (dragEl.classList.contains('home-icons') === false) {
@@ -242,6 +268,7 @@ function dragAndDropHome() {
         }
         event.dataTransfer.dropEffect = 'move';
     }, false);
+
     homeCards.addEventListener('dragend', function(event) {
         event.preventDefault();
         if (dragEl.classList.contains('home-icons') === false) {
@@ -253,6 +280,7 @@ function dragAndDropHome() {
         }
         dragSrc.classList.remove('opacity05');
     }, false);
+
     homeCards.addEventListener('drop', function(event) {
         event.preventDefault();
         event.stopPropagation();
@@ -279,7 +307,6 @@ function dragAndDropHome() {
         for (const th of ths) {
             th.classList.remove('dragover-icon');
         }
-
     }, false);
 }
 
@@ -351,6 +378,10 @@ function _editHomeIcon(pos, replace, title) {
             if (obj.result.data.options.length === 8) {
                 obj.result.data.options.splice(4, 0, parseInt(settings.advanced.uiMaxElementsPerPage));
             }
+            //workarround for 6.11.2 change
+            if (obj.result.data.options[8].indexOf('((') === -1 && obj.result.data.options[8].length > 0) {
+                obj.result.data.options[8] = '(' + obj.result.data.options[8] + ')';
+            }
         }
 
         showHomeIconCmdOptions(obj.result.data.options);
@@ -418,7 +449,7 @@ function deleteHomeIcon(pos) {
 
 function showHomeIconCmdOptions(values) {
     let list = '';
-    const optionsText = getSelectedOptionAttribute('selectHomeIconCmd', 'data-options')
+    const optionsText = getSelectedOptionAttribute('selectHomeIconCmd', 'data-options');
     if (optionsText !== undefined) {    
         const options = JSON.parse(optionsText);
         for (let i = 0; i < options.options.length; i++) {

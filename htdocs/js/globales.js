@@ -22,6 +22,7 @@ let deferredA2HSprompt;
 let dragSrc;
 let dragEl;
 let showSyncedLyrics = false;
+let scrollSyncedLyrics = true;
 let appInited = false;
 let subdir = '';
 let uiEnabled = true;
@@ -56,14 +57,33 @@ app.apps = {
         "search": "",
         "scrollPos": 0
     },
-    "Playback": { 
-        "offset": 0,
-        "limit": 100,
-        "filter": "-",
-        "sort": "-",
-        "tag": "-",
-        "search": "",
-        "scrollPos": 0
+    "Playback": {
+        "active": "Database",
+        "tabs": {
+            "Database": {
+                "active": "List",
+                "views": {
+                    "List": {
+                        "offset": 0,
+                        "limit": 100,
+                        "filter": "any",
+                        "sort": "AlbumArtist",
+                        "tag": "Album",
+                        "search": "",
+                        "scrollPos": 0
+                    },
+                    "Detail": {
+                        "offset": 0,
+                        "limit": 100,
+                        "filter": "-",
+                        "sort": "-",
+                        "tag": "-",
+                        "search": "",
+                        "scrollPos": 0
+                    }
+                }
+            }
+        }
     },
     "Queue": {
         "active": "Current",
@@ -370,6 +390,7 @@ uiElements.modalOutputAttributes = new BSN.Modal(document.getElementById('modalO
 uiElements.modalPicture = new BSN.Modal(document.getElementById('modalPicture'));
 uiElements.modalEditHomeIcon = new BSN.Modal(document.getElementById('modalEditHomeIcon'));
 uiElements.modalConfirm = new BSN.Modal(document.getElementById('modalConfirm'));
+uiElements.modalCollybia = new BSN.Modal(document.getElementById('modalCollybia'));
 
 uiElements.dropdownMainMenu = new BSN.Dropdown(document.getElementById('mainMenu'));
 uiElements.dropdownVolumeMenu = new BSN.Dropdown(document.getElementById('volumeMenu'));
