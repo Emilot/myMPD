@@ -68,14 +68,7 @@ bool web_server_init(void *arg_mgr, t_config *config, t_mg_user_data *mg_user_da
     mgr->product_name = "myMPD "MYMPD_VERSION;
     //set dns server
     sds dns_uri = get_dnsserver();
-    if (strlen(dns_uri) > 0) {
-        mgr->dns4.url = strdup(dns_uri);
-    }
-    else {
-        dns_uri = sdscat(dns_uri, "udp://8.8.8.8:53");
-        mgr->dns4.url = strdup(dns_uri);
-        MYMPD_LOG_WARN("Error reading dns server settings");
-    }
+    mgr->dns4.url = strdup(dns_uri);
     MYMPD_LOG_DEBUG("Setting dns server to %s", dns_uri);
     sdsfree(dns_uri);
   
@@ -291,6 +284,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data, void *fn
                 break;
             }
             //ssl support
+            #ifdef ENABLE_SSL
             if (config->ssl == true) {
                 MYMPD_LOG_DEBUG("Init tls with cert %s and key %s", config->ssl_cert, config->ssl_key);
                 struct mg_tls_opts tls_opts = {
@@ -303,6 +297,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data, void *fn
                     break;
                 }
             }
+            #endif
             mg_user_data->connection_count++;
             MYMPD_LOG_DEBUG("New connection id %lu, connections %d", nc->id, mg_user_data->connection_count);
             break;
