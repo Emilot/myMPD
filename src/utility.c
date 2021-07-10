@@ -22,8 +22,6 @@
 
 #include "../dist/src/sds/sds.h"
 #include "sds_extras.h"
-#include "list.h"
-#include "mympd_config_defs.h"
 #include "log.h"
 #include "tiny_queue.h"
 #include "api.h"
@@ -217,8 +215,10 @@ int testdir(const char *name, const char *dirname, bool create) {
     }
 
     if (create == true) {
+        errno = 0;
         if (mkdir(dirname, 0700) != 0) {
-            MYMPD_LOG_ERROR("%s: creating \"%s\" failed: %s", name, dirname, strerror(errno));
+            MYMPD_LOG_ERROR("%s: creating \"%s\" failed", name, dirname);
+            MYMPD_LOG_ERRNO(errno);
             //directory does not exist and creating it failed
             return 2;
         }
@@ -282,7 +282,7 @@ bool validate_string_not_dir(const char *data) {
 }
 
 bool validate_uri(const char *data) {
-    if (strstr(data, "/../") != NULL) {
+    if (strncmp(data, "../", 3) == 0 || strstr(data, "/../") != NULL || strstr(data, "/./") != NULL) {
         return false;
     }
     return true;
@@ -429,9 +429,11 @@ const struct magic_byte_entry magic_bytes[] = {
 };
 
 sds get_mime_type_by_magic(const char *filename) {
+    errno = 0;
     FILE *fp = fopen(filename, "rb");
     if (fp == NULL) {
-        MYMPD_LOG_ERROR("Can not open file \"%s\"", filename, strerror(errno));
+        MYMPD_LOG_ERROR("Can not open file \"%s\"", filename);
+        MYMPD_LOG_ERRNO(errno);
         return sdsempty();
     }
     unsigned char binary_buffer[8];
@@ -448,7 +450,7 @@ sds get_mime_type_by_magic_stream(sds stream) {
     sds hex_buffer = sdsempty();
     size_t len = sdslen(stream) < 8 ? sdslen(stream) : 8;
     for (size_t i = 0; i < len; i++) {
-        hex_buffer = sdscatprintf(hex_buffer, "%02X", stream[i]);
+        hex_buffer = sdscatprintf(hex_buffer, "%02X", (unsigned char) stream[i]);
     }
     const struct magic_byte_entry *p = NULL;
     for (p = magic_bytes; p->magic_bytes != NULL; p++) {
@@ -456,6 +458,9 @@ sds get_mime_type_by_magic_stream(sds stream) {
             MYMPD_LOG_DEBUG("Matched magic bytes for mime_type: %s", p->mime_type);
             break;
         }
+    }
+    if (p->magic_bytes == NULL) {
+        MYMPD_LOG_WARN("Could not get mime type from bytes \"%s\"", hex_buffer);
     }
     sdsfree(hex_buffer);
     sds mime_type = sdsnew(p->mime_type);
@@ -467,37 +472,6 @@ bool is_streamuri(const char *uri) {
         return true;
     }
     return false;
-}
-
-bool write_covercache_file(t_config *config, const char *uri, const char *mime_type, sds binary) {
-    bool rc = false;
-    sds filename = sdsnew(uri);
-    uri_to_filename(filename);
-    sds tmp_file = sdscatfmt(sdsempty(), "%s/covercache/%s.XXXXXX", config->varlibdir, filename);
-    int fd = mkstemp(tmp_file);
-    if (fd < 0) {
-        MYMPD_LOG_ERROR("Can not open file \"%s\" for write: %s", tmp_file, strerror(errno));
-    }
-    else {
-        FILE *fp = fdopen(fd, "w");
-        fwrite(binary, 1, sdslen(binary), fp);
-        fclose(fp);
-        sds ext = get_ext_by_mime_type(mime_type);
-        sds cover_file = sdscatfmt(sdsempty(), "%s/covercache/%s.%s", config->varlibdir, filename, ext);
-        if (rename(tmp_file, cover_file) == -1) {
-            MYMPD_LOG_ERROR("Rename file from \"%s\" to \"%s\" failed: %s", tmp_file, cover_file, strerror(errno));
-            if (unlink(tmp_file) != 0) {
-                MYMPD_LOG_ERROR("Error removing file \"%s\": %s", tmp_file, strerror(errno));
-            }
-        }
-        MYMPD_LOG_DEBUG("Write covercache file \"%s\" for uri \"%s\"", cover_file, uri);
-        sdsfree(ext);
-        sdsfree(cover_file);
-        rc = true;
-    }
-    sdsfree(tmp_file);
-    sdsfree(filename);
-    return rc;
 }
 
 void my_usleep(time_t usec) {

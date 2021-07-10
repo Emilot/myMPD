@@ -135,13 +135,17 @@ bool create_certificates(sds dir, sds custom_san) {
 
 bool cleanup_certificates(sds dir, const char *name) {
     sds cert_file = sdscatfmt(sdsempty(), "%s/%s.pem", dir, name);
+    errno = 0;
     if (unlink(cert_file) != 0) {
-        MYMPD_LOG_ERROR("Error removing file \"%s\": %s", cert_file, strerror(errno));
+        MYMPD_LOG_ERROR("Error removing file \"%s\"", cert_file);
+        MYMPD_LOG_ERRNO(errno);
     }
     sdsfree(cert_file);
     sds key_file = sdscatfmt(sdsempty(), "%s/%s.key", dir, name);
+    errno = 0;
     if (unlink(key_file) != 0) {
-        MYMPD_LOG_ERROR("Error removing file \"%s\": %s", key_file, strerror(errno));
+        MYMPD_LOG_ERROR("Error removing file \"%s\"", key_file);
+        MYMPD_LOG_ERRNO(errno);
     }
     sdsfree(key_file);
     
@@ -273,12 +277,12 @@ static sds get_san(sds buffer) {
         if (strcmp(hostbuffer, res->ai_canonname) != 0) {
             buffer = sdscatfmt(buffer, ", DNS:%s", res->ai_canonname);
         }
-        char addrstr[100];
+        char addrstr[INET6_ADDRSTRLEN];
         sds old_addrstr = sdsempty();
         void *ptr = NULL;
         
         for (rp = res; rp != NULL; rp = rp->ai_next) {
-            inet_ntop(res->ai_family, res->ai_addr->sa_data, addrstr, 100);
+            inet_ntop(res->ai_family, res->ai_addr->sa_data, addrstr, INET6_ADDRSTRLEN);
 
             switch (res->ai_family) {
                 case AF_INET:
@@ -289,7 +293,7 @@ static sds get_san(sds buffer) {
                     break;
             }
             if (ptr != NULL) {
-                inet_ntop(res->ai_family, ptr, addrstr, 100);
+                inet_ntop(res->ai_family, ptr, addrstr, INET6_ADDRSTRLEN);
                 if (strcmp(old_addrstr, addrstr) != 0) {
                     buffer = sdscatfmt(buffer, ", IP:%s", addrstr);
                     old_addrstr = sdsreplace(old_addrstr, addrstr);
@@ -492,9 +496,11 @@ static X509 *generate_selfsigned_cert(EVP_PKEY *pkey) {
 static bool write_to_disk(sds key_file, EVP_PKEY *pkey, sds cert_file, X509 *cert) {
     /* Write the key to disk. */    
     sds key_file_tmp = sdscatfmt(sdsempty(), "%s.XXXXXX", key_file);
+    errno = 0;
     int fd = mkstemp(key_file_tmp);
     if (fd < 0) {
-        MYMPD_LOG_ERROR("Can not open file \"%s\" for write: %s", key_file_tmp, strerror(errno));
+        MYMPD_LOG_ERROR("Can not open file \"%s\" for write", key_file_tmp);
+        MYMPD_LOG_ERRNO(errno);
         sdsfree(key_file_tmp);
         return false;
     }
@@ -506,8 +512,10 @@ static bool write_to_disk(sds key_file, EVP_PKEY *pkey, sds cert_file, X509 *cer
         sdsfree(key_file_tmp);
         return false;
     }
+    errno = 0;
     if (rename(key_file_tmp, key_file) == -1) {
-        MYMPD_LOG_ERROR("Renaming file from %s to %s failed: %s", key_file_tmp, key_file, strerror(errno));
+        MYMPD_LOG_ERROR("Renaming file from %s to %s failed", key_file_tmp, key_file);
+        MYMPD_LOG_ERRNO(errno);
         sdsfree(key_file_tmp);
         return false;
     }
@@ -515,8 +523,10 @@ static bool write_to_disk(sds key_file, EVP_PKEY *pkey, sds cert_file, X509 *cer
     
     /* Write the certificate to disk. */
     sds cert_file_tmp = sdscatfmt(sdsempty(), "%s.XXXXXX", cert_file);
+    errno = 0;
     if ((fd = mkstemp(cert_file_tmp)) < 0 ) {
-        MYMPD_LOG_ERROR("Can not open file \"%s\" for write: %s", cert_file_tmp, strerror(errno));
+        MYMPD_LOG_ERROR("Can not open file \"%s\" for write", cert_file_tmp);
+        MYMPD_LOG_ERRNO(errno);
         sdsfree(cert_file_tmp);
         return false;
     }
@@ -528,8 +538,10 @@ static bool write_to_disk(sds key_file, EVP_PKEY *pkey, sds cert_file, X509 *cer
         sdsfree(cert_file_tmp);
         return false;
     }
+    errno = 0;
     if (rename(cert_file_tmp, cert_file) == -1) {
-        MYMPD_LOG_ERROR("Renaming file from %s to %s failed: %s", cert_file_tmp, cert_file, strerror(errno));
+        MYMPD_LOG_ERROR("Renaming file from %s to %s failed", cert_file_tmp, cert_file);
+        MYMPD_LOG_ERRNO(errno);
         sdsfree(cert_file_tmp);
         return false;
     }
