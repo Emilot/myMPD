@@ -10,9 +10,7 @@ void mympd_api_read_statefiles(t_config *config, t_mympd_state *mympd_state);
 sds mympd_api_settings_put(t_config *config, t_mympd_state *mympd_state, sds buffer, sds method, long request_id);
 void mympd_api_settings_reset(t_config *config, t_mympd_state *mympd_state);
 bool mympd_api_cols_save(t_config *config, t_mympd_state *mympd_state, const char *table, const char *cols);
-bool mympd_api_settings_set(t_config *config, t_mympd_state *mympd_state, struct json_token *key, struct json_token *val,
-                            bool *mpd_conf_changed, bool *ns_changed, bool *apmode_changed, bool *airplay_changed, 
-		    bool *dac_changed, bool *roon_changed, bool *spotify_changed, bool *ffmpeg_changed, bool *wifi_changed);
+bool mympd_api_settings_set(t_config *config, t_mympd_state *mympd_state, struct json_token *key, struct json_token *val, bool *mpd_conf_changed, bool *ns_changed, bool *apmode_changed, bool *airplay_changed, bool *roon_changed, bool *spotify_changed, bool *dac_changed, bool *ffmpeg_changed, bool *wifi_changed);
 bool mympd_api_connection_save(t_config *config, t_mympd_state *mympd_state, struct json_token *key, struct json_token *val);
 void mympd_api_settings_delete(t_config *config);
 sds mympd_api_picture_list(t_config *config, sds buffer, sds method, long request_id);

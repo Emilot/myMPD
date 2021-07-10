@@ -73,24 +73,26 @@ function appGoto(card, tab, view, offset, limit, filter, sort, tag, search, newS
             }
         }
     }
+
     //get ptr to new app
     const ptr = app.apps[card].offset !== undefined ? app.apps[card] :
-        app.apps[card].tabs[tab].offset !== undefined ? app.apps[card].tabs[tab] :
-            app.apps[card].tabs[tab].views[view];
-
+                app.apps[card].tabs[tab].offset !== undefined ? app.apps[card].tabs[tab] :
+                app.apps[card].tabs[tab].views[view];
+                
     //save scrollPos of old app
-    if (oldptr != ptr) {
+    if (oldptr !== ptr) {
         oldptr.scrollPos = document.body.scrollTop ? document.body.scrollTop : document.documentElement.scrollTop;
     }
+    
     //set options to default, if not defined
     if (offset === null || offset === undefined) { offset = ptr.offset; }
     if (limit === null || limit === undefined)   { limit = ptr.limit; }
     if (filter === null || filter === undefined) { filter = ptr.filter; }
     if (sort === null || sort === undefined)     { sort = ptr.sort; }
     if (tag === null || tag === undefined)       { tag = ptr.tag; }
-    if (search === null || search === undefined)  { search = ptr.search; }
+    if (search === null || search === undefined) { search = ptr.search; }
     //set new scrollpos
-    if (newScrollPos === null || newScrollPos !== undefined) {
+    if (newScrollPos !== undefined) {
         ptr.scrollPos = newScrollPos;
     }
     //build hash
@@ -140,7 +142,6 @@ function appRoute() {
         ptr.tag = app.current.tag;
         ptr.search = app.current.search;
         app.current.scrollPos = ptr.scrollPos;
-
         //sync browse and playback
         if ((app.current.app === 'Browse' || app.current.app === 'Playback') && app.current.tab === 'Database') {
             setAppState(app.current.offset, app.current.limit, app.current.filter, app.current.sort, app.current.tag, app.current.search);
@@ -163,7 +164,7 @@ function appRoute() {
     }
     // else if (app.current.app === 'Playback') {
     //     sendAPI("MPD_API_PLAYER_CURRENT_SONG", {}, songChange);
-    // }
+    // }  
     else if (app.current.app === 'Queue' && app.current.tab === 'Current' ) {
         selectTag('searchqueuetags', 'searchqueuetagsdesc', app.current.filter);
         getQueue();
@@ -545,7 +546,7 @@ function appInit() {
             event.target.tagName === 'TEXTAREA' || event.ctrlKey || event.altKey) {
             return;
         }
-         // const cmd = keymap[event.key];
+        // const cmd = keymap[event.key];
         // if (cmd && typeof window[cmd.cmd] === 'function') {
         //     if (keymap[event.key].req === undefined || settings[keymap[event.key].req] === true)
         //         parseCmd(event, cmd);
@@ -626,7 +627,7 @@ function initPlayback() {
     }, false);
 
     document.getElementById('cardPlaybackTags').addEventListener('click', function(event) {
-        if (event.target.nodeName === 'SPAN') {
+        if (event.target.nodeName === 'P') {
             gotoBrowse(event);
         }
     }, false); 

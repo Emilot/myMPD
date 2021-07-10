@@ -98,8 +98,8 @@ function parseQueueMini(obj) {
 }
 
 function parseQueueList(obj) {
-    if (obj.result.totalTime && obj.result.totalTime > 0 && obj.result.totalEntities <= settings.maxElementsPerPage) {
-        document.getElementById('cardFooterQueueMini').innerText = t('Num songs', obj.result.totalEntities) + ' – ' + beautifyDuration(obj.result.totalTime);
+    if (obj.result.totalTime && obj.result.totalTime > 0 && obj.result.totalEntities <= app.apps.Queue.tabs.Current.limit) {
+        document.getElementById('cardFooterQueueMini').innerText = t('Num songs', obj.result.totalEntities) + ' â€“ ' + beautifyDuration(obj.result.totalTime);
     }
     else if (obj.result.totalEntities > 0) {
         document.getElementById('cardFooterQueueMini').innerText = t('Num songs', obj.result.totalEntities);

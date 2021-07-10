@@ -59,9 +59,11 @@ install(TARGETS mympd-config DESTINATION ${CMAKE_INSTALL_FULL_BINDIR})
 if (LUA_FOUND)
   set(MYMPD_SCRIPT_SOURCES
     mympd-script.c
+    log.c
     ../dist/src/mongoose/mongoose.c
     ../dist/src/sds/sds.c
     ../src/sds_extras.c
+    ../src/http_client.c
   )
 
   set(MONGOOSE_FLAGS "${MONGOOSE_SSL} -DMG_ENABLE_MQTT=0 -DMG_ENABLE_HTTP_WEBSOCKET=0 \
@@ -70,7 +72,7 @@ if (LUA_FOUND)
 	-DMG_DISABLE_HTTP_KEEP_ALIVE=1 -DMG_ENABLE_IPV6")
 
   set_property(SOURCE "mympd-script.c" PROPERTY COMPILE_FLAGS "${MYMPD_COMPILE_FLAGS} ${MONGOOSE_FLAGS}")
-  set_property(SOURCE "../dist/src/mongoose/mongoose.c" PROPERTY COMPILE_FLAGS "-Wno-format-truncation ${MONGOOSE_FLAGS}")
+  set_property(SOURCE "../dist/src/mongoose/mongoose.c" PROPERTY COMPILE_FLAGS "-Wno-unused-result ${MONGOOSE_FLAGS}")
 
   add_executable(mympd-script ${MYMPD_SCRIPT_SOURCES})
   target_link_libraries(mympd-script)

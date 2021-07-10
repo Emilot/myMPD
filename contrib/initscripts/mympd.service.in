@@ -13,13 +13,13 @@ ExecStart=@CMAKE_INSTALL_FULL_BINDIR@/mympd
 Type=simple
 
 # disallow writing to /usr, /bin, /sbin, ...
-ProtectSystem=yes
+#ProtectSystem=yes
 
 # more paranoid security settings
 ProtectKernelTunables=yes
 ProtectControlGroups=yes
-ProtectKernelModules=yes
-RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+#ProtectKernelModules=yes
+#RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
 RestrictNamespaces=yes
 
 [Install]

@@ -4,6 +4,7 @@
  https://github.com/jcorporation/mympd
 */
 
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -14,7 +15,7 @@
 #include "../sds_extras.h"
 #include "../log.h"
 #include "../list.h"
-#include "config_defs.h"
+#include "mympd_config_defs.h"
 #include "../utility.h"
 #include "../api.h"
 #include "../tiny_queue.h"
@@ -39,8 +40,8 @@ void mpd_client_mpd_features(t_config *config, t_mpd_client_state *mpd_client_st
     MYMPD_LOG_NOTICE("MPD protocoll version: %u.%u.%u", mpd_client_state->protocol[0], mpd_client_state->protocol[1], mpd_client_state->protocol[2]);
 
     // Defaults
-    mpd_client_state->feat_sticker = false;
-    mpd_client_state->feat_playlists = false;
+    mpd_client_state->mpd_state->feat_stickers = false;
+    mpd_client_state->mpd_state->feat_playlists = false;
     mpd_client_state->mpd_state->feat_tags = false;
     mpd_client_state->mpd_state->feat_advsearch = false;
     mpd_client_state->feat_fingerprint = false;
@@ -48,7 +49,6 @@ void mpd_client_mpd_features(t_config *config, t_mpd_client_state *mpd_client_st
     mpd_client_state->feat_coverimage = true;
     mpd_client_state->feat_mpd_albumart = false;
     mpd_client_state->feat_mpd_readpicture = false;
-    mpd_client_state->mpd_state->feat_mpd_searchwindow = false;
     mpd_client_state->feat_single_oneshot = false;
     mpd_client_state->feat_mpd_mount = false;
     mpd_client_state->feat_mpd_neighbor = false;
@@ -65,7 +65,6 @@ void mpd_client_mpd_features(t_config *config, t_mpd_client_state *mpd_client_st
     buffer = mpd_client_put_state(config, mpd_client_state, buffer, NULL, 0);
     sdsfree(buffer);
 
-    mpd_client_state->mpd_state->feat_mpd_searchwindow = mpd_shared_feat_mpd_searchwindow(mpd_client_state->mpd_state);
     mpd_client_state->mpd_state->feat_advsearch = mpd_shared_feat_advsearch(mpd_client_state->mpd_state);
 
     if (mpd_connection_cmp_server_version(mpd_client_state->mpd_state->conn, 0, 21, 0) >= 0) {
@@ -94,16 +93,18 @@ void mpd_client_mpd_features(t_config *config, t_mpd_client_state *mpd_client_st
     }
     
     //push settings to web_server_queue
+    struct set_mg_user_data_request *extra = (struct set_mg_user_data_request*)malloc(sizeof(struct set_mg_user_data_request));
+    assert(extra);
+    extra->music_directory = sdsdup(mpd_client_state->music_directory_value);
+    extra->playlist_directory = sdsdup(config->playlist_directory);
+    extra->coverimage_names = sdsdup(mpd_client_state->coverimage_name);
+    extra->feat_library = mpd_client_state->feat_library;
+    extra->feat_mpd_albumart = mpd_client_state->feat_mpd_albumart;
+    extra->mpd_stream_port = config->mpd_stream_port;
+    extra->mpd_host = sdsdup(mpd_client_state->mpd_state->mpd_host);
+
     t_work_result *web_server_response = create_result_new(-1, 0, 0, "");
-    sds data = sdsnew("{");
-    data = tojson_char(data, "musicDirectory", mpd_client_state->music_directory_value, true);
-    data = tojson_char(data, "playlistDirectory", config->playlist_directory, true);
-    data = tojson_char(data, "coverimageName", mpd_client_state->coverimage_name, true);
-    data = tojson_bool(data, "featLibrary", mpd_client_state->feat_library, false);
-    data = tojson_bool(data, "featMpdAlbumart", mpd_client_state->feat_mpd_albumart, false);
-    data = sdscat(data, "}");
-    web_server_response->data = sdsreplace(web_server_response->data, data);
-    sdsfree(data);
+    web_server_response->extra = extra;
     tiny_queue_push(web_server_queue, web_server_response, 0);
 }
 
@@ -141,11 +142,11 @@ static void mpd_client_feature_commands(t_mpd_client_state *mpd_client_state) {
         while ((pair = mpd_recv_command_pair(mpd_client_state->mpd_state->conn)) != NULL) {
             if (strcmp(pair->value, "sticker") == 0) {
                 MYMPD_LOG_DEBUG("MPD supports stickers");
-                mpd_client_state->feat_sticker = true;
+                mpd_client_state->mpd_state->feat_stickers = true;
             }
             else if (strcmp(pair->value, "listplaylists") == 0) {
                 MYMPD_LOG_DEBUG("MPD supports playlists");
-                mpd_client_state->feat_playlists = true;
+                mpd_client_state->mpd_state->feat_playlists = true;
             }
             else if (strcmp(pair->value, "getfingerprint") == 0) {
                 MYMPD_LOG_DEBUG("MPD supports fingerprint");
@@ -177,18 +178,18 @@ static void mpd_client_feature_commands(t_mpd_client_state *mpd_client_state) {
     mpd_response_finish(mpd_client_state->mpd_state->conn);
     check_error_and_recover2(mpd_client_state->mpd_state, NULL, NULL, 0, false);
     
-    if (mpd_client_state->feat_sticker == false && mpd_client_state->stickers == true) {
+    if (mpd_client_state->mpd_state->feat_stickers == false && mpd_client_state->stickers == true) {
         MYMPD_LOG_WARN("MPD don't support stickers, disabling myMPD feature");
-        mpd_client_state->feat_sticker = false;
+        mpd_client_state->mpd_state->feat_stickers = false;
     }
-    if (mpd_client_state->feat_sticker == true && mpd_client_state->stickers == false) {
-        mpd_client_state->feat_sticker = false;
+    if (mpd_client_state->mpd_state->feat_stickers == true && mpd_client_state->stickers == false) {
+        mpd_client_state->mpd_state->feat_stickers = false;
     }
-    if (mpd_client_state->feat_sticker == false && mpd_client_state->smartpls == true) {
+    if (mpd_client_state->mpd_state->feat_stickers == false && mpd_client_state->smartpls == true) {
         MYMPD_LOG_WARN("Stickers are disabled, disabling smart playlists");
         mpd_client_state->feat_smartpls = false;
     }
-    if (mpd_client_state->feat_playlists == false && mpd_client_state->smartpls == true) {
+    if (mpd_client_state->mpd_state->feat_playlists == false && mpd_client_state->smartpls == true) {
         MYMPD_LOG_WARN("Playlists are disabled, disabling smart playlists");
         mpd_client_state->feat_smartpls = false;
     }

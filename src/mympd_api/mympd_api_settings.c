@@ -21,7 +21,7 @@
 #include "../../dist/src/frozen/frozen.h"
 #include "../log.h"
 #include "../list.h"
-#include "config_defs.h"
+#include "mympd_config_defs.h"
 #include "../utility.h"
 #include "mympd_api_utility.h"
 #include "mympd_api_timer.h"
@@ -34,7 +34,7 @@ static sds state_file_rw_string(t_config *config, const char *name, const char *
 static bool state_file_rw_bool(t_config *config, const char *name, const bool def_value, bool warn);
 static int state_file_rw_int(t_config *config, const char *name, const int def_value, bool warn);
 static bool state_file_write(t_config *config, const char *name, const char *value);
-static sds default_navbar_icons(t_config *config);
+static sds default_navbar_icons(t_config *config, sds buffer);
 static sds read_navbar_icons(t_config *config);
 
 //public functions
@@ -46,12 +46,11 @@ void mympd_api_settings_delete(t_config *config) {
         "cols_browse_filesystem", "cols_browse_playlists_detail", "cols_playback", "cols_queue_current", "cols_queue_last_played",
         "cols_search", "cols_queue_jukebox", "coverimage", "coverimage_name", "coverimage_size", "jukebox_mode", "jukebox_playlist", "jukebox_queue_length",
         "jukebox_unique_tag", "jukebox_last_played", "generate_pls_tags", "smartpls_sort", "smartpls_prefix", "smartpls_interval",
-        "last_played", "last_played_count", "locale", "localplayer", "love", "love_channel", "love_message",
+        "last_played", "last_played_count", "locale", "love", "love_channel", "love_message",
         "mpd_host", "mpd_pass", "mpd_port", "notification_page", "notification_web", "searchtaglist",
-        "smartpls", "stickers", "stream_port", "stream_url", "taglist", "music_directory", "bookmarks", "bookmark_list", "coverimage_size_small", 
+        "smartpls", "stickers", "taglist", "music_directory", "bookmarks", "bookmark_list", "coverimage_size_small", 
         "theme", "timer", "highlight_color", "media_session", "booklet_name", "lyrics", "home_list", "navbar_icons", "advanced", 
-        "home", "bg_image",	"ns_share", "samba_version", "ns_username", "ns_password", "apmode", "airplay", "roon", "spotify",
-        "tidal_enabled", "tidal_username", "tidal_password", "tidal_audioquality", 0};
+        "home", "bg_image", "ns_share", "samba_version", "ns_username", "ns_password", "apmode", "airplay", "roon", "spotify", 0};
 
     const char** ptr = state_files;
     while (*ptr != 0) {
@@ -156,9 +155,7 @@ bool mympd_api_cols_save(t_config *config, t_mympd_state *mympd_state, const cha
     return true;
 }
 
-bool mympd_api_settings_set(t_config *config, t_mympd_state *mympd_state, struct json_token *key,
-                            struct json_token *val, bool *mpd_conf_changed, bool *ns_changed,
-                            bool *apmode_changed, bool *airplay_changed, bool *roon_changed, bool *spotify_changed, bool *dac_changed, bool *ffmpeg_changed, bool *wifi_changed) {
+bool mympd_api_settings_set(t_config *config, t_mympd_state *mympd_state, struct json_token *key, struct json_token *val, bool *mpd_conf_changed, bool *ns_changed, bool *apmode_changed, bool *airplay_changed, bool *roon_changed, bool *spotify_changed, bool *dac_changed, bool *ffmpeg_changed, bool *wifi_changed) {
     sds settingname = sdsempty();
     sds settingvalue = sdscatlen(sdsempty(), val->ptr, val->len);
     char *crap;
@@ -206,18 +203,6 @@ bool mympd_api_settings_set(t_config *config, t_mympd_state *mympd_state, struct
     else if (strncmp(key->ptr, "bookletName", key->len) == 0) {
         mympd_state->booklet_name = sdsreplacelen(mympd_state->booklet_name, settingvalue, sdslen(settingvalue));
         settingname = sdscat(settingname, "booklet_name");
-    }
-    else if (strncmp(key->ptr, "featLocalplayer", key->len) == 0) {
-        mympd_state->localplayer = val->type == JSON_TYPE_TRUE ? true : false;
-        settingname = sdscat(settingname, "localplayer");
-    }
-    else if (strncmp(key->ptr, "streamPort", key->len) == 0) {
-        mympd_state->stream_port = strtoimax(settingvalue, &crap, 10);
-        settingname = sdscat(settingname, "stream_port");
-    }
-    else if (strncmp(key->ptr, "streamUrl", key->len) == 0) {
-        mympd_state->stream_url = sdsreplacelen(mympd_state->stream_url, settingvalue, sdslen(settingvalue));
-        settingname = sdscat(settingname, "stream_url");
     }
     else if (strncmp(key->ptr, "locale", key->len) == 0) {
         mympd_state->locale = sdsreplacelen(mympd_state->locale, settingvalue, sdslen(settingvalue));
@@ -355,17 +340,34 @@ bool mympd_api_settings_set(t_config *config, t_mympd_state *mympd_state, struct
         mympd_state->highlight_color = sdsreplacelen(mympd_state->highlight_color, settingvalue, sdslen(settingvalue));
         settingname = sdscat(settingname, "highlight_color");
     }
+    else if (strncmp(key->ptr, "lyrics", key->len) == 0) {
+        mympd_state->lyrics = val->type == JSON_TYPE_TRUE ? true : false;
+        settingname = sdscat(settingname, "lyrics");
+    }
+    else if (strncmp(key->ptr, "advanced", key->len) == 0) {
+        mympd_state->advanced = sdsreplacelen(mympd_state->advanced, settingvalue, sdslen(settingvalue));
+        settingname = sdscat(settingname, "advanced");
+    }
+    else if (strncmp(key->ptr, "featHome", key->len) == 0) {
+        mympd_state->home = val->type == JSON_TYPE_TRUE ? true : false;
+        settingname = sdscat(settingname, "home");
+    }
+    else if (strncmp(key->ptr, "bgImage", key->len) == 0) {
+        mympd_state->bg_image = sdsreplacelen(mympd_state->bg_image, settingvalue, sdslen(settingvalue));
+        settingname = sdscat(settingname, "bg_image");
+    }
+    else if (strncmp(key->ptr, "mixertype", key->len) == 0) {
+        if (sdscmp(mympd_state->mixer_type, settingvalue) != 0) {
+            *mpd_conf_changed = true;
+        }
+        mympd_state->mixer_type = sdsreplacelen(mympd_state->mixer_type, settingvalue, sdslen(settingvalue));
+        settingname = sdscat(settingname, "mixer_type");
+    }
     else if (strncmp(key->ptr, "dac", key->len) == 0) {
         if (sdscmp(mympd_state->dac, settingvalue) != 0)
             *dac_changed = true;
         mympd_state->dac = sdsreplacelen(mympd_state->dac, settingvalue, sdslen(settingvalue));
         settingname = sdscat(settingname, "dac");
-    }
-    else if (strncmp(key->ptr, "mixerType", key->len) == 0) {
-        if (sdscmp(mympd_state->mixer_type, settingvalue) != 0)
-            *mpd_conf_changed = true;
-        mympd_state->mixer_type = sdsreplacelen(mympd_state->mixer_type, settingvalue, sdslen(settingvalue));
-        settingname = sdscat(settingname, "mixer_type");
     }
     else if (strncmp(key->ptr, "dop", key->len) == 0) {
         if ((mympd_state->dop == true && val->type == JSON_TYPE_FALSE) ||
@@ -381,47 +383,115 @@ bool mympd_api_settings_set(t_config *config, t_mympd_state *mympd_state, struct
         mympd_state->ffmpeg = val->type == JSON_TYPE_TRUE ? true : false;
         settingname = sdscat(settingname, "ffmpeg");
     }
-    else if (strncmp(key->ptr, "nsType", key->len) == 0) {
+    else if (strncmp(key->ptr, "mixerType", key->len) == 0)
+    {
+        if (sdscmp(mympd_state->mixer_type, settingvalue) != 0)
+        {
+            *mpd_conf_changed = true;
+        }
+        mympd_state->mixer_type = sdsreplacelen(mympd_state->mixer_type, settingvalue, sdslen(settingvalue));
+        settingname = sdscat(settingname, "mixer_type");
+    }
+    else if (strncmp(key->ptr, "dop", key->len) == 0)
+    {
+        if ((mympd_state->dop == true && val->type == JSON_TYPE_FALSE) ||
+            (mympd_state->dop == false && val->type == JSON_TYPE_TRUE))
+        {
+            *mpd_conf_changed = true;
+        }
+        mympd_state->dop = val->type == JSON_TYPE_TRUE ? true : false;
+        settingname = sdscat(settingname, "dop");
+    }
+    else if (strncmp(key->ptr, "nsType", key->len) == 0)
+    {
         int ns_type = strtoimax(settingvalue, &crap, 10);
-        if (ns_type < 0 || ns_type > 3) {
+        if (ns_type < 0 || ns_type > 3)
+        {
             sdsfree(settingname);
             sdsfree(settingvalue);
             return false;
         }
         if (mympd_state->ns_type != ns_type)
+        {
             *ns_changed = true;
+        }
         mympd_state->ns_type = ns_type;
         settingname = sdscat(settingname, "ns_type");
     }
-    else if (strncmp(key->ptr, "nsServer", key->len) == 0) {
+    else if (strncmp(key->ptr, "nsServer", key->len) == 0)
+    {
         if (sdscmp(mympd_state->ns_server, settingvalue) != 0)
+        {
             *ns_changed = true;
+        }
         mympd_state->ns_server = sdsreplacelen(mympd_state->ns_server, settingvalue, sdslen(settingvalue));
         settingname = sdscat(settingname, "ns_server");
     }
-    else if (strncmp(key->ptr, "nsShare", key->len) == 0) {
+    else if (strncmp(key->ptr, "nsShare", key->len) == 0)
+    {
         if (sdscmp(mympd_state->ns_share, settingvalue) != 0)
+        {
             *ns_changed = true;
+        }
         mympd_state->ns_share = sdsreplacelen(mympd_state->ns_share, settingvalue, sdslen(settingvalue));
         settingname = sdscat(settingname, "ns_share");
     }
-    else if (strncmp(key->ptr, "sambaVersion", key->len) == 0) {
+    else if (strncmp(key->ptr, "sambaVersion", key->len) == 0)
+    {
         if (sdscmp(mympd_state->samba_version, settingvalue) != 0)
+        {
             *ns_changed = true;
+        }
         mympd_state->samba_version = sdsreplacelen(mympd_state->samba_version, settingvalue, sdslen(settingvalue));
         settingname = sdscat(settingname, "samba_version");
     }
-    else if (strncmp(key->ptr, "nsUsername", key->len) == 0) {
+    else if (strncmp(key->ptr, "nsUsername", key->len) == 0)
+    {
         if (sdscmp(mympd_state->ns_username, settingvalue) != 0)
+        {
             *ns_changed = true;
+        }
         mympd_state->ns_username = sdsreplacelen(mympd_state->ns_username, settingvalue, sdslen(settingvalue));
         settingname = sdscat(settingname, "ns_username");
     }
-    else if (strncmp(key->ptr, "nsPassword", key->len) == 0) {
+    else if (strncmp(key->ptr, "nsPassword", key->len) == 0)
+    {
         if (sdscmp(mympd_state->ns_password, settingvalue) != 0)
+        {
             *ns_changed = true;
+        }
         mympd_state->ns_password = sdsreplacelen(mympd_state->ns_password, settingvalue, sdslen(settingvalue));
         settingname = sdscat(settingname, "ns_password");
+    }
+    else if (strncmp(key->ptr, "airplay", key->len) == 0)
+    {
+        if ((mympd_state->airplay == true && val->type == JSON_TYPE_FALSE) ||
+            (mympd_state->airplay == false && val->type == JSON_TYPE_TRUE))
+        {
+            *airplay_changed = true;
+        }
+        mympd_state->airplay = val->type == JSON_TYPE_TRUE ? true : false;
+        settingname = sdscat(settingname, "airplay");
+    }
+    else if (strncmp(key->ptr, "roon", key->len) == 0)
+    {
+        if ((mympd_state->roon == true && val->type == JSON_TYPE_FALSE) ||
+            (mympd_state->roon == false && val->type == JSON_TYPE_TRUE))
+        {
+            *roon_changed = true;
+        }
+        mympd_state->roon = val->type == JSON_TYPE_TRUE ? true : false;
+        settingname = sdscat(settingname, "roon");
+    }
+    else if (strncmp(key->ptr, "spotify", key->len) == 0)
+    {
+        if ((mympd_state->spotify == true && val->type == JSON_TYPE_FALSE) ||
+            (mympd_state->spotify == false && val->type == JSON_TYPE_TRUE))
+        {
+            *spotify_changed = true;
+        }
+        mympd_state->spotify = val->type == JSON_TYPE_TRUE ? true : false;
+        settingname = sdscat(settingname, "spotify");
     }
     else if (strncmp(key->ptr, "apmode", key->len) == 0) {
         if ((mympd_state->apmode == true && val->type == JSON_TYPE_FALSE) ||
@@ -429,56 +499,6 @@ bool mympd_api_settings_set(t_config *config, t_mympd_state *mympd_state, struct
             *apmode_changed = true;
         mympd_state->apmode = val->type == JSON_TYPE_TRUE ? true : false;
         settingname = sdscat(settingname, "apmode");
-    }
-    else if (strncmp(key->ptr, "airplay", key->len) == 0) {
-        if ((mympd_state->airplay == true && val->type == JSON_TYPE_FALSE) ||
-            (mympd_state->airplay == false && val->type == JSON_TYPE_TRUE))
-            *airplay_changed = true;
-        mympd_state->airplay = val->type == JSON_TYPE_TRUE ? true : false;
-        settingname = sdscat(settingname, "airplay");
-    }
-    else if (strncmp(key->ptr, "roon", key->len) == 0) {
-        if ((mympd_state->roon == true && val->type == JSON_TYPE_FALSE) ||
-            (mympd_state->roon == false && val->type == JSON_TYPE_TRUE))
-            *roon_changed = true;
-        mympd_state->roon = val->type == JSON_TYPE_TRUE ? true : false;
-        settingname = sdscat(settingname, "roon");
-    }
-    else if (strncmp(key->ptr, "spotify", key->len) == 0) {
-        if ((mympd_state->spotify == true && val->type == JSON_TYPE_FALSE) ||
-            (mympd_state->spotify == false && val->type == JSON_TYPE_TRUE))
-            *spotify_changed = true;
-        mympd_state->spotify = val->type == JSON_TYPE_TRUE ? true : false;
-        settingname = sdscat(settingname, "spotify");
-    }
-    else if (strncmp(key->ptr, "tidalEnabled", key->len) == 0) {
-        if ((mympd_state->tidal_enabled == true && val->type == JSON_TYPE_FALSE) ||
-            (mympd_state->tidal_enabled == false && val->type == JSON_TYPE_TRUE))
-            *mpd_conf_changed = true;
-        mympd_state->tidal_enabled = val->type == JSON_TYPE_TRUE ? true : false;
-        settingname = sdscat(settingname, "tidal_enabled");
-    }
-    else if (strncmp(key->ptr, "tidalUsername", key->len) == 0) {
-        if (sdscmp(mympd_state->tidal_username, settingvalue) != 0)
-            *mpd_conf_changed = true;
-        mympd_state->tidal_username = sdsreplacelen(mympd_state->tidal_username, settingvalue, sdslen(settingvalue));
-        settingname = sdscat(settingname, "tidal_username");
-    }
-    else if (strncmp(key->ptr, "tidalPassword", key->len) == 0) {
-        if (sdscmp(mympd_state->tidal_password, settingvalue) != 0)
-            *mpd_conf_changed = true;
-        mympd_state->tidal_password = sdsreplacelen(mympd_state->tidal_password, settingvalue, sdslen(settingvalue));
-        settingname = sdscat(settingname, "tidal_password");
-    }
-    else if (strncmp(key->ptr, "tidalAudioquality", key->len) == 0) {
-        if (sdscmp(mympd_state->tidal_audioquality, settingvalue) != 0)
-            *mpd_conf_changed = true;
-        mympd_state->tidal_audioquality = sdsreplacelen(mympd_state->tidal_audioquality, settingvalue, sdslen(settingvalue));
-        settingname = sdscat(settingname, "tidal_audioquality");
-    }
-    else if (strncmp(key->ptr, "lyrics", key->len) == 0) {
-        mympd_state->lyrics = val->type == JSON_TYPE_TRUE ? true : false;
-        settingname = sdscat(settingname, "lyrics");
     }
     else if (strncmp(key->ptr, "wifi", key->len) == 0) {
         if ((mympd_state->wifi == true && val->type == JSON_TYPE_FALSE) ||
@@ -498,17 +518,6 @@ bool mympd_api_settings_set(t_config *config, t_mympd_state *mympd_state, struct
             *wifi_changed = true;
         mympd_state->wifi_password = sdsreplacelen(mympd_state->wifi_password, settingvalue, sdslen(settingvalue));
         settingname = sdscat(settingname, "wifi_password");
-    else if (strncmp(key->ptr, "advanced", key->len) == 0) {
-        mympd_state->advanced = sdsreplacelen(mympd_state->advanced, settingvalue, sdslen(settingvalue));
-        settingname = sdscat(settingname, "advanced");
-    }
-    else if (strncmp(key->ptr, "featHome", key->len) == 0) {
-        mympd_state->home = val->type == JSON_TYPE_TRUE ? true : false;
-        settingname = sdscat(settingname, "home");
-    }
-    else if (strncmp(key->ptr, "bgImage", key->len) == 0) {
-        mympd_state->bg_image = sdsreplacelen(mympd_state->bg_image, settingvalue, sdslen(settingvalue));
-        settingname = sdscat(settingname, "bg_image");
     }
     else {
         sdsfree(settingname);
@@ -563,9 +572,6 @@ void mympd_api_read_statefiles(t_config *config, t_mympd_state *mympd_state) {
     mympd_state->cols_playback = state_file_rw_string(config, "cols_playback", config->cols_playback, false);
     mympd_state->cols_queue_last_played = state_file_rw_string(config, "cols_queue_last_played", config->cols_queue_last_played, false);
     mympd_state->cols_queue_jukebox = state_file_rw_string(config, "cols_queue_jukebox", config->cols_queue_jukebox, false);
-    mympd_state->localplayer = state_file_rw_bool(config, "localplayer", config->localplayer, false);
-    mympd_state->stream_port = state_file_rw_int(config, "stream_port", config->stream_port, false);
-    mympd_state->stream_url = state_file_rw_string(config, "stream_url", config->stream_url, false);
     mympd_state->bg_cover = state_file_rw_bool(config, "bg_cover", config->bg_cover, false);
     mympd_state->bg_color = state_file_rw_string(config, "bg_color", config->bg_color, false);
     mympd_state->bg_css_filter = state_file_rw_string(config, "bg_css_filter", config->bg_css_filter, false);
@@ -580,7 +586,10 @@ void mympd_api_read_statefiles(t_config *config, t_mympd_state *mympd_state) {
     mympd_state->timer = state_file_rw_bool(config, "timer", config->timer, false);
     mympd_state->highlight_color = state_file_rw_string(config, "highlight_color", config->highlight_color, false);
     mympd_state->booklet_name = state_file_rw_string(config, "booklet_name", config->booklet_name, false);
+    mympd_state->advanced = state_file_rw_string(config, "advanced", "{}", false);
     mympd_state->lyrics = state_file_rw_bool(config, "lyrics", config->lyrics, false);
+    mympd_state->home = state_file_rw_bool(config, "home", config->home, false);
+    mympd_state->bg_image = state_file_rw_string(config, "bg_image", config->bg_image, false);
     mympd_state->mixer_type = state_file_rw_string(config, "mixer_type", config->mixer_type, false);
     mympd_state->dac = state_file_rw_string(config, "dac", config->dac, false);
     mympd_state->dop = state_file_rw_bool(config, "dop", config->dop, false);
@@ -592,18 +601,10 @@ void mympd_api_read_statefiles(t_config *config, t_mympd_state *mympd_state) {
     mympd_state->ns_username = state_file_rw_string(config, "ns_username", config->ns_username, false);
     mympd_state->ns_password = state_file_rw_string(config, "ns_password", config->ns_password, false);
     mympd_state->apmode = state_file_rw_bool(config, "apmode", config->apmode, false);
-    mympd_state->airplay = state_file_rw_bool(config, "airplay", config->airplay, false);
-    mympd_state->roon = state_file_rw_bool(config, "roon", config->roon, false);
-    mympd_state->spotify = state_file_rw_bool(config, "spotify", config->spotify, false);
-    mympd_state->tidal_enabled = state_file_rw_bool(config, "tidal_enabled", config->tidal_enabled, false);
-    mympd_state->tidal_username = state_file_rw_string(config, "tidal_username", config->tidal_username, false);
-    mympd_state->tidal_password = state_file_rw_string(config, "tidal_password", config->tidal_password, false);
-    mympd_state->tidal_audioquality = state_file_rw_string(config, "tidal_audioquality", config->tidal_audioquality, false);
     mympd_state->wifi = state_file_rw_bool(config, "wifi", config->wifi, false);
     mympd_state->wifi_ssid = state_file_rw_string(config, "wifi_ssid", config->wifi_ssid, false);
     mympd_state->wifi_password = state_file_rw_string(config, "wifi_password", config->wifi_password, false);
-    mympd_state->home = state_file_rw_bool(config, "home", config->home, false);
-    mympd_state->bg_image = state_file_rw_string(config, "bg_image", config->bg_image, false);
+
     if (config->readonly == true) {
         mympd_state->bookmarks = false;
         mympd_state->smartpls = false;
@@ -625,9 +626,7 @@ sds mympd_api_settings_put(t_config *config, t_mympd_state *mympd_state, sds buf
 #else
     buffer = tojson_bool(buffer, "featCacert", false, true);
 #endif
-    buffer = tojson_bool(buffer, "featLocalplayer", mympd_state->localplayer, true);
-    buffer = tojson_long(buffer, "streamPort", mympd_state->stream_port, true);
-    buffer = tojson_char(buffer, "streamUrl", mympd_state->stream_url, true);
+    buffer = tojson_bool(buffer, "featLocalPlayback", (config->mpd_stream_port == 0 ? false : true), true);
     buffer = tojson_bool(buffer, "coverimage", mympd_state->coverimage, true);
     buffer = tojson_char(buffer, "coverimageName", mympd_state->coverimage_name, true);
     buffer = tojson_long(buffer, "coverimageSize", mympd_state->coverimage_size, true);
@@ -668,31 +667,27 @@ sds mympd_api_settings_put(t_config *config, t_mympd_state *mympd_state, sds buf
     buffer = tojson_bool(buffer, "featLyrics", mympd_state->lyrics, true);
     buffer = tojson_bool(buffer, "featScripting", config->scripting, true);
     buffer = tojson_bool(buffer, "featScripteditor", config->scripteditor, true);
-    buffer = tojson_char(buffer, "mixerType", mympd_state->mixer_type, true);
+    buffer = tojson_bool(buffer, "featHome", mympd_state->home, true);
+    buffer = tojson_long(buffer, "volumeMin", config->volume_min, true);
+    buffer = tojson_long(buffer, "volumeMax", config->volume_max, true);
+    buffer = tojson_char(buffer, "bgImage", mympd_state->bg_image, true);
     buffer = tojson_char(buffer, "dac", mympd_state->dac, true);
+    buffer = tojson_char(buffer, "mixertype", mympd_state->mixer_type, true);
     buffer = tojson_bool(buffer, "dop", mympd_state->dop, true);
     buffer = tojson_bool(buffer, "ffmpeg", mympd_state->ffmpeg, true);
+    buffer = tojson_bool(buffer, "apmode", mympd_state->apmode, true);
     buffer = tojson_long(buffer, "nsType", mympd_state->ns_type, true);
     buffer = tojson_char(buffer, "nsServer", mympd_state->ns_server, true);
     buffer = tojson_char(buffer, "nsShare", mympd_state->ns_share, true);
     buffer = tojson_char(buffer, "sambaVersion", mympd_state->samba_version, true);
     buffer = tojson_char(buffer, "nsUsername", mympd_state->ns_username, true);
     buffer = tojson_char(buffer, "nsPassword", mympd_state->ns_password, true);
-    buffer = tojson_bool(buffer, "apmode", mympd_state->apmode, true);
     buffer = tojson_bool(buffer, "airplay", mympd_state->airplay, true);
     buffer = tojson_bool(buffer, "roon", mympd_state->roon, true);
     buffer = tojson_bool(buffer, "spotify", mympd_state->spotify, true);
-    buffer = tojson_bool(buffer, "tidalEnabled", mympd_state->tidal_enabled, true);
-    buffer = tojson_char(buffer, "tidalUsername", mympd_state->tidal_username, true);
-    buffer = tojson_char(buffer, "tidalPassword", mympd_state->tidal_password, true);
-    buffer = tojson_char(buffer, "tidalAudioquality", mympd_state->tidal_audioquality, true);
     buffer = tojson_bool(buffer, "wifi", mympd_state->wifi, true);
     buffer = tojson_char(buffer, "wifissid", mympd_state->wifi_ssid, true);
     buffer = tojson_char(buffer, "wifiPassword", mympd_state->wifi_password, true);
-    buffer = tojson_bool(buffer, "featHome", mympd_state->home, true);
-    buffer = tojson_long(buffer, "volumeMin", config->volume_min, true);
-    buffer = tojson_long(buffer, "volumeMax", config->volume_max, true);
-    buffer = tojson_char(buffer, "bgImage", mympd_state->bg_image, true);
     buffer = sdscatfmt(buffer, "\"colsQueueCurrent\":%s,", mympd_state->cols_queue_current);
     buffer = sdscatfmt(buffer, "\"colsSearch\":%s,", mympd_state->cols_search);
     buffer = sdscatfmt(buffer, "\"colsBrowseDatabaseDetail\":%s,", mympd_state->cols_browse_database);
@@ -701,7 +696,8 @@ sds mympd_api_settings_put(t_config *config, t_mympd_state *mympd_state, sds buf
     buffer = sdscatfmt(buffer, "\"colsPlayback\":%s,", mympd_state->cols_playback);
     buffer = sdscatfmt(buffer, "\"colsQueueLastPlayed\":%s,", mympd_state->cols_queue_last_played);
     buffer = sdscatfmt(buffer, "\"colsQueueJukebox\":%s,", mympd_state->cols_queue_jukebox);
-    buffer = sdscatfmt(buffer, "\"navbarIcons\":%s", mympd_state->navbar_icons);
+    buffer = sdscatfmt(buffer, "\"navbarIcons\":%s,", mympd_state->navbar_icons);
+    buffer = sdscatfmt(buffer, "\"advanced\":%s", mympd_state->advanced);
 
     if (config->syscmds == true) {
         buffer = sdscat(buffer, ",\"syscmdList\":[");
@@ -854,7 +850,8 @@ static bool state_file_write(t_config *config, const char *name, const char *val
 static sds default_navbar_icons(t_config *config, sds buffer) {
     MYMPD_LOG_NOTICE("Writing default navbar_icons");
     sds file_name = sdscatfmt(sdsempty(), "%s/state/navbar_icons", config->varlibdir);
-    sds buffer = sdsnew(NAVBAR_ICONS);
+    sdsclear(buffer);
+    buffer = sdscat(buffer, NAVBAR_ICONS);
     FILE *fp = fopen(file_name, "w");
     if (fp == NULL) {
         MYMPD_LOG_ERROR("Can not open file \"%s\" for write: %s", file_name, strerror(errno));
@@ -878,7 +875,7 @@ static sds read_navbar_icons(t_config *config) {
         if (errno != ENOENT) {
             MYMPD_LOG_ERROR("Can not open file \"%s\": %s", file_name, strerror(errno));
         }
-        buffer = default_navbar_icons(config);
+        buffer = default_navbar_icons(config, buffer);
         sdsfree(file_name);
         return buffer;
     }
@@ -886,15 +883,14 @@ static sds read_navbar_icons(t_config *config) {
     char *line = NULL;
     char *crap = NULL;
     size_t n = 0;
-    ssize_t read;
-    while ((read = getline(&line, &n, fp)) > 0) {
+    while (getline(&line, &n, fp) > 0) {
         strtok_r(line, "\n", &crap);
         buffer = sdscat(buffer, line);
     }
     FREE_PTR(line);
     fclose(fp);
     if (sdslen(buffer) == 0) {
-        buffer = default_navbar_icons(config);
+        buffer = default_navbar_icons(config, buffer);
     }
     return buffer;
 }

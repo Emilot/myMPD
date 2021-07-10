@@ -16,7 +16,7 @@
 #include "../sds_extras.h"
 #include "../../dist/src/frozen/frozen.h"
 #include "../list.h"
-#include "config_defs.h"
+#include "mympd_config_defs.h"
 #include "../utility.h"
 #include "../api.h"
 #include "../log.h"
@@ -26,7 +26,7 @@
 #include "../mpd_shared.h"
 #include "mpd_worker_utility.h"
 #include "mpd_worker_smartpls.h"
-#include "mpd_worker_stickercache.h"
+#include "mpd_worker_cache.h"
 #include "mpd_worker_api.h"
 
 //private definitions
@@ -37,7 +37,7 @@ static bool mpd_worker_api_settings_set(t_mpd_worker_state *mpd_worker_state, st
 void mpd_worker_api(t_config *config, t_mpd_worker_state *mpd_worker_state, void *arg_request) {
     t_work_request *request = (t_work_request*) arg_request;
     bool rc;
-    bool bool_buf;
+    bool bool_buf1;
     bool async = false;
     int je;
     char *p_charbuf1 = NULL;
@@ -50,7 +50,7 @@ void mpd_worker_api(t_config *config, t_mpd_worker_state *mpd_worker_state, void
     MEASURE_START
     #endif
 
-    MYMPD_LOG_INFO("MPD WORKER API request (%d)(%ld) %s: %s", request->conn_id, request->id, request->method, request->data);
+    MYMPD_LOG_INFO("MPD WORKER API request (%lld)(%ld) %s: %s", request->conn_id, request->id, request->method, request->data);
     //create response struct
     t_work_result *response = create_result(request);
     
@@ -95,19 +95,19 @@ void mpd_worker_api(t_config *config, t_mpd_worker_state *mpd_worker_state, void
             break;
         }
         case MPDWORKER_API_SMARTPLS_UPDATE_ALL:
-            je = json_scanf(request->data, sdslen(request->data), "{params: {force: %B}}", &bool_buf);
+            je = json_scanf(request->data, sdslen(request->data), "{params: {force: %B}}", &bool_buf1);
             if (je == 1) {
                 response->data = jsonrpc_respond_message(response->data, request->method, request->id, false, 
                     "playlist", "info", "Smart playlists update started");
                 if (request->conn_id > -1) {
-                    MYMPD_LOG_DEBUG("Push response to queue for connection %lu: %s", request->conn_id, response->data);
+                    MYMPD_LOG_DEBUG("Push response to queue for connection %lld: %s", request->conn_id, response->data);
                     tiny_queue_push(web_server_queue, response, 0);
                 }
                 else {
                     free_result(response);
                 }
                 free_request(request);
-                rc = mpd_worker_smartpls_update_all(config, mpd_worker_state, bool_buf);
+                rc = mpd_worker_smartpls_update_all(config, mpd_worker_state, bool_buf1);
                 if (rc == true) {
                     send_jsonrpc_notify("playlist", "info", "Smart playlists updated");
                 }
@@ -131,8 +131,8 @@ void mpd_worker_api(t_config *config, t_mpd_worker_state *mpd_worker_state, void
                 }
             }
             break;
-        case MPDWORKER_API_STICKERCACHE_CREATE:
-            mpd_worker_sticker_cache_init(mpd_worker_state);
+        case MPDWORKER_API_CACHES_CREATE:
+            mpd_worker_cache_init(mpd_worker_state);
             async = true;
             free_request(request);
             free_result(response);
@@ -163,7 +163,7 @@ void mpd_worker_api(t_config *config, t_mpd_worker_state *mpd_worker_state, void
             tiny_queue_push(mympd_script_queue, response, request->id);
         }
         else if (request->conn_id > -1) {
-            MYMPD_LOG_DEBUG("Push response to queue for connection %lu: %s", request->conn_id, response->data);
+            MYMPD_LOG_DEBUG("Push response to queue for connection %lld: %s", request->conn_id, response->data);
             tiny_queue_push(web_server_queue, response, 0);
         }
         else {
@@ -207,6 +207,12 @@ static bool mpd_worker_api_settings_set(t_mpd_worker_state *mpd_worker_state, st
             *mpd_host_changed = true;
             mpd_worker_state->mpd_state->mpd_port = mpd_port;
         }
+    }
+    else if (strncmp(key->ptr, "dc", key->len) == 0) {
+        mpd_worker_state->mpd_state->dc = strtoimax(settingvalue, &crap, 10);
+    }
+    else if (strncmp(key->ptr, "stickers", key->len) == 0) {
+        mpd_worker_state->stickers = val->type == JSON_TYPE_TRUE ? true : false;
     }
     else if (strncmp(key->ptr, "smartpls", key->len) == 0) {
         mpd_worker_state->smartpls = val->type == JSON_TYPE_TRUE ? true : false;

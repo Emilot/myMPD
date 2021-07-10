@@ -27,12 +27,12 @@
 #include "log.h"
 #include "list.h"
 #include "tiny_queue.h"
-#include "config_defs.h"
+#include "mympd_config_defs.h"
 #include "utility.h"
 #include "global.h"
 #include "lua_mympd_state.h"
 #include "mpd_client.h"
-#include "maintenance.h"
+#include "covercache.h"
 #include "mympd_api/mympd_api_utility.h"
 #include "mympd_api/mympd_api_timer.h"
 #include "mympd_api/mympd_api_settings.h"
@@ -59,16 +59,13 @@ void *mympd_api_loop(void *arg_config) {
     assert(mympd_state);
     mympd_api_read_statefiles(config, mympd_state);
 
+    //home icons
     list_init(&mympd_state->home_list);
-    if (config->home == true) {
-        mympd_api_read_home_list(config, mympd_state);
-    }
+    mympd_api_read_home_list(config, mympd_state);
 
     //myMPD timer
     init_timerlist(&mympd_state->timer_list);
-    if (mympd_state->timer == true) {
-        timerfile_read(config, mympd_state);
-    }
+    timerfile_read(config, mympd_state);
     
     //set timers
     if (config->covercache == true) {
@@ -89,12 +86,8 @@ void *mympd_api_loop(void *arg_config) {
     }
 
     //cleanup
-    if (config->home == true) {
-        mympd_api_write_home_list(config, mympd_state);
-    }
-    if (mympd_state->timer == true) {
-        timerfile_save(config, mympd_state);
-    }
+    mympd_api_write_home_list(config, mympd_state);
+    timerfile_save(config, mympd_state);
     free_mympd_state(mympd_state);
     sdsfree(thread_logname);
     return NULL;
@@ -119,7 +112,7 @@ static void mympd_api(t_config *config, t_mympd_state *mympd_state, t_work_reque
     MEASURE_START
     #endif
 
-    MYMPD_LOG_INFO("MYMPD API request (%d): %s", request->conn_id, request->data);
+    MYMPD_LOG_INFO("MYMPD API request (%lld): %s", request->conn_id, request->data);
     //create response struct
     t_work_result *response = create_result(request);
     
@@ -388,7 +381,7 @@ static void mympd_api(t_config *config, t_mympd_state *mympd_state, t_work_reque
             break;
         }
         case MYMPD_API_SETTINGS_RESET:
-            //ToDo: error checking
+            //TODO: error checking
             mympd_api_settings_reset(config, mympd_state);
             response->data = jsonrpc_respond_ok(response->data, request->method, request->id, "general");
             break;
@@ -407,7 +400,7 @@ static void mympd_api(t_config *config, t_mympd_state *mympd_state, t_work_reque
             bool ffmpeg_changed = false;
             bool wifi_changed = false;
             while ((h = json_next_key(request->data, sdslen(request->data), h, ".params", &key, &val)) != NULL) {
-                rc = mympd_api_settings_set(config, mympd_state, &key, &val,  &mpd_conf_changed, &ns_changed, &apmode_changed, &airplay_changed, &roon_changed, &spotify_changed, &dac_changed, &ffmpeg_changed, &wifi_changed);
+                rc = mympd_api_settings_set(config, mympd_state, &key, &val, &mpd_conf_changed, &ns_changed, &apmode_changed, &airplay_changed, &roon_changed, &spotify_changed, &dac_changed, &ffmpeg_changed, &wifi_changed);
                 if (rc == false) {
                     break;
                 }
@@ -548,7 +541,7 @@ static void mympd_api(t_config *config, t_mympd_state *mympd_state, t_work_reque
                 }
             }
             else if (timer_def != NULL) {
-                MYMPD_LOG_ERROR("No timer id received, discarding timer definition");
+                MYMPD_LOG_ERROR("No timer id or interval, discarding timer definition");
                 free_timer_definition(timer_def);
             }
             break;
@@ -576,17 +569,20 @@ static void mympd_api(t_config *config, t_mympd_state *mympd_state, t_work_reque
                 response->data = jsonrpc_respond_ok(response->data, request->method, request->id, "timer");
             }
             break;
-        case MYMPD_API_WIFI_SERVER_LIST:
-            response->data = collybia_wifi_server_list(response->data, request->method, request->id);
-            break;
         case MYMPD_API_NS_SERVER_LIST:
-            response->data = collybia_ns_server_list(response->data, request->method, request->id);
+                response->data = collybia_ns_server_list(response->data, request->method, request->id);
+            break;
+        case MYMPD_API_WIFI_SERVER_LIST:
+                response->data = collybia_wifi_server_list(response->data, request->method, request->id);
             break;
         case MYMPD_API_UPDATE_CHECK:
-            response->data = collybia_update_check(response->data, request->method, request->id);
+                response->data = collybia_update_check(response->data, request->method, request->id);
             break;
         case MYMPD_API_UPDATE_INSTALL:
-            response->data = collybia_update_install(response->data, request->method, request->id);
+                response->data = collybia_update_install(response->data, request->method, request->id);
+            break;
+        case MYMPD_API_WIFI_CONNECT:
+                response->data = collybia_wifi_connect(response->data, request->method, request->id);
             break;
         default:
             response->data = jsonrpc_respond_message(response->data, request->method, request->id, true,
@@ -615,7 +611,7 @@ static void mympd_api(t_config *config, t_mympd_state *mympd_state, t_work_reque
         tiny_queue_push(mympd_script_queue, response, request->id);
     }
     else if (request->conn_id > -1) {
-        MYMPD_LOG_DEBUG("Push response to web_server_queue for connection %lu: %s", request->conn_id, response->data);
+        MYMPD_LOG_DEBUG("Push response to web_server_queue for connection %lld: %s", request->conn_id, response->data);
         tiny_queue_push(web_server_queue, response, 0);
     }
     else {

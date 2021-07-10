@@ -33,6 +33,9 @@ const ligatureMore = 'menu';
 const progressBarTransition = 'width 1s linear';
 let tagAlbumArtist = 'AlbumArtist';
 
+//remember offset for filesystem browsing uris
+const browseFilesystemHistory = {};
+
 //list of stickers
 const stickerList = ['stickerPlayCount', 'stickerSkipCount', 'stickerLastPlayed', 
     'stickerLastSkipped', 'stickerLike'];
@@ -281,6 +284,12 @@ const advancedSettingsDefault = {
         "title": "Playlist",
         "form": "NotificationSettingsAdvFrm"
     },
+    "notificationScript": {
+        "defaultValue": true,
+        "inputType": "checkbox",
+        "title": "Script",
+        "form": "NotificationSettingsAdvFrm"
+    },
     "uiAAASection": {
         "inputType": "section",
         "title": "Appearance",
@@ -314,6 +323,12 @@ const advancedSettingsDefault = {
         },
         "inputType": "select",
         "title": "Elements per page",
+        "form": "AdvancedSettingsFrm"
+    },
+    "uiLocalPlayback": {
+        "defaultValue": false,
+        "inputType": "checkbox",
+        "title": "Local playback",
         "form": "AdvancedSettingsFrm"
     }
 };
@@ -399,6 +414,7 @@ uiElements.dropdownLocalPlayer = new BSN.Dropdown(document.getElementById('local
 uiElements.dropdownDatabaseSort = new BSN.Dropdown(document.getElementById('btnDatabaseSortDropdown'));
 uiElements.dropdownNeighbors = new BSN.Dropdown(document.getElementById('btnDropdownNeighbors'));
 uiElements.dropdownHomeIconLigature = new BSN.Dropdown(document.getElementById('btnHomeIconLigature'));
+uiElements.dropdownServers = new BSN.Dropdown(document.getElementById('btnDropdownServers'));
 
 uiElements.collapseDBupdate = new BSN.Collapse(document.getElementById('navDBupdate'));
 uiElements.collapseSettings = new BSN.Collapse(document.getElementById('navSettings'));

@@ -1054,9 +1054,21 @@ div.album-grid-mouseover {
   text-overflow: ellipsis;
 }
 
+.text-monospace {
+  font-size: 90%;
+}
+
+.queue-playing {
+  font-weight: bold;
+}
+
 #splashScreenLogo img {
   filter: invert(100%);
   vertical-align: text-bottom !important;
+}
+
+#modalInit img {
+  margin-right: 5px;
 }
 
 #mainMenu img {
@@ -1112,3 +1124,4 @@ img.covergrid-header {
   float: left;
   margin-right: 1rem;
 }
+

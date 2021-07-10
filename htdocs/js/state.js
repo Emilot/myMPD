@@ -13,7 +13,6 @@ function parseStats(obj) {
     document.getElementById('mpdstats_mympd_uptime').innerText = beautifyDuration(obj.result.myMPDuptime);
     document.getElementById('mpdstats_dbUpdated').innerText = localeDate(obj.result.dbUpdated);
     document.getElementById('mympdVersion').innerText = obj.result.mympdVersion;
-    document.getElementById('collybiaVersion').innerText = obj.result.collybiaVersion;
     document.getElementById('mpdInfo_version').innerText = obj.result.mpdVersion;
     document.getElementById('mpdInfo_libmpdclientVersion').innerText = obj.result.libmpdclientVersion;
     document.getElementById('mpdInfo_libmympdclientVersion').innerText = obj.result.libmympdclientVersion;
@@ -33,7 +32,6 @@ function getServerinfo() {
                 logError('Can not parse response to json object:' + ajaxRequest.responseText);
             }
             document.getElementById('wsIP').innerText = obj.result.ip;
-            document.getElementById('wsIP1').innerText = obj.result.ip;
             document.getElementById('wsMongooseVersion').innerText = obj.result.version;
         }
     };
@@ -147,20 +145,20 @@ function setCounter(currentSongId, totalTime, elapsedTime) {
                     posTd.classList.remove('mi');
                     posTd.innerText = getAttDec(tr, 'data-songpos');
                 }
-                tr.classList.remove('font-weight-bold');
+                tr.classList.remove('queue-playing');
             }
             tr = document.getElementById('queueMiniTrackId' + lastState.currentSongId);
             if (tr) {
                 const durationTd = tr.querySelector('[data-col=Duration]');
                 if (durationTd) {
-                    durationTd.innerText = tr.getAttribute(tr, 'data-duration');
+                    durationTd.innerText = getAttDec(tr, 'data-duration');
                 }
                 const posTd = tr.querySelector('[data-col=Pos]');
                 if (posTd) {
                     posTd.classList.remove('mi');
-                    posTd.innerText = tr.getAttribute(tr, 'data-songpos');
+                    posTd.innerText = getAttDec(tr, 'data-songpos');
                 }
-                tr.classList.remove('font-weight-bold');
+                tr.classList.remove('queue-playing');
             }
         }
     }
@@ -177,7 +175,7 @@ function setCounter(currentSongId, totalTime, elapsedTime) {
                 posTd.innerText = 'play_arrow';
             }
         }
-        tr.classList.add('font-weight-bold');
+        tr.classList.remove('queue-playing');
     }
     tr = document.getElementById('queueMiniTrackId' + currentSongId);
     if (tr) {
@@ -192,7 +190,7 @@ function setCounter(currentSongId, totalTime, elapsedTime) {
                 posTd.innerText = 'play_arrow';
             }
         }
-        tr.classList.add('font-weight-bold');
+        tr.classList.remove('queue-playing');
     }
 
     //synced lyrics
@@ -260,7 +258,7 @@ function parseState(obj) {
         if (settings.bgCover === true) {
             clearBackgroundImage();
         }
-        const pb = document.getElementById('cardPlaybackTags').getElementsByTagName('span');
+        const pb = document.getElementById('cardPlaybackTags').getElementsByTagName('p');
         for (let i = 0; i < pb.length; i++) {
             pb[i].innerText = '';
         }
@@ -268,7 +266,7 @@ function parseState(obj) {
     else {
         const cff = document.getElementById('currentFileformat');
         if (cff) {
-            cff.getElementsByTagName('span')[0].innerText = fileformat(obj.result.audioFormat);
+            cff.getElementsByTagName('p')[0].innerText = fileformat(obj.result.audioFormat);
         }
     }
 
@@ -370,7 +368,7 @@ function _setCurrentCover(url, el) {
     }
 
     const div = document.createElement('div');
-    div.classList.add('coverbg', 'carousel');
+    div.classList.add('coverbg', 'carousel', 'rounded');
     div.style.backgroundImage = 'url("' + subdir + '/albumart/' + url + '")';
     div.style.opacity = 0;
     setAttEnc(div, 'data-uri', url);
@@ -527,19 +525,19 @@ function setPlaybackCardTags(songObj) {
     for (const col of settings.colsPlayback) {
         const c = document.getElementById('current' + col);
         if (c && col === 'Lyrics') {
-            getLyrics(songObj.uri, c.getElementsByTagName('span')[0]);
+            getLyrics(songObj.uri, c.getElementsByTagName('p')[0]);
         }
         else if (c) {
             let value = songObj[col];
             if (value === undefined) {
                 value = '-';
             }
-            c.getElementsByTagName('span')[0].innerHTML = printValue(col, value);
+            c.getElementsByTagName('p')[0].innerHTML = printValue(col, value);
             if (value === '-' || settings.browsetags.includes(col) === false) {
-                c.getElementsByTagName('span')[0].classList.remove('clickable');
+                c.getElementsByTagName('p')[0].classList.remove('clickable');
             }
             else {
-                c.getElementsByTagName('span')[0].classList.add('clickable');
+                c.getElementsByTagName('p')[0].classList.add('clickable');
             }
             setAttEnc(c, 'data-name', value);
             if (col === 'Album' && songObj[tagAlbumArtist] !== null) {

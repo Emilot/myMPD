@@ -28,7 +28,7 @@
 #include "sds_extras.h"
 #include "log.h"
 #include "list.h"
-#include "config_defs.h"
+#include "mympd_config_defs.h"
 #include "utility.h"
 #include "cert.h"
 
@@ -273,12 +273,12 @@ static sds get_san(sds buffer) {
         if (strcmp(hostbuffer, res->ai_canonname) != 0) {
             buffer = sdscatfmt(buffer, ", DNS:%s", res->ai_canonname);
         }
-        char addrstr[100];
+        char addrstr[INET6_ADDRSTRLEN];
         sds old_addrstr = sdsempty();
         void *ptr = NULL;
         
         for (rp = res; rp != NULL; rp = rp->ai_next) {
-            inet_ntop(res->ai_family, res->ai_addr->sa_data, addrstr, 100);
+            inet_ntop(res->ai_family, res->ai_addr->sa_data, addrstr, INET6_ADDRSTRLEN);
 
             switch (res->ai_family) {
                 case AF_INET:
@@ -289,7 +289,7 @@ static sds get_san(sds buffer) {
                     break;
             }
             if (ptr != NULL) {
-                inet_ntop(res->ai_family, ptr, addrstr, 100);
+                inet_ntop(res->ai_family, ptr, addrstr, INET6_ADDRSTRLEN);
                 if (strcmp(old_addrstr, addrstr) != 0) {
                     buffer = sdscatfmt(buffer, ", IP:%s", addrstr);
                     old_addrstr = sdsreplace(old_addrstr, addrstr);
@@ -332,7 +332,7 @@ static X509_REQ *generate_request(EVP_PKEY *pkey) {
 
     /* Set the DN */
     time_t now = time(NULL);
-    sds cn = sdscatprintf(sdsempty(), "myMPD Server Certificate %ld", now);
+    sds cn = sdscatprintf(sdsempty(), "myMPD Server Certificate %llu", (unsigned long long)now);
 
     X509_NAME *name = X509_REQ_get_subject_name(req);
     X509_NAME_add_entry_by_txt(name, "C",  MBSTRING_ASC, (unsigned char *)"DE", -1, -1, 0);
@@ -463,7 +463,7 @@ static X509 *generate_selfsigned_cert(EVP_PKEY *pkey) {
     
     /* Set the DN */
     time_t now = time(NULL);
-    sds cn = sdscatprintf(sdsempty(), "myMPD CA %ld", now);
+    sds cn = sdscatprintf(sdsempty(), "myMPD CA %llu", (unsigned long long)now);
     X509_NAME_add_entry_by_txt(name, "C",  MBSTRING_ASC, (unsigned char *)"DE", -1, -1, 0);
     X509_NAME_add_entry_by_txt(name, "O",  MBSTRING_ASC, (unsigned char *)"myMPD", -1, -1, 0);
     X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC, (unsigned char *)cn, -1, -1, 0);

@@ -219,7 +219,7 @@ function parseSettings() {
         domCache.body.style.backgroundImage = 'url("' + subdir + settings.bgImage + '")';
     }
     else if (settings.bgImage !== '') {
-        domCache.body.style.backgroundImage = 'url("' + subdir + '/browse/pics/' + settings.bgImage + '")';
+        domCache.body.style.backgroundImage = 'url("' + subdir + '/pics/' + settings.bgImage + '")';
     }
     else {
         domCache.body.style.backgroundImage = '';
@@ -334,6 +334,11 @@ function parseSettings() {
     else {
         document.getElementById('btnStop').classList.add('hide');
     }
+
+    //set local playback url    
+    if (settings.advanced.uiLocalPlayback === true) {
+        setLocalPlayerUrl();
+    }
     
     //parse mpd settings if connected
     if (settings.mpdConnected === true) {
@@ -376,19 +381,10 @@ function parseSettings() {
     
     toggleBtnChk('btnNotifyPage', settings.notificationPage);
     toggleBtnChk('btnMediaSession', settings.mediaSession);
-    toggleBtnChkCollapse('btnFeatLocalplayer', 'collapseLocalplayer', settings.featLocalplayer);
     toggleBtnChk('btnFeatTimer', settings.featTimer);
     toggleBtnChk('btnFeatLyrics', settings.featLyrics);
     toggleBtnChk('btnFeatHome', settings.featHome);
 
-    if (settings.streamUrl === '') {
-        document.getElementById('selectStreamMode').value = 'port';
-        document.getElementById('inputStreamUrl').value = settings.streamPort;
-    }
-    else {
-        document.getElementById('selectStreamMode').value = 'url';
-        document.getElementById('inputStreamUrl').value = settings.streamUrl;
-    }
     toggleBtnChkCollapse('btnCoverimage', 'collapseAlbumart', settings.coverimage);
 
     document.getElementById('inputBookletName').value = settings.bookletName;
@@ -438,8 +434,11 @@ function parseSettings() {
     document.getElementById('inputLastPlayedCount').value = settings.lastPlayedCount;
     
     toggleBtnChkCollapse('btnSmartpls', 'collapseSmartpls', settings.smartpls);
-    
-    const features = ["featLocalplayer", "featSyscmds", "featMixramp", "featCacert", "featBookmarks", 
+
+    if (settings.advanced.uiLocalPlayback === false) {
+        settings.featLocalPlayback = false;    
+    }
+    const features = ["featLocalPlayback", "featSyscmds", "featMixramp", "featCacert", "featBookmarks", 
         "featRegex", "featTimer", "featLyrics", "featScripting", "featScripteditor", "featHome"];
     for (let j = 0; j < features.length; j++) {
         const Els = document.getElementsByClassName(features[j]);
@@ -546,10 +545,6 @@ function parseSettings() {
     document.getElementById('volumeBar').setAttribute('min', settings.volumeMin);
     document.getElementById('volumeBar').setAttribute('max', settings.volumeMax);
 
-    if (settings.featLocalplayer === true) {
-        setLocalPlayerUrl();
-    }
-    
     if (settings.musicDirectory === 'auto') {
         document.getElementById('selectMusicDirectory').value = settings.musicDirectory;
         document.getElementById('inputMusicDirectory').value = settings.musicDirectoryValue !== undefined ? settings.musicDirectoryValue : '';
@@ -588,6 +583,9 @@ function parseSettings() {
     else if (app.current.app === 'Browse' && app.current.tab === 'Database' && app.current.search !== '') {
         appRoute();
     }
+    else if ((app.current.app === 'Browse' || app.current.app === 'Playback') && app.current.tab === 'Database' && app.current.search !== '') {
+        appRoute();
+    }
     else if (app.current.app === 'Playback' && app.current.tab === 'Database' && app.current.search !== '') {
         appRoute();
     }
@@ -612,6 +610,7 @@ function parseSettings() {
     else {
         logDebug('mediaSession not supported by browser');
     }
+    parseCollybiaSettings();
 
     settingsParsed = 'true';
 }
@@ -759,10 +758,10 @@ function parseMPDSettings() {
         //construct playback view
         let pbtl = '';
         for (let i = 0; i < settings.colsPlayback.length; i++) {
-            pbtl += '<div id="current' + settings.colsPlayback[i] + '" data-tag="' +
+            pbtl += '<div id="current' + settings.colsPlayback[i]  + '" data-tag="' + 
                 settings.colsPlayback[i] + '">' +
-                '<small>' + t(settings.colsPlayback[i]) + ' &bull; </small>' +
-                '<span></span></div>';
+                '<small>' + t(settings.colsPlayback[i]) + '</small>' +
+                '<p></p></div>';
         }
         document.getElementById('cardPlaybackTags').innerHTML = pbtl;
         //fill blank card with lastSongObj
@@ -791,7 +790,7 @@ function parseMPDSettings() {
     }
 
     if (settings.featAdvsearch === false) {
-        const tagEls = document.getElementById('cardPlaybackTags').getElementsByTagName('span');
+        const tagEls = document.getElementById('cardPlaybackTags').getElementsByTagName('p');
         for (let i = 0; i < tagEls.length; i++) {
             tagEls[i].classList.remove('clickable');
         }
@@ -853,22 +852,6 @@ function saveSettings(closeModal) {
         formOK = false;
     }
     
-    let streamUrl = '';
-    let streamPort = '';
-    const inputStreamUrl = document.getElementById('inputStreamUrl');
-    if (getSelectValue('selectStreamMode') === 'port') {
-        streamPort = inputStreamUrl.value;
-        if (!validateInt(inputStreamUrl)) {
-            formOK = false;
-        }
-    }
-    else {
-        streamUrl = inputStreamUrl.value;
-        if (!validateStream(inputStreamUrl)) {
-            formOK = false;
-        }
-    }
-
     const inputCoverimageSizeSmall = document.getElementById('inputCoverimageSizeSmall');
     if (!validateInt(inputCoverimageSizeSmall)) {
         formOK = false;
@@ -944,9 +927,6 @@ function saveSettings(closeModal) {
             "bgColor": document.getElementById('inputBgColor').value,
             "bgImage": getSelectValue('selectBgImage'),
             "bgCssFilter": document.getElementById('inputBgCssFilter').value,
-            "featLocalplayer": (document.getElementById('btnFeatLocalplayer').classList.contains('active') ? true : false),
-            "streamUrl": streamUrl,
-            "streamPort": parseInt(streamPort),
             "coverimage": (document.getElementById('btnCoverimage').classList.contains('active') ? true : false),
             "coverimageName": document.getElementById('inputCoverimageName').value,
             "coverimageSize": document.getElementById('inputCoverimageSize').value,
@@ -1031,11 +1011,6 @@ function saveQueueSettings() {
         jukeboxUniqueTag = 'Album';
     }
     
-    if (jukeboxMode === '1' && settings.featSearchwindow === false && jukeboxPlaylist === 'Database') {
-        formOK = false;
-        document.getElementById('warnJukeboxPlaylist').classList.remove('hide');
-    }
-       
     if (formOK === true) {
         sendAPI("MYMPD_API_SETTINGS_SET", {
             "consume": (document.getElementById('btnConsume').classList.contains('active') ? 1 : 0),

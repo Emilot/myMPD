@@ -148,15 +148,13 @@ function parseSearch(obj) {
         }
         setAttEnc(row, 'data-name', data.Title);
     });
-
-    scrollToPosY(app.current.scrollPos);
 }
 
 //eslint-disable-next-line no-unused-vars
 function saveSearchAsSmartPlaylist() {
-    parseSmartPlaylist({"jsonrpc":"2.0","id":0,"result":{"method": "MPD_API_SMARTPLS_GET", 
-        "playlist": "",
-        "type": "search",
+    parseSmartPlaylist({"jsonrpc":"2.0","id":0,"result":{"method":"MPD_API_SMARTPLS_GET", 
+        "playlist":"",
+        "type":"search",
         "tag": settings.featAdvsearch === true ? 'expression' : app.current.filter,
         "searchstr": app.current.search}});
 }

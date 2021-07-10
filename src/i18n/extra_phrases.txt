@@ -23,6 +23,11 @@ MUSICBRAINZ_ARTISTID
 MUSICBRAINZ_RELEASETRACKID
 MUSICBRAINZ_TRACKID
 MUSICBRAINZ_WORKID
+ComposerSort
+Ensemble
+Movement
+MovementNumber
+Location
 Type
 Pos
 Fileformat
@@ -43,8 +48,6 @@ Error executing script %{script}: Can not open or read script file
 Error executing script %{script}: Runtime error
 Error executing script %{script}: Error while running the message handler
 Error executing script %{script}
-HTTPS Port
-HTTP Port
 Browse
 Home
 App

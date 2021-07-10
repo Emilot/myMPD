@@ -8,7 +8,7 @@ const ignoreMessages = ['No current song', 'No lyrics found'];
 function sendAPI(method, params, callback, onerror) {
     const request = {"jsonrpc": "2.0", "id": 0, "method": method, "params": params};
     const ajaxRequest = new XMLHttpRequest();
-    ajaxRequest.open('POST', subdir + '/api', true);
+    ajaxRequest.open('POST', subdir + '/api/', true);
     ajaxRequest.setRequestHeader('Content-type', 'application/json');
     ajaxRequest.onreadystatechange = function() {
         if (ajaxRequest.readyState === 4) {
@@ -102,6 +102,10 @@ function webSocketConnect() {
             try {
                 obj = JSON.parse(msg.data);
                 logDebug('Websocket notification: ' + JSON.stringify(obj));
+                let currentVersion = document.getElementById('currentVersion').innerText;
+                if (obj.method === 'welcome' && currentVersion !== '' && obj.params.collybiaVersion !== currentVersion) {
+                    clearAndReload();
+                }
             }
             catch(error) {
                 logError('Invalid JSON data received: ' + msg.data);
@@ -154,7 +158,6 @@ function webSocketConnect() {
                     //fall through
                 case 'update_finished':
                     updateDBfinished(obj.method);
-                    updateDBStats();
                     break;
                 case 'update_volume':
                     obj.result = obj.params;

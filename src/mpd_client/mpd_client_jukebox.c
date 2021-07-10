@@ -20,7 +20,7 @@
 #include "../log.h"
 #include "../list.h"
 #include "../random.h"
-#include "config_defs.h"
+#include "mympd_config_defs.h"
 #include "../utility.h"
 #include "../mpd_shared/mpd_shared_typedefs.h"
 #include "../mpd_shared/mpd_shared_tags.h"
@@ -71,7 +71,7 @@ sds mpd_client_put_jukebox_list(t_mpd_client_state *mpd_client_state, sds buffer
                         if ((entity = mpd_recv_entity(mpd_client_state->mpd_state->conn)) != NULL) {
                             const struct mpd_song *song = mpd_entity_get_song(entity);
                             buffer = put_song_tags(buffer, mpd_client_state->mpd_state, tagcols, song);
-                            if (mpd_client_state->feat_sticker == true && mpd_client_state->sticker_cache != NULL) {
+                            if (mpd_client_state->mpd_state->feat_stickers == true && mpd_client_state->sticker_cache != NULL) {
                                 buffer = sdscat(buffer, ",");
                                 buffer = mpd_shared_sticker_list(buffer, mpd_client_state->sticker_cache, mpd_song_get_uri(song));
                             }
@@ -147,7 +147,7 @@ bool mpd_client_jukebox(t_config *config, t_mpd_client_state *mpd_client_state, 
         add_songs = 99;
     }
         
-    if (mpd_client_state->feat_playlists == false && strcmp(mpd_client_state->jukebox_playlist, "Database") != 0) {
+    if (mpd_client_state->mpd_state->feat_playlists == false && strcmp(mpd_client_state->jukebox_playlist, "Database") != 0) {
         MYMPD_LOG_WARN("Jukebox: Playlists are disabled");
         return true;
     }
@@ -415,13 +415,6 @@ static bool _mpd_client_jukebox_fill_jukebox_queue(t_config *config, t_mpd_clien
     
     if (manual == true) {
         list_free(&mpd_client_state->jukebox_queue_tmp);
-    }
-    
-    if (jukebox_mode == JUKEBOX_ADD_SONG && strcmp(playlist, "Database") == 0 && 
-        mpd_client_state->mpd_state->feat_mpd_searchwindow == false)
-    {
-        MYMPD_LOG_ERROR("Jukebox mode song and playlist database depends on mpd version >= 0.20.0");
-        return false;
     }
     
     //get last_played and current queue

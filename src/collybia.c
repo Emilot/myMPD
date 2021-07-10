@@ -4,213 +4,111 @@
 #include <stdbool.h>
 #include <curl/curl.h>
 #include <mntent.h>
+#include <pthread.h>
 
 #include "../dist/src/sds/sds.h"
 #include "list.h"
-#include "config_defs.h"
+#include "mympd_config_defs.h"
 #include "log.h"
 #include "mympd_api/mympd_api_utility.h"
 #include "sds_extras.h"
 #include "utility.h"
 #include "collybia.h"
 
-#define COLLYBIA_REPO "https://collybia.com/repo/collybia/web_version"
+#define COLLYBIAAUDIO_REPO "https://collybia.com/repo/collybia/web_version"
 
-struct memory_struct
+pthread_mutex_t lock;
+
+static bool output_name_init(void);
+static sds device_name_get(sds name);
+static sds output_name_get(sds name);
+static bool output_name_set(const char *name);
+static bool syscmd(const char *cmdline);
+static int ns_set(int type, const char *server, const char *share, const char *vers, const char *username,
+                  const char *password);
+static sds web_version_get(sds version);
+static size_t write_memory_callback(void *contents, size_t size, size_t nmemb, void *userp);
+static bool validate_version(const char *data);
+
+void collybia_init(void) // todo: change return type to bool
 {
-    char *memory;
-    size_t size;
-};
-
-static size_t write_memory_callback(void *contents, size_t size, size_t nmemb, void *userp)
-{
-    size_t realsize = size * nmemb;
-    struct memory_struct *mem = (struct memory_struct *)userp;
-
-    char *ptr = realloc(mem->memory, mem->size + realsize + 1);
-    if (ptr == NULL)
+    if (curl_global_init(CURL_GLOBAL_ALL) != 0)
     {
-        // out of memory
-        LOG_ERROR("not enough memory (realloc returned NULL)");
-        return 0;
+        MYMPD_LOG_ERROR("curl global init has failed");
     }
-
-    mem->memory = ptr;
-    memcpy(&(mem->memory[mem->size]), contents, realsize);
-    mem->size += realsize;
-    mem->memory[mem->size] = 0;
-
-    return realsize;
+    if (pthread_mutex_init(&lock, NULL) != 0)
+    {
+        MYMPD_LOG_ERROR("mutex init has failed");
+    }
+    output_name_init();
 }
 
-static bool syscmd(const char *cmdline)
+void collybia_cleanup(void)
 {
-    LOG_DEBUG("Executing syscmd \"%s\"", cmdline);
-    const int rc = system(cmdline);
-    if (rc == 0)
+    curl_global_cleanup();
+    pthread_mutex_destroy(&lock);
+}
+
+void collybia_dc_handle(int *dc) // todo: change return type to bool
+{
+    static bool handled = false;
+
+    pthread_mutex_lock(&lock);
+
+    if (handled == true)
     {
-        return true;
+        MYMPD_LOG_DEBUG("Handled dc %d", *dc);
     }
     else
     {
-        LOG_ERROR("Executing syscmd \"%s\" failed", cmdline);
-        return false;
-    }
-}
-
-static int ns_set(int type, const char *server, const char *share, const char *vers, const char *username, const char *password)
-{
-    /* sds tmp_file = sdsnew("/tmp/fstab.XXXXXX");
-    int fd = mkstemp(tmp_file);
-    if (fd < 0)
-    {
-        LOG_ERROR("Can't open %s for write", tmp_file);
-        sdsfree(tmp_file);
-        return false;
-    } */
-    int me = 0;
-    sds tmp_file = sdsnew("/etc/fstab.new");
-    FILE *tmp = setmntent(tmp_file, "w");
-    sds org_file = sdsnew("/etc/fstab");
-    FILE *org = setmntent(org_file, "r");
-    if (tmp && org)
-    {
-        sds mnt_fsname = sdsempty();
-        sds mnt_dir = sdsnew("/mnt/nas-");
-        sds mnt_type = sdsempty();
-        sds credentials = sdsempty();
-        sds mnt_opts = sdsempty();
-        if (type == 1 || type == 2)
+        MYMPD_LOG_DEBUG("Handling dc %d", *dc);
+        if (*dc != 3)
         {
-            mnt_fsname = sdscatfmt(mnt_fsname, "//%s%s", server, share);
-            mnt_dir = sdscat(mnt_dir, "samba");
-            mnt_type = sdscat(mnt_type, "cifs");
-            if (type == 1)
-            {
-                credentials = sdscat(credentials, "username=guest,password=");
-            }
-            else
-            {
-                credentials = sdscatfmt(credentials, "username=%s,password=%s", username, password);
-            }
-            mnt_opts = sdscatfmt(mnt_opts, "%s,%s,ro,uid=mpd,gid=audio,iocharset=utf8,nolock,noauto,x-systemd.automount,x-systemd.device-timeout=10", vers, credentials);
-        }
-        else if (type == 3)
-        {
-            mnt_fsname = sdscatfmt(mnt_fsname, "%s:%s", server, share);
-            mnt_dir = sdscat(mnt_dir, "nfs");
-            mnt_type = sdscat(mnt_type, "nfs");
-            mnt_opts = sdscat(mnt_opts, "ro,noauto,x-systemd.automount,x-systemd.device-timeout=10,rsize=8192,wsize=8192");
-        }
-        struct mntent n = {mnt_fsname, mnt_dir, mnt_type, mnt_opts, 0, 0};
-        bool append = true;
-
-        struct mntent *m;
-        while ((m = getmntent(org)))
-        {
-            // if (strcmp(m->mnt_dir, "/mnt/nas-\0") == 0)
-            if (strstr(m->mnt_dir, "/mnt/nas-") != NULL)
-            {
-                append = false;
-                if (type == 0)
-                {
-                    me = -1; // remove mount entry
-                    continue;
-                }
-                else
-                {
-                    addmntent(tmp, &n);
-                    me = 2; // edit mount entry
-                    continue;
-                }
-            }
-            addmntent(tmp, m);
-        }
-        if (type != 0 && append)
-        {
-            addmntent(tmp, &n);
-            me = 1; // add mount entry
-        }
-        fflush(tmp);
-        endmntent(tmp);
-        endmntent(org);
-
-        int rc = rename(tmp_file, org_file);
-        if (rc == -1)
-        {
-            LOG_ERROR("Renaming file from %s to %s failed", tmp_file, org_file);
-            me = 0; // old table
-        }
-        sdsfree(mnt_fsname);
-        sdsfree(mnt_dir);
-        sdsfree(mnt_type);
-        sdsfree(credentials);
-        sdsfree(mnt_opts);
-    }
-    else
-    {
-        // LOG_ERROR("Can't open %s for read", org_file);
-        if (tmp)
-        {
-            endmntent(tmp);
+            syscmd("reboot");
         }
         else
         {
-            LOG_ERROR("Can't open %s for write", tmp_file);
-        }
-        if (org)
-        {
-            endmntent(org);
-        }
-        else
-        {
-            LOG_ERROR("Can't open %s for read", org_file);
+            syscmd("systemctl restart mpd");
         }
     }
-    sdsfree(tmp_file);
-    sdsfree(org_file);
-    return me;
+    *dc = 0;
+    handled = !handled;
+
+    pthread_mutex_unlock(&lock);
 }
 
-int collybia_settings_set(t_mympd_state *mympd_state, bool mpd_conf_changed,
-                       bool ns_changed, bool apmode_changed, bool airplay_changed, bool roon_changed, bool spotify_changed, bool dac_changed, bool ffmpeg_changed, bool wifi_changed)
+int collybia_settings_set(t_mympd_state *mympd_state, bool mpd_conf_changed, bool ns_changed, bool apmode_changed, bool airplay_changed, bool roon_changed, bool spotify_changed, bool dac_changed, bool ffmpeg_changed, bool wifi_changed)
 {
     // TODO: error checking, revert to old values on fail
-    bool rc = true;
     int dc = 0;
 
     if (ns_changed == true)
     {
         dc = ns_set(mympd_state->ns_type, mympd_state->ns_server, mympd_state->ns_share, mympd_state->samba_version, mympd_state->ns_username, mympd_state->ns_password);
+        if (dc != 0)
+        {
+            if (syscmd("mount -a") == true) {
+                dc = 0;
+            }
+        }
     }
 
     if (mpd_conf_changed == true)
     {
-        LOG_DEBUG("mpd conf changed");
+        MYMPD_LOG_DEBUG("mpd conf changed");
 
         const char *dop = mympd_state->dop == true ? "yes" : "no";
         sds conf = sdsnew("/etc/mpd.conf");
         sds cmdline = sdscatfmt(sdsempty(), "sed -i 's/^mixer_type.*/mixer_type \"%S\"/;s/^dop.*/dop \"%s\"/' %S",
                                 mympd_state->mixer_type, dop, conf);
-        rc = syscmd(cmdline);
-        if (rc == true && dc == 0)
+        if (syscmd(cmdline) == true && dc == 0)
         {
             dc = 3;
         }
-        const char *tidal_enabled = mympd_state->tidal_enabled == true ? "yes" : "no";
-        conf = sdsreplace(conf, "/etc/upmpdcli.conf");
-        cmdline = sdscrop(cmdline);
-        cmdline = sdscatfmt(cmdline, "sed -i 's/^enabled.*/enabled \"%s\"/;s/^#tidaluser.*/tidaluser = %S /;s/^#tidalpass.*/tidalpass = %S /;s/^#tidalquality.*/tidalquality = %S /' %S",
-                            tidal_enabled, mympd_state->tidal_username, mympd_state->tidal_password, mympd_state->tidal_audioquality, conf);
-        rc = syscmd(cmdline);
-        if (rc == true && dc == 0)
-        {
-            dc = 3;
-        }
+
         sdsfree(conf);
         sdsfree(cmdline);
     }
-
     if (dac_changed == true)
     {
       syscmd("systemctl start dac_change");
@@ -222,8 +120,7 @@ int collybia_settings_set(t_mympd_state *mympd_state, bool mpd_conf_changed,
         sds conf = sdsnew("/etc/mpd.conf");
         sds cmdline = sdscatfmt(sdsempty(), "sed -E -i '0,/enabled/ s/^enabled.*/enabled \"%s\"/' %S",
                             ffmpeg, conf);
-        rc = syscmd(cmdline);
-        if (rc == true && dc == 0)
+        if (syscmd(cmdline) == true && dc == 0)
         {
             dc = 3;
         }
@@ -239,12 +136,12 @@ int collybia_settings_set(t_mympd_state *mympd_state, bool mpd_conf_changed,
         sds conf = sdsnew("/boot/config.txt");
         sds cmdline = sdscatfmt(sdsempty(), "sed -i 's/^dtoverlay=pi3-disable-wifi.*/#dtoverlay=pi3-disable-wifi %S /' %S",
                             wifi, conf);
-        rc = syscmd(cmdline);
-        if (rc == true && dc == 0)
+        if (syscmd(cmdline) == true && dc == 0)
         {
             dc = 3;
         }
-        syscmd("/home/collybia/net_wifi");
+        syscmd("systemctl start wifi");
+        syscmd("systemctl enable wifi");
 
         sdsfree(conf);
         sdsfree(cmdline);
@@ -255,13 +152,10 @@ int collybia_settings_set(t_mympd_state *mympd_state, bool mpd_conf_changed,
         sds conf = sdsnew("/boot/config.txt");
         sds cmdline = sdscatfmt(sdsempty(), "sed -i 's/^#dtoverlay=pi3-disable-wifi.*/dtoverlay=pi3-disable-wifi %S /' %S",
                             wifi, conf);
-        rc = syscmd(cmdline);
-        if (rc == true && dc == 0)
+        if (syscmd(cmdline) == true && dc == 0)
         {
             dc = 3;
         }
-        syscmd("/home/collybia/net_wired");
-
         sdsfree(conf);
         sdsfree(cmdline);
      }
@@ -285,13 +179,11 @@ int collybia_settings_set(t_mympd_state *mympd_state, bool mpd_conf_changed,
     {
         if (mympd_state->airplay == true)
         {
-            syscmd("systemctl enable shairport-sync");
-            syscmd("systemctl start shairport-sync");
+            syscmd("systemctl enable shairport-sync && systemctl start shairport-sync");
         }
         else
         {
-            syscmd("systemctl stop shairport-sync");
-            syscmd("systemctl disable shairport-sync");
+            syscmd("systemctl disable shairport-sync && systemctl stop shairport-sync");
         }
     }
 
@@ -299,13 +191,11 @@ int collybia_settings_set(t_mympd_state *mympd_state, bool mpd_conf_changed,
     {
         if (mympd_state->roon == true)
         {
-            syscmd("systemctl enable roonbridge");
-            syscmd("systemctl start roonbridge");
+            syscmd("systemctl enable roonbridge && systemctl start roonbridge");
         }
         else
         {
-            syscmd("systemctl stop roonbridge");
-            syscmd("systemctl disable roonbridge");
+            syscmd("systemctl disable roonbridge && systemctl stop roonbridge");
         }
     }
 
@@ -313,13 +203,11 @@ int collybia_settings_set(t_mympd_state *mympd_state, bool mpd_conf_changed,
     {
         if (mympd_state->spotify == true)
         {
-            syscmd("systemctl enable spotifyd");
-            syscmd("systemctl start spotifyd");
+            syscmd("systemctl enable spotifyd && systemctl start spotifyd");
         }
         else
         {
-            syscmd("systemctl stop spotifyd");
-            syscmd("systemctl disable spotifyd");
+            syscmd("systemctl disable spotifyd && systemctl stop spotifyd");
         }
     }
 
@@ -332,13 +220,13 @@ sds collybia_ns_server_list(sds buffer, sds method, int request_id)
     // returns three lines per server found - 1st line ip address 2nd line name 3rd line workgroup
     if (fp == NULL)
     {
-        LOG_ERROR("Failed to get server list");
-        buffer = jsonrpc_respond_message(buffer, method, request_id, "Failed to get server list", true);
+        MYMPD_LOG_ERROR("Failed to get server list");
+        buffer = jsonrpc_respond_message(buffer, method, request_id, true, "general", "error", "Failed to get server list");
     }
     else
     {
-        buffer = jsonrpc_start_result(buffer, method, request_id);
-        buffer = sdscat(buffer, ",\"data\":[");
+        buffer = jsonrpc_result_start(buffer, method, request_id);
+        buffer = sdscat(buffer, "\"data\":[");
         unsigned entity_count = 0;
         char *line = NULL;
         size_t n = 0;
@@ -375,7 +263,7 @@ sds collybia_ns_server_list(sds buffer, sds method, int request_id)
         buffer = sdscat(buffer, "],");
         buffer = tojson_long(buffer, "totalEntities", entity_count, true);
         buffer = tojson_long(buffer, "returnedEntities", entity_count, false);
-        buffer = jsonrpc_end_result(buffer);
+        buffer = jsonrpc_result_end(buffer);
         if (line != NULL)
         {
             free(line);
@@ -388,6 +276,322 @@ sds collybia_ns_server_list(sds buffer, sds method, int request_id)
     return buffer;
 }
 
+sds collybia_wifi_server_list(sds buffer, sds method, int request_id)
+{
+    FILE *fp = popen("ifconfig wlan0 up;/usr/bin/iw dev wlan0 scan | grep \"SSID\" | awk '{print $2}'", "r");
+
+    if (fp == NULL)
+    {
+        MYMPD_LOG_ERROR("Failed to get server list");
+        buffer = jsonrpc_respond_message(buffer, method, request_id, true, "general", "error", "Failed to get wifi list");
+    }
+    else
+    {
+        buffer = jsonrpc_result_start(buffer, method, request_id);
+        buffer = sdscat(buffer, "\"data\":[");
+        unsigned entity_count = 0;
+        char *line = NULL;
+        size_t n = 0;
+        sds wifi_net = sdsempty();
+        while (getline(&line, &n, fp) > 0)
+        {
+            wifi_net = sdsreplace(wifi_net, line);
+            sdstrim(wifi_net, "\n");
+            if (getline(&line, &n, fp) < 0)
+            {
+                break;
+            }
+
+            if (entity_count++)
+            {
+                buffer = sdscat(buffer, ",");
+            }
+            buffer = sdscat(buffer, "{");
+            buffer = tojson_char(buffer, "wifiSSID", wifi_net, false);
+            buffer = sdscat(buffer, "}");
+        }
+        buffer = sdscat(buffer, "],");
+        buffer = tojson_long(buffer, "totalEntities", entity_count, true);
+        buffer = tojson_long(buffer, "returnedEntities", entity_count, false);
+        buffer = jsonrpc_result_end(buffer);
+        if (line != NULL)
+        {
+            free(line);
+        }
+        fclose(fp);
+        sdsfree(wifi_net);
+    }
+    return buffer;
+}
+
+sds collybia_wifi_connect(sds buffer, sds method, int request_id)
+{
+    bool service = syscmd("/home/collybia/wifi_connect");
+
+    buffer = jsonrpc_result_start(buffer, method, request_id);
+    buffer = sdscat(buffer, ",");
+    buffer = tojson_bool(buffer, "service", service, false);
+    buffer = jsonrpc_result_end(buffer);
+    return buffer;
+}
+
+sds collybia_update_check(sds buffer, sds method, int request_id)
+{
+    sds latest_version = web_version_get(sdsempty());
+    sdstrim(latest_version, " \n");
+    if (validate_version(latest_version) == false)
+    {
+        sdsreplace(latest_version, sdsempty());
+    }
+    bool update_available;
+    if (sdslen(latest_version) > 0)
+    {
+        update_available = strcmp(latest_version, COLLYBIA_VERSION) > 0 ? true : false;
+    }
+    else
+    {
+        update_available = false;
+    }
+
+    buffer = jsonrpc_result_start(buffer, method, request_id);
+    buffer = tojson_char(buffer, "currentVersion", COLLYBIA_VERSION, true);
+    buffer = tojson_char(buffer, "latestVersion", latest_version, true);
+    buffer = tojson_bool(buffer, "updateAvailable", update_available, false);
+    buffer = jsonrpc_result_end(buffer);
+    sdsfree(latest_version);
+    return buffer;
+}
+
+sds collybia_update_install(sds buffer, sds method, int request_id)
+{
+    bool service = syscmd("systemctl start collybia_update");
+
+    buffer = jsonrpc_result_start(buffer, method, request_id);
+    buffer = tojson_bool(buffer, "service", service, false);
+    buffer = jsonrpc_result_end(buffer);
+    return buffer;
+}
+
+// Compare output_name w/ device_name and set
+static bool output_name_init(void)
+{
+    bool rc = true;
+    sds device_name = device_name_get(sdsempty());
+    if (sdslen(device_name) > 0)
+    {
+        sds output_name = output_name_get(sdsempty());
+        if (sdscmp(output_name, device_name) != 0)
+        {
+            rc = output_name_set(device_name);
+        }
+        sdsfree(output_name);
+    }
+    sdsfree(device_name);
+    return rc;
+}
+
+// Get hw:0,0 name
+static sds device_name_get(sds name)
+{
+    FILE *fp = popen("/usr/bin/aplay -l | grep \"card 0.*device 0\"", "r");
+    if (fp == NULL)
+    {
+        MYMPD_LOG_ERROR("Failed to get device name");
+    }
+    else
+    {
+        char *line = NULL;
+        size_t n = 0;
+        if (getline(&line, &n, fp) > 0)
+        {
+            char *pch = strtok(line, "[");
+            // pch = strtok(NULL, "]");
+            // name = sdscatfmt(name, "%s, ", pch); // card name
+            pch = strtok(NULL, "[");
+            pch = strtok(NULL, "]");
+            name = sdscatfmt(name, "%s", pch); // device name
+            pch = NULL;
+        }
+        if (line != NULL)
+        {
+            free(line);
+        }
+        pclose(fp);
+    }
+    return name;
+}
+
+// Get mpd.conf output name
+static sds output_name_get(sds name)
+{
+    FILE *fp = popen("grep \"^name\" /etc/mpd.conf", "r");
+    if (fp == NULL)
+    {
+        MYMPD_LOG_ERROR("Failed to get output name");
+    }
+    else
+    {
+        char *line = NULL;
+        size_t n = 0;
+        if (getline(&line, &n, fp) > 0)
+        {
+            char *pch = strtok(line, "\"");
+            pch = strtok(NULL, "\"");
+            name = sdscatfmt(name, "%s", pch);
+            pch = NULL;
+        }
+        if (line != NULL)
+        {
+            free(line);
+        }
+        pclose(fp);
+    }
+    return name;
+}
+
+// Edit mpd.conf output name and restart mpd.service
+static bool output_name_set(const char *name)
+{
+    sds conf = sdsnew("/etc/mpd.conf");
+    // sds cmdline = sdscatfmt(sdsempty(), "sed -Ei 's/^(\\s*)name(\\s*).*/\\1name\\2\"%S\"/' %S", name, conf);
+    sds cmdline = sdscatfmt(sdsempty(), "sed -i 's/^name.*/name \"%s\"/' %S", name, conf);
+    bool rc = syscmd(cmdline);
+    if (rc == true)
+    {
+        syscmd("systemctl restart mpd");
+    }
+    sdsfree(conf);
+    sdsfree(cmdline);
+    return rc;
+}
+
+static bool syscmd(const char *cmdline)
+{
+    MYMPD_LOG_DEBUG("Executing syscmd \"%s\"", cmdline);
+    const int rc = system(cmdline);
+    if (rc == 0)
+    {
+        return true;
+    }
+    else
+    {
+        MYMPD_LOG_ERROR("Executing syscmd \"%s\" failed", cmdline);
+        return false;
+    }
+}
+
+static int ns_set(int type, const char *server, const char *share, const char *vers, const char *username,
+                  const char *password) {
+    // sds tmp_file = sdsnew("/tmp/fstab.XXXXXX");
+    // int fd = mkstemp(tmp_file);
+    // if (fd < 0)
+    // {
+    //     LOG_ERROR("Can't open %s for write", tmp_file);
+    //     sdsfree(tmp_file);
+    //     return false;
+    // }
+    int me = 0;
+    sds tmp_file = sdsnew("/etc/fstab.new");
+    FILE *tmp = setmntent(tmp_file, "w");
+    sds org_file = sdsnew("/etc/fstab");
+    FILE *org = setmntent(org_file, "r");
+    if (tmp && org)
+    {
+        sds mnt_fsname = sdsempty();
+        sds mnt_dir = sdsnew("/mnt/nas-");
+        sds mnt_type = sdsempty();
+        sds credentials = sdsempty();
+        sds mnt_opts = sdsempty();
+        if (type == 1 || type == 2)
+        {
+            mnt_fsname = sdscatfmt(mnt_fsname, "//%s%s", server, share);
+            mnt_dir = sdscat(mnt_dir, "samba");
+            mnt_type = sdscat(mnt_type, "cifs");
+            if (type == 1)
+            {
+                credentials = sdscat(credentials, "username=guest,password=");
+            }
+            else
+            {
+                credentials = sdscatfmt(credentials, "username=%s,password=%s", username, password);
+            }
+            mnt_opts = sdscatfmt(mnt_opts, "%s,%s,ro,uid=mpd,gid=audio,iocharset=utf8,noauto,x-systemd.automount,x-systemd.device-timeout=10s", vers, credentials);
+        }
+        else if (type == 3)
+        {
+            mnt_fsname = sdscatfmt(mnt_fsname, "%s:%s", server, share);
+            mnt_dir = sdscat(mnt_dir, "nfs");
+            mnt_type = sdscat(mnt_type, "nfs");
+            mnt_opts = sdscat(mnt_opts, "ro,noauto,x-systemd.automount,x-systemd.device-timeout=10s,rsize=8192,wsize=8192");
+        }
+        struct mntent n = {mnt_fsname, mnt_dir, mnt_type, mnt_opts, 0, 0};
+        bool append = true;
+
+        struct mntent *m;
+        while ((m = getmntent(org)))
+        {
+            if (strstr(m->mnt_dir, "/mnt/nas-") != NULL)
+            {
+                append = false;
+                if (type == 0)
+                {
+                    me = -1; // remove mount entry
+                    continue;
+                }
+                else
+                {
+                    addmntent(tmp, &n);
+                    me = 2; // edit mount entry
+                    continue;
+                }
+            }
+            addmntent(tmp, m);
+        }
+        if (type != 0 && append)
+        {
+            addmntent(tmp, &n);
+            me = 1; // add mount entry
+        }
+        fflush(tmp);
+        endmntent(tmp);
+        endmntent(org);
+
+        int rc = rename(tmp_file, org_file);
+        if (rc == -1)
+        {
+            MYMPD_LOG_ERROR("Renaming file from %s to %s failed", tmp_file, org_file);
+            me = 0; // old table
+        }
+        sdsfree(mnt_fsname);
+        sdsfree(mnt_dir);
+        sdsfree(mnt_type);
+        sdsfree(credentials);
+        sdsfree(mnt_opts);
+    }
+    else
+    {
+        if (tmp)
+        {
+            endmntent(tmp);
+        }
+        else
+        {
+            MYMPD_LOG_ERROR("Can't open %s for write", tmp_file);
+        }
+        if (org)
+        {
+            endmntent(org);
+        }
+        else
+        {
+            MYMPD_LOG_ERROR("Can't open %s for read", org_file);
+        }
+    }
+    sdsfree(tmp_file);
+    sdsfree(org_file);
+    return me;
+}
+
 static sds web_version_get(sds version)
 {
     struct memory_struct chunk;
@@ -397,7 +601,7 @@ static sds web_version_get(sds version)
     CURL *curl_handle = curl_easy_init();
     if (curl_handle)
     {
-        curl_easy_setopt(curl_handle, CURLOPT_URL, COLLYBIA_REPO);
+        curl_easy_setopt(curl_handle, CURLOPT_URL, COLLYBIAAUDIO_REPO);
         curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_memory_callback);
         curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk);
         curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 0L);
@@ -405,22 +609,43 @@ static sds web_version_get(sds version)
         CURLcode res = curl_easy_perform(curl_handle);
         if (res != CURLE_OK)
         {
-            LOG_ERROR("curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+            MYMPD_LOG_ERROR("curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
         }
         else
         {
             version = sdscatlen(version, chunk.memory, chunk.size);
-            LOG_INFO("%lu bytes retrieved", (unsigned long)chunk.size);
+            MYMPD_LOG_DEBUG("%lu bytes retrieved", (unsigned long)chunk.size);
         }
 
         curl_easy_cleanup(curl_handle);
     }
     else
     {
-        LOG_ERROR("curl_easy_init");
+        MYMPD_LOG_ERROR("curl_easy_init");
     }
     free(chunk.memory);
     return version;
+}
+
+static size_t write_memory_callback(void *contents, size_t size, size_t nmemb, void *userp)
+{
+    size_t realsize = size * nmemb;
+    struct memory_struct *mem = (struct memory_struct *)userp;
+
+    char *ptr = realloc(mem->memory, mem->size + realsize + 1);
+    if (ptr == NULL)
+    {
+        // out of memory
+        MYMPD_LOG_ERROR("not enough memory (realloc returned NULL)");
+        return 0;
+    }
+
+    mem->memory = ptr;
+    memcpy(&(mem->memory[mem->size]), contents, realsize);
+    mem->size += realsize;
+    mem->memory[mem->size] = 0;
+
+    return realsize;
 }
 
 static bool validate_version(const char *data)
@@ -436,87 +661,3 @@ static bool validate_version(const char *data)
     }
     return rc;
 }
-
-sds collybia_update_check(sds buffer, sds method, int request_id)
-{
-    sds latest_version = web_version_get(sdsempty());
-    sdstrim(latest_version, " \n");
-    if (validate_version(latest_version) == false)
-    {
-        sdsreplace(latest_version, sdsempty());
-    }
-    bool updates_available;
-    if (sdslen(latest_version) > 0)
-    {
-        updates_available = strcmp(latest_version, COLLYBIA_VERSION) > 0 ? true : false;
-    }
-    else
-    {
-        updates_available = false;
-    }
-
-    buffer = jsonrpc_start_result(buffer, method, request_id);
-    buffer = sdscat(buffer, ",");
-    buffer = tojson_char(buffer, "currentVersion", COLLYBIA_VERSION, true);
-    buffer = tojson_char(buffer, "latestVersion", latest_version, true);
-    buffer = tojson_bool(buffer, "updatesAvailable", updates_available, false);
-    buffer = jsonrpc_end_result(buffer);
-    sdsfree(latest_version);
-    return buffer;
-}
-
-sds collybia_update_install(sds buffer, sds method, int request_id)
-{
-    bool service = syscmd("systemctl start update");
-
-    buffer = jsonrpc_start_result(buffer, method, request_id);
-    buffer = sdscat(buffer, ",");
-    buffer = tojson_bool(buffer, "service", service, false);
-    buffer = jsonrpc_end_result(buffer);
-    return buffer;
-}
-
-sds collybia_wifi_server_list(sds buffer, sds method, int request_id)
-{
-    sds command = sdscatfmt(sdsempty(), "ifconfig wlan0 up;/usr/bin/iw dev wlan0 scan | grep \"SSID\" | awk '{print $2}'");
-    FILE *fp = popen(command, "r");
-    if (fp == NULL)
-    {
-        LOG_ERROR("Failed to get server list");
-        buffer = jsonrpc_respond_message(buffer, method, request_id, "Failed to get wifi net list", true);
-    }
-    else
-    {
-        buffer = jsonrpc_start_result(buffer, method, request_id);
-        buffer = sdscat(buffer, ",\"data\":[");
-        unsigned entity_count = 0;
-        char *line = NULL;
-        size_t n = 0;
-        sds wifi_net = sdsempty();
-        while (getline(&line, &n, fp) > 0)
-        {
-            wifi_net = sdsreplace(wifi_net, line);
-            if (entity_count++)
-            {
-                buffer = sdscat(buffer, ",");
-            }
-            buffer = sdscat(buffer, "{");
-            buffer = tojson_char(buffer, "wifiSSID", wifi_net, false);
-            buffer = sdscat(buffer, "}");
-        }
-        buffer = sdscat(buffer, "],");
-        buffer = tojson_long(buffer, "totalEntities", entity_count, true);
-        buffer = tojson_long(buffer, "returnedEntities", entity_count, false);
-        buffer = jsonrpc_end_result(buffer);
-        if (line != NULL)
-        {
-            free(line);
-        }
-        fclose(fp);
-        sdsfree(wifi_net);
-    }
-    sdsfree(command);
-    return buffer;
-}
-
-

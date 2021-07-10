@@ -5,13 +5,13 @@
 #
 
 project (mympd C)
-set(CPACK_PACKAGE_VERSION_MAJOR "6")
-set(CPACK_PACKAGE_VERSION_MINOR "12")
-set(CPACK_PACKAGE_VERSION_PATCH "1")
+set(CPACK_PACKAGE_VERSION_MAJOR "7")
+set(CPACK_PACKAGE_VERSION_MINOR "0")
+set(CPACK_PACKAGE_VERSION_PATCH "2")
 
-set(CPACK_PACKAGE_COLLYBIAVERSION_MAJOR "2")
+set(CPACK_PACKAGE_COLLYBIAVERSION_MAJOR "3")
 set(CPACK_PACKAGE_COLLYBIAVERSION_MINOR "0")
-set(CPACK_PACKAGE_COLLYBIAVERSION_PATCH "1")
+set(CPACK_PACKAGE_COLLYBIAVERSION_PATCH "0")
 
 cmake_minimum_required(VERSION 3.4)
 include(GNUInstallDirs)
@@ -65,7 +65,7 @@ if(NOT "${ENABLE_SSL}" MATCHES "OFF")
 endif()
 if((OPENSSL_FOUND) AND ("${OPENSSL_VERSION}" VERSION_GREATER "1.1.0"))
   set(ENABLE_SSL "ON")
-  set(MONGOOSE_SSL "-DMG_ENABLE_SSL")
+  set(MONGOOSE_SSL "-DMG_ENABLE_OPENSSL=1")
   include_directories(${OPENSSL_INCLUDE_DIR})
 else()
   message("Openssl is disabled")
@@ -135,7 +135,7 @@ if(${MEMCHECK} MATCHES "TRUE")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 -Wall -Werror -Wvla -Winit-self -Wuninitialized -Werror=array-bounds")
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb")
 else()
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 -O1 -Wall -Werror -Wvla -Winit-self -Wuninitialized -Werror=array-bounds -fstack-protector-strong -D_FORTIFY_SOURCE=2 -pie -fPIE")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 -O3 -Wall -Werror -Wvla -Winit-self -Wuninitialized -Werror=array-bounds -fstack-protector-strong -D_FORTIFY_SOURCE=2 -pie -fPIE")
   set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -s")
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb -fsanitize=address \
 	-fsanitize=undefined -fsanitize=shift -fsanitize=integer-divide-by-zero -fsanitize=unreachable -fsanitize=vla-bound \
@@ -144,9 +144,7 @@ else()
 	-fsanitize=nonnull-attribute -fsanitize=returns-nonnull-attribute -fsanitize=bool -fsanitize=enum -fsanitize=vptr -static-libasan")
 endif()
 
-set(MONGOOSE_FLAGS "${MONGOOSE_SSL} \
-	-DMG_ENABLE_HTTP_WEBDAV -DMG_ENABLE_FAKE_DAVLOCK -DMG_ENABLE_MQTT=0 -DMG_ENABLE_HTTP_CGI=0 -DMG_ENABLE_IPV6 \
-	-DMG_ENABLE_HTTP_SSI=0 -DMG_ENABLE_BROADCAST=0 -DMG_ENABLE_THREADS=0 -DMG_DISABLE_HTTP_DIGEST_AUTH -D CS_DISABLE_MD5")
+set(MONGOOSE_FLAGS "${MONGOOSE_SSL} -DMG_ENABLE_DIRECTORY_LISTING=1")
 
 set(MYMPD_FLAGS "-Wextra -pedantic -Wformat=2 -Wunused-parameter -Wshadow -Wwrite-strings \
 	-Wformat=2  -Wstrict-prototypes -Wold-style-definition -Wredundant-decls -Wnested-externs -Wmissing-include-dirs")
@@ -174,7 +172,7 @@ set_property(SOURCE ${MYMPD_SRC_FILES6} PROPERTY COMPILE_FLAGS "${MYMPD_FLAGS}")
 set_property(SOURCE dist/src/frozen/frozen.c PROPERTY COMPILE_FLAGS "-Wno-stringop-overflow")
 
 #compiler flags for mongoose
-set_property(SOURCE dist/src/mongoose/mongoose.c PROPERTY COMPILE_FLAGS "-Wno-format-truncation ${MONGOOSE_FLAGS}")
+set_property(SOURCE dist/src/mongoose/mongoose.c PROPERTY COMPILE_FLAGS "-Wno-unused-result -Wno-vla ${MONGOOSE_FLAGS}")
 
 #linker flags
 set (CMAKE_EXE_LINKER_FLAGS "-Wl,-z,relro -Wl,-z,now")
@@ -182,16 +180,17 @@ set (CMAKE_EXE_LINKER_FLAGS "-Wl,-z,relro -Wl,-z,now")
 set(SOURCES
   src/main.c
   src/api.c
+  src/covercache.c
   src/global.c
   src/list.c
   src/tiny_queue.c
   src/log.c
   src/mympd_config.c
   src/handle_options.c
-  src/maintenance.c
   src/utility.c
   src/random.c
   src/sds_extras.c
+  src/http_client.c
   src/lua_mympd_state.c
   src/collybia.c
   src/mpd_shared.c
@@ -235,7 +234,6 @@ set(SOURCES
   src/web_server.c
   src/web_server/web_server_utility.c
   src/web_server/web_server_albumart.c
-  src/web_server/web_server_tagpics.c
   dist/src/mongoose/mongoose.c
   dist/src/frozen/frozen.c
   dist/src/inih/ini.c

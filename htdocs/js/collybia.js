@@ -8,7 +8,7 @@ function initCollybia() {
 
     document.getElementById('modalCollybia').addEventListener('keydown', function (event) {
         if (event.key === 'Enter') {
-            saveIdeonSettings();
+            saveCollybiaSettings();
             event.stopPropagation();
             event.preventDefault();
         }
@@ -54,12 +54,23 @@ function initCollybia() {
             document.getElementById('inputNsServer').value = event.target.getAttribute('data-value');
         }
     });
+
+    document.getElementById('btnDropdownWifi').parentNode.addEventListener('show.bs.dropdown', function () {
+        sendAPI("MYMPD_API_WIFI_SERVER_LIST", {}, parseWifi, true);
+    });
+
+    document.getElementById('dropdownWifi').children[0].addEventListener('click', function (event) {
+        event.preventDefault();
+        if (event.target.nodeName === 'A') {
+            document.getElementById('inputWifiSSID').value = event.target.getAttribute('data-value');
+        }
+    });
 }
 
 function parseServers(obj) {
     let list = '';
     if (obj.error) {
-        list = '<div class="list-group-item"><span class="material-icons">error_outline</span> ' + t(obj.error.message) + '</div>';
+        list = '<div class="list-group-item"><span class="mi">error_outline</span> ' + t(obj.error.message) + '</div>';
     }
     else {
         for (let i = 0; i < obj.result.returnedEntities; i++) {
@@ -67,9 +78,10 @@ function parseServers(obj) {
                 obj.result.data[i].ipAddress + '<br/><small>' + obj.result.data[i].name + '</small></a>';
         }
         if (obj.result.returnedEntities === 0) {
-            list = '<div class="list-group-item"><span class="material-icons">error_outline</span>&nbsp;' + t('Empty list') + '</div>';
+            list = '<div class="list-group-item"><span class="mi">error_outline</span>&nbsp;' + t('Empty list') + '</div>';
         }
     }
+
     document.getElementById('dropdownServers').children[0].innerHTML = list;
 }
 
@@ -94,6 +106,12 @@ function checkForUpdates() {
     sendAPI("MYMPD_API_UPDATE_CHECK", {}, parseCheck);
 
     btnWaiting(document.getElementById('btnCheckForUpdates'), true);
+}
+
+function wifiConnect() {
+    sendAPI("MYMPD_API_WIFI_CONNECT", {});
+
+    btnWaiting(document.getElementById('btnWifiConnect'), false);
 }
 
 function parseCheck(obj) {
@@ -129,22 +147,15 @@ function installUpdates() {
 }
 
 function parseInstall(obj) {
-    if (obj.result.pacman === false) {
+    if (obj.result.service === false) {
         document.getElementById('updateMsg').innerText = 'Update error, please try again later';
+        btnWaiting(document.getElementById('btnInstallUpdate'), false);
     }
-    else if (obj.result.reboot === false) {
-        document.getElementById('updateMsg').innerText = 'Reboot error, please reboot manually';
-    }
-    else {
-        document.getElementById('updateMsg').innerText = '';
-    }
-
-    btnWaiting(document.getElementById('btnInstallUpdates'), false);
 }
 
 function parseCollybiaSettings() {
     document.getElementById('selectDac').value = settings.dac;
-    document.getElementById('selectMixerType').value = settings.mixerType;
+    document.getElementById('selectMixerType').value = settings.mixertype;
     toggleBtnChk('btnDop', settings.dop);
     toggleBtnChk('btnFFmpeg', settings.ffmpeg);
 
@@ -183,10 +194,6 @@ function parseCollybiaSettings() {
     toggleBtnChk('btnWifiEnabled', settings.wifi);
     document.getElementById('inputWifiSSID').value = settings.wifissid;
     document.getElementById('inputWifiPassword').value = settings.wifiPassword;
-    toggleBtnChkCollapse('btnTidalEnabled', 'collapseTidal', settings.tidalEnabled);
-    document.getElementById('inputTidalUsername').value = settings.tidalUsername;
-    document.getElementById('inputTidalPassword').value = settings.tidalPassword;
-    document.getElementById('selectTidalAudioquality').value = settings.tidalAudioquality;
 }
 
 function saveCollybiaSettings() {
@@ -200,7 +207,7 @@ function saveCollybiaSettings() {
     let inputNsPassword = document.getElementById('inputNsPassword');
 
     if (selectNsTypeValue !== '0') {
-        if (!validateNotBlank(inputNsServer)) {
+        if (!validateIPAddress(inputNsServer)) {
             formOK = false;
         }
         if (!validatePath(inputNsShare)) {
@@ -212,15 +219,6 @@ function saveCollybiaSettings() {
             formOK = false;
         }
     }
-
-    let inputTidalUsername = document.getElementById('inputTidalUsername');
-    let inputTidalPassword = document.getElementById('inputTidalPassword');
-    if (document.getElementById('btnTidalEnabled').classList.contains('active')) {
-        if (!validateNotBlank(inputTidalUsername) || !validateNotBlank(inputTidalPassword)) {
-            formOK = false;
-        }
-    }
-
     let inputWifiPassword = document.getElementById('inputWifiPassword');
     let inputWifiSSID = document.getElementById('inputWifiSSID');
     if (document.getElementById('btnWifiEnabled').classList.contains('active')) {
@@ -233,30 +231,25 @@ function saveCollybiaSettings() {
         let selectDac = document.getElementById('selectDac');
         let selectMixerType = document.getElementById('selectMixerType');
         let selectSambaVersion = document.getElementById('selectSambaVersion');
-        let selectTidalAudioquality = document.getElementById('selectTidalAudioquality');
         sendAPI("MYMPD_API_SETTINGS_SET", {
             "dac": selectDac.options[selectDac.selectedIndex].value,
-            "mixerType": selectMixerType.options[selectMixerType.selectedIndex].value,
-            "dop": (document.getElementById('btnDop').classList.contains('active') ? true : false),
             "ffmpeg": (document.getElementById('btnFFmpeg').classList.contains('active') ? true : false),
+            "mixertype": selectMixerType.options[selectMixerType.selectedIndex].value,
+            "dop": (document.getElementById('btnDop').classList.contains('active') ? true : false),
             "nsType": parseInt(selectNsTypeValue),
             "nsServer": inputNsServer.value,
             "nsShare": inputNsShare.value,
             "sambaVersion": selectSambaVersion.options[selectSambaVersion.selectedIndex].value,
             "nsUsername": inputNsUsername.value,
             "nsPassword": inputNsPassword.value,
-            "apmode": (document.getElementById('btnAPMode').classList.contains('active') ? true : false),
             "airplay": (document.getElementById('btnAirplay').classList.contains('active') ? true : false),
             "roon": (document.getElementById('btnRoon').classList.contains('active') ? true : false),
             "spotify": (document.getElementById('btnSpotify').classList.contains('active') ? true : false),
             "wifi": (document.getElementById('btnWifiEnabled').classList.contains('active') ? true : false),
             "wifiPassword": inputWifiPassword.value,
-            "wifissid": inputWifiSSID.value,
-            "tidalEnabled": (document.getElementById('btnTidalEnabled').classList.contains('active') ? true : false),
-            "tidalUsername": inputTidalUsername.value,
-            "tidalPassword": inputTidalPassword.value,
-            "tidalAudioquality": selectTidalAudioquality.options[selectTidalAudioquality.selectedIndex].value
+            "wifissid": inputWifiSSID.value
         }, getSettings);
-        modalCollybia.hide();
+        uiElements.modalCollybia.hide();
     }
 }
+

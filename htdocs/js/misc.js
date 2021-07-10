@@ -172,14 +172,6 @@ function _updateDBfinished(idleEvent) {
     }
 }
 
-function updateDBStats() {
-    sendAPI("MPD_API_DATABASE_STATS", {}, parseDBStats);
-}
-
-function parseDBStats(obj) {
-    // document.getElementById('panel-heading-browse').innerHTML = 'Library total: Tracks ' + obj.result.songs + ' &bull; Time ' + beautifyDuration(obj.result.dbPlaytime);
-}
-
 //eslint-disable-next-line no-unused-vars
 function zoomPicture(el) {
     if (el.classList.contains('booklet')) {

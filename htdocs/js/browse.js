@@ -188,10 +188,13 @@ function initBrowse() {
             const name = getAttDec(event.target.parentNode, 'data-name');
             const dataType = getAttDec(event.target.parentNode, 'data-type');
             switch(dataType) {
-                case 'parentDir':
+                case 'parentDir': {
+                    const offset = browseFilesystemHistory[uri] !== undefined ? browseFilesystemHistory[uri].offset : 0;
+                    const scrollPos = browseFilesystemHistory[uri] !== undefined ? browseFilesystemHistory[uri].scrollPos : 0;
                     app.current.filter = '-';
-                    appGoto('Browse', 'Filesystem', undefined, '0', app.current.limit, app.current.filter, app.current.sort, '-', uri);
+                    appGoto('Browse', 'Filesystem', undefined, offset, app.current.limit, app.current.filter, app.current.sort, '-', uri, scrollPos);
                     break;
+                }
                 case 'dir':
                     clickFolder(uri, name);
                     break;
@@ -236,7 +239,9 @@ function initBrowse() {
         if (event.target.nodeName === 'A') {
             event.preventDefault();
             const uri = getAttDec(event.target, 'data-uri');
-            appGoto('Browse', 'Filesystem', undefined, '0', app.current.limit, app.current.filter, app.current.sort, '-', getAttDec(event.target, 'data-uri'));
+            const offset = browseFilesystemHistory[uri] !== undefined ? browseFilesystemHistory[uri].offset : 0;
+            const scrollPos = browseFilesystemHistory[uri] !== undefined ? browseFilesystemHistory[uri].scrollPos : 0;
+            appGoto('Browse', 'Filesystem', undefined, offset, app.current.limit, app.current.filter, app.current.sort, '-', uri, scrollPos);
         }
     }, false);
 
@@ -302,18 +307,18 @@ function gotoBrowse(event) {
             }
             if (artist !== null) {
                 //Show album details
-                appGoto(card, 'Database', 'Detail', '0', undefined, tag, tagAlbumArtist, name, artist);
+                appGoto('Browse', 'Database', 'Detail', '0', undefined, tag, tagAlbumArtist, name, artist);
             }
             else {
                 //show filtered album list
                 document.getElementById('searchDatabaseStr').value = '';
-                appGoto(card, 'Database', 'List', '0', undefined, tag, tagAlbumArtist, 'Album', '((' + tag + ' == \'' + escapeMPD(name) + '\'))');
+                appGoto('Browse', 'Database', 'List', '0', undefined, tag, tagAlbumArtist, 'Album', '((' + tag + ' == \'' + escapeMPD(name) + '\'))');
             }
         }
         else {
             //show filtered album list
             document.getElementById('searchDatabaseStr').value = '';
-            appGoto(card, 'Database', 'List', '0', undefined, tag, tagAlbumArtist, 'Album', '((' + tag + ' == \'' + escapeMPD(name) + '\'))');
+            appGoto('Browse', 'Database', 'List', '0', undefined, tag, tagAlbumArtist, 'Album', '((' + tag + ' == \'' + escapeMPD(name) + '\'))');
         }
     }
 }
@@ -445,10 +450,10 @@ function parseDatabase(obj) {
             id = genId('database' + obj.result.data[i].Album + obj.result.data[i].AlbumArtist);
             picture = subdir + '/albumart/' + obj.result.data[i].FirstSongUri;
             html = '<div class="card card-grid clickable" data-picture="' + encodeURI(picture)  + '" ' + 
-                   'data-uri="' + encodeURI(obj.result.data[i].FirstSongUri.replace(/\/[^/]+$/, '')) + '" ' +
-                   'data-type="dir" data-name="' + encodeURI(obj.result.data[i].Album) + '" ' +
-                   'data-album="' + encodeURI(obj.result.data[i].Album) + '" ' +
-                   'data-albumartist="' + encodeURI(obj.result.data[i].AlbumArtist) + '" tabindex="0">' +
+                       'data-uri="' + encodeURI(obj.result.data[i].FirstSongUri.replace(/\/[^/]+$/, '')) + '" ' +
+                       'data-type="dir" data-name="' + encodeURI(obj.result.data[i].Album) + '" ' +
+                       'data-album="' + encodeURI(obj.result.data[i].Album) + '" ' +
+                       'data-albumartist="' + encodeURI(obj.result.data[i].AlbumArtist) + '" tabindex="0">' +
                    '<div class="card-body album-cover-loading album-cover-grid bg-white d-flex" id="' + id + '"></div>' +
                    '<div class="card-footer card-footer-grid p-2" title="' + e(obj.result.data[i].AlbumArtist) + ': ' + e(obj.result.data[i].Album) + '">' +
                    e(obj.result.data[i].Album) + '<br/><small>' + e(obj.result.data[i].AlbumArtist) + '</small>' +
@@ -456,7 +461,7 @@ function parseDatabase(obj) {
         }
         else {
             id = genId('database' + obj.result.data[i].value);
-            picture = subdir + '/tagpics/' + obj.result.tag + '/' + encodeURI(obj.result.data[i].value);
+            picture = subdir + '/pics/' + obj.result.tag + '/' + encodeURI(obj.result.data[i].value);
             html = '<div class="card card-grid clickable" data-picture="' + encodeURI(picture) + '" data-tag="' + encodeURI(obj.result.data[i].value) + '" tabindex="0">' +
                    (obj.result.pics === true ? '<div class="card-body album-cover-loading album-cover-grid bg-white" id="' + id + '"></div>' : '') +
                    '<div class="card-footer card-footer-grid p-2" title="' + e(obj.result.data[i].value) + '">' +
@@ -560,7 +565,7 @@ function parseAlbumDetails(obj) {
 
 //eslint-disable-next-line no-unused-vars
 function backToAlbumGrid() {
-    appGoto(app.current.app, 'Database', 'List');
+    appGoto('Browse', 'Database', 'List');
 }  
 
 //eslint-disable-next-line no-unused-vars

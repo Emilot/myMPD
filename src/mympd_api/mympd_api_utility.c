@@ -15,7 +15,7 @@
 #include "../sds_extras.h"
 #include "../log.h"
 #include "../list.h"
-#include "config_defs.h"
+#include "mympd_config_defs.h"
 #include "../api.h"
 #include "../tiny_queue.h"
 #include "../global.h"
@@ -65,7 +65,8 @@ void mympd_api_push_to_mpd_client(t_mympd_state *mympd_state) {
     request2->data = tojson_char(request2->data, "generatePlsTags", mympd_state->generate_pls_tags, true);
     request2->data = tojson_char(request2->data, "mpdHost", mympd_state->mpd_host, true);
     request2->data = tojson_char(request2->data, "mpdPass", mympd_state->mpd_pass, true);
-    request2->data = tojson_long(request2->data, "mpdPort", mympd_state->mpd_port, false);
+    request2->data = tojson_long(request2->data, "mpdPort", mympd_state->mpd_port, true);
+    request2->data = tojson_bool(request2->data, "stickers", mympd_state->stickers, false);
     request2->data = sdscat(request2->data, "}}");
     tiny_queue_push(mpd_worker_queue, request2, 0);
 }
@@ -96,7 +97,6 @@ void free_mympd_state_sds(t_mympd_state *mympd_state) {
     sdsfree(mympd_state->cols_playback);
     sdsfree(mympd_state->cols_queue_last_played);
     sdsfree(mympd_state->cols_queue_jukebox);
-    sdsfree(mympd_state->stream_url);
     sdsfree(mympd_state->bg_color);
     sdsfree(mympd_state->bg_css_filter);
     sdsfree(mympd_state->coverimage_name);
@@ -110,6 +110,12 @@ void free_mympd_state_sds(t_mympd_state *mympd_state) {
     sdsfree(mympd_state->navbar_icons);
     sdsfree(mympd_state->advanced);
     sdsfree(mympd_state->bg_image);
+    sdsfree(mympd_state->mixer_type);
+    sdsfree(mympd_state->ns_server);
+    sdsfree(mympd_state->ns_share);
+    sdsfree(mympd_state->samba_version);
+    sdsfree(mympd_state->ns_username);
+    sdsfree(mympd_state->ns_password);
 }
 
 static const char *mympd_cols[]={"Pos", "Duration", "Type", "LastPlayed", "Filename", "Filetype", "Fileformat", "LastModified", 

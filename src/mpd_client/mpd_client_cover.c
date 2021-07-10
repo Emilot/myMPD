@@ -19,8 +19,9 @@
 #include "../mpd_shared/mpd_shared_typedefs.h"
 #include "../mpd_shared.h"
 #include "../list.h"
-#include "config_defs.h"
+#include "mympd_config_defs.h"
 #include "../utility.h"
+#include "../covercache.h"
 #include "mpd_client_utility.h"
 #include "mpd_client_cover.h"
 

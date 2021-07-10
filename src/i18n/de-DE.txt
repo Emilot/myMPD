@@ -154,10 +154,25 @@ Label
 Herausgeber
 
 Grouping
-Grupierung
+Gruppierung
 
 Conductor
 Dirigent
+
+ComposerSort
+Komponist
+
+Ensemble
+Ensemble
+
+Movement
+Movement
+
+MovementNumber
+Movement Nummer
+
+Location
+Ort
 
 Pos
 Pos
@@ -458,15 +473,6 @@ Tags für die Datenbankanzeige
 
 Local playback
 Lokale Wiedergabe
-
-URI
-URL
-
-HTTPS Port
-HTTPS Port
-
-HTTP Port
-HTTP Port
 
 Statistics
 Statistiken
@@ -1491,15 +1497,6 @@ deaktiviert
 enabled
 aktiviert
 
-No mixed content,  MPD stream must be served over https:
-Mixed Content: MPD stream muss über https ausgeliefert werden:
-
-Details
-Details
-
-Port
-Port
-
 Websocket is disconnected
 Websocket ist nicht verbunden
 
@@ -1723,12 +1720,6 @@ Hilf mit myMPD zu verbessern
 Are you sure?
 Bist du sicher?
 
-No
-Nein
-
-Yes
-Ja
-
 Do you really want to clear the queue?
 Willst du die Warteschlange wirklich leeren?
 
@@ -1748,11 +1739,19 @@ stop only
 nur Stop
 
 Do you really want to clear the playlist?
-Willst du wirlich die Wiedergabeliste wirklich leeren?
-
+Willst du wirlich die Wiedergabeliste "%{playlist}" leeren?
 
 Do you really want to delete the playlist?
-Willst du wirklich die Wiedergabeliste löschen?
+Willst du wirklich die Wiedergabeliste "%{playlist}" löschen?
+
+Do you really want to delete the script?
+Willst du wirklich das Skript "%{script}" löschen?
+
+Yes, delete it
+Ja, löschen
+
+Yes, do it
+Ja, tu es
 
 Playback settings
 Wiedergabeeinstellungen
@@ -1828,3 +1827,12 @@ Standardbild Dunkel
 
 No script selected
 Kein Skript ausgewählt
+
+Synced lyrics
+Synchronisierter Liedtext
+
+Unsynced lyrics
+Liedtext
+
+Can not open script directory
+Skriptverzeichnis konnte nicht geöffnet werden

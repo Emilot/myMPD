@@ -40,7 +40,6 @@ sds get_mime_type_by_ext(const char *filename);
 sds get_ext_by_mime_type(const char *mime_type);
 sds get_mime_type_by_magic(const char *filename);
 sds get_mime_type_by_magic_stream(sds stream);
-bool write_covercache_file(t_config *config, const char *uri, const char *mime_type, sds binary);
 bool strtobool(const char *value);
 int strip_extension(char *s);
 void strip_slash(sds s);
@@ -49,6 +48,7 @@ void my_usleep(time_t usec);
 unsigned long substractUnsigned(unsigned long num1, unsigned long num2);
 char *basename_uri(char *uri);
 bool is_streamuri(const char *uri);
+int unsigned_to_int(unsigned x);
 
 #define FREE_PTR(PTR) do { \
     if (PTR != NULL) \

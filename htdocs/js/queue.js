@@ -20,24 +20,12 @@ function initQueue() {
         }
     }, false);
 
-    document.getElementById('QueueCurrentList').addEventListener('click', function (event) {
-        if (event.target.parentNode.parentNode.nodeName === 'TFOOT') {
-            return;
-        }
-        else if (event.target.nodeName === 'TD') {
+    document.getElementById('QueueCurrentList').addEventListener('click', function(event) {
+        if (event.target.nodeName === 'TD') {
             clickQueueSong(getAttDec(event.target.parentNode, 'data-trackid'), getAttDec(event.target.parentNode, 'data-uri'));
-        }
-        else if (event.target.nodeName === 'IMG') {
-            clickQueueSong(getAttDec(event.target.parentNode.parentNode, 'data-trackid'), getAttDec(event.target.parentNode.parentNode, 'data-uri'));
         }
         else if (event.target.nodeName === 'A') {
             showMenu(event.target, event);
-        }
-    }, false);
-
-    document.getElementById('QueueMiniList').addEventListener('click', function (event) {
-        if (event.target.nodeName === 'TD') {
-            sendAPI("MPD_API_PLAYER_PLAY_TRACK", { "track": getAttDec(event.target.parentNode, 'data-trackid') });
         }
     }, false);
     
@@ -47,6 +35,12 @@ function initQueue() {
         }
         else if (event.target.nodeName === 'A') {
             showMenu(event.target, event);
+        }
+    }, false);
+
+    document.getElementById('QueueMiniList').addEventListener('click', function (event) {
+        if (event.target.nodeName === 'TD') {
+            sendAPI("MPD_API_PLAYER_PLAY_TRACK", { "track": getAttDec(event.target.parentNode, 'data-trackid') });
         }
     }, false);
 
@@ -268,19 +262,10 @@ function addToQueue() {
     if (!validateInt(inputAddToQueueQuantityEl)) {
         formOK = false;
     }
-    
-    const jukeboxMode = getSelectValue('selectAddToQueueMode');
-    const jukeboxPlaylist = getSelectValue('selectAddToQueuePlaylist');
-    
-    if (jukeboxMode === '1' && settings.featSearchwindow === false && jukeboxPlaylist === 'Database') {
-        document.getElementById('warnJukeboxPlaylist2').classList.remove('hide');
-        formOK = false;
-    }
-    
     if (formOK === true) {
         sendAPI("MPD_API_QUEUE_ADD_RANDOM", {
-            "mode": jukeboxMode,
-            "playlist": jukeboxPlaylist,
+            "mode": getSelectValue('selectAddToQueueMode'),
+            "playlist": getSelectValue('selectAddToQueuePlaylist'),
             "quantity": document.getElementById('inputAddToQueueQuantity').value
         });
         uiElements.modalAddToQueue.hide();

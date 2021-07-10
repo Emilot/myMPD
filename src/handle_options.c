@@ -20,8 +20,8 @@
 #include "../dist/src/frozen/frozen.h"
 #include "log.h"
 #include "list.h"
-#include "config_defs.h"
-#include "config.h"
+#include "mympd_config_defs.h"
+#include "mympd_config.h"
 #include "mympd_api/mympd_api_utility.h"
 #include "mympd_api/mympd_api_timer.h"
 #include "mympd_api/mympd_api_settings.h"
@@ -29,7 +29,7 @@
   #include "cert.h"
 #endif
 #include "utility.h"
-#include "maintenance.h"
+#include "covercache.h"
 #include "handle_options.h"
 
 //private function definitions

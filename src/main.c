@@ -31,9 +31,9 @@
 #include "log.h"
 #include "list.h"
 #include "tiny_queue.h"
-#include "config_defs.h"
+#include "mympd_config_defs.h"
 #include "utility.h"
-#include "config.h"
+#include "mympd_config.h"
 #include "api.h"
 #include "global.h"
 #include "mpd_client.h"
@@ -45,7 +45,6 @@
   #include "cert.h"
 #endif
 #include "handle_options.h"
-#include "maintenance.h"
 #include "random.h"
 
 _Thread_local sds thread_logname;
@@ -178,11 +177,6 @@ static bool drop_privileges(t_config *config, uid_t startup_uid) {
             MYMPD_LOG_ERROR("setuid() failed: %s", strerror(errno));
             return false;
         }
-    }
-    //check if not root
-    if (getuid() == 0) {
-        MYMPD_LOG_ERROR("myMPD should not be run with root privileges");
-        return false;
     }
 
     return true;
@@ -344,11 +338,11 @@ int main(int argc, char **argv) {
     //get startup uid
     uid_t startup_uid = getuid();
     
-    mpd_client_queue = tiny_queue_create();
-    mpd_worker_queue = tiny_queue_create();
-    mympd_api_queue = tiny_queue_create();
-    web_server_queue = tiny_queue_create();
-    mympd_script_queue = tiny_queue_create();
+    mpd_client_queue = tiny_queue_create("mpd_client_queue");
+    mpd_worker_queue = tiny_queue_create("mpd_worker_queue");
+    mympd_api_queue = tiny_queue_create("mympd_api_queue");
+    web_server_queue = tiny_queue_create("web_server_queue");
+    mympd_script_queue = tiny_queue_create("mympd_script_queue");
 
     //create mg_user_data struct for web_server
     t_mg_user_data *mg_user_data = (t_mg_user_data *)malloc(sizeof(t_mg_user_data));
@@ -578,11 +572,8 @@ int main(int argc, char **argv) {
     sdsfree(configfile);
     sdsfree(option);
     if (init_mg_user_data == true) {
-        sdsfree(mg_user_data->browse_document_root);
-        sdsfree(mg_user_data->music_directory);
-        sdsfree(mg_user_data->playlist_directory);
-        sdsfreesplitres(mg_user_data->coverimage_names, mg_user_data->coverimage_names_len);
-        sdsfree(mg_user_data->rewrite_patterns);
+        free((char *)mgr.dns4.url);
+        free_mg_user_data(mg_user_data);
     }
     FREE_PTR(mg_user_data);
     if (rc == EXIT_SUCCESS) {

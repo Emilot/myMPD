@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <assert.h>
+#include <time.h>
 #include <mpd/client.h>
 
 #include "../../dist/src/sds/sds.h"
@@ -17,7 +18,7 @@
 #include "../mpd_shared/mpd_shared_typedefs.h"
 #include "../mpd_shared.h"
 #include "../list.h"
-#include "config_defs.h"
+#include "mympd_config_defs.h"
 #include "../utility.h"
 #include "../api.h"
 #include "../log.h"
@@ -27,6 +28,7 @@
 #include "../mpd_shared/mpd_shared_playlists.h"
 #include "../mpd_shared.h"
 #include "../mpd_shared/mpd_shared_sticker.h"
+#include "../mpd_shared/mpd_shared_tags.h"
 #include "../lua_mympd_state.h"
 #include "mpd_client_utility.h"
 #include "mpd_client_browse.h"
@@ -62,8 +64,12 @@ void mpd_client_api(t_config *config, t_mpd_client_state *mpd_client_state, void
     char *p_charbuf3 = NULL;
     char *p_charbuf4 = NULL;
     char *p_charbuf5 = NULL;
+    
+    #ifdef DEBUG
+    MEASURE_START
+    #endif
 
-    MYMPD_LOG_INFO("MPD CLIENT API request (%d)(%ld) %s: %s", request->conn_id, request->id, request->method, request->data);
+    MYMPD_LOG_INFO("MPD CLIENT API request (%lld)(%ld) %s: %s", request->conn_id, request->id, request->method, request->data);
     //create response struct
     t_work_result *response = create_result(request);
     
@@ -250,7 +256,7 @@ void mpd_client_api(t_config *config, t_mpd_client_state *mpd_client_state, void
             }
             break;
         case MPD_API_LIKE:
-            if (mpd_client_state->feat_sticker == false) {
+            if (mpd_client_state->mpd_state->feat_stickers == false) {
                 response->data = jsonrpc_respond_message(response->data, request->method, request->id, true, "sticker", "error", "MPD stickers are disabled");
                 MYMPD_LOG_ERROR("MPD stickers are disabled");
                 break;
@@ -539,9 +545,9 @@ void mpd_client_api(t_config *config, t_mpd_client_state *mpd_client_state, void
         case MPD_API_QUEUE_MINI: {
             t_tags *tagcols = (t_tags *)malloc(sizeof(t_tags));
             assert(tagcols);
-            je = json_scanf(request->data, sdslen(request->data), "{params: {pos: %u, limit: %u, cols: %M}}", &uint_buf1, &uint_buf2, json_to_tags, tagcols);
-            if (je == 3) {
-                response->data = mpd_client_put_queue_mini(mpd_client_state, response->data, request->method, request->id, uint_buf1, uint_buf2, tagcols);
+            je = json_scanf(request->data, sdslen(request->data), "{params: {pos: %u, cols: %M}}", &uint_buf1, json_to_tags, tagcols);
+            if (je == 2) {
+                response->data = mpd_client_put_queue_mini(mpd_client_state, response->data, request->method, request->id, uint_buf1, tagcols);
             }
             free(tagcols);
             break;
@@ -711,8 +717,8 @@ void mpd_client_api(t_config *config, t_mpd_client_state *mpd_client_state, void
                 }
                 rc = mpd_client_jukebox_add_to_queue(config, mpd_client_state, uint_buf2, uint_buf1, p_charbuf1, true);
                 if (rc == true) {
-                    response->data = jsonrpc_respond_message(response->data, request->method, request->id, true, 
-                        "queue", "error", "Sucessfully added random songs to queue");
+                    response->data = jsonrpc_respond_message(response->data, request->method, request->id, false, 
+                        "queue", "info", "Sucessfully added random songs to queue");
                 }
                 else {
                     response->data = jsonrpc_respond_message(response->data, request->method, request->id, true, 
@@ -788,7 +794,7 @@ void mpd_client_api(t_config *config, t_mpd_client_state *mpd_client_state, void
             response->data = respond_with_mpd_error_or_ok(mpd_client_state->mpd_state, response->data, request->method, request->id, rc, "mpd_run_shuffle");
             break;
         case MPD_API_PLAYLIST_RM:
-            je = json_scanf(request->data, sdslen(request->data), "{params: {uri:%Q}}", &p_charbuf1);
+            je = json_scanf(request->data, sdslen(request->data), "{params: {uri: %Q}}", &p_charbuf1);
             if (je == 1) {
                 response->data = mpd_client_playlist_delete(config, mpd_client_state, response->data, request->method, request->id, p_charbuf1);
             }
@@ -800,7 +806,7 @@ void mpd_client_api(t_config *config, t_mpd_client_state *mpd_client_state, void
             response->data = mpd_client_put_stats(config, mpd_client_state, response->data, request->method, request->id);
             break;
         case MPD_API_ALBUMART:
-            je = json_scanf(request->data, sdslen(request->data), "{params: {uri:% Q}}", &p_charbuf1);
+            je = json_scanf(request->data, sdslen(request->data), "{params: {uri: %Q}}", &p_charbuf1);
             if (je == 1) {
                 response->data = mpd_client_getcover(config, mpd_client_state, response->data, request->method, request->id, p_charbuf1, &response->binary);
             }
@@ -901,6 +907,11 @@ void mpd_client_api(t_config *config, t_mpd_client_state *mpd_client_state, void
     FREE_PTR(p_charbuf3);                    
     FREE_PTR(p_charbuf4);
     FREE_PTR(p_charbuf5);
+    
+    #ifdef DEBUG
+    MEASURE_END
+    MEASURE_PRINT(request->method)
+    #endif
 
     if (sdslen(response->data) == 0) {
         response->data = jsonrpc_respond_message_phrase(response->data, request->method, request->id, true, 
@@ -912,7 +923,7 @@ void mpd_client_api(t_config *config, t_mpd_client_state *mpd_client_state, void
         tiny_queue_push(mympd_script_queue, response, request->id);
     }
     else if (request->conn_id > -1) {
-        MYMPD_LOG_DEBUG("Push response to web_server_queue for connection %lu: %s", request->conn_id, response->data);
+        MYMPD_LOG_DEBUG("Push response to web_server_queue for connection %lld: %s", request->conn_id, response->data);
         tiny_queue_push(web_server_queue, response, 0);
     }
     else {

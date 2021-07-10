@@ -435,12 +435,6 @@ Selattavat tagit
 Local playback
 Paikallinen toisto
 
-URI
-URL
-
-Port
-Portti
-
 Statistics
 Tilastot
 
@@ -560,9 +554,6 @@ Libmpdclient Versio
 
 Libmympdclient version
 Libmympdclient Versio
-
-Shortcut
-Pikalinkki
 
 Action
 Toiminto

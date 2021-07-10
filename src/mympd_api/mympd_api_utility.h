@@ -96,30 +96,27 @@ typedef struct t_mympd_state {
     bool lyrics;
     struct list home_list;
     sds navbar_icons;
+    sds advanced;
+    bool home;
+    sds bg_image;
+    // collybia
     sds mixer_type;
     sds dac;
     bool dop;
     bool ffmpeg;
     int ns_type;
     sds ns_server;
+    sds samba_version;
     sds ns_share;
     sds ns_username;
     sds ns_password;
     bool airplay;
-    bool apmode;
     bool roon;
     bool spotify;
-    bool tidal_enabled;
-    sds tidal_username;
-    sds tidal_password;
-    sds tidal_audioquality;
-    sds samba_version;
+    bool apmode;
     bool wifi;
     sds wifi_ssid;
     sds wifi_password;
-    sds advanced;
-    bool home;
-    sds bg_image;
 } t_mympd_state;
 
 void free_mympd_state(t_mympd_state *mympd_state);

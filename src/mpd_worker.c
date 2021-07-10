@@ -19,7 +19,7 @@
 #include "sds_extras.h"
 #include "log.h"
 #include "list.h"
-#include "config_defs.h"
+#include "mympd_config_defs.h"
 #include "tiny_queue.h"
 #include "api.h"
 #include "global.h"
@@ -30,8 +30,10 @@
 #include "mpd_worker/mpd_worker_utility.h"
 #include "mpd_worker/mpd_worker_api.h"
 #include "mpd_worker/mpd_worker_smartpls.h"
-#include "mpd_worker/mpd_worker_stickercache.h"
+#include "mpd_worker/mpd_worker_cache.h"
 #include "mpd_worker.h"
+#include "mympd_api/mympd_api_utility.h"
+#include "collybia.h"
 
 //private definitions
 static void mpd_worker_idle(t_config *config, t_mpd_worker_state *mpd_worker_state);
@@ -65,6 +67,9 @@ void *mpd_worker_loop(void *arg_config) {
     mpd_worker_state->mpd_state->conn_state = MPD_DISCONNECTED;
     while (s_signal_received == 0) {
         mpd_worker_idle(config, mpd_worker_state);
+        if (mpd_worker_state->mpd_state->conn_state == MPD_TOO_OLD) {
+            break;
+        }
     }
     //Cleanup
     mpd_shared_mpd_disconnect(mpd_worker_state->mpd_state);
@@ -110,6 +115,10 @@ static void mpd_worker_idle(t_config *config, t_mpd_worker_state *mpd_worker_sta
             break;
         }
         case MPD_DISCONNECTED:
+            if (mpd_worker_state->mpd_state->dc != 0)
+            {
+                collybia_dc_handle(&mpd_worker_state->mpd_state->dc);
+            }
             /* Try to connect */
             if (strncmp(mpd_worker_state->mpd_state->mpd_host, "/", 1) == 0) {
                 MYMPD_LOG_NOTICE("MPD worker connecting to socket %s", mpd_worker_state->mpd_state->mpd_host);
@@ -138,12 +147,22 @@ static void mpd_worker_idle(t_config *config, t_mpd_worker_state *mpd_worker_sta
             }
 
             MYMPD_LOG_NOTICE("MPD worker connected");
+            //check version
+            if (mpd_connection_cmp_server_version(mpd_worker_state->mpd_state->conn, 0, 20, 0) < 0) {
+                MYMPD_LOG_EMERG("MPD version to old, myMPD supports only MPD version >= 0.20.0");
+                mpd_worker_state->mpd_state->conn_state = MPD_TOO_OLD;               
+                return;
+            }
+
             mpd_connection_set_timeout(mpd_worker_state->mpd_state->conn, mpd_worker_state->mpd_state->timeout);
             mpd_worker_state->mpd_state->conn_state = MPD_CONNECTED;
             mpd_worker_state->mpd_state->reconnect_interval = 0;
             mpd_worker_state->mpd_state->reconnect_time = 0;
             
             mpd_worker_features(mpd_worker_state);
+            
+            //update database and sticker cache
+            mpd_worker_cache_init(mpd_worker_state);
             
             if (!mpd_send_idle_mask(mpd_worker_state->mpd_state->conn, set_idle_mask)) {
                 MYMPD_LOG_ERROR("MPD worker entering idle mode failed");
@@ -223,6 +242,7 @@ static void mpd_worker_parse_idle(t_config *config, t_mpd_worker_state *mpd_work
             switch(idle_event) {
                 case MPD_IDLE_DATABASE:
                     mpd_worker_smartpls_update_all(config, mpd_worker_state, false);
+                    mpd_worker_cache_init(mpd_worker_state);
                     break;
                 default: {
                     //other idle events not used
