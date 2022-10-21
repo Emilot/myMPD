@@ -169,11 +169,7 @@ static bool drop_privileges(sds username, uid_t startup_uid) {
             return false;
         }
     }
-    //check if not root
-    if (getuid() == 0) {
-        MYMPD_LOG_ERROR("myMPD should not be run with root privileges");
-        return false;
-    }
+
     return true;
 }
 

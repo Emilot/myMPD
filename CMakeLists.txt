@@ -304,6 +304,7 @@ set(MYMPD_SOURCES
   src/lib/utility.c
   src/lib/validate.c
   src/main.c
+  src/collybia.c
   src/mpd_client/autoconf.c
   src/mpd_client/connection.c
   src/mpd_client/errorhandler.c
