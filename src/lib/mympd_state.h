@@ -241,6 +241,24 @@ struct t_mympd_state {
     struct t_lyrics lyrics;                       //!< lyrics settings
     sds listenbrainz_token;                       //!< listenbrainz token
     sds webui_settings;                           //!< settings only relevant for webui, saved as string containing json
+    //settings only for collybia
+    sds dac;
+    sds mixer;
+    sds samba_version;
+    bool dop;
+    bool ffmpeg;
+    bool roon;
+    bool airplay;
+    bool spotify;
+    bool wifi;
+    bool apmode;
+    int ns_type;
+    sds ns_server;
+    sds ns_share;
+    sds ns_username;
+    sds ns_password;
+    sds wifi_password;
+    sds wifissid;
 };
 
 /**
