@@ -410,6 +410,171 @@ bool mympd_api_settings_set(sds key, sds value, int vtype, validate_callback vcb
         }
         mympd_state->listenbrainz_token = sds_replacelen(mympd_state->listenbrainz_token, value, sdslen(value));
     }
+    else if (strcmp(key, "dac") == 0 && vtype == MJSON_TOK_STRING) {
+        if (vcb_isfilepath(value) == false) {
+            *error = set_invalid_value(*error, key, value);
+            return false;
+        }
+        mympd_state->dac = sds_replace(mympd_state->dac, value);
+        strip_slash(mympd_state->dac);
+    }
+    else if (strcmp(key, "mixer") == 0 && vtype == MJSON_TOK_STRING) {
+        if (vcb_isfilepath(value) == false) {
+            *error = set_invalid_value(*error, key, value);
+            return false;
+        }
+        mympd_state->mixer = sds_replace(mympd_state->mixer, value);
+        strip_slash(mympd_state->mixer);
+    }
+    else if (strcmp(key, "sambaVersion") == 0 && vtype == MJSON_TOK_STRING) {
+        if (vcb_isfilepath(value) == false) {
+            *error = set_invalid_value(*error, key, value);
+            return false;
+        }
+        mympd_state->samba_version = sds_replace(mympd_state->samba_version, value);
+        strip_slash(mympd_state->samba_version);
+    }
+    else if (strcmp(key, "nsType") == 0 && vtype == MJSON_TOK_NUMBER) {
+        int ns_type = (int)strtoimax(value, NULL, 10);
+        if (ns_type < 0 || ns_type > 3) {
+            *error = set_invalid_value(*error, key, value);
+            return false;
+        }
+        if (mympd_state->ns_type != ns_type)
+        mympd_state->ns_type = ns_type;
+    }
+    else if (strcmp(key, "dop") == 0) {
+        if (vtype == MJSON_TOK_TRUE) {
+            mympd_state->dop = true;
+        }
+        else if (vtype == MJSON_TOK_FALSE) {
+            mympd_state->dop = false;
+        }
+        else {
+            *error = set_invalid_value(*error, key, value);
+            return false;
+        }
+    }
+    else if (strcmp(key, "ffmpeg") == 0) {
+        if (vtype == MJSON_TOK_TRUE) {
+            mympd_state->ffmpeg = true;
+        }
+        else if (vtype == MJSON_TOK_FALSE) {
+            mympd_state->ffmpeg = false;
+        }
+        else {
+            *error = set_invalid_value(*error, key, value);
+            return false;
+        }
+    }
+    else if (strcmp(key, "airplay") == 0) {
+        if (vtype == MJSON_TOK_TRUE) {
+            mympd_state->airplay = true;
+        }
+        else if (vtype == MJSON_TOK_FALSE) {
+            mympd_state->airplay = false;
+        }
+        else {
+            *error = set_invalid_value(*error, key, value);
+            return false;
+        }
+    }
+    else if (strcmp(key, "roon") == 0) {
+        if (vtype == MJSON_TOK_TRUE) {
+            mympd_state->roon = true;
+        }
+        else if (vtype == MJSON_TOK_FALSE) {
+            mympd_state->roon = false;
+        }
+        else {
+            *error = set_invalid_value(*error, key, value);
+            return false;
+        }
+    }
+    else if (strcmp(key, "spotify") == 0) {
+        if (vtype == MJSON_TOK_TRUE) {
+            mympd_state->spotify = true;
+        }
+        else if (vtype == MJSON_TOK_FALSE) {
+            mympd_state->spotify = false;
+        }
+        else {
+            *error = set_invalid_value(*error, key, value);
+            return false;
+        }
+    }
+    else if (strcmp(key, "wifi") == 0) {
+        if (vtype == MJSON_TOK_TRUE) {
+            mympd_state->wifi = true;
+        }
+        else if (vtype == MJSON_TOK_FALSE) {
+            mympd_state->wifi = false;
+        }
+        else {
+            *error = set_invalid_value(*error, key, value);
+            return false;
+        }
+    }
+    else if (strcmp(key, "apmode") == 0) {
+        if (vtype == MJSON_TOK_TRUE) {
+            mympd_state->apmode = true;
+        }
+        else if (vtype == MJSON_TOK_FALSE) {
+            mympd_state->apmode = false;
+        }
+        else {
+            *error = set_invalid_value(*error, key, value);
+            return false;
+        }
+    }
+    else if (strcmp(key, "nsServer") == 0 && vtype == MJSON_TOK_STRING) {
+        if (vcb_isfilepath(value) == false) {
+            *error = set_invalid_value(*error, key, value);
+            return false;
+        }
+        mympd_state->ns_server = sds_replace(mympd_state->ns_server, value);
+        strip_slash(mympd_state->ns_server);
+    }
+    else if (strcmp(key, "nsShare") == 0 && vtype == MJSON_TOK_STRING) {
+        if (vcb_isfilepath(value) == false) {
+            *error = set_invalid_value(*error, key, value);
+            return false;
+        }
+        mympd_state->ns_share = sds_replace(mympd_state->ns_share, value);
+        strip_slash(mympd_state->ns_share);
+    }
+    else if (strcmp(key, "nsUsername") == 0 && vtype == MJSON_TOK_STRING) {
+        if (vcb_isfilepath(value) == false) {
+            *error = set_invalid_value(*error, key, value);
+            return false;
+        }
+        mympd_state->ns_username = sds_replace(mympd_state->ns_username, value);
+        strip_slash(mympd_state->ns_username);
+    }
+    else if (strcmp(key, "nsPassword") == 0 && vtype == MJSON_TOK_STRING) {
+        if (vcb_isfilepath(value) == false) {
+            *error = set_invalid_value(*error, key, value);
+            return false;
+        }
+        mympd_state->ns_password = sds_replace(mympd_state->ns_password, value);
+        strip_slash(mympd_state->ns_password);
+    }
+    else if (strcmp(key, "wifiPassword") == 0 && vtype == MJSON_TOK_STRING) {
+        if (vcb_isfilepath(value) == false) {
+            *error = set_invalid_value(*error, key, value);
+            return false;
+        }
+        mympd_state->wifi_password = sds_replace(mympd_state->wifi_password, value);
+        strip_slash(mympd_state->wifi_password);
+    }
+    else if (strcmp(key, "wifissid") == 0 && vtype == MJSON_TOK_STRING) {
+        if (vcb_isfilepath(value) == false) {
+            *error = set_invalid_value(*error, key, value);
+            return false;
+        }
+        mympd_state->wifissid = sds_replace(mympd_state->wifissid, value);
+        strip_slash(mympd_state->wifissid);
+    }
     else {
         sdsclear(*error);
         *error = sdscatfmt(*error, "Unknown setting \"%S\": \"%S\"", key, value);
@@ -693,6 +858,23 @@ void mympd_api_settings_statefiles_global_read(struct t_mympd_state *mympd_state
     mympd_state->volume_max = state_file_rw_uint(workdir, "state", "volume_max", mympd_state->volume_max, VOLUME_MIN, VOLUME_MAX, false);
     mympd_state->volume_step = state_file_rw_uint(workdir, "state", "volume_step", mympd_state->volume_step, VOLUME_STEP_MIN, VOLUME_STEP_MAX, false);
     mympd_state->webui_settings = state_file_rw_string_sds(workdir, "state", "webui_settings", mympd_state->webui_settings, validate_json_object, false);
+    mympd_state->dac = state_file_rw_string_sds(workdir, "state", "dac", mympd_state->dac, vcb_isname, false);
+    mympd_state->mixer = state_file_rw_string_sds(workdir, "state", "mixer", mympd_state->mixer, vcb_isname, false);
+    mympd_state->ns_type = state_file_rw_int(workdir, "state", "ns_type", mympd_state->ns_type, 0, 3, false);
+    mympd_state->roon = state_file_rw_bool(workdir, "state", "roon", mympd_state->roon, false);
+    mympd_state->airplay = state_file_rw_bool(workdir, "state", "airplay", mympd_state->airplay, false);
+    mympd_state->spotify = state_file_rw_bool(workdir, "state", "spotify", mympd_state->spotify, false);
+    mympd_state->wifi = state_file_rw_bool(workdir, "state", "wifi", mympd_state->wifi, false);
+    mympd_state->dop = state_file_rw_bool(workdir, "state", "dop", mympd_state->dop, false);
+    mympd_state->ffmpeg = state_file_rw_bool(workdir, "state", "ffmpeg", mympd_state->ffmpeg, false);
+    mympd_state->apmode = state_file_rw_bool(workdir, "state", "apmode", mympd_state->apmode, false);
+    mympd_state->samba_version = state_file_rw_string_sds(workdir, "state", "samba_version", mympd_state->samba_version, vcb_isname, false);
+    mympd_state->ns_server = state_file_rw_string_sds(workdir, "state", "ns_server", mympd_state->ns_server, vcb_isname, false);
+    mympd_state->ns_share = state_file_rw_string_sds(workdir, "state", "ns_share", mympd_state->ns_share, vcb_isname, false);
+    mympd_state->ns_username = state_file_rw_string_sds(workdir, "state", "ns_username", mympd_state->ns_username, vcb_isname, false);
+    mympd_state->ns_password = state_file_rw_string_sds(workdir, "state", "ns_password", mympd_state->ns_password, vcb_isname, false);
+    mympd_state->wifissid = state_file_rw_string_sds(workdir, "state", "wifissid", mympd_state->wifissid, vcb_isname, false);
+    mympd_state->wifi_password = state_file_rw_string_sds(workdir, "state", "wifi_password", mympd_state->wifi_password, vcb_isname, false);
     mympd_state->lyrics.uslt_ext = state_file_rw_string_sds(workdir, "state", "lyrics_uslt_ext", mympd_state->lyrics.uslt_ext, vcb_isalnum, false);
     mympd_state->lyrics.sylt_ext = state_file_rw_string_sds(workdir, "state", "lyrics_sylt_ext", mympd_state->lyrics.sylt_ext, vcb_isalnum, false);
     mympd_state->lyrics.vorbis_uslt = state_file_rw_string_sds(workdir, "state", "lyrics_vorbis_uslt", mympd_state->lyrics.vorbis_uslt, vcb_isalnum, false);
@@ -785,6 +967,24 @@ sds mympd_api_settings_get(struct t_partition_state *partition_state, sds buffer
     buffer = tojson_raw(buffer, "navbarIcons", mympd_state->navbar_icons, true);
     buffer = tojson_sds(buffer, "listenbrainzToken", mympd_state->listenbrainz_token, true);
     buffer = tojson_raw(buffer, "webuiSettings", mympd_state->webui_settings, true);
+    buffer = tojson_char(buffer, "dac", mympd_state->dac, true);
+    buffer = tojson_bool(buffer, "dop", mympd_state->dop, true);
+    buffer = tojson_bool(buffer, "ffmpeg", mympd_state->ffmpeg, true);
+    buffer = tojson_bool(buffer, "wifi", mympd_state->wifi, true);
+    buffer = tojson_char(buffer, "wifissid", mympd_state->wifissid, true);
+    buffer = tojson_char(buffer, "wifiPassword", mympd_state->wifi_password, true);
+    buffer = tojson_bool(buffer, "roon", mympd_state->roon, true);
+    buffer = tojson_bool(buffer, "airplay", mympd_state->airplay, true);
+    buffer = tojson_bool(buffer, "spotify", mympd_state->spotify, true);
+    buffer = tojson_char(buffer, "mixer", mympd_state->mixer, true);
+    buffer = tojson_bool(buffer, "apmode", mympd_state->apmode, true);
+    buffer = tojson_int(buffer, "nsType", mympd_state->ns_type, true);
+    buffer = tojson_char(buffer, "nsServer", mympd_state->ns_server, true);
+    buffer = tojson_char(buffer, "nsShare", mympd_state->ns_share, true);
+    buffer = tojson_char(buffer, "sambaVersion", mympd_state->samba_version, true);
+    buffer = tojson_char(buffer, "nsUsername", mympd_state->ns_username, true);
+    buffer = tojson_char(buffer, "nsPassword", mympd_state->ns_password, true);
+
     //partition specific settings
     buffer = sdscat(buffer, "\"partition\":{");
     const char *jukebox_mode_str = jukebox_mode_lookup(partition_state->jukebox_mode);

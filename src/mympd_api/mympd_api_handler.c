@@ -28,6 +28,7 @@
 #include "../mpd_client/playlists.h"
 #include "../mpd_client/search.h"
 #include "../mpd_worker/mpd_worker.h"
+#include "../collybia.h"
 #include "albumart.h"
 #include "browse.h"
 #include "filesystem.h"
@@ -329,7 +330,27 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
             break;
         }
         case MYMPD_API_SETTINGS_SET: {
+            rc = true;
+            bool ns_changed = false;
+            bool mpd_conf_changed = false;
+            bool dac_changed = false;
+            bool ffmpeg_changed = false;
+            bool apmode_changed = false;
+            bool airplay_changed = false;
+            bool roon_changed = false;
+            bool spotify_changed = false;
+            bool wifi_changed = false;
+            sds old_nas_settings = sdscatfmt(sdsempty(), "%s%i%s%", mympd_state->mixer, mympd_state->ns_type, mympd_state->dac);
+
             if (json_iterate_object(request->data, "$.params", mympd_api_settings_set, mympd_state, NULL, 1000, &error) == true) {
+                sds new_nas_settings = sdscatfmt(sdsempty(), "%s%i%s", mympd_state->mixer, mympd_state->ns_type, mympd_state->dac);
+                if (strcmp(old_nas_settings, new_nas_settings) != 0) {
+                    MYMPD_LOG_DEBUG("set collybia settings");
+                    //set collybia settings
+                    ns_changed = true;
+                    mpd_conf_changed = true;
+                    dac_changed = true;
+                }
                 if (partition_state->conn_state == MPD_CONNECTED) {
                     //feature detection
                     mpd_client_mpd_features(partition_state);
@@ -337,13 +358,28 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
                 else {
                     settings_to_webserver(partition_state->mympd_state);
                 }
+                FREE_SDS(new_nas_settings);
                 //respond with ok
                 response->data = jsonrpc_respond_ok(response->data, request->cmd_id, request->id, JSONRPC_FACILITY_GENERAL);
+            }
+            if (rc == true) {
+                MYMPD_LOG_DEBUG("set collybia settings");
+                //set collybia settings
+                ffmpeg_changed = true;
+                apmode_changed = true;
+                airplay_changed = true;
+                spotify_changed = true;
+                roon_changed = true;
+                wifi_changed = true;
+                int dc = collybia_settings_set(mympd_state, ns_changed, mpd_conf_changed, dac_changed, ffmpeg_changed, apmode_changed, airplay_changed, roon_changed, spotify_changed, wifi_changed);
+                sdsrange(request->data, 0, -3);
+                request->data = sdscatfmt(request->data, ",\"dc\":%i}}", dc);
             }
             else {
                 response->data = jsonrpc_respond_message(response->data, request->cmd_id, request->id,
                     JSONRPC_FACILITY_GENERAL, JSONRPC_SEVERITY_ERROR, "Can't save settings");
             }
+            FREE_SDS(old_nas_settings);
             break;
         }
         case MYMPD_API_PLAYER_OPTIONS_SET: {
@@ -1559,6 +1595,15 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
                         JSONRPC_FACILITY_DATABASE, JSONRPC_SEVERITY_ERROR, "Could not delete webradio favorite");
                 }
             }
+            break;
+        case MYMPD_API_NS_SERVER_LIST:
+                response->data = collybia_ns_server_list(partition_state, response->data, request->id);
+            break;
+        case MYMPD_API_WIFI_SERVER_LIST:
+                response->data = collybia_wifi_server_list(partition_state, response->data, request->id);
+            break;
+        case MYMPD_API_WIFI_CONNECT:
+                response->data = collybia_wifi_connect(partition_state, response->data, request->id);
             break;
         default:
             response->data = jsonrpc_respond_message(response->data, request->cmd_id, request->id,
