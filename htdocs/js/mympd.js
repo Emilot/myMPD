@@ -795,6 +795,8 @@ function appInit() {
     initOutputs();
     initWebradio();
     initLocalPlayback();
+    initCollybia();
+
     //init drag and drop
     for (const table of ['QueueCurrentList', 'BrowsePlaylistsDetailList']) {
         dragAndDropTable(table);

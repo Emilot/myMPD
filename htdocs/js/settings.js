@@ -20,6 +20,45 @@ function initSettings() {
         }
     }, false);
 
+    document.getElementById('selectNsType').addEventListener('change', function () {
+        const nasTypeMode = getSelectValue(this);
+        if (nasTypeMode === '0') {
+            document.getElementById('inputNsShare').parentNode.parentNode.classList.add('d-none');
+            document.getElementById('selectSambaVersion').parentNode.parentNode.classList.add('d-none');
+            document.getElementById('inputNsUsername').parentNode.parentNode.classList.add('d-none');
+            document.getElementById('inputNsPassword').parentNode.parentNode.classList.add('d-none');
+            document.getElementById('inputNsServer').parentNode.parentNode.classList.add('d-none');
+        }
+        else if (nasTypeMode === '2') {
+            document.getElementById('inputNsShare').parentNode.parentNode.classList.remove('d-none');
+            document.getElementById('selectSambaVersion').parentNode.parentNode.classList.remove('d-none');
+            document.getElementById('inputNsUsername').parentNode.parentNode.classList.remove('d-none');
+            document.getElementById('inputNsPassword').parentNode.parentNode.classList.remove('d-none');
+            document.getElementById('inputNsServer').parentNode.parentNode.classList.remove('d-none');
+        }
+        else {
+            document.getElementById('inputNsShare').parentNode.parentNode.classList.remove('d-none');
+        if (nasTypeMode === '1') {
+            document.getElementById('inputNsShare').parentNode.parentNode.classList.remove('d-none');
+            document.getElementById('selectSambaVersion').parentNode.parentNode.classList.remove('d-none');
+            document.getElementById('inputNsServer').parentNode.parentNode.classList.remove('d-none');
+            document.getElementById('inputNsUsername').parentNode.parentNode.classList.remove('d-none');
+            document.getElementById('inputNsPassword').parentNode.parentNode.classList.add('d-none');
+        }
+        else {
+            document.getElementById('selectSambaVersion').parentNode.parentNode.classList.add('d-none');
+        }
+            document.getElementById('inputNsServer').parentNode.parentNode.classList.remove('d-none');
+            document.getElementById('inputNsUsername').parentNode.parentNode.classList.add('d-none');
+            document.getElementById('inputNsPassword').parentNode.parentNode.classList.add('d-none');
+        }
+    }, false);
+
+    document.getElementById('modalCollybia').addEventListener('shown.bs.modal', function () {
+        cleanupModalId('modalCollybia');
+        getSettings();
+    });
+
     document.getElementById('modalSettings').addEventListener('shown.bs.modal', function () {
         cleanupModalId('modalSettings');
         getSettings();
@@ -286,6 +325,10 @@ function parseSettings(obj) {
     //execute only if queue settings modal is displayed
     if (document.getElementById('modalQueueSettings').classList.contains('show')) {
         populateQueueSettingsFrm();
+    }
+    //execute only if collybia settings modal is displayed
+    if (document.getElementById('modalCollybia').classList.contains('show')) {
+        populateCollybiaSettingsFrm();
     }
 
     //locales

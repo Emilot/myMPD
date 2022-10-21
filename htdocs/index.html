@@ -76,6 +76,7 @@
       <div id="menu-settings" class="collapse ps-3">
         <a data-phrase="MPD connection" class="dropdown-item alwaysEnabled" href="#modalConnection" data-bs-toggle="modal"></a>
         <a data-phrase="Settings" class="dropdown-item" data-bs-toggle="modal" href="#modalSettings"></a>
+        <a data-phrase="Audio settings" class="dropdown-item" data-bs-toggle="modal" href="#modalCollybia"></a>
         <a data-phrase="Maintenance" class="dropdown-item" data-bs-toggle="modal" href="#modalMaintenance"></a>
         <a data-phrase="Scripts" class="dropdown-item featScripting" data-bs-toggle="modal" href="#modalScripts"></a>
         <a data-phrase="Timer" class="dropdown-item featTimer" data-bs-toggle="modal" href="#modalTimer"></a>
@@ -1009,6 +1010,244 @@
         <div class="modal-footer justify-content-between">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-phrase="Cancel"></button>
           <button type="button" class="btn btn-success" data-href='{"cmd": "saveSmartPlaylist", "options": []}' data-phrase="Save"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalCollybia" class="modal fade" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header pb-0">
+          <ul class="nav nav-tabs border-bottom-0">
+            <li class="nav-item">
+              <a class="nav-link active" href="#tabAudioSettings" data-bs-toggle="tab" data-height="true" data-phrase="Audio"></a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#tabNetworkShare" data-bs-toggle="tab" data-height="true" data-phrase="Network"></a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#tabStreamingServices" data-bs-toggle="tab" data-height="true" data-phrase="Streaming"></a>
+            </li>
+          </ul>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="tab-content">
+            <div id="tabAudioSettings" class="tab-pane active">
+              <form id="tabAudioSettingsFrm">
+                <h4 data-phrase="Audio Settings"></h4>
+                <div class="mb-3 row">
+                  <label class="col-sm-4 col-form-label" for="selectDac" data-phrase="DAC List"></label>
+                  <div class="col-sm-8">
+                    <select id="selectDac" class="form-select">
+                      <option value="none" data-phrase="None"></option>
+                      <option value="akkordion-iqdacplus" data-phrase="Akkordion Music Player"></option>
+                      <option value="allo-boss-dac-pcm512x-audio" data-phrase="Allo Boss DAC"></option>
+                      <option value="allo-digione" data-phrase="Allo Digione"></option>
+                      <option value="allo-katana-dac-audio" data-phrase="Allo Katana DAC"></option>
+                      <option value="allo-piano-dac-pcm512x-audio" data-phrase="Allo Piano DAC 2.0/2.1"></option>
+                      <option value="allo-piano-dac-plus-pcm512x-audio" data-phrase="Allo Piano DAC Plus 2.1"></option>
+                      <option value="allo-piano-dac-plus-pcm512x-audio" data-phrase="Allo Piano DAC Plus 2.1 with Kali"></option>
+                      <option value="applepi-dac" data-phrase="ApplePi-DAC (Orchard Audio)"></option>
+                      <option value="audioinjector-ultra" data-phrase="Audioinjector.net ultra"></option>
+                      <option value="audioinjector-wm8731-audio" data-phrase="Audioinjector.net audio add on"></option>
+                      <option value="audiosense-pi" data-phrase="Audiosense-pi"></option>
+                      <option value="dionaudio-loco" data-phrase="Dion Audio LOCO DAC-AMP"></option>
+                      <option value="dionaudio-loco-v2" data-phrase="Dion Audio LOCO DAC-AMP v2"></option>
+                      <option value="fe-pi-audio" data-phrase="Fe-Pi Audio Sound Card"></option>
+                      <option value="hifiberry-dac" data-phrase="Hifiberry DAC"></option>
+                      <option value="hifiberry-dacplus" data-phrase="Hifiberry DAC Plus"></option>
+                      <option value="hifiberry-dacplusadc" data-phrase="HifiBerry DAC+ADC"></option>
+                      <option value="hifiberry-dacplusadcpro" data-phrase="HifiBerry DAC+ADC PRO"></option>
+                      <option value="hifiberry-dacplusdsp" data-phrase="HifiBerry DAC+DSP"></option>
+                      <option value="hifiberry-dacplushd" data-phrase="HifiBerry DAC+ HD"></option>
+                      <option value="hifiberry-digi" data-phrase="HifiBerry Digi and Digi+"></option>
+                      <option value="hifiberry-digi-pro" data-phrase="Hifiberry Digi+ Pro"></option>
+                      <option value="i-sabre-q2m" data-phrase="Audiophonics I-SABRE Q2M DAC"></option>
+                      <option value="iqaudio-codec" data-phrase="IQaudio Codec"></option>
+                      <option value="iqaudio-dac" data-phrase="IQaudio DAC"></option>
+                      <option value="iqaudio-dacplus" data-phrase="IQaudio DAC+"></option>
+                      <option value="iqaudio-digi-wm8804-audio" data-phrase="IQAudIO Digi"></option>
+                      <option value="justboom-both" data-phrase="Justboom-dac and justboom-digi simultaneous usage"></option>
+                      <option value="justboom-dac" data-phrase="JustBoom DAC Hat/Amp HAT/DAC Zero/Amp Zero"></option>
+                      <option value="justboom-digi" data-phrase="JustBoom Digi & Digi Zero"></option>
+                      <option value="hifiberry-dac" data-phrase="Mamboberry DACs"></option>
+                      <option value="max98357a" data-phrase="Maxim MAX98357A"></option>
+                      <option value="pisound" data-phrase="Blokas Labs pisound card"></option>
+                      <option value="rpi-cirrus-wm5102" data-phrase="Cirrus Logis Audio Card"></option>
+                      <option value="rpi-dac" data-phrase="RPi DAC"></option>
+                      <option value="rpi-proto" data-phrase="RPi Proto"></option>
+                      <option value="rra-digidac1-wm8741-audio" data-phrase="Red Rocks Audio DigiDAC1"></option>
+	        </select>
+                  </div>
+                </div>
+                <div class="mb-3 row">
+                  <label class="col-sm-4 col-form-label" for="selectMixerType" data-phrase="DAC volume mode"></label>
+                  <div class="col-sm-8">
+                    <select id="selectMixerType" class="form-select">
+                      <option value="disabled" data-phrase="Disabled"></option>
+                      <option value="hardware" data-phrase="Hardware"></option>
+                      <option value="software" data-phrase="Software"></option>
+                    </select>
+                  </div>
+                </div>
+                <div class="mb-3 row">
+                  <label class="col-sm-4 col-form-label" for="btnDop" data-phrase="Enable DoP"></label>
+                  <div class="col-sm-8">
+                    <button id="btnDop" class="btn btn-secondary btn-sm mi" data-href='{"cmd": "toggleBtnChk", "options": []}' type="button"></button>
+                  </div>
+                </div>
+                <div class="mb-3 row">
+                  <label class="col-sm-4 col-form-label" for="btnFFmpeg" data-phrase="Enable FFmpeg"></label>
+                  <div class="col-sm-8">
+                    <button id="btnFFmpeg" class="btn btn-secondary btn-sm mi" data-href='{"cmd": "toggleBtnChk", "options": []}' type="button"></button>
+                  </div>
+                </div>
+              </form>
+            </div>
+            <div id="tabNetworkShare" class="tab-pane">
+              <form id="NetworkShareFrm">
+                <h4 data-phrase="Your NAS Settings"></h4>
+                <!-- <div class="mb-3">If not applicable, ignore these</div> -->
+                <div class="mb-3 row">
+                  <label class="col-sm-4 col-form-label" for="selectNsType" data-phrase="Select type"></label>
+                  <div class="col-sm-8">
+                    <select id="selectNsType" class="form-select">
+                      <option value="0" data-phrase="None (not applicable)"></option>
+                      <option value="1" data-phrase="Samba A (guest access)"></option>
+                      <option value="2" data-phrase="Samba B (access with credentials)"></option>
+                      <option value="3" data-phrase="NFS"></option>
+                    </select>
+                    <!-- <small class="form-text text-muted">Select Samba A for guest access or B for access with credentials</small> -->
+                  </div>
+                </div>
+                <div id="nsServerShare">
+                  <div class="mb-3 row">
+                    <label class="col-sm-4 col-form-label" for="inputNsServer" data-phrase="Server"></label>
+                    <div class="col-sm-8">
+                      <div class="input-group">
+                        <input id="inputNsServer" class="form-control border-secondary" type="text" data-placeholder-phrase="Use dropdown or input ip address manually">
+                        <div class="input-group-append">
+                          <button id="btnDropdownServers" class="btn btn-secondary dropdown-toggle dropdown-toggle-split rounded-right" type="button" data-bs-toggle="dropdown"></button>
+                          <div id="dropdownServers" class="dropdown-menu dropdown-menu-dark dropdown-menu-right border-0 p-0 ">
+                            <div class="list-group"></div>
+                          </div>
+                        </div>
+                        <div class="invalid-feedback" data-phrase="Invalid IP address"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="mb-3 row">
+                    <label class="col-sm-4 col-form-label" for="inputNsShare" data-phrase="Path"></label>
+                    <div class="col-sm-8">
+                      <input id="inputNsShare" class="form-control" type="text" placeholder="Music folder name in NAS (e.g. music)">
+                      <div class="invalid-feedback" data-phrase="Path must start with a leading slash"></div>
+                    </div>
+                  </div>
+                </div>
+                <div id="sambaVersion" class="form-group row">
+                  <label class="col-sm-4 col-form-label" for="selectSambaVersion" data-phrase="Select samba version"></label>
+                  <div class="col-sm-8">
+                    <select id="selectSambaVersion" class="form-select alwaysEnabled">
+                      <option value="vers=1.0" data-phrase="1.0"></option>
+                      <option value="vers=2.0" data-phrase="2.0"></option>
+                      <option value="vers=2.1" data-phrase="2.1"></option>
+                      <option value="vers=3.0" data-phrase="3.0"></option>
+                    </select>
+                  </div>
+                </div>
+                <div id="nsCredentials">
+                  <div class="mb-3 row">
+                    <label class="col-sm-4 col-form-label" for="inputNsUsername" data-phrase="Username"></label>
+                    <div class="col-sm-8">
+                      <input id="inputNsUsername" type="text" class="form-control" placeholder="Username">
+                      <div class="invalid-feedback" data-phrase="Username cannot be blank"></div>
+                    </div>
+                  </div>
+                  <div class="mb-3 row">
+                    <label class="col-sm-4 col-form-label" for="inputNsPassword" data-phrase="Password"></label>
+                    <div class="col-sm-8">
+                      <input id="inputNsPassword" class="form-control" type="password" class="form-control" placeholder="Password">
+                      <div class="invalid-feedback" data-phrase="Password cannot be blank"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="mb-3 row">
+                  <label class="col-sm-4 col-form-label" for="btnWifiEnabled" data-phrase="WiFi"></label>
+                  <div class="col-sm-8 ">
+                    <button data-bs-toggle="collapse" data-bs-target="#collapseWifi" data-href='{"cmd": "toggleBtnChk", "options": []}' type="button" class="btn btn-sm btn-secondary mi" id="btnWifiEnabled"></button>
+                  </div>
+                </div>
+                <div id="collapseWifi" class="collapse">
+                  <div class="mb-3 row">
+                    <label class="col-sm-4 col-form-label" for="inputWifiSSID" data-phrase="WiFi SSID"></label>
+                    <div class="col-sm-8">
+                      <div class="input-group">
+                        <input id="inputWifiSSID" class="form-control border-secondary" type="text" data-placeholder-phrase="Use dropdown button and choose your SSID">
+                        <div class="input-group-append">
+                          <button id="btnDropdownWifi" class="btn btn-secondary dropdown-toggle dropdown-toggle-split rounded-right" type="button" data-bs-toggle="dropdown"></button>
+                          <div id="dropdownWifi" class="dropdown-menu dropdown-menu-dark dropdown-menu-right border-0 p-0 ">
+                            <div class="list-group"></div>
+                          </div>
+                        </div>
+                        <div class="invalid-feedback" data-phrase="Invalid Wifi SSID"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="mb-3 row">
+                    <label class="col-sm-4 col-form-label" for="inputWifiPassword" class="form-control" data-phrase="Password"></label>
+                    <div class="col-sm-8 ">
+                      <input id="inputWifiPassword" type="password" class="form-control border-secondary">
+                      <div class="invalid-feedback" data-phrase="Password cannot be blank"></div>
+                    </div>
+                  </div>
+                  <div class="mb-3 row">
+                    <label class="col-sm-4 col-form-label" for="btnWifiConnect" data-phrase="Connect to WiFi"></label>
+                    <div class="col-sm-8">
+                      <button type="button" id="btnWifiConnect" class="btn btn-secondary btnCleanup" data-href='{"cmd": "wifiConnect", "options": []}' data-phrase="Connect"></button>
+                    </div>
+                  </div>
+                </div>
+                <h4 data-phrase="AP Mode"></h4>
+                <div class="mb-3 row">
+                  <label class="col-sm-4 col-form-label" for="btnAPMode" data-phrase="AP Mode"></label>
+                  <div class="col-sm-8">
+                    <button id="btnAPMode" class="btn btn-secondary btn-sm mi" data-href='{"cmd": "toggleBtnChk", "options": []}' type="button"></button>
+                  </div>
+                </div>
+              </form>
+              <small>Changes will need a system reboot</small>
+            </div>
+            <div id="tabStreamingServices" class="tab-pane">
+              <form id="StreamingServicesFrm">
+                <h4 data-phrase="Streaming Services"></h4>
+                <div class="form-group row">
+                  <label class="col-sm-4 col-form-label" for="btnAirplay" data-phrase="AirPlay"></label>
+                  <div class="col-sm-8">
+                    <button id="btnAirplay" class="btn btn-secondary btn-sm mi" data-href='{"cmd": "toggleBtnChk", "options": []}' type="button"></button>
+                  </div>
+                </div>
+                <div class="mb-3 row">
+                  <label class="col-sm-4 col-form-label" for="btnRoon" data-phrase="Roon"></label>
+                  <div class="col-sm-8">
+                    <button id="btnRoon" class="btn btn-secondary btn-sm mi" data-href='{"cmd": "toggleBtnChk", "options": []}' type="button"></button>
+                  </div>
+                </div>
+                <div class="mb-3 row">
+                  <label class="col-sm-4 col-form-label" for="btnSpotify" data-phrase="Spotify"></label>
+                  <div class="col-sm-8">
+                    <button id="btnSpotify" class="btn btn-secondary btn-sm mi" data-href='{"cmd": "toggleBtnChk", "options": []}' type="button"></button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer justify-content-between">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-phrase="Cancel"></button>
+          <button type="button" class="btn btn-success protected" data-href='{"cmd": "saveCollybiaSettings", "options": [true]}' data-phrase="Save"></button>
+          </div>
         </div>
       </div>
     </div>
@@ -2643,6 +2882,7 @@
 <!--debug-->  <script src="js/elements.js"></script>
 <!--debug-->  <script src="js/validate.js"></script>
 <!--debug-->  <script src="js/notification.js"></script>
+<!--debug-->  <script src="js/collybia.js"></script>
 <!--debug-->  <script src="js/settings.js"></script>
 <!--debug-->  <script src="js/timer.js"></script>
 <!--debug-->  <script src="js/mounts.js"></script>
