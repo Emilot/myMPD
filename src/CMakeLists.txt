@@ -39,6 +39,7 @@ endif()
 
 target_sources(mympd PRIVATE
   main.c
+  collybia.c
   lib/album_cache.c
   lib/api.c
   lib/config.c
