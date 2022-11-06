@@ -5,24 +5,24 @@
 */
 
 #include "compile_time.h"
-#include "settings.h"
+#include "src/mympd_api/settings.h"
 
-#include "../../dist/mjson/mjson.h"
-#include "../lib/api.h"
-#include "../lib/jsonrpc.h"
-#include "../lib/list.h"
-#include "../lib/log.h"
-#include "../lib/mem.h"
-#include "../lib/msg_queue.h"
-#include "../lib/sds_extras.h"
-#include "../lib/state_files.h"
-#include "../lib/utility.h"
-#include "../lib/validate.h"
-#include "../mpd_client/errorhandler.h"
-#include "../mpd_client/jukebox.h"
-#include "timer.h"
-#include "timer_handlers.h"
-#include "trigger.h"
+#include "dist/mjson/mjson.h"
+#include "src/lib/api.h"
+#include "src/lib/jsonrpc.h"
+#include "src/lib/list.h"
+#include "src/lib/log.h"
+#include "src/lib/mem.h"
+#include "src/lib/msg_queue.h"
+#include "src/lib/sds_extras.h"
+#include "src/lib/state_files.h"
+#include "src/lib/utility.h"
+#include "src/lib/validate.h"
+#include "src/mpd_client/errorhandler.h"
+#include "src/mpd_client/jukebox.h"
+#include "src/mympd_api/timer.h"
+#include "src/mympd_api/timer_handlers.h"
+#include "src/mympd_api/trigger.h"
 
 
 #include <inttypes.h>
@@ -46,7 +46,7 @@ bool settings_to_webserver(struct t_mympd_state *mympd_state) {
     //push settings to web_server_queue
     struct set_mg_user_data_request *extra = malloc_assert(sizeof(struct set_mg_user_data_request));
     extra->music_directory = sdsdup(mympd_state->mpd_state->music_directory_value);
-    extra->playlist_directory = sdsdup(mympd_state->playlist_directory);
+    extra->playlist_directory = sdsdup(mympd_state->mpd_state->playlist_directory_value);
     extra->coverimage_names = sdsdup(mympd_state->coverimage_names);
     extra->thumbnail_names = sdsdup(mympd_state->thumbnail_names);
     extra->feat_albumart = mympd_state->mpd_state->feat_albumart;
@@ -184,7 +184,7 @@ bool mympd_api_settings_connection_save(sds key, sds value, int vtype, validate_
 /**
  * Saves columns
  * @param mympd_state pointer to the t_mympd_state struct
- * @param table save columsn for this table
+ * @param table save columns for this table
  * @param cols json object with the columns
  * @return true on success, else false
  */
@@ -742,12 +742,12 @@ bool mympd_api_settings_mpd_options_set(sds key, sds value, int vtype, validate_
             rc = mpd_run_repeat(partition_state->conn, bool_buf);
         }
         else if (strcmp(key, "consume") == 0) {
-            if (vtype != MJSON_TOK_TRUE && vtype != MJSON_TOK_FALSE) {
+            enum mpd_consume_state state = mpd_parse_consume_state(value);
+            if (state == MPD_CONSUME_UNKNOWN) {
                 *error = set_invalid_value(*error, key, value);
                 return false;
             }
-            bool bool_buf = vtype == MJSON_TOK_TRUE ? true : false;
-            rc = mpd_run_consume(partition_state->conn, bool_buf);
+            rc = mpd_run_consume_state(partition_state->conn, state);
         }
         else if (strcmp(key, "single") == 0) {
             enum mpd_single_state state = mpd_parse_single_state(value);
@@ -925,12 +925,12 @@ sds mympd_api_settings_get(struct t_partition_state *partition_state, sds buffer
     buffer = tojson_uint(buffer, "mpdTimeout", partition_state->mpd_state->mpd_timeout, true);
     buffer = tojson_bool(buffer, "mpdKeepalive", partition_state->mpd_state->mpd_keepalive, true);
     buffer = tojson_uint(buffer, "mpdBinarylimit", partition_state->mpd_state->mpd_binarylimit, true);
-#ifdef ENABLE_SSL
+#ifdef MYMPD_ENABLE_SSL
     buffer = tojson_bool(buffer, "pin", (sdslen(mympd_state->config->pin_hash) == 0 ? false : true), true);
 #else
     buffer = tojson_bool(buffer, "pin", false, true);
 #endif
-#ifdef DEBUG
+#ifdef MYMPD_DEBUG
     buffer = tojson_bool(buffer, "debugMode", true, true);
 #else
     buffer = tojson_bool(buffer, "debugMode", false, true);
@@ -1012,7 +1012,8 @@ sds mympd_api_settings_get(struct t_partition_state *partition_state, sds buffer
         buffer = tojson_double(buffer, "mixrampDelay", mpd_status_get_mixrampdelay(status), true);
         buffer = tojson_bool(buffer, "repeat", mpd_status_get_repeat(status), true);
         buffer = tojson_bool(buffer, "random", mpd_status_get_random(status), true);
-        buffer = tojson_bool(buffer, "consume", mpd_status_get_consume(status), true);
+        enum mpd_consume_state consume_state = mpd_status_get_consume_state(status);
+        buffer = tojson_char(buffer, "consume", mpd_lookup_consume_state(consume_state), true);
         mpd_status_free(status);
 
         enum mpd_replay_gain_mode replay_gain_mode = mpd_run_replay_gain_status(partition_state->conn);
@@ -1043,13 +1044,17 @@ sds mympd_api_settings_get(struct t_partition_state *partition_state, sds buffer
         buffer = tojson_bool(buffer, "featPlaylistRmRange", partition_state->mpd_state->feat_playlist_rm_range, true);
         buffer = tojson_bool(buffer, "featWhence", partition_state->mpd_state->feat_whence, true);
         buffer = tojson_bool(buffer, "featAdvqueue", partition_state->mpd_state->feat_advqueue, true);
+        buffer = tojson_bool(buffer, "featConsumeOneshot", partition_state->mpd_state->feat_consume_oneshot, true);
+        buffer = tojson_bool(buffer, "featPlaylistDirAuto", partition_state->mpd_state->feat_playlist_dir_auto, true);
+        buffer = tojson_bool(buffer, "featStartsWith", partition_state->mpd_state->feat_starts_with, true);
+        buffer = tojson_bool(buffer, "featPcre", partition_state->mpd_state->feat_pcre, true);
     }
-#ifdef ENABLE_SSL
+#ifdef MYMPD_ENABLE_SSL
     buffer = tojson_bool(buffer, "featCacert", (mympd_state->config->custom_cert == false && mympd_state->config->ssl == true ? true : false), true);
 #else
     buffer = tojson_bool(buffer, "featCacert", false, true);
 #endif
-#ifdef ENABLE_LUA
+#ifdef MYMPD_ENABLE_LUA
     buffer = tojson_bool(buffer, "featScripting", true, false);
 #else
     buffer = tojson_bool(buffer, "featScripting", false, false);
@@ -1058,6 +1063,7 @@ sds mympd_api_settings_get(struct t_partition_state *partition_state, sds buffer
     if (partition_state->conn_state == MPD_CONNECTED) {
         buffer = sdscatlen(buffer, ",", 1);
         buffer = tojson_sds(buffer, "musicDirectoryValue", partition_state->mpd_state->music_directory_value, true);
+        buffer = tojson_sds(buffer, "playlistDirectoryValue", partition_state->mpd_state->playlist_directory_value, true);
         //taglists
         buffer = print_tags_array(buffer, "tagList", partition_state->mpd_state->tags_mympd);
         buffer = sdscatlen(buffer, ",", 1);

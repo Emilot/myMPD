@@ -7,12 +7,12 @@
 #ifndef MYMPD_API_SCRIPTS_H
 #define MYMPD_API_SCRIPTS_H
 
-#include "../../dist/sds/sds.h"
-#include "../lib/list.h"
+#include "dist/sds/sds.h"
+#include "src/lib/list.h"
 
 #include <stdbool.h>
 
-#ifdef ENABLE_LUA
+#ifdef MYMPD_ENABLE_LUA
     bool mympd_api_script_save(sds workdir, sds script, sds oldscript, int order, sds content, struct t_list *arguments);
     bool mympd_api_script_delete(sds workdir, sds script);
     sds mympd_api_script_get(sds workdir, sds buffer, long request_id, sds script);

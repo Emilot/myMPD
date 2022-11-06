@@ -5,19 +5,19 @@
 */
 
 #include "compile_time.h"
-#include "filesystem.h"
+#include "src/mympd_api/filesystem.h"
 
-#include "../../dist/utf8/utf8.h"
-#include "../lib/jsonrpc.h"
-#include "../lib/mem.h"
-#include "../lib/rax_extras.h"
-#include "../lib/sds_extras.h"
-#include "../lib/smartpls.h"
-#include "../lib/utility.h"
-#include "../mpd_client/errorhandler.h"
-#include "../mpd_client/tags.h"
-#include "extra_media.h"
-#include "sticker.h"
+#include "dist/utf8/utf8.h"
+#include "src/lib/jsonrpc.h"
+#include "src/lib/mem.h"
+#include "src/lib/rax_extras.h"
+#include "src/lib/sds_extras.h"
+#include "src/lib/smartpls.h"
+#include "src/lib/utility.h"
+#include "src/mpd_client/errorhandler.h"
+#include "src/mpd_client/tags.h"
+#include "src/mympd_api/extra_media.h"
+#include "src/mympd_api/sticker.h"
 
 #include <libgen.h>
 #include <string.h>
@@ -30,7 +30,7 @@
  * Struct representing the entity in the rax tree
  */
 struct t_dir_entry {
-    sds name;                   //!< entity name (e.g. filname, playlistname, directory name)
+    sds name;                   //!< entity name (e.g. filename, playlistname, directory name)
     struct mpd_entity *entity;  //!< pointer to the generic mpd entity struct
 };
 
@@ -126,7 +126,7 @@ sds mympd_api_browse_filesystem(struct t_partition_state *partition_state, sds b
         char *path_cpy = strdup(path);
         char *parent_dir = dirname(path_cpy);
         buffer = sdscat(buffer, "{\"Type\":\"parentDir\",\"name\":\"parentDir\",");
-        buffer = tojson_char(buffer, "uri", (parent_dir[0] == '.' ? "" : parent_dir), false);
+        buffer = tojson_char(buffer, "uri", (parent_dir[0] == '.' ? "/" : parent_dir), false);
         buffer = sdscatlen(buffer, "}", 1);
         entity_count++;
         entities_returned++;

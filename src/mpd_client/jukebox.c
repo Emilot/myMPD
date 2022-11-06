@@ -5,23 +5,24 @@
 */
 
 #include "compile_time.h"
-#include "jukebox.h"
+#include "src/mpd_client/jukebox.h"
 
-#include "../../dist/utf8/utf8.h"
-#include "../lib/filehandler.h"
-#include "../lib/jsonrpc.h"
-#include "../lib/log.h"
-#include "../lib/mem.h"
-#include "../lib/mympd_state.h"
-#include "../lib/random.h"
-#include "../lib/sds_extras.h"
-#include "../lib/sticker_cache.h"
-#include "../mympd_api/queue.h"
-#include "../mympd_api/sticker.h"
-#include "errorhandler.h"
-#include "search.h"
-#include "search_local.h"
-#include "tags.h"
+#include "dist/utf8/utf8.h"
+#include "src/lib/filehandler.h"
+#include "src/lib/jsonrpc.h"
+#include "src/lib/log.h"
+#include "src/lib/mem.h"
+#include "src/lib/mympd_state.h"
+#include "src/lib/random.h"
+#include "src/lib/sds_extras.h"
+#include "src/lib/sticker_cache.h"
+#include "src/mpd_client/errorhandler.h"
+#include "src/mpd_client/search.h"
+#include "src/mpd_client/search_local.h"
+#include "src/mpd_client/tags.h"
+#include "src/mympd_api/queue.h"
+#include "src/mympd_api/sticker.h"
+
 
 #include <errno.h>
 #include <string.h>
@@ -119,7 +120,7 @@ void jukebox_clear_all(struct t_mympd_state *mympd_state) {
 
 /**
  * Clears the jukebox queue.
- * This is a simple wrapper arround list_clear.
+ * This is a simple wrapper around list_clear.
  * @param list the jukebox queue
  */
 void jukebox_clear(struct t_list *list) {
@@ -129,13 +130,13 @@ void jukebox_clear(struct t_list *list) {
 /**
  * Prints the jukebox queue as an jsonrpc response
  * @param partition_state pointer to myMPD partition state
- * @param buffer alreay allocated sds string to append the result
+ * @param buffer already allocated sds string to append the result
  * @param cmd_id jsonrpc method
  * @param request_id jsonrpc request id
  * @param offset offset for printing
  * @param limit max entries to print
  * @param searchstr string to search
- * @param tagcols colums to print
+ * @param tagcols columns to print
  * @return pointer to buffer
  */
 sds jukebox_list(struct t_partition_state *partition_state, sds buffer, enum mympd_cmd_ids cmd_id, long request_id,
@@ -384,7 +385,7 @@ bool jukebox_add_to_queue(struct t_partition_state *partition_state, long add_so
     }
     if (added == 0) {
         MYMPD_LOG_ERROR("\"%s\": Error adding song(s)", partition_state->name);
-        send_jsonrpc_notify(JSONRPC_FACILITY_JUKEBOX, JSONRPC_SEVERITY_ERROR, partition_state->name, "Addings songs from jukebox to queue failed");
+        send_jsonrpc_notify(JSONRPC_FACILITY_JUKEBOX, JSONRPC_SEVERITY_ERROR, partition_state->name, "Adding songs from jukebox to queue failed");
         return false;
     }
     if (manual == false) {

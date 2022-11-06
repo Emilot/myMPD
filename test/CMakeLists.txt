@@ -6,7 +6,7 @@
 
 cmake_minimum_required(VERSION 3.4)
 
-project (test C)
+project(test C)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/../cmake/")
 
@@ -15,7 +15,7 @@ find_library(MATH_LIB m REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(PCRE2 REQUIRED)
 find_package(LIBID3TAG REQUIRED)
-find_package(FLAC)
+find_package(FLAC REQUIRED)
 
 set(TEST_SOURCES
   ../dist/mjson/mjson.c
@@ -148,7 +148,7 @@ set(LIBASAN_FLAGS "-fsanitize=address \
 
 #set mongoose feature flags
 set(MONGOOSE_FLAGS "-DMG_ENABLE_OPENSSL=1 -DMG_ENABLE_DIRECTORY_LISTING=1 -DMG_ENABLE_SSI=0")
-if("${ENABLE_IPV6}" MATCHES "ON")
+if(ENABLE_IPV6)
   message("IPv6 is enabled")
   set(MONGOOSE_FLAGS "${MONGOOSE_FLAGS} -DMG_ENABLE_IPV6=1")
 else()
@@ -190,11 +190,11 @@ set_property(SOURCE ../dist/sds/sds.c PROPERTY COMPILE_FLAGS "-Wno-format-nonlit
 #compiler flags for libmpdclient
 set_property(SOURCE ${LIBMPDCLIENT_SOURCES} PROPERTY COMPILE_FLAGS "-Wno-conversion")
 
-set(ENABLE_FLAC "ON")
-set(ENABLE_LIBID3TAG "ON")
+set(MYMPD_ENABLE_FLAC "ON")
+set(MYMPD_ENABLE_LIBID3TAG "ON")
 configure_file(../src/compile_time.h.in ${PROJECT_BINARY_DIR}/compile_time.h)
 
-include_directories(${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR} ../dist/libmpdclient/include)
+include_directories(${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/.. ../dist/libmpdclient/include)
 
 include(CheckCSourceCompiles)
 

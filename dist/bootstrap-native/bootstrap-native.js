@@ -2328,6 +2328,16 @@
       if (posAjust) ObjectAssign(dropdownPosition[positionClass], posAjust);
     }
 
+    //check if dropdown overflows window bottom
+    if (positionClass !== 'dropup') {
+      const bottomPos = window.innerHeight - targetTop - targetHeight - menuHeight - offset;
+      if (bottomPos < 0) {
+        menu.style.overflowY = 'auto';
+        menu.style.overflowX = 'hidden';
+        menu.style.maxHeight = menuHeight + bottomPos - offset + 'px';
+      }
+    }
+
     dropdownMargin = dropdownMargin[positionClass];
     setElementStyle(menu, {
       ...dropdownPosition[positionClass],
@@ -3944,15 +3954,14 @@
     // const tipAbsolute = getElementStyle(tooltip, 'position') === 'absolute';
     const parentPosition = getElementStyle(container, 'position');
     // const absoluteParent = parentPosition === 'absolute';
-    const fixedParent = parentPosition === 'fixed';
+    const fixedParent = false; // parentPosition === 'fixed';
     const staticParent = parentPosition === 'static';
     const stickyParent = parentPosition === 'sticky';
     const isSticky = stickyParent && parentTop === parseFloat(getElementStyle(container, 'top'));
     // const absoluteTarget = getElementStyle(element, 'position') === 'absolute';
     // const stickyFixedParent = ['sticky', 'fixed'].includes(parentPosition);
     const leftBoundry = RTL && fixedParent ? scrollbarWidth : 0;
-    const rightBoundry = fixedParent ? parentCWidth + parentLeft + (RTL ? scrollbarWidth : 0)
-      : parentCWidth + parentLeft + (htmlcw - parentRight) - 1;
+    const rightBoundry = parentCWidth + parentLeft + (htmlcw - parentRight) - 1;
     const {
       width: elemWidth,
       height: elemHeight,
@@ -4050,8 +4059,8 @@
           eX = e.pageX;
           eY = e.pageY;
         } else { // fixedParent | stickyParent
-          eX = e.clientX - parentLeft + (fixedParent ? scroll.x : 0);
-          eY = e.clientY - parentTop + (fixedParent ? scroll.y : 0);
+          eX = e.clientX - parentLeft + (0);
+          eY = e.clientY - parentTop + (0);
         }
 
         // some weird RTL bug
@@ -4071,7 +4080,7 @@
           leftPosition = 'auto';
           rightPosition = 0;
           arrowRight = rightBoundry - eX - arrowAdjust;
-          arrowRight -= fixedParent ? parentLeft + (RTL ? scrollbarWidth : 0) : 0;
+          arrowRight -= 0;
 
         // normal top/bottom
         } else {
@@ -4098,6 +4107,26 @@
           arrowLeft = tipWidth / 2 - arrowAdjust;
         }
       }
+    }
+
+    //check if tooltip/popover overflows window bottom
+    const bottomPos = window.innerHeight - topPosition - tipHeight;
+    if (bottomPos < 0) {
+      topPosition = topPosition + bottomPos;
+      arrowTop = 0 - bottomPos;
+
+    }
+    //check if tooltip/popover overflows window top
+    if (topPosition < 0) {
+      arrowTop = elemRectTop;
+      topPosition = 0;
+
+    }
+    //check if tooltip/popover is higher as the window
+    if (tipHeight > window.innerHeight) {
+      tooltip.style.overflowY = 'auto';
+      tooltip.style.overflowX = 'hidden';
+      tooltip.style.maxHeight = '100vh';
     }
 
     // apply style to tooltip/popover

@@ -5,17 +5,17 @@
 */
 
 #include "compile_time.h"
-#include "queue.h"
+#include "src/mympd_api/queue.h"
 
-#include "../lib/jsonrpc.h"
-#include "../lib/log.h"
-#include "../lib/sds_extras.h"
-#include "../lib/utility.h"
-#include "../mpd_client/errorhandler.h"
-#include "../mpd_client/tags.h"
-#include "status.h"
-#include "sticker.h"
-#include "webradios.h"
+#include "src/lib/jsonrpc.h"
+#include "src/lib/log.h"
+#include "src/lib/sds_extras.h"
+#include "src/lib/utility.h"
+#include "src/mpd_client/errorhandler.h"
+#include "src/mpd_client/tags.h"
+#include "src/mympd_api/status.h"
+#include "src/mympd_api/sticker.h"
+#include "src/mympd_api/webradios.h"
 
 #include <string.h>
 
@@ -284,7 +284,6 @@ sds mympd_api_queue_list(struct t_partition_state *partition_state, sds buffer, 
     buffer = jsonrpc_respond_start(buffer, cmd_id, request_id);
     buffer = sdscat(buffer, "\"data\":[");
     unsigned total_time = 0;
-    long entity_count = 0;
     long entities_returned = 0;
     struct mpd_song *song;
     while ((song = mpd_recv_song(partition_state->conn)) != NULL) {
@@ -294,7 +293,6 @@ sds mympd_api_queue_list(struct t_partition_state *partition_state, sds buffer, 
         buffer = print_queue_entry(partition_state, buffer, tagcols, song);
         total_time += mpd_song_get_duration(song);
         mpd_song_free(song);
-        entity_count++;
     }
 
     buffer = sdscatlen(buffer, "],", 2);

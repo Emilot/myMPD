@@ -5,53 +5,52 @@
 */
 
 #include "compile_time.h"
-#include "mympd_api_handler.h"
+#include "src/mympd_api/mympd_api_handler.h"
 
-#include "../lib/album_cache.h"
-#include "../lib/api.h"
-#include "../lib/covercache.h"
-#include "../lib/jsonrpc.h"
-#include "../lib/log.h"
-#include "../lib/mem.h"
-#include "../lib/msg_queue.h"
-#include "../lib/mympd_state.h"
-#include "../lib/sds_extras.h"
-#include "../lib/smartpls.h"
-#include "../lib/sticker_cache.h"
-#include "../lib/utility.h"
-#include "../lib/validate.h"
-#include "../mpd_client/connection.h"
-#include "../mpd_client/errorhandler.h"
-#include "../mpd_client/features.h"
-#include "../mpd_client/jukebox.h"
-#include "../mpd_client/partitions.h"
-#include "../mpd_client/playlists.h"
-#include "../mpd_client/search.h"
-#include "../mpd_worker/mpd_worker.h"
-#include "../collybia.h"
-#include "albumart.h"
-#include "browse.h"
-#include "filesystem.h"
-#include "home.h"
-#include "last_played.h"
-#include "lyrics.h"
-#include "mounts.h"
-#include "outputs.h"
-#include "partitions.h"
-#include "pictures.h"
-#include "playlists.h"
-#include "queue.h"
-#include "scripts.h"
-#include "settings.h"
-#include "smartpls.h"
-#include "song.h"
-#include "stats.h"
-#include "status.h"
-#include "timer.h"
-#include "timer_handlers.h"
-#include "trigger.h"
-#include "volume.h"
-#include "webradios.h"
+#include "src/lib/album_cache.h"
+#include "src/lib/api.h"
+#include "src/lib/covercache.h"
+#include "src/lib/jsonrpc.h"
+#include "src/lib/log.h"
+#include "src/lib/mem.h"
+#include "src/lib/msg_queue.h"
+#include "src/lib/mympd_state.h"
+#include "src/lib/sds_extras.h"
+#include "src/lib/smartpls.h"
+#include "src/lib/sticker_cache.h"
+#include "src/lib/utility.h"
+#include "src/lib/validate.h"
+#include "src/mpd_client/connection.h"
+#include "src/mpd_client/errorhandler.h"
+#include "src/mpd_client/features.h"
+#include "src/mpd_client/jukebox.h"
+#include "src/mpd_client/partitions.h"
+#include "src/mpd_client/playlists.h"
+#include "src/mpd_client/search.h"
+#include "src/mpd_worker/mpd_worker.h"
+#include "src/mympd_api/albumart.h"
+#include "src/mympd_api/browse.h"
+#include "src/mympd_api/filesystem.h"
+#include "src/mympd_api/home.h"
+#include "src/mympd_api/last_played.h"
+#include "src/mympd_api/lyrics.h"
+#include "src/mympd_api/mounts.h"
+#include "src/mympd_api/outputs.h"
+#include "src/mympd_api/partitions.h"
+#include "src/mympd_api/pictures.h"
+#include "src/mympd_api/playlists.h"
+#include "src/mympd_api/queue.h"
+#include "src/mympd_api/scripts.h"
+#include "src/mympd_api/settings.h"
+#include "src/mympd_api/smartpls.h"
+#include "src/mympd_api/song.h"
+#include "src/mympd_api/stats.h"
+#include "src/mympd_api/status.h"
+#include "src/mympd_api/timer.h"
+#include "src/mympd_api/timer_handlers.h"
+#include "src/mympd_api/trigger.h"
+#include "src/mympd_api/volume.h"
+#include "src/mympd_api/webradios.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -95,7 +94,7 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
     sds error = sdsempty();
     bool async = false;
 
-    #ifdef DEBUG
+    #ifdef MYMPD_DEBUG
     MEASURE_INIT
     MEASURE_START
     #endif
@@ -215,7 +214,7 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
         case MYMPD_API_HOME_ICON_LIST:
             response->data = mympd_api_home_icon_list(&mympd_state->home_list, response->data, request->id);
             break;
-        #ifdef ENABLE_LUA
+        #ifdef MYMPD_ENABLE_LUA
         case MYMPD_API_SCRIPT_SAVE: {
             struct t_list arguments;
             list_init(&arguments);
@@ -610,7 +609,7 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
             break;
         case INTERNAL_API_SCRIPT_INIT: {
             struct t_list *lua_mympd_state = list_new();
-            rc = mympd_api_status_lua_mympd_state_set(lua_mympd_state, partition_state, mympd_state->listenbrainz_token);
+            rc = mympd_api_status_lua_mympd_state_set(lua_mympd_state, partition_state);
             if (rc == true) {
                 response->data = jsonrpc_respond_ok(response->data, request->cmd_id, request->id, JSONRPC_FACILITY_SCRIPT);
                 response->extra = lua_mympd_state;
@@ -623,7 +622,7 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
             }
             break;
         }
-        case MYMPD_API_PLAYER_OUTPUT_ATTRIBUTS_SET: {
+        case MYMPD_API_PLAYER_OUTPUT_ATTRIBUTES_SET: {
             struct t_list attributes;
             list_init(&attributes);
             if (json_get_uint(request->data, "$.params.outputId", 0, MPD_OUTPUT_ID_MAX, &uint_buf1, &error) == true &&
@@ -1151,7 +1150,7 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
                 rc = mpd_client_playlist_shuffle(partition_state, sds_buf1);
                 if (rc == true) {
                     response->data = jsonrpc_respond_message(response->data, request->cmd_id, request->id,
-                        JSONRPC_FACILITY_PLAYLIST, JSONRPC_SEVERITY_INFO, "Shuffled playlist succesfully");
+                        JSONRPC_FACILITY_PLAYLIST, JSONRPC_SEVERITY_INFO, "Shuffled playlist successfully");
                 }
                 else {
                     response->data = jsonrpc_respond_message(response->data, request->cmd_id, request->id,
@@ -1166,7 +1165,7 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
                 rc = mpd_client_playlist_sort(partition_state, sds_buf1, sds_buf2);
                 if (rc == true) {
                     response->data = jsonrpc_respond_message(response->data, request->cmd_id, request->id,
-                        JSONRPC_FACILITY_PLAYLIST, JSONRPC_SEVERITY_INFO, "Sorted playlist succesfully");
+                        JSONRPC_FACILITY_PLAYLIST, JSONRPC_SEVERITY_INFO, "Sorted playlist successfully");
                 }
                 else {
                     response->data = jsonrpc_respond_message(response->data, request->cmd_id, request->id,
@@ -1352,9 +1351,24 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
             }
             break;
         case MYMPD_API_QUEUE_SAVE:
-            if (json_get_string(request->data, "$.params.plist", 1, FILENAME_LEN_MAX, &sds_buf1, vcb_isfilename, &error) == true) {
-                rc = mpd_run_save(partition_state->conn, sds_buf1);
-                response->data = mympd_respond_with_error_or_ok(partition_state, response->data, request->cmd_id, request->id, rc, "mpd_run_save", &result);
+            if (json_get_string(request->data, "$.params.plist", 1, FILENAME_LEN_MAX, &sds_buf1, vcb_isfilename, &error) == true &&
+                json_get_string(request->data, "$.params.mode", 1, NAME_LEN_MAX, &sds_buf2, vcb_isalnum, &error) == true)
+            {
+                if (mympd_state->mpd_state->feat_advqueue == true) {
+                    enum mpd_queue_save_mode save_mode = mpd_parse_queue_save_mode(sds_buf2);
+                    if (save_mode != MPD_QUEUE_SAVE_MODE_UNKNOWN) {
+                        rc = mpd_run_save_queue(partition_state->conn, sds_buf1, save_mode);
+                        response->data = mympd_respond_with_error_or_ok(partition_state, response->data, request->cmd_id, request->id, rc, "mpd_run_save_queue", &result);
+                    }
+                    else {
+                        response->data = jsonrpc_respond_message(response->data, request->cmd_id, request->id,
+                            JSONRPC_FACILITY_QUEUE, JSONRPC_SEVERITY_ERROR, "Unknown queue save mode");
+                    }
+                }
+                else {
+                    rc = mpd_run_save(partition_state->conn, sds_buf1);
+                    response->data = mympd_respond_with_error_or_ok(partition_state, response->data, request->cmd_id, request->id, rc, "mpd_run_save", &result);
+                }
             }
             break;
         case MYMPD_API_QUEUE_SEARCH: {
@@ -1622,7 +1636,7 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
     FREE_SDS(sds_buf9);
     FREE_SDS(sds_buf0);
 
-    #ifdef DEBUG
+    #ifdef MYMPD_DEBUG
     MEASURE_END
     MEASURE_PRINT(method)
     #endif
@@ -1669,7 +1683,7 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
 /**
  * Tries to play the last inserted song and checks for success
  * @param partition_state pointer to partition state
- * @param play realy play last inserts song
+ * @param play really play last inserts song
  * @param buffer already allocated sds string to append the error response
  * @param cmd_id jsonrpc method
  * @param request_id jsonrpc request id

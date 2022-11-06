@@ -6,10 +6,10 @@
 
 #include "compile_time.h"
 
-#include "../dist/sds/sds.h"
-#include "../src/lib/http_client.h"
-#include "../src/lib/sds_extras.h"
-#include "log.h"
+#include "dist/sds/sds.h"
+#include "src/lib/http_client.h"
+#include "src/lib/sds_extras.h"
+#include "cli_tools/log.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -92,16 +92,14 @@ int main(int argc, char **argv) {
 
     struct mg_client_response_t response = {
         .rc = -1,
-        .response = sdsempty(),
+        .response_code = 0,
         .header = sdsempty(),
         .body = sdsempty()
     };
 
     http_client_request(&request, &response);
-    puts(response.response);
     puts(response.body);
 
-    sdsfree(response.response);
     sdsfree(response.header);
     sdsfree(response.body);
     sdsfree(uri);

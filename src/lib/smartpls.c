@@ -5,14 +5,14 @@
 */
 
 #include "compile_time.h"
-#include "smartpls.h"
+#include "src/lib/smartpls.h"
 
-#include "filehandler.h"
-#include "jsonrpc.h"
-#include "log.h"
-#include "msg_queue.h"
-#include "sds_extras.h"
-#include "state_files.h"
+#include "src/lib/filehandler.h"
+#include "src/lib/jsonrpc.h"
+#include "src/lib/log.h"
+#include "src/lib/msg_queue.h"
+#include "src/lib/sds_extras.h"
+#include "src/lib/state_files.h"
 
 #include <errno.h>
 #include <string.h>
@@ -83,7 +83,7 @@ bool is_smartpls(sds workdir, const char *playlist) {
 }
 
 /**
- * Returns the samrt playlist last modification time
+ * Returns the smart playlist last modification time
  * @param workdir myMPD working directory
  * @param playlist name of the playlist to check
  * @return last modification time

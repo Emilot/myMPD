@@ -7,13 +7,13 @@
 #ifndef MYMPD_API_H
 #define MYMPD_API_H
 
-#include "../../dist/sds/sds.h"
-#include "list.h"
+#include "dist/sds/sds.h"
+#include "src/lib/list.h"
 
 #include <stdbool.h>
 
 /**
- * myMPD api methodes
+ * myMPD api methods
  * all above INTERNAL_API_COUNT are internal
  * TOTAL_API_COUNT must be the last
  */
@@ -76,7 +76,7 @@
     X(MYMPD_API_PLAYER_CURRENT_SONG) \
     X(MYMPD_API_PLAYER_NEXT) \
     X(MYMPD_API_PLAYER_OPTIONS_SET) \
-    X(MYMPD_API_PLAYER_OUTPUT_ATTRIBUTS_SET) \
+    X(MYMPD_API_PLAYER_OUTPUT_ATTRIBUTES_SET) \
     X(MYMPD_API_PLAYER_OUTPUT_LIST) \
     X(MYMPD_API_PLAYER_OUTPUT_TOGGLE) \
     X(MYMPD_API_PLAYER_PAUSE) \
@@ -174,7 +174,7 @@
 #define GEN_STR(X) #X,
 
 /**
- * Enum of myMPD jsonrpc api methodes
+ * Enum of myMPD jsonrpc api methods
  */
 enum mympd_cmd_ids {
     MYMPD_CMDS(GEN_ENUM)

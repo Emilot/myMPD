@@ -5,21 +5,21 @@
 */
 
 #include "compile_time.h"
-#include "browse.h"
+#include "src/mympd_api/browse.h"
 
-#include "../../dist/utf8/utf8.h"
-#include "../lib/album_cache.h"
-#include "../lib/jsonrpc.h"
-#include "../lib/log.h"
-#include "../lib/rax_extras.h"
-#include "../lib/sds_extras.h"
-#include "../lib/sticker_cache.h"
-#include "../mpd_client/errorhandler.h"
-#include "../mpd_client/search.h"
-#include "../mpd_client/search_local.h"
-#include "../mpd_client/tags.h"
-#include "extra_media.h"
-#include "sticker.h"
+#include "dist/utf8/utf8.h"
+#include "src/lib/album_cache.h"
+#include "src/lib/jsonrpc.h"
+#include "src/lib/log.h"
+#include "src/lib/rax_extras.h"
+#include "src/lib/sds_extras.h"
+#include "src/lib/sticker_cache.h"
+#include "src/mpd_client/errorhandler.h"
+#include "src/mpd_client/search.h"
+#include "src/mpd_client/search_local.h"
+#include "src/mpd_client/tags.h"
+#include "src/mympd_api/extra_media.h"
+#include "src/mympd_api/sticker.h"
 
 #include <dirent.h>
 #include <errno.h>
@@ -174,7 +174,7 @@ sds mympd_api_browse_album_list(struct t_partition_state *partition_state, sds b
 {
     if (partition_state->mpd_state->album_cache.cache == NULL) {
         buffer = jsonrpc_respond_message(buffer, MYMPD_API_DATABASE_ALBUMS_GET, request_id,
-            JSONRPC_FACILITY_DATABASE, JSONRPC_SEVERITY_ERROR, "Albumcache not ready");
+            JSONRPC_FACILITY_DATABASE, JSONRPC_SEVERITY_WARN, "Albumcache not ready");
         return buffer;
     }
 
@@ -223,7 +223,7 @@ sds mympd_api_browse_album_list(struct t_partition_state *partition_state, sds b
                 }
                 else {
                     //sort tag not present, append to end of the list
-                    MYMPD_LOG_WARN("Sort tag \"%s\" not set", mpd_tag_name(sort_tag));
+                    MYMPD_LOG_WARN("Sort tag \"%s\" not set for \"%.*s\"", mpd_tag_name(sort_tag), (int)iter.key_len, (char *)iter.key);
                     key = sdscatfmt(key, "zzzzzzzzzz::%s", mpd_song_get_uri(album));
                 }
             }
@@ -378,7 +378,7 @@ sds mympd_api_browse_tag_list(struct t_partition_state *partition_state, sds buf
         FREE_SDS(iter.data);
     }
     raxStop(&iter);
-    //checks if this tag has a directory with pictures in /var/lib/mympd/pics
+    //checks if this tag has a directory with pictures in /vsrc/lib/mympd/pics
     sds pic_path = sdscatfmt(sdsempty(), "%S/pics/%s", partition_state->mympd_state->config->workdir, tag);
     bool pic = false;
     errno = 0;

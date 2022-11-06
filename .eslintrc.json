@@ -3,14 +3,18 @@
         "browser": true,
         "es6": true
     },
-    "extends": "eslint:recommended",
+    "plugins": [
+        "jsdoc"
+    ],
+    "extends": [
+        "eslint:recommended",
+        "plugin:jsdoc/recommended"
+    ],
     "globals": {
         "Atomics": "readonly",
         "SharedArrayBuffer": "readonly",
         "BSN": true,
         "i18n": true,
-        "locales": true,
-        "missingPhrases": true,
         "MediaMetadata": true
     },
     "parserOptions": {
@@ -36,6 +40,13 @@
         "no-shadow-restricted-names": "error",
         "no-useless-concat": "error",
         "no-var": "error",
-        "prefer-const": "error"
+        "prefer-const": "error",
+        "jsdoc/newline-after-description": "off",
+        "jsdoc/no-undefined-types": ["warn", {
+            "definedTypes": [
+                "ChildNode",
+                "ParentNode"
+            ]
+        }]
     }
 }

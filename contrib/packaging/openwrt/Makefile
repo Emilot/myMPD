@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME := mympd
-PKG_VERSION := 10.0.3
+PKG_VERSION := 10.1.0
 PKG_RELEASE := 1
 
 PKG_SOURCE := $(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -70,16 +70,11 @@ define Package/mympd/config
 endef
 
 CMAKE_OPTIONS += \
-	-DCMAKE_BUILD_TYPE=RELEASE \
-	-DENABLE_FLAC=$(if $(CONFIG_MYMPD_FLAC),ON,OFF) \
-	-DENABLE_LIBID3TAG=$(if $(CONFIG_MYMPD_ID3TAG),ON,OFF) \
-	-DENABLE_LUA=$(if $(CONFIG_MYMPD_LUA),ON,OFF) \
-	-DENABLE_SSL=$(if $(CONFIG_MYMPD_SSL),ON,OFF)
-
-define Build/Prepare
-	$(call Build/Prepare/Default)
-	(cd $(PKG_BUILD_DIR); ./build.sh createassets)
-endef
+	-DCMAKE_BUILD_TYPE=Release \
+	-DMYMPD_ENABLE_FLAC=$(if $(CONFIG_MYMPD_FLAC),ON,OFF) \
+	-DMYMPD_ENABLE_LIBID3TAG=$(if $(CONFIG_MYMPD_ID3TAG),ON,OFF) \
+	-DMYMPD_ENABLE_LUA=$(if $(CONFIG_MYMPD_LUA),ON,OFF) \
+	-DMYMPD_ENABLE_SSL=$(if $(CONFIG_MYMPD_SSL),ON,OFF)
 
 define Package/mympd/install
 	$(INSTALL_DIR) $(1)/usr/bin

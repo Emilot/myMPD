@@ -4,7 +4,7 @@
 
 pkgname=mympd
 _pkgname=myMPD
-pkgver=10.0.3
+pkgver=10.1.0
 pkgrel=1
 pkgdesc="A standalone and mobile friendly web-based MPD client."
 arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
@@ -20,16 +20,13 @@ backup=()
 install=archlinux.install
 source=("mympd_${pkgver}.orig.tar.gz")
 sha256sums=('SKIP')
+options=(debug strip)
 
 build() {
-  cd "${srcdir}" || exit 1
-  ./build.sh createassets
-  cd release || exit 1
-  cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr -DCMAKE_BUILD_TYPE=RELEASE ..
-  make
+  cmake -B release -DCMAKE_INSTALL_PREFIX:PATH=/usr -DCMAKE_BUILD_TYPE=Release -DMYMPD_STRIP_BINARY=OFF "${srcdir}"
+  make -C release
 }
 
 package() {
-  cd "${srcdir}/release"
-  make DESTDIR="$pkgdir/" install
+  make -C release DESTDIR="$pkgdir/" install
 }

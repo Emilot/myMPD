@@ -5,19 +5,19 @@
 */
 
 #include "compile_time.h"
-#include "last_played.h"
+#include "src/mympd_api/last_played.h"
 
-#include "../../dist/sds/sds.h"
-#include "../lib/filehandler.h"
-#include "../lib/jsonrpc.h"
-#include "../lib/log.h"
-#include "../lib/sds_extras.h"
-#include "../lib/utility.h"
-#include "../lib/validate.h"
-#include "../mpd_client/errorhandler.h"
-#include "../mpd_client/search_local.h"
-#include "../mpd_client/tags.h"
-#include "sticker.h"
+#include "dist/sds/sds.h"
+#include "src/lib/filehandler.h"
+#include "src/lib/jsonrpc.h"
+#include "src/lib/log.h"
+#include "src/lib/sds_extras.h"
+#include "src/lib/utility.h"
+#include "src/lib/validate.h"
+#include "src/mpd_client/errorhandler.h"
+#include "src/mpd_client/search_local.h"
+#include "src/mpd_client/tags.h"
+#include "src/mympd_api/sticker.h"
 
 #include <errno.h>
 #include <string.h>
@@ -216,7 +216,7 @@ sds mympd_api_last_played_list(struct t_partition_state *partition_state, sds bu
                 }
                 else {
                     MYMPD_LOG_ERROR("\"%s\": Reading last_played line failed", partition_state->name);
-                    MYMPD_LOG_DEBUG("Errorneous line: %s", line);
+                    MYMPD_LOG_DEBUG("Erroneous line: %s", line);
                     FREE_SDS(uri);
                 }
             }
@@ -249,7 +249,7 @@ sds mympd_api_last_played_list(struct t_partition_state *partition_state, sds bu
 /**
  * Gets the song and searches for searchstr and prints it as json object
  * @param partition_state pointer to partition state
- * @param buffer alreay allocated buffer to append the result
+ * @param buffer already allocated buffer to append the result
  * @param entity_count position in the list
  * @param last_played songs last played time as unix timestamp
  * @param uri uri of the song

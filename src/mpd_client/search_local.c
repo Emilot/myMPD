@@ -5,13 +5,13 @@
 */
 
 #include "compile_time.h"
-#include "search_local.h"
+#include "src/mpd_client/search_local.h"
 
-#include "../../dist/utf8/utf8.h"
-#include "../lib/log.h"
-#include "../lib/mem.h"
-#include "../lib/sds_extras.h"
-#include "../lib/utility.h"
+#include "dist/utf8/utf8.h"
+#include "src/lib/log.h"
+#include "src/lib/mem.h"
+#include "src/lib/sds_extras.h"
+#include "src/lib/utility.h"
 
 #define PCRE2_CODE_UNIT_WIDTH 8
 #include <pcre2.h>
@@ -34,7 +34,7 @@ enum search_operators {
 };
 
 /**
- * Struct to hold a parsed search expression trible
+ * Struct to hold a parsed search expression triple
  */
 struct t_search_expression {
     int tag;                   //!< tag to search in

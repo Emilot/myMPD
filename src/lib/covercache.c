@@ -5,12 +5,12 @@
 */
 
 #include "compile_time.h"
-#include "covercache.h"
+#include "src/lib/covercache.h"
 
-#include "filehandler.h"
-#include "log.h"
-#include "mimetype.h"
-#include "sds_extras.h"
+#include "src/lib/filehandler.h"
+#include "src/lib/log.h"
+#include "src/lib/mimetype.h"
+#include "src/lib/sds_extras.h"
 
 #include <dirent.h>
 #include <errno.h>
@@ -38,8 +38,10 @@ bool covercache_write_file(sds cachedir, const char *uri, const char *mime_type,
         MYMPD_LOG_WARN("Covercache file for \"%s\" not written, could not determine file extension", uri);
         return false;
     }
+    MYMPD_LOG_DEBUG("Writing covercache for \"%s\"", uri);
     sds filename = sds_hash(uri);
     sds filepath = sdscatfmt(sdsempty(), "%S/covercache/%S-%i.%s", cachedir, filename, offset, ext);
+    MYMPD_LOG_DEBUG("Writing covercache file \"%s\"", filepath);
     bool rc = write_data_to_file(filepath, binary, sdslen(binary));
     FREE_SDS(filename);
     FREE_SDS(filepath);

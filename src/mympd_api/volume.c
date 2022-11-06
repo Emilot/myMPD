@@ -5,13 +5,13 @@
 */
 
 #include "compile_time.h"
-#include "volume.h"
+#include "src/mympd_api/volume.h"
 
-#include "../lib/api.h"
-#include "../lib/jsonrpc.h"
-#include "../lib/log.h"
-#include "../mpd_client/errorhandler.h"
-#include "../mpd_client/volume.h"
+#include "src/lib/api.h"
+#include "src/lib/jsonrpc.h"
+#include "src/lib/log.h"
+#include "src/mpd_client/errorhandler.h"
+#include "src/mpd_client/volume.h"
 
 #include <mpd/client.h>
 
@@ -41,7 +41,7 @@ sds mympd_api_volume_set(struct t_partition_state *partition_state, sds buffer, 
 }
 
 /**
- * 
+ * Changes the volume by relative_volume
  * @param partition_state pointer to partition state
  * @param buffer already allocated sds string to append the response
  * @param request_id jsonrpc request id

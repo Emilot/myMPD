@@ -5,15 +5,17 @@
 */
 
 #include "compile_time.h"
-#include "utility.h"
+#include "src/web_server/utility.h"
 
-#include "../lib/filehandler.h"
-#include "../lib/log.h"
-#include "../lib/mem.h"
-#include "../lib/sds_extras.h"
-#include "../lib/utility.h"
+#include "src/lib/config_def.h"
+#include "src/lib/filehandler.h"
+#include "src/lib/log.h"
+#include "src/lib/mem.h"
+#include "src/lib/mimetype.h"
+#include "src/lib/sds_extras.h"
+#include "src/lib/utility.h"
 
-#ifdef EMBEDDED_ASSETS
+#ifdef MYMPD_EMBEDDED_ASSETS
     //embedded files for release build
     #include "embedded_files.c"
 #endif
@@ -60,6 +62,42 @@ void *mg_user_data_free(struct t_mg_user_data *mg_user_data) {
 }
 
 /**
+ * Checks the covercache and serves the image
+ * @param nc mongoose connection
+ * @param hm http message
+ * @param mg_user_data pointer to mongoose configuration
+ * @param uri_decoded image uri
+ * @param offset embedded image offset
+ * @return true if an image is served,
+ *         false if waiting for mpd_client to handle request
+ */
+bool check_covercache(struct mg_connection *nc, struct mg_http_message *hm,
+        struct t_mg_user_data *mg_user_data, sds uri_decoded, int offset)
+{
+    if (mg_user_data->config->covercache_keep_days > 0) {
+        sds filename = sds_hash(uri_decoded);
+        sds covercachefile = sdscatfmt(sdsempty(), "%S/covercache/%S-%i", mg_user_data->config->cachedir, filename, offset);
+        FREE_SDS(filename);
+        covercachefile = webserver_find_image_file(covercachefile);
+        if (sdslen(covercachefile) > 0) {
+            const char *mime_type = get_mime_type_by_ext(covercachefile);
+            MYMPD_LOG_DEBUG("Serving file %s (%s)", covercachefile, mime_type);
+            static struct mg_http_serve_opts s_http_server_opts;
+            s_http_server_opts.root_dir = mg_user_data->browse_directory;
+            s_http_server_opts.extra_headers = EXTRA_HEADERS_IMAGE;
+            s_http_server_opts.mime_types = EXTRA_MIME_TYPES;
+            mg_http_serve_file(nc, hm, covercachefile, &s_http_server_opts);
+            webserver_handle_connection_close(nc);
+            FREE_SDS(covercachefile);
+            return true;
+        }
+        MYMPD_LOG_DEBUG("No covercache file found");
+        FREE_SDS(covercachefile);
+    }
+    return false;
+}
+
+/**
  * Image file extensions to detect
  */
 static const char *image_file_extensions[] = {
@@ -68,7 +106,7 @@ static const char *image_file_extensions[] = {
     NULL};
 
 /**
- * Finds the first image with basefilename by trying out extentions
+ * Finds the first image with basefilename by trying out extensions
  * @param basefilename basefilename to append extensions
  * @return pointer to basefilename
  */
@@ -140,7 +178,7 @@ void webserver_send_data(struct mg_connection *nc, const char *data, size_t len,
 }
 
 /**
- * Sends a 301 moved permamently header
+ * Sends a 301 moved permanently header
  * @param nc mongoose connection
  * @param location destination for the redirect
  */
@@ -195,7 +233,7 @@ void webserver_serve_stream_image(struct mg_connection *nc) {
     webserver_send_header_found(nc, "assets/coverimage-stream.svg");
 }
 
-#ifdef EMBEDDED_ASSETS
+#ifdef MYMPD_EMBEDDED_ASSETS
 /**
  * Struct holding embedded file information
  */
@@ -298,11 +336,9 @@ bool webserver_serve_embedded_files(struct mg_connection *nc, sds uri) {
         FREE_SDS(uri_decoded);
         return true;
     }
-    else {
-        sds errormsg = sdscatfmt(sdsempty(), "Embedded asset \"%S\" not found", uri_decoded);
-        webserver_send_error(nc, 404, errormsg);
-        FREE_SDS(errormsg);
-    }
+    sds errormsg = sdscatfmt(sdsempty(), "Embedded asset \"%S\" not found", uri_decoded);
+    webserver_send_error(nc, 404, errormsg);
+    FREE_SDS(errormsg);
     FREE_SDS(uri_decoded);
     return false;
 }

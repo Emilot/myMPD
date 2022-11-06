@@ -5,18 +5,18 @@
 */
 
 #include "compile_time.h"
-#include "scripts.h"
+#include "src/mympd_api/scripts.h"
 
-#include "../lib/api.h"
-#include "../lib/filehandler.h"
-#include "../lib/http_client.h"
-#include "../lib/jsonrpc.h"
-#include "../lib/log.h"
-#include "../lib/lua_mympd_state.h"
-#include "../lib/mem.h"
-#include "../lib/msg_queue.h"
-#include "../lib/sds_extras.h"
-#include "../lib/utility.h"
+#include "src/lib/api.h"
+#include "src/lib/filehandler.h"
+#include "src/lib/http_client.h"
+#include "src/lib/jsonrpc.h"
+#include "src/lib/log.h"
+#include "src/lib/lua_mympd_state.h"
+#include "src/lib/mem.h"
+#include "src/lib/msg_queue.h"
+#include "src/lib/sds_extras.h"
+#include "src/lib/utility.h"
 
 #include <dirent.h>
 #include <errno.h>
@@ -26,12 +26,12 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
-#ifdef ENABLE_LUA
+#ifdef MYMPD_ENABLE_LUA
 
 #include <lauxlib.h>
 #include <lua.h>
 #include <lualib.h>
-#ifdef EMBEDDED_ASSETS
+#ifdef MYMPD_EMBEDDED_ASSETS
     //embedded files for release build
     #include "scripts_lualibs.c"
 #endif
@@ -157,7 +157,7 @@ bool mympd_api_script_delete(sds workdir, sds script) {
  * Saves a script
  * @param workdir working directory
  * @param script scriptname
- * @param oldscript old scriptname (leavy empty for new script)
+ * @param oldscript old scriptname (leave empty for a new script)
  * @param order script list is order by this value
  * @param content script content
  * @param arguments arguments for the script
@@ -244,7 +244,7 @@ sds mympd_api_script_get(sds workdir, sds buffer, long request_id, sds script) {
  * @param workdir working directory
  * @param script script to execute (name or script content)
  * @param lualibs comma separated string of lua libs to load
- * @param arguments argumentlist for the script
+ * @param arguments argument list for the script
  * @param localscript true = load script from filesystem, false = load script from script parameter
  * @return true on success, else false
  */
@@ -502,7 +502,7 @@ static sds lua_err_to_str(sds buffer, int rc, bool phrase, const char *script) {
  */
 static bool mympd_luaopen(lua_State *lua_vm, const char *lualib) {
     MYMPD_LOG_DEBUG("Loading embedded lua library %s", lualib);
-    #ifdef EMBEDDED_ASSETS
+    #ifdef MYMPD_EMBEDDED_ASSETS
         sds lib_string;
         if (strcmp(lualib, "json") == 0) {
             lib_string = sdscatlen(sdsempty(), json_lua_data, json_lua_size);
@@ -516,7 +516,7 @@ static bool mympd_luaopen(lua_State *lua_vm, const char *lualib) {
         int rc = luaL_dostring(lua_vm, lib_string);
         FREE_SDS(lib_string);
     #else
-        sds filename = sdscatfmt(sdsempty(), "%s/%s.lua", LUALIBS_PATH, lualib);
+        sds filename = sdscatfmt(sdsempty(), "%s/%s.lua", MYMPD_LUALIBS_PATH, lualib);
         int rc = luaL_dofile(lua_vm, filename);
         FREE_SDS(filename);
     #endif
@@ -758,7 +758,7 @@ static int lua_http_client(lua_State *lua_vm) {
 
     struct mg_client_response_t mg_client_response = {
         .rc = -1,
-        .response = sdsempty(),
+        .response_code = 0,
         .header = sdsempty(),
         .body = sdsempty()
     };
@@ -766,10 +766,9 @@ static int lua_http_client(lua_State *lua_vm) {
     http_client_request(&mg_client_request, &mg_client_response);
 
     lua_pushinteger(lua_vm, mg_client_response.rc);
-    lua_pushlstring(lua_vm, mg_client_response.response, sdslen(mg_client_response.response));
+    lua_pushinteger(lua_vm, mg_client_response.response_code);
     lua_pushlstring(lua_vm, mg_client_response.header, sdslen(mg_client_response.header));
     lua_pushlstring(lua_vm, mg_client_response.body, sdslen(mg_client_response.body));
-    FREE_SDS(mg_client_response.response);
     FREE_SDS(mg_client_response.header);
     FREE_SDS(mg_client_response.body);
     return 4;

@@ -9,7 +9,7 @@
 
 #include "compile_time.h"
 
-#include "../dist/sds/sds.h"
+#include "dist/sds/sds.h"
 
 #include <stdbool.h>
 
@@ -22,17 +22,17 @@ struct t_config {
     sds cachedir;             //!< cache directory
     sds http_host;            //!< ip to bind the webserver
     sds http_port;            //!< http port to listen
-    #ifdef ENABLE_SSL
+    #ifdef MYMPD_ENABLE_SSL
         bool ssl;             //!< enables ssl
         sds ssl_port;         //!< https port to listen
         sds ssl_cert;         //!< filename of the certificate
         sds ssl_key;          //!< filename of the private key
         bool custom_cert;     //!< false if myMPD uses the self generated certificates
-        sds ssl_san;          //!< additonal names for SAN of the self generated certificate
+        sds ssl_san;          //!< additional names for SAN of the self generated certificate
     #endif
     sds acl;                  //!< IPv4 ACL string
     sds scriptacl;            //!< IPv4 ACL string for the /api/script endpoint
-    #ifdef ENABLE_LUA
+    #ifdef MYMPD_ENABLE_LUA
         sds lualibs;          //!< enabled lua libraries
     #endif
     bool log_to_syslog;       //!< enable syslog logging

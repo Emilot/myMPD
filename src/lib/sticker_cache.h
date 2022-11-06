@@ -7,25 +7,26 @@
 #ifndef MYMPD_STICKER_CACHE_H
 #define MYMPD_STICKER_CACHE_H
 
-#include "../lib/mympd_state.h"
+#include "src/lib/mympd_state.h"
 
 #include <stdbool.h>
 
 /**
  * MPD sticker values
- *
  */
 struct t_sticker {
     long play_count;      //!< number how often the song was played
     long skip_count;      //!< number how often the song was skipped
     time_t last_played;   //!< timestamp when the song was played the last time
     time_t last_skipped;  //!< timestamp when the song was skipped the last time
+    time_t elapsed;       //!< recent song position
     long like;            //!< hate/neutral/love value
 };
 
 struct t_sticker *get_sticker_from_cache(struct t_cache *sticker_cache, const char *uri);
 void sticker_cache_free(struct t_cache *sticker_cache);
 
+bool sticker_set_elapsed(struct t_list *sticker_queue, const char *uri, time_t elapsed);
 bool sticker_inc_play_count(struct t_list *sticker_queue, const char *uri);
 bool sticker_inc_skip_count(struct t_list *sticker_queue, const char *uri);
 bool sticker_set_like(struct t_list *sticker_queue, const char *uri, int value);

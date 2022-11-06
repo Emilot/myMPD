@@ -4,7 +4,7 @@
 # (c) 2018-2022 Juergen Mang <mail@jcgames.de>
 
 Name:           mympd
-Version:        10.0.3
+Version:        10.1.0
 Release:        0
 License:        GPL-3.0-or-later
 Group:          Productivity/Multimedia/Sound/Players
@@ -26,25 +26,22 @@ BuildRequires:  gzip
 BuildRequires:  jq
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
-%global debug_package %{nil}
-
 %description
 myMPD is a standalone and lightweight web-based MPD client.
 It's tuned for minimal resource usage and requires only very few dependencies.
 Therefore myMPD is ideal for raspberry pis and similar devices.
 
+%debug_package
+
 %prep
 %setup -q -n %{name}-%{version}
 
 %build
-./build.sh createassets
-cd release || exit 1
-cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr -DCMAKE_BUILD_TYPE=RELEASE ..
-make
+cmake -B release -DCMAKE_INSTALL_PREFIX:PATH=/usr -DCMAKE_BUILD_TYPE=Release -DMYMPD_STRIP_BINARY=OFF .
+make -C release
 
 %install
-cd release || exit 1
-make install DESTDIR=%{buildroot}
+make -C release install DESTDIR=%{buildroot}
 
 %post
 echo "Checking status of mympd system user and group"
@@ -70,5 +67,5 @@ fi
 %license LICENSE.md
 
 %changelog
-* Thu Oct 13 2022 Juergen Mang <mail@jcgames.de> 10.0.3-0
+* Sun Nov 06 2022 Juergen Mang <mail@jcgames.de> 10.1.0-0
 - Version from master

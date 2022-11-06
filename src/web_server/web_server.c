@@ -5,19 +5,19 @@
 */
 
 #include "compile_time.h"
-#include "web_server.h"
+#include "src/web_server/web_server.h"
 
-#include "../lib/api.h"
-#include "../lib/http_client.h"
-#include "../lib/jsonrpc.h"
-#include "../lib/log.h"
-#include "../lib/mem.h"
-#include "../lib/msg_queue.h"
-#include "../lib/sds_extras.h"
-#include "albumart.h"
-#include "proxy.h"
-#include "request_handler.h"
-#include "tagart.h"
+#include "src/lib/api.h"
+#include "src/lib/http_client.h"
+#include "src/lib/jsonrpc.h"
+#include "src/lib/log.h"
+#include "src/lib/mem.h"
+#include "src/lib/msg_queue.h"
+#include "src/lib/sds_extras.h"
+#include "src/web_server/albumart.h"
+#include "src/web_server/proxy.h"
+#include "src/web_server/request_handler.h"
+#include "src/web_server/tagart.h"
 
 #include <sys/prctl.h>
 
@@ -27,7 +27,7 @@
 
 static bool parse_internal_message(struct t_work_response *response, struct t_mg_user_data *mg_user_data);
 static void ev_handler(struct mg_connection *nc, int ev, void *ev_data, void *fn_data);
-#ifdef ENABLE_SSL
+#ifdef MYMPD_ENABLE_SSL
     static void ev_handler_redirect(struct mg_connection *nc_http, int ev, void *ev_data, void *fn_data);
 #endif
 static void send_ws_notify(struct mg_mgr *mgr, struct t_work_response *response);
@@ -76,14 +76,14 @@ bool web_server_init(struct mg_mgr *mgr, struct t_config *config, struct t_mg_us
     //bind to http_port
     struct mg_connection *nc_http = NULL;
     sds http_url = sdscatfmt(sdsempty(), "http://%S:%S", config->http_host, config->http_port);
-    #ifdef ENABLE_SSL
+    #ifdef MYMPD_ENABLE_SSL
     if (config->ssl == true) {
         nc_http = mg_http_listen(mgr, http_url, ev_handler_redirect, NULL);
     }
     else {
     #endif
         nc_http = mg_http_listen(mgr, http_url, ev_handler, NULL);
-    #ifdef ENABLE_SSL
+    #ifdef MYMPD_ENABLE_SSL
     }
     #endif
     FREE_SDS(http_url);
@@ -94,7 +94,7 @@ bool web_server_init(struct mg_mgr *mgr, struct t_config *config, struct t_mg_us
     MYMPD_LOG_NOTICE("Listening on http://%s:%s", config->http_host, config->http_port);
 
     //bind to ssl_port
-    #ifdef ENABLE_SSL
+    #ifdef MYMPD_ENABLE_SSL
     if (config->ssl == true) {
         sds https_url = sdscatfmt(sdsempty(), "https://%S:%S", config->http_host, config->ssl_port);
         struct mg_connection *nc_https = mg_http_listen(mgr, https_url, ev_handler, NULL);
@@ -106,7 +106,7 @@ bool web_server_init(struct mg_mgr *mgr, struct t_config *config, struct t_mg_us
         MYMPD_LOG_NOTICE("Listening on https://%s:%s", config->http_host, config->ssl_port);
     }
     #endif
-    MYMPD_LOG_NOTICE("Serving files from \"%s\"", DOC_ROOT);
+    MYMPD_LOG_NOTICE("Serving files from \"%s\"", MYMPD_DOC_ROOT);
     return mgr;
 }
 
@@ -138,7 +138,7 @@ void *web_server_loop(void *arg_mgr) {
     mg_log_set(1);
     mg_log_set_fn(mongoose_log, NULL);
 
-    #ifdef ENABLE_SSL
+    #ifdef MYMPD_ENABLE_SSL
     MYMPD_LOG_DEBUG("Using certificate: %s", mg_user_data->config->ssl_cert);
     MYMPD_LOG_DEBUG("Using private key: %s", mg_user_data->config->ssl_key);
     #endif
@@ -322,7 +322,7 @@ static void send_api_response(struct mg_mgr *mgr, struct t_work_response *respon
 
 /**
  * Matches the acl against the client ip and
- * sends an error repsonse / drains the connection if acl is not matched
+ * sends an error response / drains the connection if acl is not matched
  * @param nc mongoose connection
  * @param acl acl string to check
  * @return true if acl matches, else false
@@ -384,7 +384,7 @@ static bool check_conn_limit(struct mg_connection *nc, int connection_count) {
  */
 static void ev_handler(struct mg_connection *nc, int ev, void *ev_data, void *fn_data) {
     //connection specific data structure
-    struct t_frontend_nc_data *frontend_nc_data = (struct t_frontend_nc_data *)fn_data;
+    struct t_frontend_nc_data *frontend_nc_data = (struct t_frontend_nc_data *) fn_data;
     //mongoose user data
     struct t_mg_user_data *mg_user_data = (struct t_mg_user_data *) nc->mgr->userdata;
     struct t_config *config = mg_user_data->config;
@@ -403,8 +403,13 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data, void *fn
             break;
         }
         case MG_EV_ACCEPT:
+            if (loglevel == LOG_DEBUG) {
+                char buf[INET6_ADDRSTRLEN];
+                mg_straddr(&nc->rem, buf, INET6_ADDRSTRLEN);
+                MYMPD_LOG_DEBUG("New connection id \"%lu\" from %s, connections: %d", nc->id, buf, mg_user_data->connection_count);
+            }
             //ssl support
-            #ifdef ENABLE_SSL
+            #ifdef MYMPD_ENABLE_SSL
             if (config->ssl == true) {
                 MYMPD_LOG_DEBUG("Init tls with cert \"%s\" and key \"%s\" for connection \"%lu\"", config->ssl_cert, config->ssl_key, nc->id);
                 struct mg_tls_opts tls_opts = {
@@ -421,11 +426,6 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data, void *fn
             //check acl
             if (check_acl(nc, config->acl) == false) {
                 break;
-            }
-            if (loglevel == LOG_DEBUG) {
-                char buf[INET6_ADDRSTRLEN];
-                mg_straddr(&nc->rem, buf, INET6_ADDRSTRLEN);
-                MYMPD_LOG_DEBUG("New connection id \"%lu\" from %s, connections: %d", nc->id, buf, mg_user_data->connection_count);
             }
             break;
         case MG_EV_WS_MSG: {
@@ -548,11 +548,15 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data, void *fn
                     nc->is_draining = 1;
                     break;
                 }
-                create_backend_connection(nc, frontend_nc_data->backend_nc, node->value_p, forward_backend_to_frontend);
+                create_backend_connection(nc, frontend_nc_data->backend_nc, node->value_p, forward_backend_to_frontend_stream);
             }
             else if (mg_http_match_uri(hm, "/proxy") == true) {
                 //Makes a get request to the defined uri and returns the response
                 request_handler_proxy(nc, hm, frontend_nc_data->backend_nc);
+            }
+            else if (mg_http_match_uri(hm, "/proxy-covercache") == true) {
+                //Makes a get request to the defined uri and caches and returns the response
+                request_handler_proxy_covercache(nc, hm, frontend_nc_data->backend_nc);
             }
             else if (mg_http_match_uri(hm, "/serverinfo") == true) {
                 request_handler_serverinfo(nc);
@@ -583,17 +587,17 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data, void *fn
             else if (mg_http_match_uri(hm, "/favicon.ico") == true) {
                 webserver_send_header_redirect(nc, "/assets/appicon-192.png");
             }
-            #ifdef ENABLE_SSL
+            #ifdef MYMPD_ENABLE_SSL
             else if (mg_http_match_uri(hm, "/ca.crt") == true) {
                 request_handler_ca(nc, hm, mg_user_data);
             }
             #endif
             else {
                 //all other uris
-                #ifndef EMBEDDED_ASSETS
+                #ifndef MYMPD_EMBEDDED_ASSETS
                     //serve all files from filesystem
                     static struct mg_http_serve_opts s_http_server_opts;
-                    s_http_server_opts.root_dir = DOC_ROOT;
+                    s_http_server_opts.root_dir = MYMPD_DOC_ROOT;
                     if (mg_http_match_uri(hm, "/test/#") == true) {
                         //test suite uses innerHTML
                         s_http_server_opts.extra_headers = EXTRA_HEADERS_UNSAFE;
@@ -635,7 +639,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data, void *fn
     }
 }
 
-#ifdef ENABLE_SSL
+#ifdef MYMPD_ENABLE_SSL
 /**
  * Redirects the client to https if ssl is enabled.
  * Only requests to /browse/webradios are not redirected.

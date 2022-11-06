@@ -6,36 +6,36 @@
 
 #include "compile_time.h"
 
-#include "../dist/mongoose/mongoose.h"
-#include "../dist/sds/sds.h"
-#include "lib/api.h"
-#include "lib/config.h"
-#include "lib/config_def.h"
-#include "lib/filehandler.h"
-#include "lib/handle_options.h"
-#include "lib/log.h"
-#include "lib/mem.h"
-#include "lib/msg_queue.h"
-#include "lib/random.h"
-#include "lib/sds_extras.h"
-#include "lib/smartpls.h"
-#include "mympd_api/mympd_api.h"
-#include "web_server/web_server.h"
+#include "dist/mongoose/mongoose.h"
+#include "dist/sds/sds.h"
+#include "src/lib/api.h"
+#include "src/lib/config.h"
+#include "src/lib/config_def.h"
+#include "src/lib/filehandler.h"
+#include "src/lib/handle_options.h"
+#include "src/lib/log.h"
+#include "src/lib/mem.h"
+#include "src/lib/msg_queue.h"
+#include "src/lib/random.h"
+#include "src/lib/sds_extras.h"
+#include "src/lib/smartpls.h"
+#include "src/mympd_api/mympd_api.h"
+#include "src/web_server/web_server.h"
 
-#ifdef ENABLE_SSL
-    #include "lib/cert.h"
+#ifdef MYMPD_ENABLE_SSL
+    #include "src/lib/cert.h"
     #include <openssl/opensslv.h>
 #endif
 
-#ifdef ENABLE_LUA
+#ifdef MYMPD_ENABLE_LUA
     #include <lua.h>
 #endif
 
-#ifdef ENABLE_LIBID3TAG
+#ifdef MYMPD_ENABLE_LIBID3TAG
     #include <id3tag.h>
 #endif
 
-#ifdef ENABLE_FLAC
+#ifdef MYMPD_ENABLE_FLAC
     #include <FLAC/export.h>
 #endif
 
@@ -45,7 +45,7 @@
 #include <pwd.h>
 #include <signal.h>
 
-#ifdef ENABLE_LIBASAN
+#ifdef MYMPD_ENABLE_LIBASAN
 const char *__asan_default_options(void) {
     return "detect_stack_use_after_return=true";
 }
@@ -240,7 +240,7 @@ static const struct t_subdirs_entry workdir_subdirs[] = {
     {"pics",             "Pics dir"},
     {"pics/backgrounds", "Backgrounds dir"},
     {"pics/thumbs",      "Thumbnails dir"},
-    #ifdef ENABLE_LUA
+    #ifdef MYMPD_ENABLE_LUA
     {"scripts",          "Scripts dir"},
     #endif
     {"smartpls",         "Smartpls dir"},
@@ -280,9 +280,9 @@ static bool check_dir(const char *parent, const char *subdir, const char *descri
  */
 static bool check_dirs(struct t_config *config) {
     int testdir_rc;
-    #ifndef EMBEDDED_ASSETS
+    #ifndef MYMPD_EMBEDDED_ASSETS
         //release uses empty document root and delivers embedded files
-        testdir_rc = testdir("Document root", DOC_ROOT, false, false);
+        testdir_rc = testdir("Document root", MYMPD_DOC_ROOT, false, false);
         if (testdir_rc != DIR_EXISTS) {
             return false;
         }
@@ -318,10 +318,10 @@ int main(int argc, char **argv) {
     thread_logname = sdsnew("mympd");
     log_on_tty = isatty(fileno(stdout)) ? true : false;
     log_to_syslog = false;
-    #ifdef DEBUG
-    set_loglevel(LOG_DEBUG);
+    #ifdef MYMPD_DEBUG
+        set_loglevel(LOG_DEBUG);
     #else
-    set_loglevel(LOG_NOTICE);
+        set_loglevel(LOG_NOTICE);
     #endif
 
     //set initital states
@@ -394,7 +394,7 @@ int main(int argc, char **argv) {
     //reads the config from /var/lib/mympd/config folder or writes defaults
     mympd_read_config(config);
 
-    #ifdef ENABLE_IPV6
+    #ifdef MYMPD_ENABLE_IPV6
         if (sdslen(config->acl) > 0) {
             MYMPD_LOG_WARN("No acl support for IPv6");
         }
@@ -408,7 +408,7 @@ int main(int argc, char **argv) {
     }
 
     //set loglevel
-    #ifdef DEBUG
+    #ifdef MYMPD_DEBUG
         MYMPD_LOG_NOTICE("Debug build is running");
         set_loglevel(LOG_DEBUG);
     #else
@@ -420,7 +420,7 @@ int main(int argc, char **argv) {
         log_to_syslog = true;
     }
 
-    #ifdef ENABLE_LIBASAN
+    #ifdef MYMPD_ENABLE_LIBASAN
         MYMPD_LOG_NOTICE("Running with libasan memory checker");
     #endif
 
@@ -429,16 +429,16 @@ int main(int argc, char **argv) {
             LIBMYMPDCLIENT_MAJOR_VERSION, LIBMYMPDCLIENT_MINOR_VERSION, LIBMYMPDCLIENT_PATCH_VERSION,
             LIBMPDCLIENT_MAJOR_VERSION, LIBMPDCLIENT_MINOR_VERSION, LIBMPDCLIENT_PATCH_VERSION);
     MYMPD_LOG_INFO("Mongoose %s", MG_VERSION);
-    #ifdef ENABLE_LUA
+    #ifdef MYMPD_ENABLE_LUA
         MYMPD_LOG_INFO("%s", LUA_RELEASE);
     #endif
-    #ifdef ENABLE_LIBID3TAG
+    #ifdef MYMPD_ENABLE_LIBID3TAG
         MYMPD_LOG_INFO("Libid3tag %s", ID3_VERSION);
     #endif
-    #ifdef ENABLE_FLAC
+    #ifdef MYMPD_ENABLE_FLAC
         MYMPD_LOG_INFO("FLAC %d.%d.%d", FLAC_API_VERSION_CURRENT, FLAC_API_VERSION_REVISION, FLAC_API_VERSION_AGE);
     #endif
-    #ifdef ENABLE_SSL
+    #ifdef MYMPD_ENABLE_SSL
         MYMPD_LOG_INFO("%s", OPENSSL_VERSION_TEXT);
     #endif
 
@@ -479,7 +479,7 @@ int main(int argc, char **argv) {
     }
 
     //check for ssl certificates
-    #ifdef ENABLE_SSL
+    #ifdef MYMPD_ENABLE_SSL
         if (config->ssl == true &&
             config->custom_cert == false &&
             certificates_check(config->workdir, config->ssl_san) == false)
