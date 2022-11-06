@@ -4,6 +4,16 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
+## myMPD v10.1.1 (not yet released)
+
+This is a small bugfix release.
+
+### Changelog
+
+- Fix: remove song progress indicator in queue view after switching to new song #881
+
+***
+
 ## myMPD v10.1.0 (2022-11-06)
 
 This minor release adds support of new MPD 0.24 features. The javascript frontend is now documented with jsDoc and linted with the typescript compiler.
