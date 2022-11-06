@@ -7,6 +7,7 @@
 #include "compile_time.h"
 #include "src/mympd_api/mympd_api_handler.h"
 
+#include "../collybia.h"
 #include "src/lib/album_cache.h"
 #include "src/lib/api.h"
 #include "src/lib/covercache.h"
