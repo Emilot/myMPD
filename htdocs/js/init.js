@@ -248,6 +248,7 @@ function appInit() {
         hidePopover();
     }, false);
     //init modules
+    initCollybia();
     initGlobalModals();
     initSong();
     initHome();
