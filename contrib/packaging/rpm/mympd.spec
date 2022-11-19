@@ -4,7 +4,7 @@
 # (c) 2018-2022 Juergen Mang <mail@jcgames.de>
 
 Name:           mympd
-Version:        10.1.1
+Version:        10.1.2
 Release:        0
 License:        GPL-3.0-or-later
 Group:          Productivity/Multimedia/Sound/Players
@@ -46,19 +46,6 @@ make -C release
 %install
 make -C release install DESTDIR=%{buildroot}
 
-%post
-echo "Checking status of mympd system user and group"
-getent group mympd > /dev/null || groupadd -r mympd
-getent passwd mympd > /dev/null || useradd -r -g mympd -s /bin/false -d /var/lib/mympd mympd
-echo "myMPD installed"
-true
-
-%postun
-if [ "$1" = "0" ]
-then
-  echo "Please purge /var/lib/mympd manually"
-fi
-
 %files
 %defattr(-,root,root,-)
 %doc README.md
@@ -70,5 +57,5 @@ fi
 %license LICENSE.md
 
 %changelog
-* Sun Nov 13 2022 Juergen Mang <mail@jcgames.de> 10.1.1-0
+* Sun Nov 13 2022 Juergen Mang <mail@jcgames.de> 10.1.2-0
 - Version from master

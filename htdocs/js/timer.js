@@ -61,7 +61,7 @@ function initTimer() {
             const selectTimerPlaylistEl = document.getElementById('selectTimerPlaylist');
             if (value === 'album') {
                 elDisable(selectTimerPlaylistEl);
-                selectTimerPlaylistEl.value = 'Database';
+                selectTimerPlaylistEl.value = tn('Database');
                 setData(selectTimerPlaylistEl, 'value', 'Database');
             }
             else if (value === 'song') {
@@ -267,7 +267,7 @@ function parseEditTimer(obj) {
     else {
         elEnable(selectTimerPlaylistEl);
     }
-    filterPlaylistsSelect(1, 'selectTimerPlaylist', '', playlistValue);
+    filterPlaylistsSelect(0, 'selectTimerPlaylist', '', playlistValue);
 
     document.getElementById('inputTimerId').value = obj.result.timerid;
     document.getElementById('inputTimerName').value = obj.result.name;
@@ -397,7 +397,7 @@ function showListTimer() {
  * @returns {void}
  */
 function parseListTimer(obj) {
-    const tbody = document.querySelector('#listTimer > tbody');
+    const tbody = document.getElementById('listTimerList');
     if (checkResult(obj, tbody) === false) {
         return;
     }
@@ -427,7 +427,7 @@ function parseListTimer(obj) {
             default:
                 for (const unit of [604800, 86400, 3600, 60, 1]) {
                     if (obj.result.data[i].interval >= unit && obj.result.data[i].interval % unit === 0) {
-                        interval = tn('Each ' + unit, obj.result.data[i].interval / unit);
+                        interval = tn('Each ' + unit, {"smartCount": obj.result.data[i].interval / unit});
                         break;
                     }
                 }

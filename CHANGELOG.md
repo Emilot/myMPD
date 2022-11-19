@@ -4,6 +4,17 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
+## myMPD v10.1.2 (not yet released)
+
+This is a small bugfix release.
+
+### Changelog
+
+- Fix: parsing timer list
+- Fix: some small ui issues
+
+***
+
 ## myMPD v10.1.1 (2022-11-13)
 
 This is a small bugfix release.
