@@ -4,7 +4,21 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
-## myMPD v10.1.3 (not yet released)
+## myMPD v10.1.4 (not yet released)
+
+This is a small bugfix release.
+
+### Changelog
+
+- Fix: Fix: improve styleTip positioning for scrolling window #907
+- Fix: carousel indicator border override #909
+- Fix: myMPD preconfiguration with systemd #912
+- Fix: `build.sh purge` removes the group and systemd private directories
+- Upd: improve album cache creation performance #913
+
+***
+
+## myMPD v10.1.3 (2022-11-26)
 
 This is a small bugfix release.
 
@@ -13,6 +27,8 @@ This is a small bugfix release.
 - Fix: Remove "-" from musicbrainz_artistid and musicbrainz_albumartistid #903
 - Fix: scrobble repeated songs #904
 - Fix: When switching through consume mode skip oneshot for mpd < 0.24 #905
+- Fix: unescape mpd filter expression value #906
+- Upd: improve mpd filter expression parsing
 
 ***
 

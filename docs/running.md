@@ -21,6 +21,15 @@ You must enable and start the service manually. Use `systemctl enable mympd` to 
 
 myMPD logs to STDERR, you can see the live logs with `journalctl -fu mympd`.
 
+The default myMPD service unit uses the `DynamicUser=` directive, therefor no static mympd user is created. If you want to change the group membership of this dynamic user, you must add an override.
+
+**Example: add the mympd user to the music group**
+
+```
+mkdir /etc/systemd/system/mympd.service.d
+echo -e '[Service]\nSupplementaryGroups=music' > /etc/systemd/system/mympd.service.d/music-group.conf
+```
+
 ### Openrc usage
 
 You must enable and start the service manually. Use `rc-update add mympd` to enable myMPD at startup and `rc-service mympd start` to start myMPD now.
