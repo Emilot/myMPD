@@ -4,7 +4,29 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
-## myMPD v10.1.4 (not yet released)
+## myMPD v10.1.6 (2022-12-10)
+
+This is a small bugfix release.
+
+### Changelog
+
+- Fix: pthread join bug #918
+- Fix: workdir/cachedir for install to /usr/local #926 #927
+
+***
+
+## myMPD v10.1.5 (2022-12-06)
+
+This is a small bugfix release.
+
+### Changelog
+
+- Fix: Debian postinst script #917
+- Fix: `build.sh purge` - do not fail if not all install_manifest files can be removed
+
+***
+
+## myMPD v10.1.4 (2022-12-04)
 
 This is a small bugfix release.
 

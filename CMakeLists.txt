@@ -9,7 +9,7 @@ cmake_policy(SET CMP0003 NEW)
 # myMPD is written in C
 # supported compilers: gcc, clang
 project(mympd
-  VERSION 10.1.4
+  VERSION 10.1.6
   LANGUAGES C
 )
 
@@ -69,15 +69,16 @@ if(MYMPD_MINIMAL)
 endif()
 
 # cmake modules
-include(GNUInstallDirs)
-include(CheckCSourceCompiles)
 include(CheckCCompilerFlag)
+include(CheckCSourceCompiles)
+include(CheckIPOSupported)
+include(GNUInstallDirs)
 
 # custom cmake modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/")
 
 # calculate paths
-if(CMAKE_INSTALL_PREFIX STREQUAL "/usr")
+if(CMAKE_INSTALL_PREFIX MATCHES "/usr")
   set(SUBDIR "/${PROJECT_NAME}")
   set(SUBDIRLIB "/lib")
   set(SUBDIRCACHE "/cache")
@@ -92,16 +93,13 @@ message("Executables in: ${CMAKE_INSTALL_FULL_BINDIR}")
 
 if(CMAKE_INSTALL_PREFIX STREQUAL "/usr/local")
   set(MYMPD_WORK_DIR "/${CMAKE_INSTALL_LOCALSTATEDIR}${SUBDIRLIB}${SUBDIR}")
-else()
-  set(MYMPD_WORK_DIR "${CMAKE_INSTALL_FULL_LOCALSTATEDIR}${SUBDIRLIB}${SUBDIR}")
-endif()
-message("Workdir: ${MYMPD_WORK_DIR}")
-
-if(CMAKE_INSTALL_PREFIX STREQUAL "/usr/local")
   set(MYMPD_CACHE_DIR "/${CMAKE_INSTALL_LOCALSTATEDIR}${SUBDIRCACHE}${SUBDIR}")
 else()
+  set(MYMPD_WORK_DIR "${CMAKE_INSTALL_FULL_LOCALSTATEDIR}${SUBDIRLIB}${SUBDIR}")
   set(MYMPD_CACHE_DIR "${CMAKE_INSTALL_FULL_LOCALSTATEDIR}${SUBDIRCACHE}${SUBDIR}")
 endif()
+
+message("Workdir: ${MYMPD_WORK_DIR}")
 message("Cachedir: ${MYMPD_CACHE_DIR}")
 
 if(MYMPD_EMBEDDED_ASSETS)
@@ -318,11 +316,15 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
     message("Generating binary with debug symbols")
     add_compile_options("-g")
   endif()
+  # IPO/LTO support
+  check_ipo_supported()
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
   add_compile_options(
     "-ggdb"
     "-Og"
   )
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION FALSE)
 else()
   # if CMAKE_BUILD_TYPE is neither Release nor Debug,
   # do not alter compile options
