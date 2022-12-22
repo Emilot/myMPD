@@ -4,6 +4,18 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
+## myMPD v10.1.7 (2022-12-22)
+
+This is a small bugfix release.
+
+### Changelog
+
+- Upd: FR and NL translations
+- Fix: relax validation of webradio codecs #933
+- Fix: javascript error on login
+
+***
+
 ## myMPD v10.1.6 (2022-12-10)
 
 This is a small bugfix release.
