@@ -836,50 +836,52 @@ installdeps() {
 updatelibmympdclient() {
   check_cmd git meson
 
-  cd dist/libmpdclient || exit 1
+  cd dist/libmympdclient || exit 1
 
   TMPDIR=$(mktemp -d)
   cd "$TMPDIR" || exit 1
-  git clone --depth=1 -b libmympdclient https://github.com/jcorporation/libmpdclient.git
-  cd libmpdclient || exit 1
+  git clone --depth=1 -b libmympdclient https://github.com/jcorporation/libmympdclient.git
+  cd libmympdclient || exit 1
   meson . output -Dbuffer_size=8192
 
-  cd "$STARTPATH/dist/libmpdclient" || exit 1
+  cd "$STARTPATH/dist/libmympdclient" || exit 1
   install -d src
   install -d include/mpd/
 
-  rsync -av --delete "$TMPDIR/libmpdclient/src/" ./src/
-  rsync -av --delete "$TMPDIR/libmpdclient/include/mpd/" ./include/mpd/
+  rsync -av --delete "$TMPDIR/libmympdclient/src/" ./src/
+  rsync -av --delete "$TMPDIR/libmympdclient/include/mpd/" ./include/mpd/
 
-  rsync -av "$TMPDIR/libmpdclient/output/version.h" include/mpd/version.h
-  rsync -av "$TMPDIR/libmpdclient/output/config.h" include/config.h
+  rsync -av "$TMPDIR/libmympdclient/output/version.h" include/mpd/version.h
+  rsync -av "$TMPDIR/libmympdclient/output/config.h" include/config.h
 
-  rsync -av "$TMPDIR/libmpdclient/COPYING" COPYING
-  rsync -av "$TMPDIR/libmpdclient/AUTHORS" AUTHORS
+  rsync -av "$TMPDIR/libmympdclient/COPYING" COPYING
+  rsync -av "$TMPDIR/libmympdclient/AUTHORS" AUTHORS
 
   rm -rf "$TMPDIR"
 }
 
 updatebootstrapnative() {
   check_cmd git npm
-  cd dist/bootstrap-native || exit 1
-
+  #clone repository
   TMPDIR=$(mktemp -d)
   cd "$TMPDIR" || exit 1
-  git clone --depth=1 -b master https://github.com/jcorporation/bootstrap.native.git
+  git clone --depth=1 -b bsn5 git@github.com:jcorporation/bootstrap.native.git
   cd bootstrap.native
-  npm install @rollup/plugin-buble
-  cp "$STARTPATH/dist/bootstrap-native/mympd-config.js" src/
-  cp "$STARTPATH/dist/bootstrap-native/mympd-init.js" src/util/
-  npm run custom INPUTFILE:src/mympd-config.js,OUTPUTFILE:dist/bootstrap-mympd.js,MIN:false,FORMAT:umd
-  npm run custom INPUTFILE:src/mympd-config.js,OUTPUTFILE:dist/bootstrap-mympd.min.js,MIN:true,FORMAT:umd
-
-  cp dist/bootstrap-mympd.js "$STARTPATH/dist/bootstrap-native/bootstrap-native.js"
-  cp dist/bootstrap-mympd.min.js "$STARTPATH/dist/bootstrap-native/bootstrap-native.min.js"
-
+  npm install vite
+  #copy custom config
+  cp "$STARTPATH/dist/bootstrap-native/mympd-config.ts" src/index.ts
+  cp "$STARTPATH/dist/bootstrap-native/mympd-init.ts" src/util/
+  #minified build
+  npm run build-vite
+  grep -v "^//" dist/bootstrap-native.js > "$STARTPATH/dist/bootstrap-native/bootstrap-native.min.js"
+  #normal build
+  sed -i 's/minify: true/minify: false/' vite.config.ts
+  npm run build-vite
+  grep -v "^//" dist/bootstrap-native.js > "$STARTPATH/dist/bootstrap-native/bootstrap-native.js"
+  #cleanup
   cd "$STARTPATH" || exit 1
   rm -rf "$TMPDIR"
-
+  #update debug build
   if [ -d debug ]
   then
     cp dist/bootstrap-native/bootstrap-native.js htdocs/js/
@@ -907,7 +909,7 @@ uninstall() {
   #the binaries
   if [ -f release/install_manifest.txt ]
   then
-    xargs rm < release/install_manifest.txt || true
+    xargs rm -f < release/install_manifest.txt || true
   fi
   [ -z "${DESTDIR+x}" ] && DESTDIR=""
   #CMAKE_INSTALL_PREFIX="/usr"
@@ -944,6 +946,9 @@ purge() {
   rm -rf "$DESTDIR/var/cache/mympd"
   rm -rf "$DESTDIR/var/cache/private/mympd"
   rm -f "$DESTDIR/etc/init.d/mympd"
+  rm -rf "$DESTDIR/usr/share/doc/mympd"
+  rm -f "$DESTDIR/usr/share/man/man1/mympd.1.gz"
+  rm -f "$DESTDIR/usr/share/man/man1/mympd-script.1.gz"
   #CMAKE_INSTALL_PREFIX="/opt/mympd/"
   rm -rf "$DESTDIR/var/opt/mympd"
   #remove user
@@ -1201,7 +1206,7 @@ run_stylelint() {
     return 1
   fi
   rc=0
-  for F in mympd.css theme-light.css
+  for F in mympd.css theme-light.css theme-dark.css
   do
     echo "Linting $F"
     if ! npx stylelint "htdocs/css/$F"

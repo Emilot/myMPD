@@ -19,8 +19,14 @@ myMPD uses stickers to save statistics and votes of songs.
 **playCount is updated:**
 
 - The song must be longer than 10 seconds
-- And the song has been played for at least half its duration, or for 4 minutes (whichever occurs earlier.)
+- And the song has been played for at least half its duration, or for 4 minutes (whichever occurs earlier)
 
 **skipCount is updated:**
 
 - The song has been played for at least 10 seconds
+
+## Sticker cache
+
+myMPD uses an internal sticker cache to speed up the access. Sticker writes are always delegated to MPD, but reads are always from the cache.
+
+<div class="alert alert-warning">Stickers should only modified by myMPD.</div>
