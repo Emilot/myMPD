@@ -1,6 +1,6 @@
 /*
  SPDX-License-Identifier: GPL-3.0-or-later
- myMPD (c) 2018-2022 Juergen Mang <mail@jcgames.de>
+ myMPD (c) 2018-2023 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 */
 
@@ -36,34 +36,6 @@ struct t_webradio_entry {
 /**
  * Public functions
  */
-
-/**
- * Resolves mympd://webradio uris to real myMPD host address
- * @param uri uri to resolv
- * @param mpd_host mpd host
- * @param http_host myMPD webserver host
- * @param http_port myMPD webserver http port
- * @param ssl_port myMPD webserver ssl port
- * @return resolved uri
- */
-sds resolv_mympd_uri(sds uri, sds mpd_host, sds http_host, int http_port, int ssl_port) {
-    if (strncmp(uri, "mympd://webradio/", 17) == 0) {
-        sdsrange(uri, 17, -1);
-        sds host = get_mympd_host(mpd_host, http_host);
-        sds new_uri = sdsempty();
-        if (http_port == 0) {
-            //use ssl port
-            new_uri = sdscatfmt(new_uri, "https://%S:%i/browse/webradios/%S", host, ssl_port, uri);
-        }
-        else {
-            new_uri = sdscatfmt(new_uri, "http://%S:%i/browse/webradios/%S", host, http_port, uri);
-        }
-        FREE_SDS(uri);
-        FREE_SDS(host);
-        return new_uri;
-    }
-    return uri;
-}
 
 /**
  * Gets the webradio m3u as json object string.

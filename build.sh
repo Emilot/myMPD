@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 #SPDX-License-Identifier: GPL-3.0-or-later
-#myMPD (c) 2018-2022 Juergen Mang <mail@jcgames.de>
+#myMPD (c) 2018-2023 Juergen Mang <mail@jcgames.de>
 #https://github.com/jcorporation/mympd
 
 #exit on error
@@ -64,6 +64,12 @@ umask 0022
 #get myMPD version
 VERSION=$(grep "  VERSION" CMakeLists.txt | sed 's/  VERSION //')
 COPYRIGHT="myMPD ${VERSION} | (c) 2018-2022 Juergen Mang <mail@jcgames.de> | SPDX-License-Identifier: GPL-3.0-or-later | https://github.com/jcorporation/mympd"
+
+MYMPD_MINIFY_JS="1"
+if [ -f .git/HEAD ] && ! grep -q "master" .git/HEAD
+then
+  MYMPD_MINIFY_JS="0"
+fi
 
 #check for command
 check_cmd() {
@@ -143,11 +149,16 @@ minify() {
   elif [ "$TYPE" = "js" ]
   then
     #shellcheck disable=SC2016
-    if ! perl -pe 's/^\s*//gm; s/^\s*\/?\*.*$//g; s/^\/\/.+$//g; s/^logDebug\(.*$//g; s/\/\*debug\*\/.*$//g; s/\s*$//gm;' "$SRC" > "${DST}.tmp"
+    if [ "$MYMPD_MINIFY_JS" = "0" ]
     then
-      rm -f "${DST}.tmp"
-      echo_error "Error minifying $SRC"
-      exit 1
+      cp "$SRC" "${DST}.tmp"
+    else
+      if ! perl -pe 's/^\s*//gm; s/^\s*\/?\*.*$//g; s/^\/\/.+$//g; s/^logDebug\(.*$//g; s/\/\*debug\*\/.*$//g; s/\s*$//gm;' "$SRC" > "${DST}.tmp"
+      then
+        rm -f "${DST}.tmp"
+        echo_error "Error minifying $SRC"
+        exit 1
+      fi
     fi
   elif [ "$TYPE" = "json" ]
   then
@@ -215,7 +226,12 @@ createassets() {
 
   echo "Combining and compressing javascript"
   echo "//${COPYRIGHT}" > "$MYMPD_BUILDDIR/htdocs/js/copyright.min.js"
-  JSFILES="dist/bootstrap-native/bootstrap-native.min.js dist/long-press-event/long-press-event.min.js"
+  if [ "$MYMPD_MINIFY_JS" = "0" ]
+  then
+    JSFILES="dist/bootstrap-native/bootstrap-native.js dist/long-press-event/long-press-event.js"
+  else
+    JSFILES="dist/bootstrap-native/bootstrap-native.min.js dist/long-press-event/long-press-event.min.js"
+  fi
   JSFILES="$JSFILES $MYMPD_BUILDDIR/htdocs/js/*.min.js"
   for F in $JSFILES
   do
@@ -406,6 +422,8 @@ cleanup() {
   rm -rf htdocs/assets/i18n
 
   #generated documentation
+  rm -rf docs/_site
+  rm -rf docs/.jekyll-cache
   rm -rf docs/doxygen
   rm -rf docs/jsdoc
 

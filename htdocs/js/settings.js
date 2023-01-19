@@ -1,6 +1,6 @@
 "use strict";
 // SPDX-License-Identifier: GPL-3.0-or-later
-// myMPD (c) 2018-2022 Juergen Mang <mail@jcgames.de>
+// myMPD (c) 2018-2023 Juergen Mang <mail@jcgames.de>
 // https://github.com/jcorporation/mympd
 
 /** @module settings_js */
@@ -807,11 +807,11 @@ function parseMPDSettings() {
     }
     else if (settings.tagList.includes('Artist')) {
         tagAlbumArtist = 'Artist';
-        if (app.cards.Browse.tabs.Database.views.List.filter === 'AlbumArtist') {
-            app.cards.Browse.tabs.Database.views.List.filter = tagAlbumArtist;
+        if (app.cards.Browse.tabs.Database.views.AlbumList.filter === 'AlbumArtist') {
+            app.cards.Browse.tabs.Database.views.AlbumList.filter = tagAlbumArtist;
         }
-        if (app.cards.Browse.tabs.Database.views.List.sort.tag === 'AlbumArtist') {
-            app.cards.Browse.tabs.Database.views.List.sort.tag = tagAlbumArtist;
+        if (app.cards.Browse.tabs.Database.views.AlbumList.sort.tag === 'AlbumArtist') {
+            app.cards.Browse.tabs.Database.views.AlbumList.sort.tag = tagAlbumArtist;
         }
     }
 

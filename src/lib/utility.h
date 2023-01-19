@@ -1,6 +1,6 @@
 /*
  SPDX-License-Identifier: GPL-3.0-or-later
- myMPD (c) 2018-2022 Juergen Mang <mail@jcgames.de>
+ myMPD (c) 2018-2023 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 */
 
@@ -8,9 +8,11 @@
 #define MYMPD_UTILITY_H
 
 #include "dist/sds/sds.h"
+#include "src/lib/config_def.h"
 
 #include <stdbool.h>
 #include <time.h>
+
 
 bool is_streamuri(const char *uri);
 bool is_virtual_cuedir(sds music_directory, sds filename);
@@ -23,7 +25,7 @@ void sanitize_filename(sds filename);
 
 void my_msleep(long msec);
 
-sds get_mympd_host(sds mpd_host, sds http_host);
+sds resolv_mympd_uri(sds uri, sds mpd_host, struct t_config *config);
 
 //measure time
 #define MEASURE_INIT struct timespec tic;\

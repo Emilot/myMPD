@@ -1,6 +1,6 @@
 /*
  SPDX-License-Identifier: GPL-3.0-or-later
- myMPD (c) 2018-2022 Juergen Mang <mail@jcgames.de>
+ myMPD (c) 2018-2023 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 */
 
@@ -10,6 +10,11 @@ html[data-bs-theme="light"] {
 
 html[data-bs-theme="light"] .navbar {
   background-color: var(--bs-gray-400);
+}
+
+html[data-bs-theme="light"] .navbar .btn:active {
+  border-color: var(--bs-gray-200);
+  background-color: var(--bs-gray-200);
 }
 
 html[data-bs-theme="light"] .form-control::placeholder {
@@ -55,4 +60,8 @@ html[data-bs-theme="light"] .btn-dark {
   background-color: var(--bs-gray-500) !important;
   border-color: var(--bs-gray-500) !important;
   color: var(--bs-gray-800);
+}
+
+html[data-bs-theme="light"] .album-cover {
+  border-color: var(--bs-gray-500) !important;
 }

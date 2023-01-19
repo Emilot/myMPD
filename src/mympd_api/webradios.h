@@ -1,6 +1,6 @@
 /*
  SPDX-License-Identifier: GPL-3.0-or-later
- myMPD (c) 2018-2022 Juergen Mang <mail@jcgames.de>
+ myMPD (c) 2018-2023 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 */
 
@@ -11,7 +11,6 @@
 
 #include <stdbool.h>
 
-sds resolv_mympd_uri(sds uri, sds mpd_host, sds http_host, int http_port, int ssl_port);
 sds get_webradio_from_uri(sds workdir, const char *uri);
 bool mympd_api_webradio_save(sds workdir, sds name, sds uri, sds uri_old,
         sds genre, sds picture, sds homepage, sds country, sds language, sds codec, int bitrate, sds description);

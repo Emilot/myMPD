@@ -4,7 +4,7 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
-## myMPD v10.2.0 (not yet released)
+## myMPD v10.2.0 (2023-01-19)
 
 This release reworks the scripting api and improves the scripting documentation. The new presets feature lets you switch mpd and jukebox options with one click.
 
@@ -27,13 +27,15 @@ This release reworks the scripting api and improves the scripting documentation.
 - Feat: manual refresh of album and sticker cache
 - Feat: rework main menu
 - Feat: add shortcuts for more modals
+- Feat: add `mympd_uri` config option #950
+- Upd: libmympdclient 1.0.17
 - Upd: some UI cleanups and improvements #909
 - Upd: Bootstrap 5.3.0-alpha1
 - Upd: bootstrap.native 5.0.0-alpha2
 - Upd: documentation improvements
 - Upd: some backend improvements
 - Upd: do not create files with root permissions
-- Upd: start mpd autoconfiguration if `state/mpd_host` doest not exist
+- Upd: start mpd autoconfiguration if `state/mpd_host` does not exist
 
 ***
 

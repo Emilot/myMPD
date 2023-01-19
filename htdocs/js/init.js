@@ -1,6 +1,6 @@
 "use strict";
 // SPDX-License-Identifier: GPL-3.0-or-later
-// myMPD (c) 2018-2022 Juergen Mang <mail@jcgames.de>
+// myMPD (c) 2018-2023 Juergen Mang <mail@jcgames.de>
 // https://github.com/jcorporation/mympd
 
 /** @module init_js */
@@ -274,8 +274,8 @@ function appInit() {
         }
         const cmd = keymap[event.key];
         if (cmd && typeof window[cmd.cmd] === 'function') {
-            if (keymap[event.key].req === undefined ||
-                settings[keymap[event.key].req] === true)
+            if (keymap[event.key].feature === undefined ||
+                features[keymap[event.key].feature] === true)
             {
                 parseCmd(event, cmd);
             }
@@ -339,6 +339,9 @@ function initGlobalModals() {
             continue;
         }
         const col = elCreateEmpty('div', {"class": ["col", "col-6", "mb-3", "align-items-center"]});
+        if (keymap[key].feature !== undefined) {
+            col.classList.add(keymap[key].feature);
+        }
         const k = elCreateText('div', {"class": ["key", "float-start"]}, (keymap[key].key !== undefined ? keymap[key].key : key));
         if (keymap[key].key && keymap[key].key.length > 1) {
             k.classList.add('mi', 'mi-small');

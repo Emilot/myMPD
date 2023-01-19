@@ -1,6 +1,6 @@
 /*
  SPDX-License-Identifier: GPL-3.0-or-later
- myMPD (c) 2018-2022 Juergen Mang <mail@jcgames.de>
+ myMPD (c) 2018-2023 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 */
 
@@ -78,8 +78,8 @@ static const char *jsonrpc_event_names[JSONRPC_EVENT_MAX] = {
     [JSONRPC_EVENT_UPDATE_STORED_PLAYLIST] = "update_stored_playlist",
     [JSONRPC_EVENT_UPDATE_VOLUME] = "update_volume",
     [JSONRPC_EVENT_WELCOME] = "welcome",
-    [JSONRPC_EVENT_UPDATE_CACHE_STARTED] = "update_album_cache_started",
-    [JSONRPC_EVENT_UPDATE_CACHE_FINISHED] = "update_album_cache_finished"
+    [JSONRPC_EVENT_UPDATE_CACHE_STARTED] = "update_cache_started",
+    [JSONRPC_EVENT_UPDATE_CACHE_FINISHED] = "update_cache_finished"
 };
 
 /**
