@@ -168,6 +168,14 @@ void mympd_state_free(struct t_mympd_state *mympd_state) {
     FREE_SDS(mympd_state->lyrics.vorbis_uslt);
     FREE_SDS(mympd_state->lyrics.vorbis_sylt);
     FREE_SDS(mympd_state->listenbrainz_token);
+    FREE_SDS(mympd_state->dac);
+    FREE_SDS(mympd_state->mixer);
+    FREE_SDS(mympd_state->ns_server);
+    FREE_SDS(mympd_state->ns_share);
+    FREE_SDS(mympd_state->ns_username);
+    FREE_SDS(mympd_state->ns_password);
+    FREE_SDS(mympd_state->wifi_password);
+    FREE_SDS(mympd_state->samba_version);
     //struct itself
     FREE_PTR(mympd_state);
 }

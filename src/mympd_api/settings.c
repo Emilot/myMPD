@@ -422,7 +422,6 @@ bool mympd_api_settings_set(sds key, sds value, int vtype, validate_callback vcb
             return false;
         }
         mympd_state->dac = sds_replace(mympd_state->dac, value);
-        strip_slash(mympd_state->dac);
     }
     else if (strcmp(key, "mixer") == 0 && vtype == MJSON_TOK_STRING) {
         if (vcb_isfilepath(value) == false) {
@@ -430,7 +429,6 @@ bool mympd_api_settings_set(sds key, sds value, int vtype, validate_callback vcb
             return false;
         }
         mympd_state->mixer = sds_replace(mympd_state->mixer, value);
-        strip_slash(mympd_state->mixer);
     }
     else if (strcmp(key, "sambaVersion") == 0 && vtype == MJSON_TOK_STRING) {
         if (vcb_isfilepath(value) == false) {
@@ -438,7 +436,6 @@ bool mympd_api_settings_set(sds key, sds value, int vtype, validate_callback vcb
             return false;
         }
         mympd_state->samba_version = sds_replace(mympd_state->samba_version, value);
-        strip_slash(mympd_state->samba_version);
     }
     else if (strcmp(key, "nsType") == 0 && vtype == MJSON_TOK_NUMBER) {
         int ns_type = (int)strtoimax(value, NULL, 10);
@@ -539,7 +536,6 @@ bool mympd_api_settings_set(sds key, sds value, int vtype, validate_callback vcb
             return false;
         }
         mympd_state->ns_server = sds_replace(mympd_state->ns_server, value);
-        strip_slash(mympd_state->ns_server);
     }
     else if (strcmp(key, "nsShare") == 0 && vtype == MJSON_TOK_STRING) {
         if (vcb_isfilepath(value) == false) {
@@ -547,7 +543,6 @@ bool mympd_api_settings_set(sds key, sds value, int vtype, validate_callback vcb
             return false;
         }
         mympd_state->ns_share = sds_replace(mympd_state->ns_share, value);
-        strip_slash(mympd_state->ns_share);
     }
     else if (strcmp(key, "nsUsername") == 0 && vtype == MJSON_TOK_STRING) {
         if (vcb_isfilepath(value) == false) {
@@ -555,7 +550,6 @@ bool mympd_api_settings_set(sds key, sds value, int vtype, validate_callback vcb
             return false;
         }
         mympd_state->ns_username = sds_replace(mympd_state->ns_username, value);
-        strip_slash(mympd_state->ns_username);
     }
     else if (strcmp(key, "nsPassword") == 0 && vtype == MJSON_TOK_STRING) {
         if (vcb_isfilepath(value) == false) {
@@ -563,7 +557,6 @@ bool mympd_api_settings_set(sds key, sds value, int vtype, validate_callback vcb
             return false;
         }
         mympd_state->ns_password = sds_replace(mympd_state->ns_password, value);
-        strip_slash(mympd_state->ns_password);
     }
     else if (strcmp(key, "wifiPassword") == 0 && vtype == MJSON_TOK_STRING) {
         if (vcb_isfilepath(value) == false) {
@@ -571,7 +564,6 @@ bool mympd_api_settings_set(sds key, sds value, int vtype, validate_callback vcb
             return false;
         }
         mympd_state->wifi_password = sds_replace(mympd_state->wifi_password, value);
-        strip_slash(mympd_state->wifi_password);
     }
     else if (strcmp(key, "wifissid") == 0 && vtype == MJSON_TOK_STRING) {
         if (vcb_isfilepath(value) == false) {
@@ -579,7 +571,6 @@ bool mympd_api_settings_set(sds key, sds value, int vtype, validate_callback vcb
             return false;
         }
         mympd_state->wifissid = sds_replace(mympd_state->wifissid, value);
-        strip_slash(mympd_state->wifissid);
     }
     else {
         sdsclear(*error);
@@ -887,7 +878,7 @@ void mympd_api_settings_statefiles_global_read(struct t_mympd_state *mympd_state
     mympd_state->lyrics.vorbis_sylt = state_file_rw_string_sds(workdir, DIR_WORK_STATE, "lyrics_vorbis_sylt", mympd_state->lyrics.vorbis_sylt, vcb_isalnum, true);
     mympd_state->listenbrainz_token = state_file_rw_string_sds(workdir, DIR_WORK_STATE, "listenbrainz_token", mympd_state->listenbrainz_token, vcb_isalnum, true);
     mympd_state->navbar_icons = state_file_rw_string_sds(workdir, DIR_WORK_STATE, "navbar_icons", mympd_state->navbar_icons, validate_json_array, true);
-	mympd_state->dac = state_file_rw_string_sds(workdir, DIR_WORK_STATE, "dac", mympd_state->dac, vcb_isname, true);
+    mympd_state->dac = state_file_rw_string_sds(workdir, DIR_WORK_STATE, "dac", mympd_state->dac, vcb_isname, true);
     mympd_state->mixer = state_file_rw_string_sds(workdir, DIR_WORK_STATE, "mixer", mympd_state->mixer, vcb_isname, true);
     mympd_state->ns_type = state_file_rw_int(workdir, DIR_WORK_STATE, "ns_type", mympd_state->ns_type, 0, 3, true);
     mympd_state->roon = state_file_rw_bool(workdir, DIR_WORK_STATE, "roon", mympd_state->roon, true);
