@@ -43,6 +43,45 @@ function initSettingsConnection() {
         }
     }, false);
 
+    document.getElementById('selectNsType').addEventListener('change', function () {
+        const nasTypeMode = getSelectValue(this);
+        if (nasTypeMode === '0') {
+            document.getElementById('inputNsShare').parentNode.parentNode.classList.add('d-none');
+            document.getElementById('selectSambaVersion').parentNode.parentNode.classList.add('d-none');
+            document.getElementById('inputNsUsername').parentNode.parentNode.classList.add('d-none');
+            document.getElementById('inputNsPassword').parentNode.parentNode.classList.add('d-none');
+            document.getElementById('inputNsServer').parentNode.parentNode.classList.add('d-none');
+        }
+        else if (nasTypeMode === '2') {
+            document.getElementById('inputNsShare').parentNode.parentNode.classList.remove('d-none');
+            document.getElementById('selectSambaVersion').parentNode.parentNode.classList.remove('d-none');
+            document.getElementById('inputNsUsername').parentNode.parentNode.classList.remove('d-none');
+            document.getElementById('inputNsPassword').parentNode.parentNode.classList.remove('d-none');
+            document.getElementById('inputNsServer').parentNode.parentNode.classList.remove('d-none');
+        }
+        else {
+            document.getElementById('inputNsShare').parentNode.parentNode.classList.remove('d-none');
+        if (nasTypeMode === '1') {
+            document.getElementById('inputNsShare').parentNode.parentNode.classList.remove('d-none');
+            document.getElementById('selectSambaVersion').parentNode.parentNode.classList.remove('d-none');
+            document.getElementById('inputNsServer').parentNode.parentNode.classList.remove('d-none');
+            document.getElementById('inputNsUsername').parentNode.parentNode.classList.remove('d-none');
+            document.getElementById('inputNsPassword').parentNode.parentNode.classList.add('d-none');
+        }
+        else {
+            document.getElementById('selectSambaVersion').parentNode.parentNode.classList.add('d-none');
+        }
+            document.getElementById('inputNsServer').parentNode.parentNode.classList.remove('d-none');
+            document.getElementById('inputNsUsername').parentNode.parentNode.classList.add('d-none');
+            document.getElementById('inputNsPassword').parentNode.parentNode.classList.add('d-none');
+        }
+    }, false);
+
+    document.getElementById('modalCollybia').addEventListener('shown.bs.modal', function () {
+        getSettings();
+        cleanupModalId('modalCollybia');
+    });
+
     document.getElementById('modalConnection').addEventListener('shown.bs.modal', function () {
         getSettings();
         cleanupModalId('modalConnection');
