@@ -6,9 +6,11 @@ https://github.com/jcorporation/myMPD/
 
 ## myMPD v10.2.1 (not yet released)
 
-This is a small bugfix relese.
-
 ### Changelog
+
+- Feat: show myMPD uri in About dialog #953
+- Upd: traditional chinese translation #957
+- Upd: Mongoose 7.9 #952
 
 ***
 
@@ -21,7 +23,7 @@ This release reworks the scripting api and improves the scripting documentation.
 - Existing lua scripts must be adapted to the new simplified API
 - Existing play timers must be changed to use presets
 - Some views are renamed
-- Use [systemd-run]({{ site.baseurl }}/running#manual-startup), if you use a distribution with systemd
+- Use systemd-run, if you use a distribution with systemd
 
 ### Changelog
 
@@ -1296,7 +1298,7 @@ This is only a small maintenance release.
 
 This is only a small maintenance release with some minor features.
 
-#### Changelog
+### Changelog
 
 - Feat: build and packaging improvements
 - Feat: improvements of playback card layout
@@ -1997,7 +1999,7 @@ This is mainly a bugfix release.
 ### Changelog
 
 - Feat: add rescan database command
-- Fix: don't use serviceworker for http:// uris -> fixes http stream in local player
+- Fix: don't use serviceworker for `http://` uris -> fixes http stream in local player
 - Fix: show lastPlayed in song details
 - Fix: moved pics directory to /var/lib/mympd
 - Fix packaging issues
