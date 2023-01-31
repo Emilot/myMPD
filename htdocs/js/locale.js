@@ -124,30 +124,24 @@ function setLocale(newLocale) {
     if (newLocale === 'default') {
         //auto detection
         locale = navigator.language || navigator.userLanguage;
-        if (locale.length === 2) {
-            locale += '-';
-        }
+        const shortLocale = locale.substring(0, 2);
+        locale = localeMap[locale] === undefined
+            ? localeMap[shortLocale] === undefined
+                ? locale
+                : localeMap[shortLocale]
+            : localeMap[locale];
     }
     else {
         locale = newLocale;
     }
+
     //check if locale is available
-    let localeFound = false;
-    for (const l in i18n) {
-        if (l === 'default') {
-            continue;
-        }
-        if (l.indexOf(locale) === 0) {
-            locale = l;
-            localeFound = true;
-            break;
-        }
-    }
-    //fallback to default locale
-    if (localeFound === false) {
+    if (i18n[locale] === undefined) {
+        //fallback to default locale
         logError('Locale "' + locale + '" not defined');
         locale = 'en-US';
     }
+
     //get phrases and translate dom
     httpGet(subdir + '/assets/i18n/' + locale + '.json', function(obj) {
         phrases = obj;

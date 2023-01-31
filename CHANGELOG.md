@@ -4,13 +4,28 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
-## myMPD v10.2.1 (not yet released)
+## myMPD v10.2.2 (not yet released)
+
+This is a small bugfix release.
+
+### Changelog
+
+- Feat: add es-AR translation
+
+***
+
+## myMPD v10.2.1 (2023-01-31)
 
 ### Changelog
 
 - Feat: show myMPD uri in About dialog #953
+- Feat: map locale strings #961
 - Upd: traditional chinese translation #957
 - Upd: Mongoose 7.9 #952
+- Upd: add config key to disable http listener #914
+- Fix: some packaging issues #955 #958
+- Fix: script execution from main menu
+- Fix: logging of IPv6 addresses
 
 ***
 
@@ -182,7 +197,7 @@ This is a small bug fix release.
 - Feat: add japanese translation
 - Fix: segmentation fault when clicking on last played list #850
 - Fix: scrobble script - artist_mbids MBID format invalid #853
-- Fix: do not show streamUri input on showAddToPlaylistCurrentSong 
+- Fix: do not show streamUri input on showAddToPlaylistCurrentSong
 
 ***
 
