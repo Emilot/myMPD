@@ -354,7 +354,7 @@ function initGlobalModals() {
     }
 
     document.getElementById('modalAbout').addEventListener('show.bs.modal', function () {
-        sendAPI("MYMPD_API_DATABASE_STATS", {}, parseStats, false);
+        sendAPI("MYMPD_API_STATS", {}, parseStats, false);
         getServerinfo();
     }, false);
 }
@@ -426,8 +426,15 @@ function initNavs() {
 
     document.getElementById('scripts').addEventListener('click', function(event) {
         event.preventDefault();
-        if (event.target.nodeName === 'A') {
-            execScript(getData(event.target, 'href'));
+        const target = event.target.nodeName === 'SPAN' ? event.target.parentNode : event.target;
+        if (target.nodeName === 'A') {
+            // @ts-ignore:
+            target.firstElementChild.textContent = 'start';
+            setTimeout(function() {
+                // @ts-ignore:
+                target.firstElementChild.textContent = 'code';
+            }, 400);
+            execScript(getData(target, 'href'));
         }
     }, false);
 }
