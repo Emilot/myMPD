@@ -1,7 +1,7 @@
 # Maintainer: Juergen Mang <mail@jcgames.de>
 
 pkgname=mympd
-pkgver=10.2.2
+pkgver=10.2.3
 pkgrel=1
 pkgdesc="A standalone and mobile friendly web-based MPD client."
 arch=('i686' 'x86_64' 'armv6h' 'armv7h' 'aarch64')
@@ -19,6 +19,7 @@ build() {
     -S "${srcdir}"
     -DCMAKE_BUILD_TYPE=Release
     -DCMAKE_INSTALL_PREFIX=/usr
+    -DMYMPD_STRIP_BINARY=OFF
     -Wno-dev
   )
 
