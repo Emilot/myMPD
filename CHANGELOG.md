@@ -4,11 +4,27 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
-## myMPD v10.2.3 (not yet released)
+## myMPD v10.2.4 (not yet released)
 
 This is a small bugfix release.
 
 ### Changelog
+
+- Feat: add pl-PL translation
+- Upd: remove zh-Hant translation
+
+***
+
+## myMPD v10.2.3 (2023-02-17)
+
+This is a small bugfix release.
+
+### Changelog
+
+- Fix: remove progressbar transition causing high cpu usage #975
+- Fix: Position hover for progressbar
+- Fix: add missing translation phrase
+- Fix: Preset selection in footer does not work #976
 
 ***
 
