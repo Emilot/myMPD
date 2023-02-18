@@ -256,6 +256,28 @@ function appInit() {
     }
     //init custom elements
     initElements(domCache.body);
+    //add bootstrap native updated event listeners for dropdowns
+    const dropdowns = document.querySelectorAll('[data-bs-toggle="dropdown"]');
+    for (const dropdown of dropdowns) {
+        const positionClass = dropdown.parentNode.classList.contains('dropup') ? 'dropup' : 'dropdown';
+        if (positionClass === 'dropdown') {
+            dropdown.parentNode.addEventListener('updated.bs.dropdown', function(event) {
+                const menu = event.target.querySelector('.dropdown-menu');
+                menu.style.removeProperty('overflow-y');
+                menu.style.removeProperty('overflow-x');
+                menu.style.removeProperty('max-height');
+                const menuHeight = menu.offsetHeight;
+                const offset = getYpos(menu);
+                const bottomPos = window.innerHeight - menuHeight - offset;
+                if (bottomPos < 0) {
+                    menu.style.overflowY = 'auto';
+                    menu.style.overflowX = 'hidden';
+                    const maxHeight = menuHeight + bottomPos - 10;
+                    menu.style.maxHeight = `${maxHeight}px`;
+                }
+            }, false);
+        }
+    }
     //update state on window focus - browser pauses javascript
     window.addEventListener('focus', function() {
         logDebug('Browser tab gots the focus -> update player state');
@@ -390,8 +412,6 @@ function initNavs() {
     domCache.progress.addEventListener('mouseout', function() {
         domCache.progressPos.style.display = 'none';
     }, false);
-
-    domCache.progressBar.style.transition = progressBarTransition;
 
     const navbarMain = document.getElementById('navbar-main');
     navbarMain.addEventListener('click', function(event) {

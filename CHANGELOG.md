@@ -4,6 +4,36 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
+## myMPD v10.2.3 (2023-02-17)
+
+This is a small bugfix release.
+
+### Changelog
+
+- Fix: remove progressbar transition causing high cpu usage #975
+- Fix: Position hover for progressbar
+- Fix: add missing translation phrase
+- Fix: Preset selection in footer does not work #976
+
+***
+
+## myMPD v10.2.2 (2023-02-10)
+
+This is a small bugfix release.
+
+### Changelog
+
+- Feat: add es-AR translation
+- Feat: add documentation for multiroom audio, thanks @tsunulukai
+- Upd: FR, NL, IT and JP translations, thanks @ all translators
+- Upd: remove bootstrap.native patches, use new updated events
+- Upd: improved docker image creation and documentation #968
+- Fix: correct location for the systemd unit #964
+- Fix: popover event in album list
+- Fix: ignore special keys for input key handlers #969
+
+***
+
 ## myMPD v10.2.1 (2023-01-31)
 
 This is a small bugfix release.

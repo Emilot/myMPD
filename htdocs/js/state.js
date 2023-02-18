@@ -71,22 +71,10 @@ function getCounterText() {
  */
 function setCounter() {
     //progressbar in footer
-    const progressPx = currentState.totalTime > 0 ?
-        Math.ceil(domCache.progress.offsetWidth * currentState.elapsedTime / currentState.totalTime) : 0;
-    if (progressPx < domCache.progressBar.offsetWidth - 50 ||
-        progressPx > domCache.progressBar.offsetWidth + 50)
-    {
-        //prevent transition if change is to big
-        domCache.progressBar.style.transition = 'none';
-        elReflow(domCache.progressBar);
-        domCache.progressBar.style.width = progressPx + 'px';
-        elReflow(domCache.progressBar);
-        domCache.progressBar.style.transition = progressBarTransition;
-        elReflow(domCache.progressBar);
-    }
-    else {
-        domCache.progressBar.style.width = progressPx + 'px';
-    }
+    //calc percent with two decimals after comma
+    const prct = currentState.totalTime > 0 ?
+        Math.ceil((100 / currentState.totalTime) * currentState.elapsedTime * 100) / 100 : 0;
+    domCache.progressBar.style.width = `${prct}vw`;
     domCache.progress.style.cursor = currentState.totalTime <= 0 ? 'default' : 'pointer';
 
     //counter
@@ -152,12 +140,7 @@ function parseState(obj) {
     //Set playback buttons
     if (obj.result.state === 'stop') {
         document.getElementById('btnPlay').textContent = 'play_arrow';
-        domCache.progressBar.style.transition = 'none';
-        elReflow(domCache.progressBar);
         domCache.progressBar.style.width = '0';
-        elReflow(domCache.progressBar);
-        domCache.progressBar.style.transition = progressBarTransition;
-        elReflow(domCache.progressBar);
     }
     else if (obj.result.state === 'play') {
         document.getElementById('btnPlay').textContent =

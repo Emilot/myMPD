@@ -4,7 +4,7 @@
 # (c) 2018-2023 Juergen Mang <mail@jcgames.de>
 
 Name:           mympd
-Version:        10.2.1
+Version:        10.2.3
 Release:        0
 License:        GPL-3.0-or-later
 Group:          Productivity/Multimedia/Sound/Players
@@ -51,11 +51,11 @@ make -C release install DESTDIR=%{buildroot}
 %doc README.md
 /usr/bin/mympd
 /usr/bin/mympd-script
-/lib/systemd/system/mympd.service
+/usr/lib/systemd/system/mympd.service
 %{_mandir}/man1/mympd.1.gz
 %{_mandir}/man1/mympd-script.1.gz
 %license LICENSE.md
 
 %changelog
-* Tue Jan 31 2023 Juergen Mang <mail@jcgames.de> 10.2.1-0
+* Fri Feb 17 2023 Juergen Mang <mail@jcgames.de> 10.2.3-0
 - Version from master
