@@ -179,31 +179,36 @@ function initBrowseDatabase() {
         }
     }, false);
 
-    document.getElementById('searchDatabaseAlbumListStr').addEventListener('keyup', function(event) {
-        if (ignoreKeys(event) === true) {
+    document.getElementById('searchDatabaseAlbumListStr').addEventListener('keydown', function(event) {
+        //handle Enter key on keydown for IME composing compatibility
+        if (event.key !== 'Enter') {
             return;
         }
         clearSearchTimer();
         const value = this.value;
-        if (event.key === 'Enter') {
-            if (value !== '') {
-                const op = getSelectValueId('searchDatabaseAlbumListMatch');
-                const crumbEl = document.getElementById('searchDatabaseAlbumListCrumb');
-                crumbEl.appendChild(createSearchCrumb(app.current.filter, op, value));
-                elShow(crumbEl);
-                this.value = '';
-            }
-            else {
-                searchTimer = setTimeout(function() {
-                    searchDatabaseAlbumList(value);
-                }, searchTimerTimeout);
-            }
+        if (value !== '') {
+            const op = getSelectValueId('searchDatabaseAlbumListMatch');
+            const crumbEl = document.getElementById('searchDatabaseAlbumListCrumb');
+            crumbEl.appendChild(createSearchCrumb(app.current.filter, op, value));
+            elShow(crumbEl);
+            this.value = '';
         }
         else {
             searchTimer = setTimeout(function() {
                 searchDatabaseAlbumList(value);
             }, searchTimerTimeout);
         }
+    }, false);
+
+    document.getElementById('searchDatabaseAlbumListStr').addEventListener('keyup', function(event) {
+        if (ignoreKeys(event) === true) {
+            return;
+        }
+        clearSearchTimer();
+        const value = this.value;
+        searchTimer = setTimeout(function() {
+            searchDatabaseAlbumList(value);
+        }, searchTimerTimeout);
     }, false);
 
     document.getElementById('searchDatabaseAlbumListMatch').addEventListener('change', function() {
@@ -217,20 +222,23 @@ function initBrowseDatabase() {
             event.stopPropagation();
             event.target.parentNode.remove();
             searchDatabaseAlbumList('');
+            document.getElementById('searchDatabaseAlbumListStr').updateBtn();
         }
         else if (event.target.nodeName === 'BUTTON') {
             //edit search expression
             event.preventDefault();
             event.stopPropagation();
             selectTag('searchDatabaseAlbumListTags', 'searchDatabaseAlbumListTagsDesc', getData(event.target,'filter-tag'));
-            document.getElementById('searchDatabaseAlbumListStr').value = unescapeMPD(getData(event.target, 'filter-value'));
+            const searchDatabaseAlbumListStrEl = document.getElementById('searchDatabaseAlbumListStr');
+            searchDatabaseAlbumListStrEl.value = unescapeMPD(getData(event.target, 'filter-value'));
             document.getElementById('searchDatabaseAlbumListMatch').value = getData(event.target, 'filter-op');
             event.target.remove();
             app.current.filter = getData(event.target,'filter-tag');
-            searchDatabaseAlbumList(document.getElementById('searchDatabaseAlbumListStr').value);
+            searchDatabaseAlbumList(searchDatabaseAlbumListStrEl.value);
             if (document.getElementById('searchDatabaseAlbumListCrumb').childElementCount === 0) {
                 elHideId('searchDatabaseAlbumListCrumb');
             }
+            searchDatabaseAlbumListStrEl.updateBtn();
         }
     }, false);
 }
