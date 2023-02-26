@@ -11,7 +11,9 @@
  * @returns {boolean} true if key event should be ignored, else false
  */
 function ignoreKeys(event) {
-    if (event === undefined) {
+    if (event === undefined ||
+        event.key === undefined)
+    {
         return true;
     }
     switch (event.key) {
@@ -19,7 +21,6 @@ function ignoreKeys(event) {
             // @ts-ignore
             event.target.blur();
             return true;
-        case 'Enter':
         case 'Backspace':
         case 'Delete':
             // do not ignore some special keys

@@ -83,30 +83,36 @@ function initSearch() {
         }
     }, false);
 
+    document.getElementById('searchStr').addEventListener('keydown', function(event) {
+        //handle Enter key on keydown for IME composing compatibility
+        if (event.key !== 'Enter') {
+            return;
+        }
+        clearSearchTimer();
+        const value = this.value;
+        if (value !== '') {
+            const op = getSelectValueId('searchMatch');
+            const crumbEl = document.getElementById('searchCrumb');
+            crumbEl.appendChild(createSearchCrumb(app.current.filter, op, value));
+            elShow(crumbEl);
+            this.value = '';
+        }
+        else {
+            searchTimer = setTimeout(function() {
+                doSearch(value);
+            }, searchTimerTimeout);
+        }
+    }, false);
+
     document.getElementById('searchStr').addEventListener('keyup', function(event) {
         if (ignoreKeys(event) === true) {
             return;
         }
         clearSearchTimer();
         const value = this.value;
-        if (event.key === 'Enter') {
-            if (value !== '') {
-                const op = getSelectValueId('searchMatch');
-                document.getElementById('searchCrumb').appendChild(createSearchCrumb(app.current.filter, op, value));
-                elShowId('searchCrumb');
-                this.value = '';
-            }
-            else {
-                searchTimer = setTimeout(function() {
-                    doSearch(value);
-                }, searchTimerTimeout);
-            }
-        }
-        else {
-             searchTimer = setTimeout(function() {
-                 doSearch(value);
-             }, searchTimerTimeout);
-         }
+        searchTimer = setTimeout(function() {
+            doSearch(value);
+        }, searchTimerTimeout);
     }, false);
 
     document.getElementById('searchCrumb').addEventListener('click', function(event) {
@@ -116,20 +122,23 @@ function initSearch() {
             event.stopPropagation();
             event.target.parentNode.remove();
             doSearch('');
+            document.getElementById('searchStr').updateBtn();
         }
         else if (event.target.nodeName === 'BUTTON') {
             //edit search expression
             event.preventDefault();
             event.stopPropagation();
-            document.getElementById('searchStr').value = unescapeMPD(getData(event.target, 'filter-value'));
+            const searchStrEl = document.getElementById('searchStr');
+            searchStrEl.value = unescapeMPD(getData(event.target, 'filter-value'));
             selectTag('searchTags', 'searchTagsDesc', getData(event.target, 'filter-tag'));
             document.getElementById('searchMatch').value = getData(event.target, 'filter-op');
             event.target.remove();
             app.current.filter = getData(event.target,'filter-tag');
-            doSearch(document.getElementById('searchStr').value);
+            doSearch(searchStrEl.value);
             if (document.getElementById('searchCrumb').childElementCount === 0) {
                 elHideId('searchCrumb');
             }
+            searchStrEl.updateBtn();
         }
     }, false);
 
