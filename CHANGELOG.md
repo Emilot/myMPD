@@ -4,7 +4,15 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
-## myMPD v10.2.4 (not yet released)
+## myMPD v10.2.5 (not yet released)
+
+This is a small bugfix release.
+
+### Changelog
+
+***
+
+## myMPD v10.2.4 (2023-02-26)
 
 This is a small bugfix release.
 
@@ -12,9 +20,11 @@ This is a small bugfix release.
 
 - Feat: add pl-PL translation
 - Upd: remove zh-Hant translation
+- Upd: IT, zh-Hans translation
 - Fix: JS error when clearing the search box #982
 - Fix: update clear button for inputs on breadcrumb select
-- Fix: Finishing IME composition with Enter key also clears the search box #977
+- Fix: Finishing IME composition with Enter key also clears the search box, thanks @soya-daizu #977
+- Fix: Album view does not work with disabled Albumartist tag #988
 
 ***
 
