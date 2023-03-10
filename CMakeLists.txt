@@ -9,7 +9,7 @@ cmake_policy(SET CMP0003 NEW)
 # myMPD is written in C
 # supported compilers: gcc, clang
 project(mympd
-  VERSION 10.2.4
+  VERSION 10.2.5
   LANGUAGES C
 )
 
@@ -220,6 +220,9 @@ if(MYMPD_EMBEDDED_ASSETS)
   endif()
   if(EXISTS "${PROJECT_BINARY_DIR}/htdocs/assets/i18n/pl-PL.json.gz")
     set(I18N_pl_PL "ON")
+  endif()
+  if(EXISTS "${PROJECT_BINARY_DIR}/htdocs/assets/i18n/ru-RU.json.gz")
+    set(I18N_ru_RU "ON")
   endif()
   if(EXISTS "${PROJECT_BINARY_DIR}/htdocs/assets/i18n/zh-Hans.json.gz")
     set(I18N_zh_Hans "ON")
