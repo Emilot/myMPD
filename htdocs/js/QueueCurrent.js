@@ -85,8 +85,7 @@ function initQueueCurrent() {
             const colName = event.target.getAttribute('data-col');
             if (colName === null ||
                 colName === 'Duration' ||
-                colName.indexOf('sticker') === 0 ||
-                features.featAdvqueue === false)
+                colName.indexOf('sticker') === 0)
             {
                 return;
             }
@@ -98,7 +97,7 @@ function initQueueCurrent() {
         //table body
         const target = getParent(event.target, 'TR');
         if (checkTargetClick(target) === true) {
-            clickQueueSong(getData(target, 'songid'), getData(target, 'uri'));
+            clickQueueSong(getData(target, 'songid'), getData(target, 'uri'), event);
         }
     }, false);
 
@@ -270,7 +269,11 @@ function parseQueue(obj) {
 
     const rowTitle = webuiSettingsDefault.clickQueueSong.validValues[settings.webuiSettings.clickQueueSong];
     updateTable(obj, 'QueueCurrent', function(row, data) {
-        row.setAttribute('draggable', 'true');
+        if (features.featAdvqueue === false ||
+            app.current.sort.tag === 'Priority')
+        {
+            row.setAttribute('draggable', 'true');
+        }
         row.setAttribute('id', 'queueSongId' + data.id);
         row.setAttribute('title', tn(rowTitle));
         setData(row, 'songid', data.id);
@@ -298,7 +301,6 @@ function parseQueue(obj) {
                 setData(row, tag, data[tag]);
             }
         }
-
     }, function(row, data) {
         tableRow(row, data, app.id, colspan, smallWidth);
         if (currentState.currentSongId === data.id) {
@@ -396,6 +398,29 @@ function setPlayingRow(playingRow) {
                 currentState.state === 'pause' ? 'pause' : 'stop';
         }
         playingRow.classList.add('queue-playing');
+    }
+}
+
+/**
+ * Sets the clickable class for current queue table header,
+ * if mpd supports queue sorting (since MPD 0.24)
+ */
+function setQueueCurrentHeaderClickable() {
+    const ths = document.querySelectorAll('#QueueCurrentList > thead > tr > th');
+    for (const th of ths) {
+        const colName = th.getAttribute('data-col');
+        if (colName === null ||
+            colName === 'Duration' ||
+            colName.indexOf('sticker') === 0)
+        {
+            continue;
+        }
+        if (features.featAdvqueue === true) {
+            th.classList.add('clickable');
+        }
+        else {
+            th.classList.remove('clickable');
+        }
     }
 }
 
@@ -653,6 +678,63 @@ function saveQueueCheckError(obj) {
     }
     else {
         uiElements.modalSaveQueue.hide();
+    }
+}
+
+/**
+ * Shows the set song position modal
+ * @param {string} plist the playlist name or the special value "queue" to move the song
+ * @param {number} oldSongPos song pos in queue to move
+ */
+//eslint-disable-next-line no-unused-vars
+function showSetSongPos(plist, oldSongPos) {
+    cleanupModalId('modalSetSongPos');
+    document.getElementById('inputSongPosNew').value = '';
+    document.getElementById('inputSongPosOld').value = oldSongPos;
+    document.getElementById('inputSongPosPlist').value = plist;
+    uiElements.modalSetSongPos.show();
+}
+
+/**
+ * Sets song position in queue or playlist
+ */
+//eslint-disable-next-line no-unused-vars
+function setSongPos() {
+    cleanupModalId('modalSetSongPos');
+    const plist = document.getElementById('inputSongPosPlist').value;
+    const oldSongPos = Number(document.getElementById('inputSongPosOld').value);
+    const newSongPosEl = document.getElementById('inputSongPosNew');
+    if (validateIntRangeEl(newSongPosEl, 1, 99999) === true) {
+        let newSongPos = Number(newSongPosEl.value);
+        if (newSongPos < oldSongPos) {
+            newSongPos--;
+        }
+        if (plist === 'queue') {
+            sendAPI("MYMPD_API_QUEUE_MOVE_SONG", {
+                "from": oldSongPos,
+                "to": newSongPos
+            }, setSongPosCheckError, true);
+        }
+        else {
+            sendAPI("MYMPD_API_PLAYLIST_CONTENT_MOVE_SONG", {
+                "plist": plist,
+                "from": oldSongPos,
+                "to": newSongPos
+            }, setSongPosCheckError, true);
+        }
+    }
+}
+
+/**
+ * Handles the MYMPD_API_QUEUE_MOVE_SONG and  jsonrpc response
+ * @param {object} obj jsonrpc response
+ */
+function setSongPosCheckError(obj) {
+    if (obj.error) {
+        showModalAlert(obj);
+    }
+    else {
+        uiElements.modalSetSongPos.hide();
     }
 }
 

@@ -60,8 +60,12 @@ function parseOutputs(obj) {
             continue;
         }
         const titlePhrase = Object.keys(obj.result.data[i].attributes).length > 0 ? 'Edit attributes' : 'Show attributes';
-        const btn = elCreateNodes('button', {"class": ["btn", "btn-secondary", "d-flex", "justify-content-between"], "id": "btnOutput" + obj.result.data[i].id}, [
-            elCreateText('span', {"class": ["mi", "align-self-center"]}, (obj.result.data[i].plugin === 'httpd' ? 'cast' : 'volume_up')),
+        const icon = settings.webuiSettings.outputLigatures[obj.result.data[i].plugin] !== undefined 
+            ? settings.webuiSettings.outputLigatures[obj.result.data[i].plugin]
+            : settings.webuiSettings.outputLigatures.default;
+        const buttonTitle = tn('Plugin') + ': ' + tn(obj.result.data[i].plugin);
+        const btn = elCreateNodes('button', {"class": ["btn", "btn-secondary", "d-flex", "justify-content-between"], "title": buttonTitle, "id": "btnOutput" + obj.result.data[i].id}, [
+            elCreateText('span', {"class": ["mi", "align-self-center"]}, icon),
             elCreateText('span', {"class": ["mx-2", "align-self-center"]}, obj.result.data[i].name),
             elCreateText('a', {"class": ["mi", "align-self-center"], "data-title-phrase": titlePhrase}, 'settings')
         ]);

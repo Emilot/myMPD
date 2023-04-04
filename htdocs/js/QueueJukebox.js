@@ -30,13 +30,13 @@ function handleQueueJukebox() {
 function initQueueJukebox() {
     document.getElementById('QueueJukeboxList').addEventListener('click', function(event) {
         if (event.target.nodeName === 'A') {
-            showPopover(event);
+            showContextMenu(event);
             return;
         }
         const target = getParent(event.target, 'TR');
         if (checkTargetClick(target) === true) {
             if (settings.partition.jukeboxMode === 'song') {
-                clickSong(getData(target, 'uri'));
+                clickSong(getData(target, 'uri'), event);
             }
             else if (settings.partition.jukeboxMode === 'album') {
                 clickAlbumPlay(getData(target, 'AlbumArtist'), getData(target, 'Album'));

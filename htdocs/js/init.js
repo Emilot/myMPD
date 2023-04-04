@@ -235,6 +235,7 @@ function appInit() {
     initLocalPlayback();
     initSession();
     initNotifications();
+    initContextMenuOffcanvas();
     //init drag and drop
     for (const table of ['QueueCurrentList', 'BrowsePlaylistDetailList']) {
         dragAndDropTable(table);
@@ -316,7 +317,7 @@ function appInit() {
             {
                 return;
             }
-            showPopover(event);
+            showContextMenu(event);
         }, false);
 
         tbody.addEventListener('contextmenu', function(event) {
@@ -326,7 +327,7 @@ function appInit() {
             {
                 return;
             }
-            showPopover(event);
+            showContextMenu(event);
         }, false);
     }
 
@@ -432,7 +433,7 @@ function initNavs() {
         {
             return;
         }
-        showPopover(event);
+        showContextMenu(event);
     }, false);
     navbarMain.addEventListener('long-press', function(event) {
         if (event.target.getAttribute('data-popover') === null &&
@@ -440,7 +441,7 @@ function initNavs() {
         {
             return;
         }
-        showPopover(event);
+        showContextMenu(event);
     }, false);
 
     document.getElementById('scripts').addEventListener('click', function(event) {

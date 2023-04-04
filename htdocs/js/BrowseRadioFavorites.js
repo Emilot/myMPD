@@ -33,10 +33,10 @@ function initBrowseRadioFavorites() {
         }
         if (target.classList.contains('card-body')) {
             const uri = getData(event.target.parentNode, 'uri');
-            clickRadioFavorites(uri);
+            clickRadioFavorites(uri, event);
         }
         else if (target.classList.contains('card-footer')) {
-            showPopover(event);
+            showContextMenu(event);
         }
     }, false);
 
@@ -46,7 +46,7 @@ function initBrowseRadioFavorites() {
         {
             return;
         }
-        showPopover(event);
+        showContextMenu(event);
     }, false);
 
     document.getElementById('BrowseRadioFavoritesList').addEventListener('long-press', function(event) {
@@ -55,7 +55,7 @@ function initBrowseRadioFavorites() {
         {
             return;
         }
-        showPopover(event);
+        showContextMenu(event);
     }, false);
 
     document.getElementById('BrowseRadioFavoritesSearchStr').addEventListener('keyup', function(event) {
@@ -404,7 +404,7 @@ function parseRadioFavoritesList(obj) {
             ])
         ]);
         const image = obj.result.data[i].Image === ''
-            ? '/assets/coverimage-stream.svg'
+            ? '/assets/coverimage-stream'
             : obj.result.data[i].Image;
         setData(card, 'image', image);
         setData(card, 'uri', obj.result.data[i].filename);

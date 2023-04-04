@@ -71,7 +71,7 @@ function initBrowseRadioRadiobrowser() {
                 });
             }
             else {
-                clickRadiobrowser(uri, getData(target, 'RADIOBROWSERUUID'));
+                clickRadiobrowser(uri, getData(target, 'RADIOBROWSERUUID'), event);
             }
         }
     }, false);
@@ -135,7 +135,7 @@ function parseRadiobrowserDetails(obj) {
     }
     else {
         document.getElementById('RadiobrowserDetailsImage').style.backgroundImage =
-            'url("' + subdir + '/assets/coverimage-notavailable.svg")';
+            'url("' + subdir + '/assets/coverimage-notavailable")';
     }
     document.getElementById('RadiobrowserDetailsTitle').textContent = result.name;
     //map fields to webradiodb fields

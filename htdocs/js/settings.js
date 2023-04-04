@@ -100,7 +100,9 @@ function parseSettings(obj) {
 
     //set webuiSettings defaults
     for (const key in webuiSettingsDefault) {
-        if (settings.webuiSettings[key] === undefined) {
+        if (settings.webuiSettings[key] === undefined &&
+            webuiSettingsDefault[key].defaultValue !== undefined)
+        {
             settings.webuiSettings[key] = webuiSettingsDefault[key].defaultValue;
         }
     }
@@ -204,6 +206,7 @@ function parseSettings(obj) {
 
     document.documentElement.style.setProperty('--mympd-thumbnail-size', settings.webuiSettings.uiThumbnailSize + "px");
     document.documentElement.style.setProperty('--mympd-highlightcolor', settings.partition.highlightColor);
+    document.documentElement.style.setProperty('--mympd-highlightcolor-contrast', settings.partition.highlightColorContrast);
 
     //default limit for all cards
     let limit = settings.webuiSettings.uiMaxElementsPerPage;
@@ -322,6 +325,7 @@ function populateSettingsFrm() {
 
     //partition specific settings
     document.getElementById('inputHighlightColor').value = settings.partition.highlightColor;
+    document.getElementById('inputHighlightColorContrast').value = settings.partition.highlightColorContrast;
     document.getElementById('inputMpdStreamPort').value = settings.partition.mpdStreamPort;
     document.getElementById('inputStreamUri').value = settings.partition.streamUri;
 
@@ -638,6 +642,7 @@ function applyFeatures() {
             el.style.display = displayValue;
         }
     }
+    setQueueCurrentHeaderClickable();
 }
 
 /**
@@ -871,6 +876,9 @@ function saveSettings(closeModal) {
                     webuiSettings[key] = webuiSettingsDefault[key].contentType === 'integer' ? Number(el.value) : el.value;
                 }
             }
+            else if (webuiSettingsDefault[key].defaultValue !== undefined) {
+                webuiSettings[key] = webuiSettingsDefault[key].defaultValue;
+            }
         }
 
         webuiSettings.enableLyrics = getBtnChkValueId('btnEnableLyrics');
@@ -956,6 +964,7 @@ function savePartitionSettings(closeModal) {
     if (formOK === true) {
         const params = {
             "highlightColor": document.getElementById('inputHighlightColor').value,
+            "highlightColorContrast": document.getElementById('inputHighlightColorContrast').value,
             "mpdStreamPort": Number(mpdStreamPortEl.value),
             "streamUri": streamUriEl.value
         };

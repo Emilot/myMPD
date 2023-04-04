@@ -101,7 +101,7 @@ function initBrowseDatabase() {
             );
         }
         else if (target.classList.contains('card-footer')){
-            showPopover(event);
+            showContextMenu(event);
         }
     }, false);
 
@@ -111,7 +111,7 @@ function initBrowseDatabase() {
         {
             return;
         }
-        showPopover(event);
+        showContextMenu(event);
     }, false);
 
     document.getElementById('BrowseDatabaseAlbumListList').addEventListener('long-press', function(event) {
@@ -120,7 +120,7 @@ function initBrowseDatabase() {
         {
             return;
         }
-        showPopover(event);
+        showContextMenu(event);
     }, false);
 
     document.getElementById('BrowseDatabaseAlbumDetailList').addEventListener('click', function(event) {
@@ -131,7 +131,7 @@ function initBrowseDatabase() {
         }
         const target = getParent(event.target, 'TR');
         if (checkTargetClick(target) === true) {
-            clickSong(getData(target, 'uri'));
+            clickSong(getData(target, 'uri'), event);
         }
     }, false);
 

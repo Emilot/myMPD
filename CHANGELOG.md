@@ -4,13 +4,27 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
-## myMPD v10.2.7 (not yet released)
+## myMPD v10.3.0 (not yet released)
 
-This is a small bugfix release.
-
-- Fix: add btn-secondary class in ligature select modal #1007
+This release reworks the context menus. myMPD now uses the offcanvas component for context menus. This is better accessible on mobile devices with small screens and removes some workarounds for the popovers.
 
 ### Changelog
+
+- Feat: custom placeholder images #980
+- Feat: fail gracefully if API request fails or is redirected #984
+- Feat: improve queue sort handling #983
+- Feat: use offcanvas instead of popover for context menus #974
+- Feat: better compression of webfont #991
+- Feat: add option to change song position in queue/playlist without drag and drop support
+- Feat: configurable highlight contrast color
+- Feat: reverse order for last-modified #1008
+- Upd: bootstrap.native 5.0.5
+- Upd: Bootstrap 5.3.0-alpha2
+- Upd: libmympdclient 1.0.18
+- Upd: sds
+- Upd: long-press-event 2.4.6 #1009
+- Upd: use asserts in release build
+- Fix: add btn-secondary class in ligature select modal #1007
 
 ***
 
@@ -53,7 +67,7 @@ This is a small bugfix release.
 - Fix: JS error when clearing the search box #982
 - Fix: update clear button for inputs on breadcrumb select
 - Fix: finishing IME composition with Enter key also clears the search box, thanks @soya-daizu #977
-- Fix: album view does not work with disabled Albumartist tag #988
+- Fix: album view does not work with disabled AlbumArtist tag #988
 
 ***
 

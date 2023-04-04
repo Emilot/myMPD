@@ -222,7 +222,7 @@ app.cards = {
                 "limit": 100,
                 "filter": "any",
                 "sort": {
-                    "tag": "-",
+                    "tag": "Priority",
                     "desc": false
                 },
                 "tag": "-",
@@ -513,7 +513,8 @@ const webuiSettingsDefault = {
             "insertAfterCurrent": "Insert after current playing song",
             "replace": "Replace queue",
             "replacePlay": "Replace queue and play",
-            "view": "Song details"
+            "view": "Song details",
+            "context": "Context menu"
         },
         "inputType": "select",
         "title": "Click song",
@@ -528,7 +529,8 @@ const webuiSettingsDefault = {
             "replace": "Replace queue",
             "replacePlay": "Replace queue and play",
             "add": "Add to favorites",
-            "view": "Webradio details"
+            "view": "Webradio details",
+            "context": "Context menu"
         },
         "inputType": "select",
         "title": "Click webradio",
@@ -542,7 +544,8 @@ const webuiSettingsDefault = {
             "insertAfterCurrent": "Insert after current playing song",
             "replace": "Replace queue",
             "replacePlay": "Replace queue and play",
-            "edit": "Edit webradio favorite"
+            "edit": "Edit webradio favorite",
+            "context": "Context menu"
         },
         "inputType": "select",
         "title": "Click webradio favorite",
@@ -553,6 +556,7 @@ const webuiSettingsDefault = {
         "validValues": {
             "play": "Play",
             "view": "Song details",
+            "context": "Context menu"
         },
         "inputType": "select",
         "title": "Click song in queue",
@@ -566,7 +570,8 @@ const webuiSettingsDefault = {
             "insertAfterCurrent": "Insert after current playing song",
             "replace": "Replace queue",
             "replacePlay": "Replace queue and play",
-            "view": "View playlist"
+            "view": "View playlist",
+            "context": "Context menu"
         },
         "inputType": "select",
         "title": "Click playlist",
@@ -580,7 +585,8 @@ const webuiSettingsDefault = {
             "insertAfterCurrent": "Insert after current playing song",
             "replace": "Replace queue",
             "replacePlay": "Replace queue and play",
-            "view": "View playlist"
+            "view": "View playlist",
+            "context": "Context menu"
         },
         "inputType": "select",
         "title": "Click filesystem playlist",
@@ -844,6 +850,18 @@ const webuiSettingsDefault = {
         "inputType": "checkbox",
         "title": "Show MusicBrainz links",
         "form": "cloudSettingsFrm"
+    },
+    "outputLigatures": {
+        "defaultValue": {
+            "default": "speaker",
+            "fifo": "read_more",
+            "httpd": "stream",
+            "null": "check_box_outline_blank",
+            "pipe": "terminal",
+            "recorder": "voicemail",
+            "shout": "cast",
+            "snapcast": "hub"
+        }
     }
 };
 
@@ -894,7 +912,7 @@ const keymap = {
         "O": {"order": 207, "cmd": "openModal", "options": ["modalMounts"], "desc": "Open mounts", "feature": "featMounts"},
         "P": {"order": 207, "cmd": "openModal", "options": ["modalPartitions"], "desc": "Open partitions", "feature": "featPartitions"},
         "Q": {"order": 203, "cmd": "openModal", "options": ["modalQueueSettings"], "desc": "Open queue settings"},
-        "S": {"order": 207, "cmd": "openModal", "options": ["modalScripts"], "desc": "Open scripts", "feature": "featScripting"},
+        "S": {"order": 207, "cmd": "showListScriptModal", "options": [], "desc": "Open scripts", "feature": "featScripting"},
         "T": {"order": 204, "cmd": "openModal", "options": ["modalSettings"], "desc": "Open settings"},
         "?": {"order": 207, "cmd": "openModal", "options": ["modalAbout"], "desc": "Open about"},
     "navigation": {"order": 300, "desc": "Navigation"},
