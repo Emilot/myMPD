@@ -33,7 +33,7 @@ function showContextMenu(event) {
         target = target.parentNode;
     }
     
-    const contextMenuType = target.getAttribute('data-popover');
+    const contextMenuType = target.getAttribute('data-contextmenu');
     logDebug('Create new context menu of type ' + contextMenuType);
     switch (contextMenuType) {
         case 'NavbarPlayback':
@@ -57,6 +57,7 @@ function showContextMenu(event) {
  * @param {EventTarget} target event target
  * @param {HTMLElement} contextMenuTitle title element
  * @param {HTMLElement} contextMenuBody element to append the menu item
+ * @returns {void}
  */
 function createMenuColumns(target, contextMenuTitle, contextMenuBody) {
     const menu = elCreateEmpty('form', {});
@@ -82,6 +83,7 @@ function createMenuColumns(target, contextMenuTitle, contextMenuBody) {
 /**
  * Adds a divider to the context menu
  * @param {HTMLElement} contextMenuBody element to append the divider
+ * @returns {void}
  */
 function addDivider(contextMenuBody) {
     if (contextMenuBody.lastChild &&
@@ -98,6 +100,7 @@ function addDivider(contextMenuBody) {
  * @param {HTMLElement} contextMenuBody element to append the menu item
  * @param {object} cmd the command
  * @param {string} text menu text, will be translated
+ * @returns {void}
  */
 function addMenuItem(contextMenuBody, cmd, text) {
     const a = elCreateTextTn('a', {"class": ["dropdown-item"], "href": "#"}, text);
@@ -109,9 +112,10 @@ function addMenuItem(contextMenuBody, cmd, text) {
  * Callback function to create the navbar context menu body
  * @param {EventTarget} target triggering element
  * @param {HTMLElement} popoverBody element to append the menu items
+ * @returns {void}
  */
 function addMenuItemsNavbarActions(target, popoverBody) {
-    const type = target.getAttribute('data-popover');
+    const type = target.getAttribute('data-contextmenu');
     switch(type) {
         case 'NavbarPlayback':
             addMenuItem(popoverBody, {"cmd": "openModal", "options": ["modalQueueSettings"]}, 'Playback settings');
@@ -145,6 +149,7 @@ function addMenuItemsNavbarActions(target, popoverBody) {
  * @param {EventTarget} target triggering element
  * @param {HTMLElement} contextMenuTitle element to set the menu header
  * @param {HTMLElement} contextMenuBody element to append the menu items
+ * @returns {void}
  */
 function addMenuItemsDiscActions(target, contextMenuTitle, contextMenuBody) {
     const dataNode = target.parentNode.parentNode;
@@ -167,6 +172,7 @@ function addMenuItemsDiscActions(target, contextMenuTitle, contextMenuBody) {
 /**
  * Appends single actions for the queue actions context menu
  * @param {HTMLElement} contextMenuBody element to append the menu items
+ * @returns {void}
  */
 function addMenuItemsSingleActions(contextMenuBody) {
     if (settings.partition.single === '0') {
@@ -191,11 +197,12 @@ function addMenuItemsSingleActions(contextMenuBody) {
 
 /**
  * Appends album actions to the context menu
- * @param {HTMLElement} dataNode element with the album data
+ * @param {HTMLElement | EventTarget} dataNode element with the album data
  * @param {HTMLElement} contextMenuTitle element to set the menu header
  * @param {HTMLElement} contextMenuBody element to append the menu items
  * @param {object} [albumArtist] array of album artist names
  * @param {string} [album] album name
+ * @returns {void}
  */
 function addMenuItemsAlbumActions(dataNode, contextMenuTitle, contextMenuBody, albumArtist, album) {
     if (dataNode !== null) {
@@ -228,7 +235,9 @@ function addMenuItemsAlbumActions(dataNode, contextMenuTitle, contextMenuBody, a
         if (tag === tagAlbumArtist) {
             addMenuItem(contextMenuBody, {"cmd": "gotoAlbumList", "options": [tagAlbumArtist, albumArtist]}, 'Show all albums from artist');
         }
-        else if (dataNode !== null && albumFilters.includes(tag)) {
+        else if (dataNode !== null &&
+                 albumFilters.includes(tag))
+        {
             const value = getData(dataNode, tag);
             if (value !== undefined) {
                 addMenuItem(contextMenuBody, {"cmd": "gotoAlbumList", "options": [tag, value]}, 'Show all albums from ' + tag);
@@ -250,6 +259,7 @@ function addMenuItemsAlbumActions(dataNode, contextMenuTitle, contextMenuBody, a
  * @param {string} uri song or stream uri
  * @param {string} type type of the element: song, stream, ...
  * @param {string} name name of the element
+ * @returns {void}
  */
 function addMenuItemsSongActions(dataNode, contextMenuBody, uri, type, name) {
     if (app.id !== 'QueueCurrent') {
@@ -283,9 +293,7 @@ function addMenuItemsSongActions(dataNode, contextMenuBody, uri, type, name) {
             addMenuItem(contextMenuBody, {"cmd": "addSongToHome", "options": [uri, type, name]}, 'Add to homescreen');
         }
     }
-    if (app.id === 'BrowseRadioRadiobrowser' &&
-        dataNode !== null)
-    {
+    if (app.id === 'BrowseRadioRadiobrowser') {
         const uuid = getData(dataNode, 'RADIOBROWSERUUID');
         addDivider(contextMenuBody);
         addMenuItem(contextMenuBody, {"cmd": "showRadiobrowserDetails", "options": [uuid]}, 'Webradio details');
@@ -301,9 +309,7 @@ function addMenuItemsSongActions(dataNode, contextMenuBody, uri, type, name) {
             "Bitrate": getData(dataNode, 'bitrate'),
         }]}, 'Add to favorites');
     }
-    if (app.id === 'BrowseRadioWebradiodb' &&
-        dataNode !== null)
-    {
+    else if (app.id === 'BrowseRadioWebradiodb') {
         addDivider(contextMenuBody);
         addMenuItem(contextMenuBody, {"cmd": "showWebradiodbDetails", "options": [uri]}, 'Webradio details');
         addMenuItem(contextMenuBody, {"cmd": "showEditRadioFavorite", "options": [{
@@ -319,7 +325,7 @@ function addMenuItemsSongActions(dataNode, contextMenuBody, uri, type, name) {
             "Description": getData(dataNode, 'description')
         }]}, 'Add to favorites');
     }
-    if (app.id === 'QueueCurrent' &&
+    else if (app.id === 'QueueCurrent' &&
         type === 'webradio')
     {
         addDivider(contextMenuBody);
@@ -332,6 +338,7 @@ function addMenuItemsSongActions(dataNode, contextMenuBody, uri, type, name) {
  * Appends search actions to the context menu
  * @param {HTMLElement} contextMenuBody element to append the menu items
  * @param {string} expression search expression
+ * @returns {void}
  */
 function addMenuItemsSearchActions(contextMenuBody, expression) {
     addMenuItem(contextMenuBody, {"cmd": "appendQueue", "options": ["search", expression]}, 'Append to queue');
@@ -355,6 +362,7 @@ function addMenuItemsSearchActions(contextMenuBody, expression) {
  * Appends directory actions to the context menu
  * @param {HTMLElement} contextMenuBody element to append the menu items
  * @param {string} baseuri directory
+ * @returns {void}
  */
 function addMenuItemsDirectoryActions(contextMenuBody, baseuri) {
     //songs must be arranged in one album per folder
@@ -391,6 +399,7 @@ function addMenuItemsDirectoryActions(contextMenuBody, baseuri) {
  * @param {HTMLElement} target element with the data
  * @param {HTMLElement} contextMenuTitle element for the menu title
  * @param {HTMLElement} contextMenuBody element to append the menu items
+ * @returns {void}
  */
 function addMenuItemsWebradioFavoritesActions(target, contextMenuTitle, contextMenuBody) {
     const type = getData(target, 'type');
@@ -407,6 +416,7 @@ function addMenuItemsWebradioFavoritesActions(target, contextMenuTitle, contextM
  * Appends actions for webradio favorites home icon to the context menu
  * @param {HTMLElement} contextMenuBody element to append the menu items
  * @param {string} uri webradio favorite uri
+ * @returns {void}
  */
 function addMenuItemsWebradioFavoritesHomeActions(contextMenuBody, uri) {
     addDivider(contextMenuBody);
@@ -420,6 +430,7 @@ function addMenuItemsWebradioFavoritesHomeActions(contextMenuBody, uri) {
  * @param {string} type playlist type: plist, smartpls
  * @param {string} uri playlist uri
  * @param {string} name playlist name
+ * @returns {void}
  */
 function addMenuItemsPlaylistActions(dataNode, contextMenuBody, type, uri, name) {
     addMenuItem(contextMenuBody, {"cmd": "appendQueue", "options": [type, uri]}, 'Append to queue');
@@ -434,8 +445,7 @@ function addMenuItemsPlaylistActions(dataNode, contextMenuBody, type, uri, name)
             addDivider(contextMenuBody);
             if (app.id === 'BrowseRadioFavorites') {
                 let image = getData(dataNode, 'image');
-                if (isHttpUri(image) === false)
-                {
+                if (isHttpUri(image) === false) {
                     image = basename(image, false);
                 }
                 addMenuItem(contextMenuBody, {"cmd": "addRadioFavoriteToHome", "options": [uri, type, name, image]}, 'Add to homescreen');
@@ -693,13 +703,13 @@ function createMenuHome(target, contextMenuTitle, contextMenuBody) {
             break;
         case 'song':
         case 'stream':
-            addMenuItemsSongActions(contextMenuBody, null, href.options[1], type, href.options[1]);
+            addMenuItemsSongActions(null, contextMenuBody, href.options[1], type, href.options[1]);
             break;
         case 'search':
             addMenuItemsSearchActions(contextMenuBody, href.options[1]);
             break;
         case 'album':
-            addMenuItemsAlbumActions(contextMenuBody, null, href.options[1], href.options[2]);
+            addMenuItemsAlbumActions(null, null, contextMenuBody, href.options[1], href.options[2]);
             break;
         case 'view':
         case 'externalLink':

@@ -8,6 +8,10 @@ https://github.com/jcorporation/myMPD/
 
 This release reworks the context menus. myMPD now uses the offcanvas component for context menus. This is better accessible on mobile devices with small screens and removes some workarounds for the popovers.
 
+### Note
+
+The sort order for the Last-Modified tag is reversed. Newer songs are now displayed first.
+
 ### Changelog
 
 - Feat: custom placeholder images #980
@@ -19,12 +23,15 @@ This release reworks the context menus. myMPD now uses the offcanvas component f
 - Feat: configurable highlight contrast color
 - Feat: reverse order for last-modified #1008
 - Upd: bootstrap.native 5.0.5
-- Upd: Bootstrap 5.3.0-alpha2
+- Upd: Bootstrap 5.3.0-alpha3
 - Upd: libmympdclient 1.0.18
 - Upd: sds
 - Upd: long-press-event 2.4.6 #1009
 - Upd: use asserts in release build
+- Upd: translation enhancements
+- Upd: jsdoc improvements
 - Fix: add btn-secondary class in ligature select modal #1007
+- Fix: Volume dropup is not displayed if clicked on button text #1017
 
 ***
 

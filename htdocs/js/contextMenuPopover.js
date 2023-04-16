@@ -9,6 +9,7 @@
  * Shows the context menu popover
  * @param {HTMLElement} target calculated target
  * @param {string} contextMenuType type of the context menu
+ * @returns {void}
  */
 function showPopover(target, contextMenuType) {
     hidePopover(target);
@@ -37,6 +38,7 @@ function showPopover(target, contextMenuType) {
 /**
  * Hides all popovers
  * @param {EventTarget} [thisEl] triggering element
+ * @returns {void}
  */
 function hidePopover(thisEl) {
     const popoverEls = document.querySelectorAll('[aria-describedby]');
@@ -55,44 +57,6 @@ function hidePopover(thisEl) {
             popover.remove();
         }
     }
-}
-
-/**
- * Adds the updated event to the popover
- * @param {EventTarget} target event target
- * @returns {void}
- */
-function addPopoverEvent(target) {
-    target.parentNode.addEventListener('updated.bs.popover', function(ev) {
-        const tipId = ev.target.getAttribute('aria-describedby');
-        const tip = document.querySelector(tipId);
-        tip.style.removeProperty('overflow-y');
-        tip.style.removeProperty('overflow-x');
-        tip.style.removeProperty('max-height');
-        const tipHeight = tip.offsetHeight;
-        let offset = getYpos(tip);
-        const bottomPos = window.innerHeight - tipHeight - offset;
-        const scrollHeight = 0 - window.scrollY;
-        if (bottomPos < scrollHeight) {
-            const newTop = offset + bottomPos;
-            tip.style.top = `${newTop}px`;
-            const arrowTop = getYpos(ev.target) - newTop;
-            tip.querySelector('.popover-arrow').style.top = `${arrowTop}px`;
-        }
-        offset = getYpos(tip);
-        // check if tooltip/popover overflows window top
-        if (offset < scrollHeight) {
-            const arrowTop = getYpos(ev.target) - scrollHeight;
-            tip.querySelector('.popover-arrow').style.top = `${arrowTop}px`;
-            tip.style.top = `${scrollHeight}px`;
-        }
-        // check if tooltip/popover is higher as the window
-        if (tipHeight > window.innerHeight) {
-            tip.style.overflowY = 'auto';
-            tip.style.overflowX = 'hidden';
-            tip.style.maxHeight = '100vh';
-        }
-    });
 }
 
 /**
@@ -129,10 +93,11 @@ function createPopoverBody(template) {
  */
 function createPopoverInit(target, title, bodyTemplate) {
     const template = elCreateNodes('div', {"class": ["popover"]}, [
-                   elCreateEmpty('div', {"class": ["popover-arrow"]}),
-                   elCreateEmpty('h3', {"class": ["popover-header"]}),
-                   createPopoverBody(bodyTemplate)
-               ]);
+            elCreateEmpty('div', {"class": ["popover-arrow"]}),
+            elCreateEmpty('h3', {"class": ["popover-header"]}),
+            createPopoverBody(bodyTemplate)
+        ]
+    );
     const options = {
         trigger: 'manual',
         delay: 0,
@@ -141,7 +106,7 @@ function createPopoverInit(target, title, bodyTemplate) {
         template: template, content: document.createTextNode('dummy')
     };
 
-    let popoverType = target.getAttribute('data-popover');
+    let popoverType = target.getAttribute('data-contextmenu');
     if (popoverType === null) {
         popoverType = target.getAttribute('data-col');
     }
@@ -162,6 +127,7 @@ function createPopoverInit(target, title, bodyTemplate) {
 /**
  * Creates the click handler for the popover menu
  * @param {HTMLElement} el container of the menu items
+ * @returns {void}
  */
 function createPopoverClickHandler(el) {
     el.addEventListener('click', function(eventClick) {
@@ -193,7 +159,6 @@ function createPopoverSimple(target, title, contentCallback) {
         contentCallback(target, popoverBody);
         createPopoverClickHandler(popoverBody);
     }, false);
-    addPopoverEvent(target);
     return popoverInit;
 }
 
@@ -237,6 +202,5 @@ function createPopoverTabs(target, tab1Callback, tab2Callback) {
             }
         }
     }, false);
-    addPopoverEvent(target);
     return popoverInit;
 }
