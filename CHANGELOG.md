@@ -4,7 +4,15 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
-## myMPD v10.3.0 (not yet released)
+## myMPD v10.3.1 (not yet released)
+
+This is a small bugfix release.
+
+### Changelog
+
+***
+
+## myMPD v10.3.0 (2023-04-17)
 
 This release reworks the context menus. myMPD now uses the offcanvas component for context menus. This is better accessible on mobile devices with small screens and removes some workarounds for the popovers.
 
@@ -22,7 +30,7 @@ The sort order for the Last-Modified tag is reversed. Newer songs are now displa
 - Feat: add option to change song position in queue/playlist without drag and drop support
 - Feat: configurable highlight contrast color
 - Feat: reverse order for last-modified #1008
-- Upd: bootstrap.native 5.0.5
+- Upd: bootstrap.native 5.0.6
 - Upd: Bootstrap 5.3.0-alpha3
 - Upd: libmympdclient 1.0.18
 - Upd: sds
