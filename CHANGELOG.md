@@ -4,7 +4,19 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
-## myMPD v10.3.1 (not yet released)
+## myMPD v10.3.2 (2023-05-08)
+
+This is a small bugfix release.
+
+### Changelog
+
+- Upd: ko-KR, es-AR translation
+- Upd: use update_jukebox events
+- Fix: Jukebox actions
+
+***
+
+## myMPD v10.3.1 (2023-04-24)
 
 This is a small bugfix release. It fixes a memory corruption error, if myMPD was compiled with NDEBUG defined.
 
