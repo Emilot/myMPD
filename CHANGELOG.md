@@ -4,6 +4,30 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
+## myMPD v10.3.2 (2023-05-08)
+
+This is a small bugfix release.
+
+### Changelog
+
+- Upd: ko-KR, es-AR translation
+- Upd: use update_jukebox events
+- Fix: Jukebox actions
+
+***
+
+## myMPD v10.3.1 (2023-04-24)
+
+This is a small bugfix release. It fixes a memory corruption error, if myMPD was compiled with NDEBUG defined.
+
+### Changelog
+
+- Upd: zh-Hans translation
+- Fix: handling of NDEBUG #1018
+- Fix: remove obsolete data attributes #1019
+
+***
+
 ## myMPD v10.3.0 (2023-04-17)
 
 This release reworks the context menus. myMPD now uses the offcanvas component for context menus. This is better accessible on mobile devices with small screens and removes some workarounds for the popovers.

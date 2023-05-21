@@ -9,7 +9,7 @@ cmake_policy(SET CMP0003 NEW)
 # myMPD is written in C
 # supported compilers: gcc, clang
 project(mympd
-  VERSION 10.3.0
+  VERSION 10.3.2
   LANGUAGES C
 )
 
@@ -319,8 +319,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
   add_compile_options(
     "-fPIE"
     "-O2"
-    # leave asserts in place
-    #"-DNDEBUG"
   )
   if(NOT MYMPD_STRIP_BINARY)
     message("Generating binary with debug symbols")
