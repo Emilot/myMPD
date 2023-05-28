@@ -4,6 +4,17 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
+## myMPD v10.3.3 (not yet released)
+
+This is a small bugfix release.
+
+### Changelog
+
+- Fix: improve javascript error logging
+- Fix: drag&drop on same element #1026
+
+***
+
 ## myMPD v10.3.2 (2023-05-08)
 
 This is a small bugfix release.
@@ -133,8 +144,6 @@ This is a small bugfix release.
 ***
 
 ## myMPD v10.2.1 (2023-01-31)
-
-This is a small bugfix release.
 
 ### Changelog
 
