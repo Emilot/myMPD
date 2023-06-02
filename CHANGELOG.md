@@ -4,14 +4,17 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
-## myMPD v10.3.3 (not yet released)
+## myMPD v10.3.3 (2023-06-02)
 
 This is a small bugfix release.
 
 ### Changelog
 
+- Upd: wrap footer text in cards #1030
 - Fix: improve javascript error logging
 - Fix: drag&drop on same element #1026
+- Fix: js error on disabled MUSICBRAINZ_ALBUMID tag #1025
+- Fix: Add Pos column to playlist detail view #1027
 
 ***
 
