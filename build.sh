@@ -53,6 +53,7 @@ CLANG_TIDY_CHECKS="$CLANG_TIDY_CHECKS,-readability-identifier-length"
 CLANG_TIDY_CHECKS="$CLANG_TIDY_CHECKS,-readability-function-cognitive-complexity,-google-readability-function-size,-readability-function-size"
 CLANG_TIDY_CHECKS="$CLANG_TIDY_CHECKS,-readability-magic-numbers"
 CLANG_TIDY_CHECKS="$CLANG_TIDY_CHECKS,-readability-non-const-parameter"
+CLANG_TIDY_CHECKS="$CLANG_TIDY_CHECKS,-google-readability-todo"
 
 #save script path and change to it
 STARTPATH=$(dirname "$(realpath "$0")")
@@ -393,9 +394,11 @@ builddebug() {
 
 buildtest() {
   echo "Compiling and running unit tests"
-  cmake -B test/build -S test -DCMAKE_BUILD_TYPE=Debug
-  make -C test/build VERBOSE=1
-  ./test/build/test
+  cmake -B debug -DCMAKE_INSTALL_PREFIX:PATH=/usr -DCMAKE_BUILD_TYPE=Debug \
+    -DMYMPD_ENABLE_LIBASAN=ON -DMYMPD_BUILD_TESTING=ON \
+    .
+  make -C debug
+  make -C debug test
 }
 
 cleanup() {
@@ -1458,7 +1461,8 @@ case "$ACTION" in
     echo "                    serves assets from htdocs"
     echo "  memcheck:         builds debug files in directory debug"
     echo "                    linked with libasan3 and serves assets from htdocs"
-    echo "  test:             builds and runs the unit tests in test/build"
+    echo "  test:             builds and runs the unit tests in directory debug"
+    echo "                    linked with libasan3"
     echo "  installdeps:      installs build and runtime dependencies"
     echo "  createassets:     creates the minfied and compressed dist files"
     echo "                    following environment variables are respected"

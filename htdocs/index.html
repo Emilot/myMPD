@@ -64,24 +64,24 @@
       <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body">
-      <a class="dropdown-item py-2" href="#" data-href='{"cmd": "showAddToPlaylist", "options": ["STREAM"]}'><span class="mi me-2">playlist_add</span><span data-phrase="Add stream"></span></a>
+      <a class="dropdown-item py-2" data-title-phrase="Shortcut: A" href="#" data-href='{"cmd": "showAddToPlaylist", "options": ["STREAM"]}'><span class="mi me-2">playlist_add</span><span data-phrase="Add stream"></span></a>
       <div class="dropdown-divider"></div>
-      <a class="dropdown-item py-2 alwaysEnabled" href="#modalConnection" data-bs-toggle="modal"><span class="mi me-2">settings_ethernet</span><span data-phrase="MPD connection"></span></a>
-      <a class="dropdown-item py-2" data-bs-toggle="modal" href="#modalSettings"><span class="mi me-2">settings</span><span data-phrase="Settings"></span></a>
-      <a class="dropdown-item py-2" data-bs-toggle="modal" href="#modalCollybia"><span class="mi me-2">settings</span><span data-phrase="Audio Settings"></span></a>
-      <a class="dropdown-item py-2 featScripting" href="#" data-href='{"cmd": "showListScriptModal", "options": []}'><span class="mi me-2">code</span><span data-phrase="Scripts"></span></a>
-      <a class="dropdown-item py-2 featTimer" data-bs-toggle="modal" href="#modalTimer"><span class="mi me-2">timer</span><span data-phrase="Timer"></span></a>
-      <a class="dropdown-item py-2 featTrigger" data-bs-toggle="modal" href="#modalTrigger"><span class="mi me-2">bolt</span><span data-phrase="Trigger"></span></a>
-      <a class="dropdown-item py-2 featMounts" data-bs-toggle="modal" href="#modalMounts"><span class="mi me-2">dns</span><span data-phrase="Mounts"></span></a>
-      <a class="dropdown-item py-2 featPartitions" data-bs-toggle="modal" href="#modalPartitions"><span class="mi me-2">dashboard</span><span data-phrase="Partitions"></span></a>
+      <a class="dropdown-item py-2 alwaysEnabled" data-title-phrase="Shortcut: C" href="#modalConnection" data-bs-toggle="modal"><span class="mi me-2">settings_ethernet</span><span data-phrase="MPD connection"></span></a>
+      <a class="dropdown-item py-2" data-title-phrase="Shortcut: T" data-bs-toggle="modal" href="#modalSettings"><span class="mi me-2">settings</span><span data-phrase="Settings"></span></a>
+      <a class="dropdown-item py-2" data-title-phrase="Shortcut: T" data-bs-toggle="modal" href="#modalCollybiaSettings"><span class="mi me-2">settings</span><span data-phrase="Audio Settings"></span></a>
+      <a class="dropdown-item py-2 featScripting" data-title-phrase="Shortcut: S" href="#" data-href='{"cmd": "showListScriptModal", "options": []}'><span class="mi me-2">code</span><span data-phrase="Scripts"></span></a>
+      <a class="dropdown-item py-2 featTimer" data-title-phrase="Shortcut: I" data-bs-toggle="modal" href="#modalTimer"><span class="mi me-2">timer</span><span data-phrase="Timer"></span></a>
+      <a class="dropdown-item py-2 featTrigger" data-title-phrase="Shortcut: G" data-bs-toggle="modal" href="#modalTrigger"><span class="mi me-2">bolt</span><span data-phrase="Trigger"></span></a>
+      <a class="dropdown-item py-2 featMounts" data-title-phrase="Shortcut: O" data-bs-toggle="modal" href="#modalMounts"><span class="mi me-2">dns</span><span data-phrase="Mounts"></span></a>
+      <a class="dropdown-item py-2 featPartitions" data-title-phrase="Shortcut: P" data-bs-toggle="modal" href="#modalPartitions"><span class="mi me-2">dashboard</span><span data-phrase="Partitions"></span></a>
       <div class="dropdown-divider"></div>
-      <a class="dropdown-item py-2" data-bs-toggle="modal" href="#modalMaintenance"><span class="mi me-2">build</span><span data-phrase="Maintenance"></span></a>
+      <a class="dropdown-item py-2" data-title-phrase="Shortcut: M" data-bs-toggle="modal" href="#modalMaintenance"><span class="mi me-2">build</span><span data-phrase="Maintenance"></span></a>
       <a class="dropdown-item py-2 featLibrary" href="browse/" target="_blank"><span class="mi me-2">folder_open</span><span data-phrase="Browse directories"></span></a>
-      <a class="dropdown-item py-2" data-bs-toggle="modal" href="#modalNotifications"><span class="mi me-2">chat_bubble_outline</span><span data-phrase="Notifications"></span></a>
-      <a class="dropdown-item py-2" data-bs-toggle="modal" href="#modalAbout"><span class="mi me-2">help_outline</span><span data-phrase="About"></span></a>
+      <a class="dropdown-item py-2" data-title-phrase="Shortcut: N" data-bs-toggle="modal" href="#modalNotifications"><span class="mi me-2">chat_bubble_outline</span><span data-phrase="Notifications"></span></a>
+      <a class="dropdown-item py-2" data-title-phrase="Shortcut: ?" data-bs-toggle="modal" href="#modalAbout"><span class="mi me-2">help_outline</span><span data-phrase="About"></span></a>
       <div class="dropdown-divider" id="mmLoginLogoutDivider"></div>
-      <a class="dropdown-item py-2" id="mmLogin" data-href='{"cmd": "enterPin", "options": []}' href="#"><span class="mi me-2">login</span><span data-phrase="Login"></span></a>
-      <a class="dropdown-item py-2" id="mmLogout" data-href='{"cmd": "removeSession", "options": []}' href="#"><span class="mi me-2">logout</span><span data-phrase="Logout"></span></a>
+      <a class="dropdown-item py-2" data-title-phrase="Shortcut: L" id="mmLogin" data-href='{"cmd": "enterPin", "options": []}' href="#"><span class="mi me-2">login</span><span data-phrase="Login"></span></a>
+      <a class="dropdown-item py-2" data-title-phrase="Shortcut: L" id="mmLogout" data-href='{"cmd": "removeSession", "options": []}' href="#"><span class="mi me-2">logout</span><span data-phrase="Logout"></span></a>
       <div class="dropdown-divider featScripting"></div>
       <div id="scripts" class="featScripting noInitChilds"></div>
     </div>
@@ -224,7 +224,7 @@
           <div id="QueueCurrentPaginationTop" class="btn-group me-2 pagination"></div>
         </div>
         <ol class="featAdvqueue breadcrumb p-2 rounded-2 d-none" id="searchQueueCrumb"></ol>
-        <div class="table-responsive-md scrollContainer">
+        <div class="table-responsive scrollContainer">
           <table id="QueueCurrentList" class="table table-hover table-sm">
             <thead>
               <tr></tr>
@@ -260,7 +260,7 @@
           <div id="QueueLastPlayedPaginationTop" class="btn-group me-2 pagination"></div>
         </div>
 
-        <div class="table-responsive-md scrollContainer">
+        <div class="table-responsive scrollContainer">
           <table id="QueueLastPlayedList" class="table table-hover table-sm">
             <thead>
               <tr></tr>
@@ -297,7 +297,7 @@
           </div>
           <div id="QueueJukeboxPaginationTop" class="btn-group me-2 pagination"></div>
         </div>
-        <div class="table-responsive-md scrollContainer">
+        <div class="table-responsive scrollContainer">
           <div id="QueueJukeboxDisabled" class="alert alert-warning" data-phrase="Jukebox is disabled"></div>
           <table id="QueueJukeboxList" class="table table-hover table-sm">
             <thead>
@@ -340,7 +340,7 @@
           </div>
           <div id="BrowsePlaylistListPaginationTop" class="btn-group me-2 pagination"></div>
         </div>
-          <div class="table-responsive-md scrollContainer">
+          <div class="table-responsive scrollContainer">
             <table id="BrowsePlaylistListList" class="table table-hover table-sm">
               <thead>
                 <tr>
@@ -397,7 +397,7 @@
             </div>
             <div id="BrowsePlaylistDetailPaginationTop" class="btn-group me-2 pagination"></div>
           </div>
-          <div class="table-responsive-md scrollContainer">
+          <div class="table-responsive scrollContainer">
             <table id="BrowsePlaylistDetailList" class="table table-hover table-sm">
               <caption></caption>
               <thead>
@@ -523,7 +523,7 @@
               </div>
             </div>
           </div>
-          <div class="table-responsive-md scrollContainer">
+          <div class="table-responsive scrollContainer">
             <div class="row me-0">
               <div class="col-12 col-sm-6 col-xl-4 mb-3">
                 <div id="viewDatabaseAlbumDetailCover" class="mb-3 album-cover album-cover-loading clickable carousel" data-href='{"cmd": "zoomPicture", "options": []}'></div>
@@ -574,7 +574,7 @@
         </div>
         <ol id="BrowseBreadcrumb" class="breadcrumb p-2 rounded-2"></ol>
         <div id="BrowseFilesystemImages" class="featLibrary not-clickable" data-href='{"cmd": "zoomPicture", "options": []}'></div>
-        <div class="table-responsive-md scrollContainer">
+        <div class="table-responsive scrollContainer">
           <table id="BrowseFilesystemList" class="table table-hover table-sm">
             <thead>
               <tr></tr>
@@ -658,7 +658,7 @@
             </div>
             <div id="BrowseRadioWebradiodbPaginationTop" class="btn-group me-2 pagination"></div>
           </div>
-          <div class="table-responsive-md scrollContainer">
+          <div class="table-responsive scrollContainer">
             <table id="BrowseRadioWebradiodbList" class="table table-hover table-sm">
               <thead>
                 <tr></tr>
@@ -697,7 +697,7 @@
             </div>
             <div id="BrowseRadioRadiobrowserPaginationTop" class="btn-group me-2 pagination"></div>
           </div>
-          <div class="table-responsive-md scrollContainer">
+          <div class="table-responsive scrollContainer">
             <table id="BrowseRadioRadiobrowserList" class="table table-hover table-sm">
               <thead>
                 <tr></tr>
@@ -751,7 +751,7 @@
           <div id="SearchPaginationTop" class="btn-group me-2 pagination"></div>
         </div>
         <ol class="breadcrumb p-2 rounded-2 d-none" id="searchCrumb"></ol>
-        <div class="table-responsive-md scrollContainer">
+        <div class="table-responsive scrollContainer">
           <table id="SearchList" class="table table-hover table-sm">
             <thead>
               <tr></tr>
@@ -1747,7 +1747,7 @@
               </form>
             </div>
             <div class="tab-pane" id="tabPresets">
-              <div class="table-responsive-md overflow-auto">
+              <div class="table-responsive overflow-auto">
                 <table class="table table-hover table-sm">
                   <thead>
                     <tr>
@@ -1807,7 +1807,7 @@
                 <li><a target="_blank" rel="noreferrer" href="https://jcorporation.github.io/myMPD/" class="text-success external" data-phrase="Documentation"></a></li>
               </ul>
 <!--debug-->  <div class="alert alert-secondary">Running in debug mode</div>
-              <div class="table-responsive-md">
+              <div class="table-responsive">
                 <table class="table table-sm">
                   <tbody>
                     <tr><td colspan="2" class="pt-3"><h5 data-phrase="Database statistics"></h5></td></tr>
@@ -2065,10 +2065,12 @@
                 <div class="col-12 col-md-4 mb-3">
                   <div class="album-cover album-cover-loading"></div>
                 </div>
-                <div class="col-12 col-md-8 table-responsive-md">
-                  <table class="table table-sm">
-                    <tbody id="tbodySongDetails"></tbody>
-                  </table>
+                <div class="col-12 col-md-8">
+                  <div class="table-responsive">
+                    <table class="table table-sm">
+                      <tbody id="tbodySongDetails"></tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2078,7 +2080,7 @@
               <div id="lyricsText"></div>
             </div>
             <div class="tab-pane" id="tabSongComments">
-              <div class="col table-responsive-md">
+              <div class="col table-responsive">
                 <table class="table table-sm">
                   <tbody id="tbodySongComments"></tbody>
                 </table>
@@ -2203,7 +2205,7 @@
             </form>
           </div>
           <div class="tab-pane active" id="listTimer">
-            <div class="table-responsive-md overflow-auto">
+            <div class="table-responsive overflow-auto">
               <table class="table table-hover table-sm">
                 <thead>
                   <tr>
@@ -2255,11 +2257,10 @@
                 <label class="col-sm-4 col-form-label" for="inputMountUrl" data-phrase="Backend uri"></label>
                 <div class="col-sm-8">
                   <div class="input-group">
-                    <select id="selectMountUrlhandler" class="form-select rounded-end-0"></select>
                     <input id="inputMountUrl" class="form-control"/>
                     <div class="btn-group">
                       <button id="btnDropdownNeighbors" class="btn btn-secondary dropdown-toggle dropdown-toggle-split square-start rounded-end" type="button" data-bs-toggle="dropdown"></button>
-                      <div id="dropdownNeighbors" class="dropdown-menu dropdown-menu-right border-0 p-0 ">
+                      <div id="dropdownNeighbors" class="dropdown-menu dropdown-menu-right dropdownWide border-0 p-0 ">
                         <div class="list-group list-group-scroll"></div>
                       </div>
                     </div>
@@ -2270,7 +2271,7 @@
             </form>
           </div>
           <div class="tab-pane active" id="listMounts">
-            <div class="table-responsive-md overflow-auto">
+            <div class="table-responsive overflow-auto">
               <table class="table table-hover table-sm">
                 <thead>
                   <tr>
@@ -2402,7 +2403,7 @@
             </form>
           </div>
           <div class="tab-pane active" id="listScripts">
-            <div class="table-responsive-md overflow-auto">
+            <div class="table-responsive overflow-auto">
               <table class="table table-hover table-sm">
                 <thead>
                   <tr>
@@ -2449,7 +2450,7 @@
               </form>
             </div>
             <div class="tab-pane active" id="listPartitions">
-              <div class="table-responsive-md overflow-auto">
+              <div class="table-responsive overflow-auto">
                 <table class="table table-hover table-sm">
                   <thead>
                     <tr>
@@ -2483,7 +2484,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <div class="table-responsive-md overflow-auto">
+          <div class="table-responsive overflow-auto">
             <table class="table table-hover table-sm">
               <thead>
                 <tr>
@@ -2512,7 +2513,7 @@
         <div class="modal-body">
           <form>
             <input type="hidden" id="modalOutputAttributesId"/>
-            <div class="table-responsive-md overflow-auto">
+            <div class="table-responsive overflow-auto">
               <table class="table table-sm">
                 <thead>
                   <tr><th data-phrase="Attribute"></th><th data-phrase="Value"></th></tr>
@@ -2590,7 +2591,7 @@
               </form>
             </div>
             <div class="tab-pane active" id="listTrigger">
-              <div class="table-responsive-md overflow-auto">
+              <div class="table-responsive overflow-auto">
                 <table class="table table-hover table-sm">
                   <thead>
                     <tr>
@@ -2759,6 +2760,7 @@
         </div>
         <div class="modal-body">
           <input type="hidden" id="inputSongPosOld"/>
+          <input type="hidden" id="inputSongId"/>
           <input type="hidden" id="inputSongPosPlist"/>
           <div class="mb-3 row">
             <label class="col-sm-4 col-form-label" for="inputSongPosNew" data-phrase="Position"></label>
@@ -2990,7 +2992,7 @@
             <div class="col-12 col-md-4 mb-3">
               <div class="album-cover album-cover-loading" id="RadiobrowserDetailsImage"></div>
             </div>
-            <div class="col-12 col-md-8 table-responsive-md">
+            <div class="col-12 col-md-8 table-responsive">
               <table class="table table-sm">
                 <tbody id="modalRadiobrowserDetailsList"></tbody>
               </table>
@@ -3013,7 +3015,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <div class="table-responsive-md">
+          <div class="table-responsive">
             <table class="table table-sm">
               <thead>
                 <tr>

@@ -454,7 +454,7 @@ function appendPlayQueue(type, uri, callback) {
 }
 
 /**
- * Appends an element to the queue
+ * Appends elements to the queue
  * @param {string} type element type: song, dir, stream, plist, smartpls, webradio, search
  * @param {string} uri element uri
  * @param {boolean} play true = play added entry, false = append only
@@ -466,16 +466,16 @@ function _appendQueue(type, uri, play, callback) {
         case 'song':
         case 'dir':
         case 'stream':
-            sendAPI("MYMPD_API_QUEUE_APPEND_URI", {
-                "uri": uri,
+            sendAPI("MYMPD_API_QUEUE_APPEND_URIS", {
+                "uris": [uri],
                 "play": play
             }, callback, true);
             break;
         case 'plist':
         case 'smartpls':
         case 'webradio':
-            sendAPI("MYMPD_API_QUEUE_APPEND_PLAYLIST", {
-                "plist": uri,
+            sendAPI("MYMPD_API_QUEUE_APPEND_PLAYLISTS", {
+                "plists": [uri],
                 "play": play
             }, callback, true);
             break;
@@ -513,7 +513,7 @@ function insertPlayAfterCurrentQueue(type, uri, callback) {
 }
 
 /**
- * Inserts the element in the queue
+ * Inserts elements into the queue
  * @param {string} type element type: song, dir, stream, plist, smartpls, webradio, search
  * @param {string} uri element uri
  * @param {number} to position to insert
@@ -527,8 +527,8 @@ function insertQueue(type, uri, to, whence, play, callback) {
         case 'song':
         case 'dir':
         case 'stream':
-            sendAPI("MYMPD_API_QUEUE_INSERT_URI", {
-                "uri": uri,
+            sendAPI("MYMPD_API_QUEUE_INSERT_URIS", {
+                "uris": [uri],
                 "to": to,
                 "whence": whence,
                 "play": play
@@ -537,8 +537,8 @@ function insertQueue(type, uri, to, whence, play, callback) {
         case 'plist':
         case 'smartpls':
         case 'webradio':
-            sendAPI("MYMPD_API_QUEUE_INSERT_PLAYLIST", {
-                "plist": uri,
+            sendAPI("MYMPD_API_QUEUE_INSERT_PLAYLISTS", {
+                "plists": [uri],
                 "to": to,
                 "whence": whence,
                 "play": play
@@ -578,7 +578,7 @@ function replacePlayQueue(type, uri, callback) {
 }
 
 /**
- * Replaces the queue with the element
+ * Replaces the queue with the elements
  * @param {string} type element type: song, dir, stream, plist, smartpls, webradio, search
  * @param {string} uri element uri
  * @param {boolean} play true = play added entry, false = insert only
@@ -590,16 +590,16 @@ function _replaceQueue(type, uri, play, callback) {
         case 'song':
         case 'stream':
         case 'dir':
-            sendAPI("MYMPD_API_QUEUE_REPLACE_URI", {
-                "uri": uri,
+            sendAPI("MYMPD_API_QUEUE_REPLACE_URIS", {
+                "uris": [uri],
                 "play": play
             }, callback, true);
             break;
         case 'plist':
         case 'smartpls':
         case 'webradio':
-            sendAPI("MYMPD_API_QUEUE_REPLACE_PLAYLIST", {
-                "plist": uri,
+            sendAPI("MYMPD_API_QUEUE_REPLACE_PLAYLISTS", {
+                "plists": [uri],
                 "play": play
             }, callback, true);
             break;
@@ -704,14 +704,16 @@ function saveQueueCheckError(obj) {
 /**
  * Shows the set song position modal
  * @param {string} plist the playlist name or the special value "queue" to move the song
- * @param {number} oldSongPos song pos in queue to move
+ * @param {number} oldSongPos song pos in the queue to move
+ * @param {number} songId song id in the queue to move
  * @returns {void}
  */
 //eslint-disable-next-line no-unused-vars
-function showSetSongPos(plist, oldSongPos) {
+function showSetSongPos(plist, oldSongPos, songId) {
     cleanupModalId('modalSetSongPos');
     document.getElementById('inputSongPosNew').value = '';
     document.getElementById('inputSongPosOld').value = oldSongPos;
+    document.getElementById('inputSongId').value = songId;
     document.getElementById('inputSongPosPlist').value = plist;
     uiElements.modalSetSongPos.show();
 }
@@ -725,6 +727,7 @@ function setSongPos() {
     cleanupModalId('modalSetSongPos');
     const plist = document.getElementById('inputSongPosPlist').value;
     const oldSongPos = Number(document.getElementById('inputSongPosOld').value);
+    const songId = Number(document.getElementById('inputSongId').value);
     const newSongPosEl = document.getElementById('inputSongPosNew');
     if (validateIntRangeEl(newSongPosEl, 1, 99999) === true) {
         let newSongPos = Number(newSongPosEl.value);
@@ -732,13 +735,13 @@ function setSongPos() {
             newSongPos--;
         }
         if (plist === 'queue') {
-            sendAPI("MYMPD_API_QUEUE_MOVE_SONG", {
-                "from": oldSongPos,
+            sendAPI("MYMPD_API_QUEUE_MOVE_ID", {
+                "songIds": [songId],
                 "to": newSongPos
             }, setSongPosCheckError, true);
         }
         else {
-            sendAPI("MYMPD_API_PLAYLIST_CONTENT_MOVE_SONG", {
+            sendAPI("MYMPD_API_PLAYLIST_CONTENT_MOVE_POSITION", {
                 "plist": plist,
                 "from": oldSongPos,
                 "to": newSongPos
@@ -748,7 +751,7 @@ function setSongPos() {
 }
 
 /**
- * Handles the MYMPD_API_QUEUE_MOVE_SONG and  jsonrpc response
+ * Handles the MYMPD_API_QUEUE_MOVE_ID and MYMPD_API_PLAYLIST_CONTENT_MOVE_POSITION jsonrpc response
  * @param {object} obj jsonrpc response
  * @returns {void}
  */
@@ -785,7 +788,7 @@ function setSongPriority() {
     const priorityEl = document.getElementById('inputSongPriority');
     if (validateIntRangeEl(priorityEl, 0, 255) === true) {
         sendAPI("MYMPD_API_QUEUE_PRIO_SET", {
-            "songId": songId,
+            "songIds": [songId],
             "priority": Number(priorityEl.value)
         }, setSongPriorityCheckError, true);
     }
@@ -806,25 +809,29 @@ function setSongPriorityCheckError(obj) {
 }
 
 /**
- * Removes song(s) from the queue
- * @param {string} mode range or single
- * @param {number} start start of the range (including) or song id to remove
+ * Removes a song range from the queue
+ * @param {number} start start of the range (including)
  * @param {number} [end] end of the range (excluding), -1 for open end
  * @returns {void}
  */
 //eslint-disable-next-line no-unused-vars
-function removeFromQueue(mode, start, end) {
-    if (mode === 'range') {
-        sendAPI("MYMPD_API_QUEUE_RM_RANGE", {
-            "start": start,
-            "end": end
-        }, null, false);
-    }
-    else if (mode === 'single') {
-        sendAPI("MYMPD_API_QUEUE_RM_SONG", {
-            "songId": start
-        }, null, false);
-    }
+function removeFromQueueRange(start, end) {
+    sendAPI("MYMPD_API_QUEUE_RM_RANGE", {
+        "start": start,
+        "end": end
+    }, null, false);
+}
+
+/**
+ * Removes song ids from the queue
+ * @param {Array} ids MPD queue song ids
+ * @returns {void}
+ */
+//eslint-disable-next-line no-unused-vars
+function removeFromQueueIDs(ids) {
+    sendAPI("MYMPD_API_QUEUE_RM_IDS", {
+        "songIds": ids
+    }, null, false);
 }
 
 /**
@@ -852,25 +859,38 @@ function gotoPlayingSong() {
 }
 
 /**
+ * Moves a entry in the queue
+ * @param {number} from from position
+ * @param {number} to to position
+ * @returns {void}
+ */
+function queueMoveSong(from, to) {
+    sendAPI("MYMPD_API_QUEUE_MOVE_POSITION", {
+        "from": from,
+        "to": to
+    }, null, false);
+}
+
+/**
  * Plays the selected song after the current song.
- * Uses the priority if in random mode else moves the song after current playing song.
+ * Sets the priority if MPD is in random mode, else moves the song after current playing song.
  * @param {number} songId current playing song id (for priority mode)
- * @param {number} songPos current playing song position (for move mode)
  * @returns {void}
  */
 //eslint-disable-next-line no-unused-vars
-function playAfterCurrent(songId, songPos) {
+function playAfterCurrent(songId) {
     if (settings.partition.random === false) {
-        //not in random mode - move song after current playling song
-        sendAPI("MYMPD_API_QUEUE_MOVE_SONG", {
-            "from": songPos,
-            "to": currentState.songPos !== undefined ? currentState.songPos + 1 : 0
+        //not in random mode - move song after current playing song
+        sendAPI("MYMPD_API_QUEUE_MOVE_RELATIVE", {
+            "songIds": [songId],
+            "to": 0,
+            "whence": 1
         }, null, false);
     }
     else {
         //in random mode - set song priority
         sendAPI("MYMPD_API_QUEUE_PRIO_SET_HIGHEST", {
-            "songId": songId
+            "songIds": [songId]
         }, null, false);
     }
 }

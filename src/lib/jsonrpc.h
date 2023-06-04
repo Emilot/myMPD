@@ -74,6 +74,8 @@ sds jsonrpc_notify_start(sds buffer, enum jsonrpc_events event);
 sds jsonrpc_respond_start(sds buffer, enum mympd_cmd_ids cmd_id, long request_id);
 sds jsonrpc_end(sds buffer);
 sds jsonrpc_respond_ok(sds buffer, enum mympd_cmd_ids cmd_id, long request_id, enum jsonrpc_facilities facility);
+sds jsonrpc_respond_with_message_or_ok(sds buffer, enum mympd_cmd_ids cmd_id, long request_id,
+        bool rc, enum jsonrpc_facilities facility, enum jsonrpc_severities severity, sds message);
 sds jsonrpc_respond_message(sds buffer, enum mympd_cmd_ids cmd_id, long request_id,
         enum jsonrpc_facilities facility, enum jsonrpc_severities severity, const char *message);
 sds jsonrpc_respond_message_phrase(sds buffer, enum mympd_cmd_ids cmd_id, long request_id,
@@ -107,6 +109,7 @@ bool json_get_string_max(sds s, const char *path, sds *result, validate_callback
 bool json_get_string(sds s, const char *path, size_t min, size_t max, sds *result, validate_callback vcb, sds *error);
 bool json_get_string_cmp(sds s, const char *path, size_t min, size_t max, const char *cmp, sds *result, sds *error);
 bool json_get_array_string(sds s, const char *path, struct t_list *l, validate_callback vcb, int max_elements, sds *error);
+bool json_get_array_llong(sds s, const char *path, struct t_list *l, int max_elements, sds *error);
 bool json_get_object_string(sds s, const char *path, struct t_list *l, validate_callback vcb, int max_elements, sds *error);
 bool json_iterate_object(sds s, const char *path, iterate_callback icb, void *icb_userdata, validate_callback vcb, int max_elements, sds *error);
 bool json_get_tags(sds s, const char *path, struct t_tags *tags, int max_elements, sds *error);

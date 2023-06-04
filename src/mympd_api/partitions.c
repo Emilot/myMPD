@@ -16,6 +16,7 @@
 #include "src/mpd_client/connection.h"
 #include "src/mpd_client/errorhandler.h"
 #include "src/mpd_client/partitions.h"
+#include "src/mpd_client/shortcuts.h"
 
 /**
  * Lists partitions
@@ -71,43 +72,48 @@ sds mympd_api_partition_rm(struct t_partition_state *partition_state, sds buffer
     //get assigned outputs
     struct t_list outputs;
     list_init(&outputs);
-    bool rc = mpd_send_noidle(partition_to_remove->conn);
+    mpd_send_noidle(partition_to_remove->conn);
     mpd_response_finish(partition_to_remove->conn);
-    if (mympd_check_rc_error_and_recover_respond(partition_to_remove, &buffer, cmd_id, request_id, rc, "mpd_send_noidle") == false) {
+    if (mympd_check_error_and_recover_respond(partition_to_remove, &buffer, cmd_id, request_id, "mpd_send_noidle") == false) {
         return buffer;
     }
-    rc = mpd_send_outputs(partition_to_remove->conn);
-    if (mympd_check_rc_error_and_recover_respond(partition_to_remove, &buffer, cmd_id, request_id, rc, "mpd_send_outputs") == false) {
-        return buffer;
-    }
-    struct mpd_output *output;
-    while ((output = mpd_recv_output(partition_to_remove->conn)) != NULL) {
-        list_push(&outputs, mpd_output_get_name(output), 0, NULL, NULL);
-        mpd_output_free(output);
+    if (mpd_send_outputs(partition_to_remove->conn)) {
+        struct mpd_output *output;
+        while ((output = mpd_recv_output(partition_to_remove->conn)) != NULL) {
+            list_push(&outputs, mpd_output_get_name(output), 0, NULL, NULL);
+            mpd_output_free(output);
+        }
     }
     mpd_response_finish(partition_to_remove->conn);
-    if (mympd_check_error_and_recover_respond(partition_to_remove, &buffer, cmd_id, request_id) == false) {
+    if (mympd_check_error_and_recover_respond(partition_to_remove, &buffer, cmd_id, request_id, "mpd_send_outputs") == false) {
         return buffer;
     }
     //disconnect partition
     mpd_client_disconnect(partition_to_remove, MPD_DISCONNECTED);
     //move outputs
-    struct t_list_node *current = outputs.head;
-    while (current != NULL) {
-        rc = mpd_run_move_output(partition_state->conn, current->key);
-        if (mympd_check_rc_error_and_recover_respond(partition_state, &buffer, cmd_id, request_id, rc, "mpd_run_move_output") == false) {
-            list_clear(&outputs);
-            return buffer;
+    if (mpd_command_list_begin(partition_state->conn, false)) {
+        struct t_list_node *current;
+        while ((current = list_shift_first(&outputs)) != NULL) {
+            bool rc = mpd_send_move_output(partition_state->conn, current->key);
+            list_node_free(current);
+            if (rc == false) {
+                mympd_set_mpd_failure(partition_state, "Error adding command to command list mpd_send_move_output");
+                break;
+            }
         }
-        current = current->next;
+        mpd_client_command_list_end_check(partition_state);
     }
+    mpd_response_finish(partition_to_remove->conn);
     list_clear(&outputs);
+    if (mympd_check_error_and_recover_respond(partition_to_remove, &buffer, cmd_id, request_id, "mpd_send_move_output") == false) {
+        return buffer;
+    }
     //wait
     my_msleep(100);
     //delete the partition
-    rc = mpd_run_delete_partition(partition_state->conn, partition);
+    mpd_run_delete_partition(partition_state->conn, partition);
     bool result = false;
-    buffer = mympd_respond_with_error_or_ok(partition_state, buffer, cmd_id, request_id, rc, "mpd_run_delete_partition", &result);
+    buffer = mympd_respond_with_error_or_ok(partition_state, buffer, cmd_id, request_id, "mpd_run_delete_partition", &result);
     if (result == true) {
         //partition was removed
         partition_to_remove->conn_state = MPD_REMOVED;

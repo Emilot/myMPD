@@ -9,7 +9,7 @@ cmake_policy(SET CMP0003 NEW)
 # myMPD is written in C
 # supported compilers: gcc, clang
 project(mympd
-  VERSION 10.3.3
+  VERSION 10.4.0
   LANGUAGES C
 )
 
@@ -48,6 +48,7 @@ if(NOT DEFINED MYMPD_DEBUG)
 endif()
 
 # available options
+option(MYMPD_BUILD_TESTING "Enables building of unit tests" "OFF")
 option(MYMPD_DEBUG "Enables myMPD debug mode, default OFF, ON for Debug" "OFF")
 option(MYMPD_EMBEDDED_ASSETS "Embed assets in binary, default ON, OFF for Debug" "ON")
 option(MYMPD_ENABLE_FLAC "Enables flac support, default ON" "ON")
@@ -55,7 +56,6 @@ option(MYMPD_ENABLE_IPV6 "Enables IPv6, default ON" "OFF")
 option(MYMPD_ENABLE_LIBASAN "Enables build with libasan, default OFF" "OFF")
 option(MYMPD_ENABLE_LIBID3TAG "Enables libid3tag support, default ON" "ON")
 option(MYMPD_ENABLE_LUA "Enables lua support, default ON" "ON")
-option(MYMPD_ENABLE_SSL "Enables OpenSSL support, default ON" "OFF")
 option(MYMPD_MANPAGES "Creates and installs manpages" "ON")
 option(MYMPD_MINIMAL "Enables minimal myMPD build, disables all MYMPD_ENABLE_* flags" "OFF")
 option(MYMPD_STRIP_BINARY "Enables stripping the binaries for Release, default ON" "ON")
@@ -65,7 +65,6 @@ if(MYMPD_MINIMAL)
   set(MYMPD_ENABLE_IPV6 "OFF")
   set(MYMPD_ENABLE_LUA "OFF")
   set(MYMPD_ENABLE_LIBID3TAG "OFF")
-  set(MYMPD_ENABLE_SSL "OFF")
 endif()
 
 # cmake modules
@@ -124,24 +123,14 @@ message("Document root: ${MYMPD_DOC_ROOT}")
 find_package(Threads REQUIRED)
 find_package(PCRE2 REQUIRED)
 find_library(MATH_LIB m REQUIRED)
+find_package(OpenSSL REQUIRED)
 
-# optional dependencies
-if(MYMPD_ENABLE_SSL)
-  message("Searching for openssl")
-  find_package(OpenSSL)
-  if(OPENSSL_FOUND)
-    if(NOT OPENSSL_VERSION VERSION_GREATER_EQUAL "1.1.0")
-      message("OpenSSL is disabled because a version lower than 1.1.0 was found")
-      set(MYMPD_ENABLE_SSL "OFF")
-    endif()
-  else()
-    message("OpenSSL is disabled because it was not found")
-    set(MYMPD_ENABLE_SSL "OFF")
-  endif()
-else()
-  message("OpenSSL is disabled by user")
+# check dependencies versions
+if(OPENSSL_VERSION VERSION_LESS "1.1.0")
+  message(FATAL_ERROR "myMPD requires an OpenSSL version greater or equal 1.1.0")
 endif()
 
+# optional dependencies
 if(MYMPD_ENABLE_LIBID3TAG)
   message("Searching for libid3tag")
   find_package(LIBID3TAG)
@@ -373,16 +362,13 @@ target_link_libraries(mympd
   mongoose
   rax
   sds
-  tinymt
   ${CMAKE_THREAD_LIBS_INIT}
   ${MATH_LIB}
   ${PCRE2_LIBRARIES}
+  ${OPENSSL_LIBRARIES}
 )
 
 # link optional dependencies
-if(OPENSSL_FOUND)
-  target_link_libraries(mympd ${OPENSSL_LIBRARIES})
-endif()
 if(LIBID3TAG_FOUND)
   target_link_libraries(mympd ${LIBID3TAG_LIBRARIES})
 endif()
@@ -396,3 +382,9 @@ endif()
 # install
 install(TARGETS mympd DESTINATION ${CMAKE_INSTALL_FULL_BINDIR})
 install(SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/cmake/CopyConfig.cmake)
+
+# test
+if(MYMPD_BUILD_TESTING)
+  include(CTest)
+  add_subdirectory(test)
+endif()

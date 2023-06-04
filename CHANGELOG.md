@@ -4,6 +4,51 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
+## myMPD v10.4.0 (not yet released)
+
+This release improves the queue and playlist management in many ways. You can now select multiple songs or playlists and take actions on this selection. Further the mpd error handling and the mpd communication was improved by using command lists.
+
+### API changes
+
+- MYMPD_API_JUKEBOX_RM: parameters changed
+- MYMPD_API_QUEUE_RM_SONG -> MYMPD_API_QUEUE_RM_IDS
+- MYMPD_API_QUEUE_MOVE_SONG -> MYMPD_API_QUEUE_MOVE_POSITION
+- MYMPD_API_QUEUE_MOVE_RELATIVE: new
+- MYMPD_API_QUEUE_APPEND_URI -> MYMPD_API_QUEUE_APPEND_URIS
+- MYMPD_API_QUEUE_INSERT_URI -> MYMPD_API_QUEUE_INSERT_URIS
+- MYMPD_API_QUEUE_REPLACE_URI -> MYMPD_API_QUEUE_REPLACE_URIS
+- MYMPD_API_QUEUE_APPEND_PLAYLIST -> MYMPD_API_QUEUE_APPEND_PLAYLISTS
+- MYMPD_API_QUEUE_INSERT_PLAYLIST -> MYMPD_API_QUEUE_INSERT_PLAYLISTS
+- MYMPD_API_QUEUE_REPLACE_PLAYLIST -> MYMPD_API_QUEUE_REPLACE_PLAYLISTS
+- MYMPD_API_QUEUE_PRIO_SET: parameters changed
+- MYMPD_API_QUEUE_PRIO_SET_HIGHEST: parameters changed
+- MYMPD_API_PLAYLIST_CONTENT_RM_SONG -> MYMPD_API_PLAYLIST_CONTENT_RM_POSITIONS
+- MYMPD_API_PLAYLIST_CONTENT_MOVE_SONG -> MYMPD_API_PLAYLIST_CONTENT_MOVE_POSITION
+- MYMPD_API_PLAYLIST_CONTENT_APPEND_URI -> MYMPD_API_PLAYLIST_CONTENT_APPEND_URIS
+- MYMPD_API_PLAYLIST_CONTENT_INSERT_URI -> MYMPD_API_PLAYLIST_CONTENT_INSERT_URIS
+- MYMPD_API_PLAYLIST_CONTENT_REPLACE_URI -> MYMPD_API_PLAYLIST_CONTENT_REPLACE_URIS
+- MYMPD_API_PLAYLIST_CONTENT_MOVE_TO_PLAYLIST: new
+- MYMPD_API_PLAYLIST_RM: parameters changed
+- MYMPD_API_PLAYLIST_COPY: new
+
+### Changelog
+
+- Feat: add multiple selections and actions #1001
+- Feat: Improve queue and playlist management #1001
+- Feat: migrate to JavaScript fetch() API #1006
+- Feat: add test target to cmake #1023
+- Feat: improve mpd error handling #1028
+- Feat: improve mpd communication
+- Feat: add quick remove and quick play buttons to more views
+- Feat: support MUSICBRAINZ_RELEASEGROUPID tag (MPD 0.24)
+- Upd: Mongoose 7.10 #1024
+- Upd: libmympdclient 1.0.21
+- Upd: OpenSSL is now required #1033
+- Upd: Replace tinymt with OpenSSL prng #1034 
+- Fix: improve Mongoose logging #1032
+
+***
+
 ## myMPD v10.3.3 (2023-06-02)
 
 This is a small bugfix release.

@@ -11,12 +11,9 @@
 #include "src/lib/sds_extras.h"
 #include "src/lib/state_files.h"
 
+#include <openssl/evp.h>
 #include <string.h>
 #include <termios.h>
-
-#ifdef MYMPD_ENABLE_SSL
-    #include <openssl/evp.h>
-#endif
 
 /**
  * Private definitions
@@ -95,17 +92,17 @@ bool pin_set(sds workdir) {
  */
 bool pin_validate(const char *pin, const char *hash) {
     if (hash[0] == '\0') {
-        MYMPD_LOG_ERROR("No pin is set");
+        MYMPD_LOG_ERROR(NULL, "No pin is set");
         return false;
     }
     sds test_hash = pin_hash(pin);
     bool rc = false;
     if (strcmp(test_hash, hash) == 0) {
-        MYMPD_LOG_INFO("Valid pin entered");
+        MYMPD_LOG_INFO(NULL, "Valid pin entered");
         rc = true;
     }
     else {
-        MYMPD_LOG_ERROR("Invalid pin entered");
+        MYMPD_LOG_ERROR(NULL, "Invalid pin entered");
     }
     FREE_SDS(test_hash);
     return rc;
@@ -122,7 +119,6 @@ bool pin_validate(const char *pin, const char *hash) {
  */
 static sds pin_hash(const char *pin) {
     sds hex_hash = sdsempty();
-#ifdef MYMPD_ENABLE_SSL
     EVP_MD_CTX* context = EVP_MD_CTX_new();
     if (context == NULL) {
         return hex_hash;
@@ -146,8 +142,5 @@ static sds pin_hash(const char *pin) {
         hex_hash = sdscatprintf(hex_hash, "%02x", hash[i]);
     }
     EVP_MD_CTX_free(context);
-#else
-    (void) pin;
-#endif
     return hex_hash;
 }

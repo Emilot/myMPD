@@ -14,13 +14,19 @@ function clickQuickRemove(target) {
     switch(app.id) {
         case 'QueueCurrent': {
             const songId = getData(target.parentNode.parentNode, 'songid');
-            removeFromQueue('single', songId);
+            removeFromQueueIDs([songId]);
+            break;
+        }
+        case 'BrowsePlaylistList': {
+            const plist = getData(target.parentNode.parentNode, 'uri');
+            const smartplsonly = getData(target.parentNode.parentNode, 'smartpls-only');
+            showDelPlaylist(plist, smartplsonly);
             break;
         }
         case 'BrowsePlaylistDetail': {
             const pos = getData(target.parentNode.parentNode, 'songpos');
             const plist = getDataId('BrowsePlaylistDetailList', 'uri');
-            removeFromPlaylist('single', plist, pos);
+            removeFromPlaylistPositions(plist, [pos]);
             break;
         }
         case 'QueueJukebox': {

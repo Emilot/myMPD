@@ -25,7 +25,9 @@ function dragAndDropTable(tableId) {
     }, false);
     tableBody.addEventListener('dragleave', function(event) {
         event.preventDefault();
-        if (dragEl === undefined || dragEl.nodeName !== 'TR') {
+        if (dragEl === undefined ||
+            dragEl.nodeName !== 'TR')
+        {
             return;
         }
         let target = event.target;
@@ -38,7 +40,9 @@ function dragAndDropTable(tableId) {
     }, false);
     tableBody.addEventListener('dragover', function(event) {
         event.preventDefault();
-        if (dragEl === undefined || dragEl.nodeName !== 'TR') {
+        if (dragEl === undefined ||
+            dragEl.nodeName !== 'TR')
+        {
             return;
         }
         const tr = tableBody.querySelectorAll('.dragover');
@@ -56,7 +60,9 @@ function dragAndDropTable(tableId) {
     }, false);
     tableBody.addEventListener('dragend', function(event) {
         event.preventDefault();
-        if (dragEl === undefined || dragEl.nodeName !== 'TR') {
+        if (dragEl === undefined ||
+            dragEl.nodeName !== 'TR')
+        {
             return;
         }
         const tr = tableBody.querySelectorAll('.dragover');
@@ -71,15 +77,17 @@ function dragAndDropTable(tableId) {
     tableBody.addEventListener('drop', function(event) {
         event.stopPropagation();
         event.preventDefault();
-        if (dragEl === undefined || dragEl.nodeName !== 'TR') {
+        if (dragEl === undefined ||
+            dragEl.nodeName !== 'TR')
+        {
             return;
         }
         let target = event.target;
         if (event.target.nodeName === 'TD') {
             target = event.target.parentNode;
         }
-        const oldSongPos = getDataId(event.dataTransfer.getData('Text'), 'songpos');
         const newSongPos = getData(target, 'songpos');
+        const oldSongPos = getDataId(event.dataTransfer.getData('Text'), 'songpos');
         if (oldSongPos === newSongPos) {
             return;
         }
@@ -92,14 +100,15 @@ function dragAndDropTable(tableId) {
             tr[i].classList.remove('dragover');
         }
         document.getElementById(tableId).classList.add('opacity05');
-        if (app.id === 'QueueCurrent') {
-            sendAPI("MYMPD_API_QUEUE_MOVE_SONG", {
-                "from": oldSongPos,
-                "to": newSongPos
-            }, null, false);
-        }
-        else if (app.id === 'BrowsePlaylistDetail') {
-            playlistMoveSong(oldSongPos, newSongPos);
+        switch(app.id) {
+            case 'QueueCurrent': {
+                queueMoveSong(oldSongPos, newSongPos);
+                break;
+            }
+            case 'BrowsePlaylistDetail': {
+                playlistMoveSong(oldSongPos, newSongPos);
+                break;
+            }
         }
     }, false);
 }
@@ -124,7 +133,9 @@ function dragAndDropTableHeader(tableName) {
     }, false);
     tableHeader.addEventListener('dragleave', function(event) {
         event.preventDefault();
-        if (dragEl === undefined || dragEl.nodeName !== 'TH') {
+        if (dragEl === undefined ||
+            dragEl.nodeName !== 'TH')
+        {
             return;
         }
         if (event.target.nodeName === 'TH') {
@@ -133,7 +144,9 @@ function dragAndDropTableHeader(tableName) {
     }, false);
     tableHeader.addEventListener('dragover', function(event) {
         event.preventDefault();
-        if (dragEl === undefined || dragEl.nodeName !== 'TH') {
+        if (dragEl === undefined ||
+            dragEl.nodeName !== 'TH')
+        {
             return;
         }
         const th = tableHeader.querySelectorAll('.dragover-th');
@@ -147,7 +160,9 @@ function dragAndDropTableHeader(tableName) {
     }, false);
     tableHeader.addEventListener('dragend', function(event) {
         event.preventDefault();
-        if (dragEl === undefined || dragEl.nodeName !== 'TH') {
+        if (dragEl === undefined ||
+            dragEl.nodeName !== 'TH')
+        {
             return;
         }
         const th = tableHeader.querySelectorAll('.dragover-th');
@@ -162,7 +177,9 @@ function dragAndDropTableHeader(tableName) {
     tableHeader.addEventListener('drop', function(event) {
         event.stopPropagation();
         event.preventDefault();
-        if (dragEl === undefined || dragEl.nodeName !== 'TH') {
+        if (dragEl === undefined ||
+            dragEl.nodeName !== 'TH')
+        {
             return;
         }
         if (event.dataTransfer.getData('Text') === event.target.getAttribute('data-col')) {
@@ -621,8 +638,13 @@ function tableRow(row, data, list, colspan, smallWidth) {
             }
         }
         switch(app.id) {
-            case 'QueueCurrent':
             case 'BrowsePlaylistDetail':
+                // add quick play and remove action
+                row.appendChild(
+                    pEl.actionPlaylistDetailTd.cloneNode(true)
+                );
+                break;
+            case 'QueueCurrent':
                 // add quick remove action
                 row.appendChild(
                     pEl.actionQueueTd.cloneNode(true)

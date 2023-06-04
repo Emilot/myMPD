@@ -541,14 +541,14 @@ function createMenuLists(target, contextMenuTitle, contextMenuBody) {
                 const plist = getData(table, 'uri');
                 const songpos = getData(dataNode, 'songpos');
                 const playlistLength = getData(table, 'playlistlength');
-                addMenuItem(contextMenuBody, {"cmd": "showSetSongPos", "options": [plist, songpos]}, 'Move song');
-                addMenuItem(contextMenuBody, {"cmd": "removeFromPlaylist", "options": ["single", plist, songpos]}, 'Remove');
+                addMenuItem(contextMenuBody, {"cmd": "showSetSongPos", "options": [plist, songpos, -1]}, 'Move song');
+                addMenuItem(contextMenuBody, {"cmd": "removeFromPlaylistPositions", "options": [plist, [songpos]]}, 'Remove');
                 if (features.featPlaylistRmRange === true) {
                     if (songpos > 0) {
-                        addMenuItem(contextMenuBody, {"cmd": "removeFromPlaylist", "options": ["range", plist, 0, songpos]}, 'Remove all upwards');
+                        addMenuItem(contextMenuBody, {"cmd": "removeFromPlaylistRange", "options": [plist, 0, songpos]}, 'Remove all upwards');
                     }
                     if (songpos + 1 < playlistLength) {
-                        addMenuItem(contextMenuBody, {"cmd": "removeFromPlaylist", "options": ["range", plist, songpos + 1, -1]}, 'Remove all downwards');
+                        addMenuItem(contextMenuBody, {"cmd": "removeFromPlaylistRange", "options": [plist, songpos + 1, -1]}, 'Remove all downwards');
                     }
                 }
             }
@@ -560,26 +560,27 @@ function createMenuLists(target, contextMenuTitle, contextMenuBody) {
             addMenuItemsSongActions(dataNode, contextMenuBody, uri, type, name);
             addDivider(contextMenuBody);
             if (currentState.currentSongId !== -1 &&
-                songid !== currentState.currentSongId)
+                songid !== currentState.currentSongId &&
+                features.featWhence === true)
             {
-                addMenuItem(contextMenuBody, {"cmd": "playAfterCurrent", "options": [songid, songpos]}, 'Play after current playing song');
+                addMenuItem(contextMenuBody, {"cmd": "playAfterCurrent", "options": [songid]}, 'Play after current playing song');
             }
             if (settings.partition.random === true) {
                 addMenuItem(contextMenuBody, {"cmd": "showSetSongPriority", "options": [songid]}, 'Set priority');
             }
             else {
-                addMenuItem(contextMenuBody, {"cmd": "showSetSongPos", "options": ["queue", songpos]}, 'Move song');
+                addMenuItem(contextMenuBody, {"cmd": "showSetSongPos", "options": ["queue", songpos, songid]}, 'Move song');
             }
             if (songid === currentState.currentSongId) {
                 addMenuItemsSingleActions(contextMenuBody);
             }
             addDivider(contextMenuBody);
-            addMenuItem(contextMenuBody, {"cmd": "removeFromQueue", "options": ["single", songid]}, 'Remove');
+            addMenuItem(contextMenuBody, {"cmd": "removeFromQueueIDs", "options": [[songid]]}, 'Remove');
             if (songpos > 0) {
-                addMenuItem(contextMenuBody, {"cmd": "removeFromQueue", "options": ["range", 0, songpos]}, 'Remove all upwards');
+                addMenuItem(contextMenuBody, {"cmd": "removeFromQueueRange", "options": [0, songpos]}, 'Remove all upwards');
             }
             if (songpos + 1 < currentState.queueLength) {
-                addMenuItem(contextMenuBody, {"cmd": "removeFromQueue", "options": ["range", songpos + 1, -1]}, 'Remove all downwards');
+                addMenuItem(contextMenuBody, {"cmd": "removeFromQueueRange", "options": [songpos + 1, -1]}, 'Remove all downwards');
             }
             return true;
         }

@@ -16,6 +16,7 @@ target_include_directories(mympd
   PRIVATE 
     ${PROJECT_BINARY_DIR}
     ${PROJECT_SOURCE_DIR}
+    ${OPENSSL_INCLUDE_DIR}
 )
 
 target_include_directories(mympd SYSTEM PRIVATE ${PCRE2_INCLUDE_DIRS})
@@ -32,16 +33,12 @@ if(MYMPD_ENABLE_LIBID3TAG)
   target_include_directories(mympd SYSTEM PRIVATE ${LIBID3TAG_INCLUDE_DIRS})
 endif()
 
-if(MYMPD_ENABLE_SSL)
-  target_include_directories(mympd SYSTEM PRIVATE ${OPENSSL_INCLUDE_DIR})
-  target_sources(mympd PRIVATE lib/cert.c)
-endif()
-
 target_sources(mympd PRIVATE
   main.c
   collybia.c
   lib/album_cache.c
   lib/api.c
+  lib/cert.c
   lib/config.c
   lib/covercache.c
   lib/env.c
@@ -76,6 +73,7 @@ target_sources(mympd PRIVATE
   mpd_client/presets.c
   mpd_client/search.c
   mpd_client/search_local.c
+  mpd_client/shortcuts.c
   mpd_client/tags.c
   mpd_client/volume.c
   mpd_worker/mpd_worker.c

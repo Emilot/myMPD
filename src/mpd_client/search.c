@@ -161,41 +161,40 @@ static sds search_songs(struct t_partition_state *partition_state, sds buffer, e
 {
     *result = false;
     if (expression[0] == '\0') {
-        MYMPD_LOG_ERROR("No search expression defined");
-        buffer = jsonrpc_respond_message(buffer, cmd_id, request_id, JSONRPC_FACILITY_MPD,
+        MYMPD_LOG_ERROR(partition_state->name, "No search expression defined");
+        return jsonrpc_respond_message(buffer, cmd_id, request_id, JSONRPC_FACILITY_MPD,
             JSONRPC_SEVERITY_ERROR, "No search expression defined");
-        return buffer;
     }
 
     if (plist == NULL) {
         //show search results
-        bool rc = mpd_search_db_songs(partition_state->conn, false);
-        if (mympd_check_rc_error_and_recover_respond(partition_state, &buffer, cmd_id, request_id, rc, "mpd_search_db_songs") == false) {
+        if (mpd_search_db_songs(partition_state->conn, false) == false) {
             mpd_search_cancel(partition_state->conn);
-            return buffer;
+            return jsonrpc_respond_message(buffer, cmd_id, request_id, JSONRPC_FACILITY_DATABASE,
+                JSONRPC_SEVERITY_ERROR, "Error creating MPD search command");
         }
     }
     else if (strcmp(plist, "queue") == 0) {
         //add search to queue
-        bool rc = mpd_search_add_db_songs(partition_state->conn, false);
-        if (mympd_check_rc_error_and_recover_respond(partition_state, &buffer, cmd_id, request_id, rc, "mpd_search_add_db_songs") == false) {
+        if (mpd_search_add_db_songs(partition_state->conn, false) == false) {
             mpd_search_cancel(partition_state->conn);
-            return buffer;
+            return jsonrpc_respond_message(buffer, cmd_id, request_id, JSONRPC_FACILITY_DATABASE,
+                JSONRPC_SEVERITY_ERROR, "Error creating MPD search command");
         }
     }
     else {
         //add search to playlist
-        bool rc = mpd_search_add_db_songs_to_playlist(partition_state->conn, plist);
-        if (mympd_check_rc_error_and_recover_respond(partition_state, &buffer, cmd_id, request_id, rc, "mpd_search_add_db_songs_to_playlist") == false) {
+        if (mpd_search_add_db_songs_to_playlist(partition_state->conn, plist) == false) {
             mpd_search_cancel(partition_state->conn);
-            return buffer;
+            return jsonrpc_respond_message(buffer, cmd_id, request_id, JSONRPC_FACILITY_DATABASE,
+                JSONRPC_SEVERITY_ERROR, "Error creating MPD search command");
         }
     }
 
-    bool rc = mpd_search_add_expression(partition_state->conn, expression);
-    if (mympd_check_rc_error_and_recover_respond(partition_state, &buffer, cmd_id, request_id, rc, "mpd_search_add_expression") == false) {
+    if (mpd_search_add_expression(partition_state->conn, expression) == false) {
         mpd_search_cancel(partition_state->conn);
-        return buffer;
+        return jsonrpc_respond_message(buffer, cmd_id, request_id, JSONRPC_FACILITY_DATABASE,
+                JSONRPC_SEVERITY_ERROR, "Error creating MPD search command");
     }
 
     if (plist == NULL ||
@@ -210,31 +209,31 @@ static sds search_songs(struct t_partition_state *partition_state, sds buffer, e
             enum mpd_tag_type sort_tag = mpd_tag_name_parse(sort);
             if (sort_tag != MPD_TAG_UNKNOWN) {
                 sort_tag = get_sort_tag(sort_tag, &partition_state->mpd_state->tags_mpd);
-                rc = mpd_search_add_sort_tag(partition_state->conn, sort_tag, sortdesc);
-                if (mympd_check_rc_error_and_recover_respond(partition_state, &buffer, cmd_id, request_id, rc, "mpd_search_add_sort_tag") == false) {
+                if (mpd_search_add_sort_tag(partition_state->conn, sort_tag, sortdesc) == false) {
                     mpd_search_cancel(partition_state->conn);
-                    return buffer;
+                    return jsonrpc_respond_message(buffer, cmd_id, request_id, JSONRPC_FACILITY_DATABASE,
+                        JSONRPC_SEVERITY_ERROR, "Error creating MPD search command");
                 }
             }
             else if (strcmp(sort, "LastModified") == 0) {
                 //swap order
                 sortdesc = sortdesc == false ? true : false;
-                rc = mpd_search_add_sort_name(partition_state->conn, "Last-Modified", sortdesc);
-                if (mympd_check_rc_error_and_recover_respond(partition_state, &buffer, cmd_id, request_id, rc, "mpd_search_add_sort_name") == false) {
+                if (mpd_search_add_sort_name(partition_state->conn, "Last-Modified", sortdesc) == false) {
                     mpd_search_cancel(partition_state->conn);
-                    return buffer;
+                    return jsonrpc_respond_message(buffer, cmd_id, request_id, JSONRPC_FACILITY_DATABASE,
+                        JSONRPC_SEVERITY_ERROR, "Error creating MPD search command");
                 }
             }
             else {
-                MYMPD_LOG_WARN("Unknown sort tag: %s", sort);
+                MYMPD_LOG_WARN(partition_state->name, "Unknown sort tag: %s", sort);
             }
         }
 
         unsigned real_limit = limit == 0 ? offset + MPD_PLAYLIST_LENGTH_MAX : offset + limit;
-        rc = mpd_search_add_window(partition_state->conn, offset, real_limit);
-        if (mympd_check_rc_error_and_recover_respond(partition_state, &buffer, cmd_id, request_id, rc, "mpd_search_add_window") == false) {
+        if (mpd_search_add_window(partition_state->conn, offset, real_limit) == false) {
             mpd_search_cancel(partition_state->conn);
-            return buffer;
+            return jsonrpc_respond_message(buffer, cmd_id, request_id, JSONRPC_FACILITY_DATABASE,
+                JSONRPC_SEVERITY_ERROR, "Error creating MPD search command");
         }
     }
 
@@ -242,19 +241,16 @@ static sds search_songs(struct t_partition_state *partition_state, sds buffer, e
         plist != NULL &&
         to < UINT_MAX) //to = UINT_MAX is append
     {
-        rc = mpd_search_add_position(partition_state->conn, to, whence);
-        if (mympd_check_rc_error_and_recover_respond(partition_state, &buffer, cmd_id, request_id, rc, "mpd_search_add_position") == false) {
+        if (mpd_search_add_position(partition_state->conn, to, whence) == false) {
             mpd_search_cancel(partition_state->conn);
-            return buffer;
+            return jsonrpc_respond_message(buffer, cmd_id, request_id, JSONRPC_FACILITY_DATABASE,
+                JSONRPC_SEVERITY_ERROR, "Error creating MPD search command");
         }
     }
 
-    rc = mpd_search_commit(partition_state->conn);
-    if (mympd_check_rc_error_and_recover_respond(partition_state, &buffer, cmd_id, request_id, rc, "mpd_search_commit") == false) {
-        return buffer;
-    }
-
-    if (plist == NULL) {
+    if (mpd_search_commit(partition_state->conn) &&
+        plist == NULL)
+    {
         buffer = jsonrpc_respond_start(buffer, cmd_id, request_id);
         buffer = sdscat(buffer, "\"data\":[");
         struct mpd_song *song;
@@ -289,9 +285,8 @@ static sds search_songs(struct t_partition_state *partition_state, sds buffer, e
         buffer = tojson_bool(buffer, "sortdesc", sortdesc, false);
         buffer = jsonrpc_end(buffer);
     }
-
     mpd_response_finish(partition_state->conn);
-    if (mympd_check_error_and_recover_respond(partition_state, &buffer, cmd_id, request_id) == false) {
+    if (mympd_check_error_and_recover_respond(partition_state, &buffer, cmd_id, request_id, "mpd_search_db_songs") == false) {
        return buffer;
     }
     *result = true;
