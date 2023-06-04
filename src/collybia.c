@@ -36,7 +36,7 @@ sds collybia_ns_server_list(struct t_partition_state *partition_state, sds buffe
     // returns three lines per server found - 1st line ip address 2nd line name 3rd line workgroup
     if (fp == NULL)
     {
-        MYMPD_LOG_ERROR("Failed to get server list");
+        MYMPD_LOG_INFO(NULL, "Failed to get server list");
         buffer = jsonrpc_respond_message(buffer, cmd_id, request_id,
 	JSONRPC_FACILITY_DATABASE, JSONRPC_SEVERITY_ERROR, "Failed to get server list");
     }
@@ -99,8 +99,7 @@ sds collybia_ns_server_list(struct t_partition_state *partition_state, sds buffe
 
 sds collybia_wifi_server_list(struct t_partition_state *partition_state, sds buffer, long request_id) {
     enum mympd_cmd_ids cmd_id = MYMPD_API_WIFI_SERVER_LIST;
-    bool rc = mpd_search_db_songs(partition_state->conn, true);
-    if (mympd_check_rc_error_and_recover_respond(partition_state, &buffer, cmd_id, request_id, rc, "mpd_search_db_songs") == false) {
+    if (mympd_check_error_and_recover_respond(partition_state, &buffer, cmd_id, request_id, "mpd_search_db_songs") == false) {
         mpd_search_cancel(partition_state->conn);
         return buffer;
     }
@@ -111,7 +110,7 @@ sds collybia_wifi_server_list(struct t_partition_state *partition_state, sds buf
     {
         buffer = jsonrpc_respond_message(buffer, cmd_id, request_id,
 	JSONRPC_FACILITY_DATABASE, JSONRPC_SEVERITY_ERROR, "Failed to get server list");
-        MYMPD_LOG_ERROR("Failed to get server list");
+        MYMPD_LOG_INFO(NULL, "Failed to get server list");
     }
     else
     {
@@ -154,8 +153,7 @@ sds collybia_wifi_server_list(struct t_partition_state *partition_state, sds buf
 
 sds collybia_wifi_connect(struct t_partition_state *partition_state, sds buffer, long request_id) {
     enum mympd_cmd_ids cmd_id = MYMPD_API_WIFI_CONNECT;
-    bool rc = mpd_search_db_songs(partition_state->conn, true);
-    if (mympd_check_rc_error_and_recover_respond(partition_state, &buffer, cmd_id, request_id, rc, "mpd_search_db_songs") == false) {
+    if (mympd_check_error_and_recover_respond(partition_state, &buffer, cmd_id, request_id, "mpd_search_db_songs") == false) {
         mpd_search_cancel(partition_state->conn);
         return buffer;
     }
@@ -171,7 +169,7 @@ sds collybia_wifi_connect(struct t_partition_state *partition_state, sds buffer,
 
 static bool syscmd(const char *cmdline)
 {
-    MYMPD_LOG_DEBUG("Executing syscmd \"%s\"", cmdline);
+    MYMPD_LOG_INFO(NULL, "Executing syscmd \"%s\"", cmdline);
     const int rc = system(cmdline);
     if (rc == 0)
     {
@@ -179,7 +177,7 @@ static bool syscmd(const char *cmdline)
     }
     else
     {
-        MYMPD_LOG_ERROR("Executing syscmd \"%s\" failed", cmdline);
+        MYMPD_LOG_INFO(NULL, "Executing syscmd \"%s\" failed", cmdline);
         return false;
     }
 }
@@ -192,11 +190,11 @@ void collybia_dc_handle(int *dc) // todo: change return type to bool
 
     if (handled == true)
     {
-        MYMPD_LOG_DEBUG("Handled dc %d", *dc);
+        MYMPD_LOG_DEBUG(NULL, "Handled dc %d", *dc);
     }
     else
     {
-        MYMPD_LOG_DEBUG("Handling dc %d", *dc);
+        MYMPD_LOG_DEBUG(NULL, "Handling dc %d", *dc);
         if (*dc != 3)
         {
             syscmd("reboot");
@@ -229,7 +227,7 @@ int collybia_settings_set(struct t_mympd_state *mympd_state, bool ns_changed, bo
     }
     if (mpd_conf_changed == true)
     {
-        MYMPD_LOG_DEBUG("mpd conf changed");
+        MYMPD_LOG_DEBUG(NULL, "mpd conf changed");
 
         const char *dop = mympd_state->dop == true ? "yes" : "no";
         sds conf = sdsnew("/etc/mpd.conf");
@@ -414,7 +412,7 @@ static int ns_set(int type, const char *server, const char *share, const char *v
         int rc = rename(tmp_file, org_file);
         if (rc == -1)
         {
-            MYMPD_LOG_ERROR("Renaming file from %s to %s failed", tmp_file, org_file);
+            MYMPD_LOG_DEBUG(NULL, "Renaming file from %s to %s failed", tmp_file, org_file);
             me = 0; // old table
         }
         sdsfree(mnt_fsname);
@@ -431,7 +429,7 @@ static int ns_set(int type, const char *server, const char *share, const char *v
         }
         else
         {
-            MYMPD_LOG_ERROR("Can't open %s for write", tmp_file);
+            MYMPD_LOG_INFO(NULL, "Can't open %s for write", tmp_file);
         }
         if (org)
         {
@@ -439,7 +437,7 @@ static int ns_set(int type, const char *server, const char *share, const char *v
         }
         else
         {
-            MYMPD_LOG_ERROR("Can't open %s for read", org_file);
+            MYMPD_LOG_INFO(NULL, "Can't open %s for read", org_file);
         }
     }
     sdsfree(tmp_file);

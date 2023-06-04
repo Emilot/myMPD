@@ -405,7 +405,7 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
             if (json_iterate_object(request->data, "$.params", mympd_api_settings_set, mympd_state, NULL, 1000, &error) == true) {
                 sds new_nas_settings = sdscatfmt(sdsempty(), "%s%i%s", mympd_state->mixer, mympd_state->ns_type, mympd_state->dac);
                 if (strcmp(old_nas_settings, new_nas_settings) != 0) {
-                    MYMPD_LOG_DEBUG("set collybia settings");
+                    MYMPD_LOG_DEBUG(NULL, "set collybia settings");
                     //set collybia settings
                     ns_changed = true;
                     mpd_conf_changed = true;
@@ -423,7 +423,7 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
                 response->data = jsonrpc_respond_ok(response->data, request->cmd_id, request->id, JSONRPC_FACILITY_GENERAL);
             }
             if (rc == true) {
-                MYMPD_LOG_DEBUG("set collybia settings");
+                MYMPD_LOG_DEBUG(NULL, "set collybia settings");
                 //set collybia settings
                 ffmpeg_changed = true;
                 apmode_changed = true;
