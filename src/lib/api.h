@@ -96,6 +96,7 @@
     X(MYMPD_API_PLAYLIST_CONTENT_APPEND_SEARCH) \
     X(MYMPD_API_PLAYLIST_CONTENT_APPEND_URIS) \
     X(MYMPD_API_PLAYLIST_CONTENT_CLEAR) \
+    X(MYMPD_API_PLAYLIST_CONTENT_DEDUP) \
     X(MYMPD_API_PLAYLIST_CONTENT_INSERT_SEARCH) \
     X(MYMPD_API_PLAYLIST_CONTENT_INSERT_URIS) \
     X(MYMPD_API_PLAYLIST_CONTENT_LIST) \
@@ -107,6 +108,7 @@
     X(MYMPD_API_PLAYLIST_CONTENT_RM_RANGE) \
     X(MYMPD_API_PLAYLIST_CONTENT_SHUFFLE) \
     X(MYMPD_API_PLAYLIST_CONTENT_SORT) \
+    X(MYMPD_API_PLAYLIST_CONTENT_VALIDATE) \
     X(MYMPD_API_PLAYLIST_COPY) \
     X(MYMPD_API_PLAYLIST_LIST) \
     X(MYMPD_API_PLAYLIST_RENAME) \
@@ -143,6 +145,7 @@
     X(MYMPD_API_SCRIPT_LIST) \
     X(MYMPD_API_SCRIPT_RM) \
     X(MYMPD_API_SCRIPT_SAVE) \
+    X(MYMPD_API_SCRIPT_VALIDATE) \
     X(MYMPD_API_SESSION_LOGIN) \
     X(MYMPD_API_SESSION_LOGOUT) \
     X(MYMPD_API_SESSION_VALIDATE) \
@@ -187,14 +190,6 @@
  */
 enum mympd_cmd_ids {
     MYMPD_CMDS(GEN_ENUM)
-};
-
-/**
- * Jsonrpc request ids
- */
-enum request_ids {
-    REQUEST_ID_NOTIFY = -1,
-    REQUEST_ID_RESPONSE = 0
 };
 
 /**
@@ -244,10 +239,12 @@ bool is_protected_api_method(enum mympd_cmd_ids cmd_id);
 bool is_public_api_method(enum mympd_cmd_ids cmd_id);
 bool is_mympd_only_api_method(enum mympd_cmd_ids cmd_id);
 void ws_notify(sds message, const char *partition);
+void ws_notify_client(sds message, long request_id);
 struct t_work_response *create_response(struct t_work_request *request);
 struct t_work_response *create_response_new(long long conn_id, long request_id, enum mympd_cmd_ids cmd_id, const char *partition);
 struct t_work_request *create_request(long long conn_id, long request_id, enum mympd_cmd_ids cmd_id, const char *data, const char *partition);
 void free_request(struct t_work_request *request);
 void free_response(struct t_work_response *response);
+bool push_response(struct t_work_response *response, long request_id, long long conn_id);
 
 #endif

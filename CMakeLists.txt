@@ -9,7 +9,7 @@ cmake_policy(SET CMP0003 NEW)
 # myMPD is written in C
 # supported compilers: gcc, clang
 project(mympd
-  VERSION 10.4.0
+  VERSION 11.0.0
   LANGUAGES C
 )
 
@@ -264,7 +264,7 @@ if(CMAKE_BUILD_TYPE MATCHES "(Release|Debug)")
   endforeach()
 
   if(NOT MYMPD_ENABLE_LIBASAN)
-    #incompatible with libasan
+    # incompatible with libasan
     add_compile_options("-D_FORTIFY_SOURCE=2")
   endif()
 else()

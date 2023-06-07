@@ -40,6 +40,7 @@ function webSocketConnect() {
     try {
         socket.onopen = function() {
             logDebug('Websocket is connected');
+            socket.send('id:' + jsonrpcId);
             if (websocketTimer !== null) {
                 clearTimeout(websocketTimer);
                 websocketTimer = null;
@@ -53,6 +54,10 @@ function webSocketConnect() {
             if (msg.data === 'pong') {
                 //websocket keepalive
                 logDebug('Got websocket pong');
+                return;
+            }
+            if (msg.data === 'ok') {
+                logDebug('Jsonrpc id registered successfuly');
                 return;
             }
             if (msg.data.length > 100000) {

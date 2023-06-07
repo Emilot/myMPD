@@ -4,11 +4,17 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
-## myMPD v10.4.0 (not yet released)
+## myMPD v11.0.0 (not yet released)
 
-This release improves the queue and playlist management in many ways. You can now select multiple songs or playlists and take actions on this selection. Further the mpd error handling and the mpd communication was improved by using command lists.
+This release improves the queue and playlist management in many ways. You can now select multiple songs or playlists and take actions on this selection. There are new methods to copy, merge, validate and deduplicate playlists. Further the mpd error handling and the mpd communication was improved by using command lists.
+
+### Note
+
+This is the first release that enforces the OpenSSL dependency.
 
 ### API changes
+
+This release changes definitions of many API methods.
 
 - MYMPD_API_JUKEBOX_RM: parameters changed
 - MYMPD_API_QUEUE_RM_SONG -> MYMPD_API_QUEUE_RM_IDS
@@ -30,11 +36,15 @@ This release improves the queue and playlist management in many ways. You can no
 - MYMPD_API_PLAYLIST_CONTENT_MOVE_TO_PLAYLIST: new
 - MYMPD_API_PLAYLIST_RM: parameters changed
 - MYMPD_API_PLAYLIST_COPY: new
+- MYMPD_API_PLAYLIST_CONTENT_VALIDATE: new
+- MYMPD_API_PLAYLIST_CONTENT_DEDUP: new
+- MYMPD_API_SCRIPT_VALIDATE: new
 
 ### Changelog
 
 - Feat: add multiple selections and actions #1001
-- Feat: Improve queue and playlist management #1001
+- Feat: improve queue and playlist management #1001
+- Feat: copy, merge, validate and deduplicate playlists #1038
 - Feat: migrate to JavaScript fetch() API #1006
 - Feat: add test target to cmake #1023
 - Feat: improve mpd error handling #1028
@@ -42,9 +52,12 @@ This release improves the queue and playlist management in many ways. You can no
 - Feat: add quick remove and quick play buttons to more views
 - Feat: support MUSICBRAINZ_RELEASEGROUPID tag (MPD 0.24)
 - Upd: Mongoose 7.10 #1024
+- Upd: Bootstrap 5.3.0 final
 - Upd: libmympdclient 1.0.21
 - Upd: OpenSSL is now required #1033
-- Upd: Replace tinymt with OpenSSL prng #1034 
+- Upd: Replace tinymt with OpenSSL prng #1034
+- Upd: use OpenSSL hash functions
+- Upd: documentation improvements
 - Fix: improve Mongoose logging #1032
 
 ***

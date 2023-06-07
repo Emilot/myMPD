@@ -5,6 +5,7 @@
 */
 
 #include "compile_time.h"
+#include "dist/sds/sds.h"
 #include "src/mympd_api/mympd_api_handler.h"
 
 #include "../collybia.h"
@@ -15,7 +16,6 @@
 #include "src/lib/list.h"
 #include "src/lib/log.h"
 #include "src/lib/mem.h"
-#include "src/lib/msg_queue.h"
 #include "src/lib/mympd_state.h"
 #include "src/lib/sds_extras.h"
 #include "src/lib/smartpls.h"
@@ -121,9 +121,13 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
                 response->data = jsonrpc_respond_ok(response->data, request->cmd_id, request->id, JSONRPC_FACILITY_GENERAL);
             }
             break;
-        case MYMPD_API_SMARTPLS_UPDATE_ALL:
-        case MYMPD_API_SMARTPLS_UPDATE:
         case MYMPD_API_CACHES_CREATE:
+        case MYMPD_API_PLAYLIST_CONTENT_DEDUP:
+        case MYMPD_API_PLAYLIST_CONTENT_SHUFFLE:
+        case MYMPD_API_PLAYLIST_CONTENT_SORT:
+        case MYMPD_API_PLAYLIST_CONTENT_VALIDATE:
+        case MYMPD_API_SMARTPLS_UPDATE:
+        case MYMPD_API_SMARTPLS_UPDATE_ALL:
             if (worker_threads > 5) {
                 response->data = jsonrpc_respond_message(response->data, request->cmd_id, request->id,
                     JSONRPC_FACILITY_GENERAL, JSONRPC_SEVERITY_ERROR, "Too many worker threads are already running");
@@ -276,6 +280,21 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
             response->data = mympd_api_home_icon_list(&mympd_state->home_list, response->data, request->id);
             break;
         #ifdef MYMPD_ENABLE_LUA
+        case MYMPD_API_SCRIPT_VALIDATE:
+            if (json_get_string(request->data, "$.params.script", 1, FILENAME_LEN_MAX, &sds_buf1, vcb_isfilename, &error) == true &&
+                json_get_string(request->data, "$.params.content", 0, CONTENT_LEN_MAX, &sds_buf2, vcb_istext, &error) == true)
+            {
+                rc = mympd_api_script_validate(sds_buf1, sds_buf2, config->lualibs, &error);
+                if (rc == true) {
+                    response->data = jsonrpc_respond_ok(response->data, request->cmd_id, request->id, JSONRPC_FACILITY_SCRIPT);
+                }
+                else {
+                    response->data = jsonrpc_respond_message(response->data, request->cmd_id, request->id,
+                            JSONRPC_FACILITY_SCRIPT, JSONRPC_SEVERITY_ERROR, error);
+                    sdsclear(error);
+                }
+            }
+        break;
         case MYMPD_API_SCRIPT_SAVE: {
             struct t_list arguments;
             list_init(&arguments);
@@ -285,13 +304,21 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
                 json_get_string(request->data, "$.params.content", 0, CONTENT_LEN_MAX, &sds_buf3, vcb_istext, &error) == true &&
                 json_get_array_string(request->data, "$.params.arguments", &arguments, vcb_isalnum, SCRIPT_ARGUMENTS_MAX, &error) == true)
             {
-                rc = mympd_api_script_save(config->workdir, sds_buf1, sds_buf2, int_buf1, sds_buf3, &arguments);
+                rc = mympd_api_script_validate(sds_buf1, sds_buf3, config->lualibs, &error);
                 if (rc == true) {
-                    response->data = jsonrpc_respond_ok(response->data, request->cmd_id, request->id, JSONRPC_FACILITY_SCRIPT);
+                    rc = mympd_api_script_save(config->workdir, sds_buf1, sds_buf2, int_buf1, sds_buf3, &arguments);
+                    if (rc == true) {
+                        response->data = jsonrpc_respond_ok(response->data, request->cmd_id, request->id, JSONRPC_FACILITY_SCRIPT);
+                    }
+                    else {
+                        response->data = jsonrpc_respond_message(response->data, request->cmd_id, request->id,
+                            JSONRPC_FACILITY_SCRIPT, JSONRPC_SEVERITY_ERROR, "Could not save script");
+                    }
                 }
                 else {
                     response->data = jsonrpc_respond_message(response->data, request->cmd_id, request->id,
-                        JSONRPC_FACILITY_SCRIPT, JSONRPC_SEVERITY_ERROR, "Could not save script");
+                            JSONRPC_FACILITY_SCRIPT, JSONRPC_SEVERITY_ERROR, error);
+                    sdsclear(error);
                 }
             }
             list_clear(&arguments);
@@ -800,7 +827,7 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
             }
             break;
         case MYMPD_API_PLAYER_STATE:
-            response->data = mympd_api_status_get(partition_state, response->data, request->id);
+            response->data = mympd_api_status_get(partition_state, response->data, request->id, RESPONSE_TYPE_RESPONSE);
             break;
         case MYMPD_API_PLAYER_CLEARERROR:
             mpd_run_clearerror(partition_state->conn);
@@ -1050,7 +1077,7 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
             }
             break;
         case MYMPD_API_PLAYER_VOLUME_GET:
-            response->data = mympd_api_status_volume_get(partition_state, response->data, request->id);
+            response->data = mympd_api_status_volume_get(partition_state, response->data, request->id, RESPONSE_TYPE_RESPONSE);
             break;
         case MYMPD_API_PLAYER_SEEK_CURRENT:
             if (json_get_int_max(request->data, "$.params.seek", &int_buf1, &error) == true &&
@@ -1353,33 +1380,6 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
                 uint_buf2 = int_buf1 < 0 ? UINT_MAX : (unsigned)int_buf1;
                 mpd_run_playlist_delete_range(partition_state->conn, sds_buf1, uint_buf1, uint_buf2);
                 response->data = mympd_respond_with_error_or_ok(partition_state, response->data, request->cmd_id, request->id, "mpd_run_playlist_delete_range", &result);
-            }
-            break;
-        case MYMPD_API_PLAYLIST_CONTENT_SHUFFLE:
-            if (json_get_string(request->data, "$.params.plist", 1, FILENAME_LEN_MAX, &sds_buf1, vcb_isfilename, &error) == true) {
-                if (mpd_client_playlist_shuffle(partition_state, sds_buf1)) {
-                    response->data = jsonrpc_respond_message(response->data, request->cmd_id, request->id,
-                        JSONRPC_FACILITY_PLAYLIST, JSONRPC_SEVERITY_INFO, "Shuffled playlist successfully");
-                }
-                else {
-                    response->data = jsonrpc_respond_message(response->data, request->cmd_id, request->id,
-                        JSONRPC_FACILITY_PLAYLIST, JSONRPC_SEVERITY_ERROR, "Shuffling playlist failed");
-                }
-            }
-            break;
-        case MYMPD_API_PLAYLIST_CONTENT_SORT:
-            if (json_get_string(request->data, "$.params.plist", 1, FILENAME_LEN_MAX, &sds_buf1, vcb_isfilename, &error) == true &&
-                json_get_string(request->data, "$.params.tag", 1, NAME_LEN_MAX, &sds_buf2, vcb_ismpdtag, &error) == true)
-            {
-                rc = mpd_client_playlist_sort(partition_state, sds_buf1, sds_buf2);
-                if (rc == true) {
-                    response->data = jsonrpc_respond_message(response->data, request->cmd_id, request->id,
-                        JSONRPC_FACILITY_PLAYLIST, JSONRPC_SEVERITY_INFO, "Sorted playlist successfully");
-                }
-                else {
-                    response->data = jsonrpc_respond_message(response->data, request->cmd_id, request->id,
-                        JSONRPC_FACILITY_PLAYLIST, JSONRPC_SEVERITY_ERROR, "Sorting playlist failed");
-                }
             }
             break;
         case MYMPD_API_PLAYLIST_COPY: {
@@ -1971,17 +1971,7 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
             JSONRPC_FACILITY_GENERAL, JSONRPC_SEVERITY_ERROR, "No response for method %{method}", 2, "method", method);
         MYMPD_LOG_ERROR(partition_state->name, "No response for method \"%s\"", method);
     }
-    if (request->conn_id == -2) {
-        MYMPD_LOG_DEBUG(partition_state->name, "Push response to mympd_script_queue for thread %ld: %s", request->id, response->data);
-        mympd_queue_push(mympd_script_queue, response, request->id);
-    }
-    else if (request->conn_id > -1) {
-        MYMPD_LOG_DEBUG(partition_state->name, "Push response to web_server_queue for connection %lld: %s", request->conn_id, response->data);
-        mympd_queue_push(web_server_queue, response, 0);
-    }
-    else {
-        free_response(response);
-    }
+    push_response(response, request->id, request->conn_id);
     free_request(request);
 }
 
