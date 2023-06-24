@@ -31,18 +31,25 @@ function handleQueueJukebox() {
  */
 function initQueueJukebox() {
     document.getElementById('QueueJukeboxList').addEventListener('click', function(event) {
+        //select mode
+        if (selectRow(event) === true) {
+            return;
+        }
         //action td
         if (event.target.nodeName === 'A') {
             handleActionTdClick(event);
             return;
         }
-        const target = getParent(event.target, 'TR');
-        if (checkTargetClick(target) === true) {
+        //table body
+        const target = event.target.closest('TR');
+        if (target.parentNode.nodeName === 'TBODY' &&
+            checkTargetClick(target) === true)
+        {
             if (settings.partition.jukeboxMode === 'song') {
                 clickSong(getData(target, 'uri'), event);
             }
             else if (settings.partition.jukeboxMode === 'album') {
-                clickAlbumPlay(getData(target, 'AlbumArtist'), getData(target, 'Album'));
+                clickQuickPlay(target);
             }
         }
     }, false);
@@ -70,13 +77,13 @@ function clearJukeboxQueue() {
 
 /**
  * Removes a song / album from the jukebox queue
- * @param {number} pos position
+ * @param {Array} pos position
  * @returns {void}
  */
 //eslint-disable-next-line no-unused-vars
-function delQueueJukeboxSong(pos) {
+function delQueueJukeboxEntries(pos) {
     sendAPI("MYMPD_API_JUKEBOX_RM", {
-        "positions": [pos]
+        "positions": pos
     }, null, false);
 }
 
@@ -110,6 +117,7 @@ function parseJukeboxList(obj) {
         setData(row, 'name', data.Title);
         setData(row, 'type', data.uri === 'Album' ? 'album' : 'song');
         setData(row, 'pos', data.Pos);
+        setData(row, 'AlbumId', data.AlbumId);
         row.setAttribute('title', tn(rowTitle));
         row.setAttribute('tabindex', 0);
     });

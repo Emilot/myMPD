@@ -45,7 +45,7 @@ function initScripts() {
             return;
         }
 
-        const target = getParent(event.target, 'TR');
+        const target = event.target.closest('TR');
         if (checkTargetClick(target) === true) {
             showEditScript(getData(target, 'script'));
         }
@@ -188,7 +188,7 @@ function getImportScript(script) {
             obj = JSON.parse(firstLine.substring(firstLine.indexOf('{')));
         }
         catch(error) {
-            showNotification(tn('Can not parse script arguments'), '', 'general', 'error');
+            showNotification(tn('Can not parse script arguments'), 'general', 'error');
             logError('Can not parse script arguments:' + firstLine);
             return;
         }
@@ -214,7 +214,7 @@ function apiParamsToArgs(p) {
     for (const param in p) {
         args += 'options["' + param + '"] = ';
         switch(p[param].type) {
-            case APItypes.text:
+            case APItypes.string:
                 args += '"' + p[param].example + '"';
                 break;
             case APItypes.array:

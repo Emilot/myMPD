@@ -89,7 +89,12 @@ function setCounter() {
     const playingRow = document.getElementById('queueSongId' + currentState.currentSongId);
     if (playingRow !== null) {
         //progressbar and counter in queue card
-        setQueueCounter(playingRow, counterText);
+        if (currentState.state === 'stop') {
+            resetDuration(playingRow);
+        }
+        else {
+            setQueueCounter(playingRow, counterText);
+        }
     }
 
     //synced lyrics
@@ -129,11 +134,14 @@ function setCounter() {
  * @returns {void}
  */
 function parseState(obj) {
-    if (obj.result === undefined) {
+    if (obj === null ||
+        obj.result === undefined)
+    {
         logError('State is undefined');
         return;
     }
     //Get current song if songid or queueVersion has changed
+    //On stream updates only the queue version will change
     if (currentState.currentSongId !== obj.result.currentSongId ||
         currentState.queueVersion !== obj.result.queueVersion)
     {

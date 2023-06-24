@@ -5,6 +5,7 @@
 */
 
 #include "compile_time.h"
+#include "src/lib/mympd_state.h"
 #include "src/mympd_api/timer.h"
 
 #include "src/lib/filehandler.h"
@@ -17,6 +18,7 @@
 
 #include <errno.h>
 #include <poll.h>
+#include <stdbool.h>
 #include <string.h>
 #include <sys/timerfd.h>
 #include <unistd.h>
@@ -126,6 +128,68 @@ void mympd_api_timer_check(struct t_timer_list *l) {
             }
         }
     }
+}
+
+/**
+ * Saves a new or existing timer
+ * @param partition_state pointer to partition state
+ * @param data request data to parse
+ * @param error pointer to already allocated sds string to append an error message
+ * @return true on success, else false
+ */
+bool mympd_api_timer_save(struct t_partition_state *partition_state, sds data, sds *error) {
+    if (partition_state->mympd_state->timer_list.length > LIST_TIMER_MAX) {
+        *error = sdscat(*error, "Too many timers defined");
+        return false;
+    }
+    int interval = 0;
+    int timerid = 0;
+    if (json_get_int(data, "$.params.interval", -1, TIMER_INTERVAL_MAX, &interval, error) == true &&
+        json_get_int(data, "$.params.timerid", 0, USER_TIMER_ID_MAX, &timerid, error) == true)
+    {
+        bool new = timerid == 0
+            ? true
+            : false;
+        if (interval > 0 &&
+            interval < TIMER_INTERVAL_MIN)
+        {
+            //interval must be gt 5 seconds
+            MYMPD_LOG_ERROR(partition_state->name, "Timer interval must be greater or equal %d, but id is: \"%d\"", TIMER_INTERVAL_MIN, interval);
+            *error = sdscat(*error, "Invalid timer interval");
+            return false;
+        }
+        if (new == true) {
+            timerid = partition_state->mympd_state->timer_list.last_id + 1;
+        }
+        else if (timerid < USER_TIMER_ID_MIN) {
+            //existing timer
+            //user defined timers must be gt 100
+            MYMPD_LOG_ERROR(partition_state->name, "Timer id must be greater or equal %d, but id is: \"%d\"", USER_TIMER_ID_MAX, timerid);
+            *error = sdscat(*error, "Invalid timer id");
+            return false;
+        }
+        //parse timer definition
+        struct t_timer_definition *timer_def = malloc_assert(sizeof(struct t_timer_definition));
+        timer_def = mympd_api_timer_parse(timer_def, data, partition_state->name, error);
+        if (timer_def == NULL) {
+            *error = sdscat(*error, "Error parsing timer definition");
+            //timer_def was freed by mympd_api_timer_parse
+            return false;
+        }
+        //calculate start time and add/replace timer
+        time_t start = mympd_api_timer_calc_starttime(timer_def->start_hour, timer_def->start_minute, interval);
+        bool rc = mympd_api_timer_replace(&partition_state->mympd_state->timer_list, start, interval, timer_handler_select, timerid, timer_def);
+        if (rc == false) {
+            *error = sdscat(*error, "Saving timer failed");
+            mympd_api_timer_free_definition(timer_def);
+            return false;
+        }
+        if (new == true) {
+            partition_state->mympd_state->timer_list.last_id = timerid;
+        }
+        return true;
+    }
+    return false;
 }
 
 /**
@@ -311,6 +375,7 @@ struct t_timer_definition *mympd_api_timer_parse(struct t_timer_definition *time
         json_get_int(str, "$.params.startMinute", 0, 59, &timer_def->start_minute, error) == true &&
         json_get_string_max(str, "$.params.action", &timer_def->action, vcb_isalnum, error) == true &&
         json_get_string_max(str, "$.params.subaction", &timer_def->subaction, vcb_isname, error) == true &&
+        json_get_string_max(str, "$.params.preset", &timer_def->preset, vcb_isname, error) == true &&
         json_get_uint(str, "$.params.volume", VOLUME_MIN, VOLUME_MAX, &timer_def->volume, error) == true &&
         json_get_string_max(str, "$.params.playlist", &timer_def->playlist, vcb_isfilename, error) == true &&
         json_get_object_string(str, "$.params.arguments", &timer_def->arguments, vcb_isname, SCRIPT_ARGUMENTS_MAX, error) == true &&
@@ -322,10 +387,6 @@ struct t_timer_definition *mympd_api_timer_parse(struct t_timer_definition *time
         json_get_bool(str, "$.params.weekdays[5]", &timer_def->weekdays[5], error) == true &&
         json_get_bool(str, "$.params.weekdays[6]", &timer_def->weekdays[6], error) == true)
     {
-        if (json_get_string_max(str, "$.params.preset", &timer_def->preset, vcb_isname, error) == false) {
-            //Migration from 10.1 to 10.2
-            timer_def->preset = sdsempty();
-        }
         timer_def->partition = sdsnew(partition);
         MYMPD_LOG_DEBUG(NULL, "Successfully parsed timer definition");
     }

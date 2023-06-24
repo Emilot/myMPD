@@ -671,6 +671,7 @@ function setFeatures() {
         features.featPlaylistDirAuto = settings.features.featPlaylistDirAuto;
         features.featStartsWith = settings.features.featStartsWith;
         features.featPcre = settings.features.featPcre;
+        features.featPcreOrStartsWith = settings.features.featPcre || settings.features.featStartsWith;
     }
 }
 
@@ -1103,7 +1104,7 @@ function initTagMultiSelect(inputId, listId, allTags, enabledTags) {
         if (enabledTags.includes(allTags[i])) {
             values.push(tn(allTags[i]));
         }
-        const btn = elCreateEmpty('button', {"class": ["btn", "btn-secondary", "btn-xs", "mi", "mi-small", "me-2"], "name": allTags[i]});
+        const btn = elCreateEmpty('button', {"class": ["btn", "btn-secondary", "btn-xs", "mi", "mi-sm", "me-2"], "name": allTags[i]});
         if (enabledTags.includes(allTags[i])) {
             btn.classList.add('active');
             btn.textContent = 'check';

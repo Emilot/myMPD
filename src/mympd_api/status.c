@@ -132,10 +132,11 @@ long mympd_api_status_updatedb_id(struct t_partition_state *partition_state) {
  * Gets the mpd status, updates internal myMPD states and returns a jsonrpc notify or response
  * @param partition_state pointer to partition state
  * @param buffer already allocated sds string to append the response
+ * @param request_id jsonrpc request id
  * @param response_type jsonrpc response type: RESPONSE_TYPE_RESPONSE or RESPONSE_TYPE_NOTIFY
  * @return pointer to buffer
  */
-sds mympd_api_status_get(struct t_partition_state *partition_state, sds buffer, long request_id, enum jsonrpc_response_types response_type) {
+sds mympd_api_status_get(struct t_partition_state *partition_state, sds buffer, long request_id, enum response_types response_type) {
     enum mympd_cmd_ids cmd_id = MYMPD_API_PLAYER_STATE;
     struct mpd_status *status = mpd_run_status(partition_state->conn);
     int song_id = -1;
@@ -152,6 +153,10 @@ sds mympd_api_status_get(struct t_partition_state *partition_state, sds buffer, 
             partition_state->last_song_scrobble_time = partition_state->song_scrobble_time;
         }
 
+        const char *player_error = mpd_status_get_error(status);
+        partition_state->player_error = player_error == NULL || player_error[0] == '\0'
+            ? false
+            : true;
         partition_state->play_state = mpd_status_get_state(status);
         partition_state->song_id = song_id;
         partition_state->song_pos = mpd_status_get_song_pos(status);
@@ -168,7 +173,9 @@ sds mympd_api_status_get(struct t_partition_state *partition_state, sds buffer, 
             : total_time / 2;
 
         partition_state->song_start_time = now - elapsed_time;
-        partition_state->song_end_time = total_time == 0 ? 0 : now + total_time - elapsed_time;
+        partition_state->song_end_time = total_time == 0
+            ? 0
+            : now + total_time - elapsed_time;
 
         if (total_time <= SCROBBLE_TIME_MIN ||  //don't track songs with length < SCROBBLE_TIME_MIN (10s)
             elapsed_time > scrobble_time)       //don't track songs that exceeded scrobble time
@@ -182,7 +189,7 @@ sds mympd_api_status_get(struct t_partition_state *partition_state, sds buffer, 
             (long long)now, (long long)partition_state->song_start_time, 
             (long long)partition_state->song_scrobble_time, (long long)partition_state->song_end_time);
 
-        if (response_type == RESPONSE_TYPE_NOTIFY) {
+        if (response_type == RESPONSE_TYPE_JSONRPC_NOTIFY) {
             buffer = jsonrpc_notify_start(buffer, JSONRPC_EVENT_UPDATE_STATE);
         }
         else {
@@ -194,7 +201,7 @@ sds mympd_api_status_get(struct t_partition_state *partition_state, sds buffer, 
         mpd_status_free(status);
     }
     mpd_response_finish(partition_state->conn);
-    if (response_type == RESPONSE_TYPE_NOTIFY) {
+    if (response_type == RESPONSE_TYPE_JSONRPC_NOTIFY) {
         mympd_check_error_and_recover_notify(partition_state, &buffer, "mpd_run_status");
     }
     else {
@@ -213,13 +220,35 @@ sds mympd_api_status_get(struct t_partition_state *partition_state, sds buffer, 
         }
         mpd_response_finish(partition_state->conn);
     }
-    if (response_type == RESPONSE_TYPE_NOTIFY) {
+    if (response_type == RESPONSE_TYPE_JSONRPC_NOTIFY) {
         mympd_check_error_and_recover_notify(partition_state, &buffer, "mpd_run_status");
     }
     else {
         mympd_check_error_and_recover_respond(partition_state, &buffer, cmd_id, request_id, "mpd_run_status");
     }
     return buffer;
+}
+
+/**
+ * Clears the mpd player error returned by the status command.
+ * @param partition_state pointer to partition state
+ * @param buffer already allocated sds string to append the error response
+ * @param cmd_id jsonrpc method
+ * @param request_id jsonrpc request id
+ * @return true on success, else false
+ */
+bool mympd_api_status_clear_error(struct t_partition_state *partition_state, sds *buffer,
+        enum mympd_cmd_ids cmd_id, long request_id)
+{
+    bool rc = true;
+    if (partition_state->player_error == true) {
+        mpd_run_clearerror(partition_state->conn);
+        rc = mympd_check_error_and_recover_respond(partition_state, buffer, cmd_id, request_id, "mpd_run_clearerror");
+        if (rc == true) {
+            partition_state->player_error = false;
+        }
+    }
+    return rc;
 }
 
 /**
@@ -280,7 +309,11 @@ bool mympd_api_status_lua_mympd_state_set(struct t_list *lua_partition_state, st
         mpd_status_free(status);
     }
     mpd_response_finish(partition_state->conn);
-    return mympd_check_error_and_recover(partition_state, NULL, "mpd_run_status");
+    bool rc = mympd_check_error_and_recover(partition_state, NULL, "mpd_run_status");
+    if (rc == false) {
+        MYMPD_LOG_ERROR(partition_state->name, "Error getting mympd state for script execution");
+    }
+    return rc;
 }
 
 /**
@@ -288,12 +321,13 @@ bool mympd_api_status_lua_mympd_state_set(struct t_list *lua_partition_state, st
  * @param partition_state pointer to partition state
  * @param buffer already allocated sds string to append the response
  * @param request_id jsonrpc request id
+ * @param response_type jsonrpc response type: RESPONSE_TYPE_RESPONSE or RESPONSE_TYPE_NOTIFY
  * @return pointer to buffer
  */
-sds mympd_api_status_volume_get(struct t_partition_state *partition_state, sds buffer, long request_id, enum jsonrpc_response_types response_type) {
+sds mympd_api_status_volume_get(struct t_partition_state *partition_state, sds buffer, long request_id, enum response_types response_type) {
     enum mympd_cmd_ids cmd_id = MYMPD_API_PLAYER_VOLUME_GET;
     int volume = mpd_client_get_volume(partition_state);
-    if (response_type == RESPONSE_TYPE_NOTIFY) {
+    if (response_type == RESPONSE_TYPE_JSONRPC_NOTIFY) {
         buffer = jsonrpc_notify_start(buffer, JSONRPC_EVENT_UPDATE_VOLUME);
     }
     else {

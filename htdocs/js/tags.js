@@ -207,7 +207,7 @@ function printValue(key, value) {
                 case 'smartpls': return elCreateText('span', {"class": ["mi"]}, 'queue_music');
                 case 'plist':    return elCreateText('span', {"class": ["mi"]}, 'list');
                 case 'dir':      return elCreateText('span', {"class": ["mi"]}, 'folder_open');
-                case 'stream':	 return elCreateText('span', {"class": ["mi"]}, 'stream');
+                case 'stream':   return elCreateText('span', {"class": ["mi"]}, 'stream');
                 case 'webradio': return elCreateText('span', {"class": ["mi"]}, 'radio');
                 default:         return elCreateText('span', {"class": ["mi"]}, 'radio_button_unchecked');
             }
@@ -225,7 +225,12 @@ function printValue(key, value) {
             return document.createTextNode(value === 0 ? tn('never') : fmtDate(value));
         case 'stickerLike':
             return elCreateText('span', {"class": ["mi"]},
-                value === 0 ? 'thumb_down' : value === 1 ? 'radio_button_unchecked' : 'thumb_up');
+                value === 0
+                    ? 'thumb_down'
+                    : value === 1 
+                        ? 'horizontal_rule'
+                        : 'thumb_up'
+            );
         case 'stickerElapsed':
             return document.createTextNode(fmtSongDuration(value));
         case 'Artist':

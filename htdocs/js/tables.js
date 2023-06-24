@@ -6,6 +6,196 @@
 /** @module tables_js */
 
 /**
+ * Switches the select mode of current displayed table
+ * @param {EventTarget} target triggering button
+ * @returns {void}
+ */
+//eslint-disable-next-line no-unused-vars
+function switchTableMode(target) {
+    const table = document.getElementById(app.id + 'List');
+    const mode = table.getAttribute('data-mode');
+
+    if (mode === null) {
+        table.setAttribute('data-mode', 'select');
+        target.classList.add('active');
+        target.classList.remove('rounded-end');
+        target.nextElementSibling.classList.remove('d-none');
+    }
+    else {
+        table.removeAttribute('data-mode');
+        target.classList.remove('active');
+        target.classList.add('rounded-end');
+        target.nextElementSibling.classList.add('d-none');
+        selectAllRows(table, false);
+    }
+}
+
+/**
+ * Selects all rows in table body
+ * @param {HTMLElement} table table element
+ * @param {boolean} select true = select all rows, false = clear selection
+ * @returns {void}
+ */
+function selectAllRows(table, select) {
+    const rows = table.querySelectorAll('tbody > tr');
+    let firstType = undefined;
+    for (const row of rows) {
+        if (row.lastElementChild.lastElementChild !== null) {
+            firstType = getData(row, 'type');
+            break;
+        }
+    }
+    for (const row of rows) {
+        if (row.classList.contains('not-clickable') ||
+            getData(row, 'type') !== firstType)
+        {
+            continue;
+        }
+        const check = row.lastElementChild.lastElementChild;
+        if (check === null) {
+            continue;
+        }
+        if (select === true) {
+            row.classList.add('active');
+            check.textContent = ligatures['checked'];
+        }
+        else {
+            row.classList.remove('active');
+            check.textContent = ligatures['unchecked'];
+        }
+    }
+    showTableSelectionCount();
+}
+
+/**
+ * Checks if table is in select mode and selects the row(s)
+ * @param {Event} event triggering event
+ * @returns {boolean} true if table in select mode, else false
+ */
+function selectRow(event) {
+    const table = event.target.closest('TABLE');
+    const mode = table.getAttribute('data-mode');
+    if (event.ctrlKey &&
+        mode === null)
+    {
+        //enable select mode
+        switchTableMode(document.getElementById('btn' + app.id + 'SelectMode'));
+    }
+    else if (mode === null) {
+        return false;
+    }
+    //in row select mode
+    const row = event.target.closest('TR');
+    if (row.classList.contains('not-clickable')) {
+        return true;
+    }
+    if (event.target.parentNode.nodeName === 'TH') {
+        const select = event.target.textContent === ligatures['unchecked']
+            ? true
+            : false;
+        event.target.textContent = select === true
+            ? ligatures['checked']
+            : ligatures['unchecked'];
+        selectAllRows(table, select);
+    }
+    else if (event.shiftKey) {
+        let lastPos = getData(table, 'last-selected');
+        if (lastPos === undefined) {
+            lastPos = 0;
+        }
+        const pos = elGetIndex(row);
+        setData(table, 'last-selected', pos);
+        let first;
+        let last;
+        if (lastPos < pos) {
+            first = lastPos;
+            last = pos;
+        }
+        else {
+            first = pos;
+            last = lastPos;
+        }
+        const rows = table.querySelector('tbody').querySelectorAll('tr');
+        const firstType = getData(rows[first], 'type');
+        for (let i = first; i <= last; i++) {
+            if (getData(rows[i], 'type') !== firstType) {
+                continue;
+            }
+            selectSingleRow(rows[i], true);
+        }
+    }
+    else {
+        selectSingleRow(row, null);
+        setData(table, 'last-selected', elGetIndex(row));
+    }
+    showTableSelectionCount();
+    event.preventDefault();
+    event.stopPropagation();
+    return true;
+}
+
+/**
+ * Selects / unselects a single row
+ * @param {HTMLElement} row row to select or unselect
+ * @param {boolean} [select] true = select, false = unselect, null = toggle
+ * @returns {void}
+ */
+function selectSingleRow(row, select) {
+    const check = row.lastElementChild.lastElementChild;
+    if (check === null) {
+        return;
+    }
+    if ((select === null && row.classList.contains('active')) ||
+        select === false)
+    {
+        check.textContent = ligatures['unchecked'];
+        row.classList.remove('active');
+    }
+    else {
+        check.textContent = ligatures['checked'];
+        row.classList.add('active');
+    }
+}
+
+/**
+ * Shows the number of selections in the dropdown
+ * @returns {void}
+ */
+function showTableSelectionCount() {
+    const table = document.getElementById(app.id + 'List');
+    const dropdown = document.querySelector('#dropdown' + app.id + 'Selection');
+    const rows = table.querySelectorAll('tbody > tr.active');
+    const count = rows.length;
+    let validSelection = true;
+    if (count > 1) {
+        const firstType = getData(rows[0], 'type');
+        for (const row of rows) {
+            if (getData(row, 'type') !== firstType) {
+                validSelection = false;
+                break;
+            }
+        }
+    }
+    if (validSelection === true) {
+        dropdown.querySelector('small').textContent = count + ' ' + tn('selected');
+    }
+    else {
+        dropdown.querySelector('small').textContent = tn('Invalid selection');
+    }
+    const btns = dropdown.querySelectorAll('button');
+    for (const btn of btns) {
+        if (count === 0 ||
+            validSelection === false)
+        {
+            btn.setAttribute('disabled', 'disabled');
+        }
+        else {
+            btn.removeAttribute('disabled');
+        }
+    }
+}
+
+/**
  * Initializes a table body for drag and drop of rows
  * @param {string} tableId table id
  * @returns {void}
@@ -14,66 +204,41 @@ function dragAndDropTable(tableId) {
     const tableBody = document.querySelector('#' + tableId + ' > tbody');
     tableBody.addEventListener('dragstart', function(event) {
         if (event.target.nodeName === 'TR') {
-            hidePopover();
             event.target.classList.add('opacity05');
             // @ts-ignore
             event.dataTransfer.setDragImage(event.target, 0, 0);
             event.dataTransfer.effectAllowed = 'move';
-            event.dataTransfer.setData('Text', event.target.getAttribute('id'));
-            dragEl = event.target.cloneNode(true);
+            dragEl = event.target;
         }
     }, false);
-    tableBody.addEventListener('dragleave', function(event) {
-        event.preventDefault();
-        if (dragEl === undefined ||
-            dragEl.nodeName !== 'TR')
+
+    tableBody.addEventListener('dragenter', function(event) {
+        const target = event.target.nodeName === 'TD'
+            ? event.target.parentNode
+            : event.target;
+        if (dragEl !== undefined &&
+            dragEl.nodeName === target.nodeName)
         {
-            return;
+            target.classList.add('dragover');
         }
-        let target = event.target;
-        if (event.target.nodeName === 'TD') {
-            target = event.target.parentNode;
-        }
-        if (target.nodeName === 'TR') {
+    }, false);
+
+    tableBody.addEventListener('dragleave', function(event) {
+        const target = event.target.nodeName === 'TD'
+            ? event.target.parentNode
+            : event.target;
+        if (dragEl !== undefined &&
+            dragEl.nodeName === target.nodeName)
+        {
             target.classList.remove('dragover');
         }
     }, false);
+
     tableBody.addEventListener('dragover', function(event) {
         event.preventDefault();
-        if (dragEl === undefined ||
-            dragEl.nodeName !== 'TR')
-        {
-            return;
-        }
-        const tr = tableBody.querySelectorAll('.dragover');
-        for (let i = 0, j = tr.length; i < j; i++) {
-            tr[i].classList.remove('dragover');
-        }
-        let target = event.target;
-        if (event.target.nodeName === 'TD') {
-            target = event.target.parentNode;
-        }
-        if (target.nodeName === 'TR') {
-            target.classList.add('dragover');
-        }
         event.dataTransfer.dropEffect = 'move';
     }, false);
-    tableBody.addEventListener('dragend', function(event) {
-        event.preventDefault();
-        if (dragEl === undefined ||
-            dragEl.nodeName !== 'TR')
-        {
-            return;
-        }
-        const tr = tableBody.querySelectorAll('.dragover');
-        for (let i = 0, j = tr.length; i < j; i++) {
-            tr[i].classList.remove('dragover');
-        }
-        if (document.getElementById(event.dataTransfer.getData('Text'))) {
-            document.getElementById(event.dataTransfer.getData('Text')).classList.remove('opacity05');
-        }
-        dragEl = undefined;
-    }, false);
+
     tableBody.addEventListener('drop', function(event) {
         event.stopPropagation();
         event.preventDefault();
@@ -82,24 +247,18 @@ function dragAndDropTable(tableId) {
         {
             return;
         }
-        let target = event.target;
-        if (event.target.nodeName === 'TD') {
-            target = event.target.parentNode;
-        }
+        const target = event.target.closest('TR');
+        target.classList.remove('dragover');
         const newSongPos = getData(target, 'songpos');
-        const oldSongPos = getDataId(event.dataTransfer.getData('Text'), 'songpos');
+        const oldSongPos = getData(dragEl, 'songpos');
         if (oldSongPos === newSongPos) {
             return;
         }
-        document.getElementById(event.dataTransfer.getData('Text')).remove();
-        dragEl.classList.remove('opacity05');
-        // @ts-ignore
-        tableBody.insertBefore(dragEl, target);
-        const tr = tableBody.querySelectorAll('.dragover');
-        for (let i = 0, j = tr.length; i < j; i++) {
-            tr[i].classList.remove('dragover');
-        }
-        document.getElementById(tableId).classList.add('opacity05');
+        // set dragged element uri to undefined to force table row replacement
+        setData(dragEl, 'uri', undefined);
+        elHide(dragEl);
+        // apply new order
+        setUpdateViewId(tableId);
         switch(app.id) {
             case 'QueueCurrent': {
                 queueMoveSong(oldSongPos, newSongPos);
@@ -110,6 +269,11 @@ function dragAndDropTable(tableId) {
                 break;
             }
         }
+    }, false);
+
+    tableBody.addEventListener('dragend', function() {
+        dragEl.classList.remove('opacity05');
+        dragEl = undefined;
     }, false);
 }
 
@@ -128,52 +292,32 @@ function dragAndDropTableHeader(tableName) {
             event.dataTransfer.setDragImage(event.target, 0, 0);
             event.dataTransfer.effectAllowed = 'move';
             event.dataTransfer.setData('Text', event.target.getAttribute('data-col'));
-            dragEl = event.target.cloneNode(true);
+            dragEl = event.target;
         }
     }, false);
-    tableHeader.addEventListener('dragleave', function(event) {
-        event.preventDefault();
-        if (dragEl === undefined ||
-            dragEl.nodeName !== 'TH')
+
+    tableHeader.addEventListener('dragenter', function(event) {
+        if (dragEl !== undefined &&
+            dragEl.nodeName === event.target.nodeName)
         {
-            return;
+            event.target.classList.add('dragover-th');
         }
-        if (event.target.nodeName === 'TH') {
+    }, false);
+
+    tableHeader.addEventListener('dragleave', function(event) {
+        if (dragEl !== undefined &&
+            dragEl.nodeName === event.target.nodeName)
+        {
             event.target.classList.remove('dragover-th');
         }
     }, false);
+
     tableHeader.addEventListener('dragover', function(event) {
+        // prevent default to allow drop
         event.preventDefault();
-        if (dragEl === undefined ||
-            dragEl.nodeName !== 'TH')
-        {
-            return;
-        }
-        const th = tableHeader.querySelectorAll('.dragover-th');
-        for (let i = 0, j = th.length; i < j; i++) {
-            th[i].classList.remove('dragover-th');
-        }
-        if (event.target.nodeName === 'TH') {
-            event.target.classList.add('dragover-th');
-        }
         event.dataTransfer.dropEffect = 'move';
     }, false);
-    tableHeader.addEventListener('dragend', function(event) {
-        event.preventDefault();
-        if (dragEl === undefined ||
-            dragEl.nodeName !== 'TH')
-        {
-            return;
-        }
-        const th = tableHeader.querySelectorAll('.dragover-th');
-        for (let i = 0, j = th.length; i < j; i++) {
-            th[i].classList.remove('dragover-th');
-        }
-        if (this.querySelector('[data-col=' + event.dataTransfer.getData('Text') + ']')) {
-            this.querySelector('[data-col=' + event.dataTransfer.getData('Text') + ']').classList.remove('opacity05');
-        }
-        dragEl = undefined;
-    }, false);
+
     tableHeader.addEventListener('drop', function(event) {
         event.stopPropagation();
         event.preventDefault();
@@ -182,24 +326,21 @@ function dragAndDropTableHeader(tableName) {
         {
             return;
         }
+        event.target.classList.remove('dragover-th');
         if (event.dataTransfer.getData('Text') === event.target.getAttribute('data-col')) {
             return;
         }
-        this.querySelector('[data-col=' + event.dataTransfer.getData('Text') + ']').remove();
-        dragEl.classList.remove('opacity05');
+        // move element
         // @ts-ignore
         tableHeader.insertBefore(dragEl, event.target);
-        const th = tableHeader.querySelectorAll('.dragover-th');
-        for (let i = 0, j = th.length; i < j; i++) {
-            th[i].classList.remove('dragover-th');
-        }
-        if (document.getElementById(tableName + 'List')) {
-            document.getElementById(tableName + 'List').classList.add('opacity05');
-            saveCols(tableName);
-        }
-        else {
-            saveCols(tableName, this.parentNode.parentNode);
-        }
+        // save this state
+        setUpdateViewId(tableName + 'List');
+        saveCols(tableName);
+    }, false);
+
+    tableHeader.addEventListener('dragend', function() {
+        dragEl.classList.remove('opacity05');
+        dragEl = undefined;
     }, false);
 }
 
@@ -289,7 +430,7 @@ function setColsChecklist(tableName, menu) {
             );
         }
         else {
-            const btn = elCreateText('button', {"class": ["btn", "btn-secondary", "btn-xs", "clickable", "mi", "mi-small", "me-2"],
+            const btn = elCreateText('button', {"class": ["btn", "btn-secondary", "btn-xs", "clickable", "mi", "mi-sm", "me-2"],
                 "name": tags[i]}, 'radio_button_unchecked');
             if (settings['cols' + tableName].includes(tags[i])) {
                 btn.classList.add('active');
@@ -327,9 +468,16 @@ function setCols(tableName) {
     const thead = document.querySelector('#' + tableName + 'List > thead > tr');
     elClear(thead);
 
+    const clickable = (tableName === 'QueueCurrent' && features.featAdvqueue) ||
+                      tableName === 'Search'
+        ? 'clickable'
+        : 'not-clickable';
+    if (clickable === 'not-clickable') {
+        thead.classList.add(clickable);
+    }
     for (let i = 0, j = settings['cols' + tableName].length; i < j; i++) {
         const hname = settings['cols' + tableName][i];
-        const th = elCreateTextTn('th', {"draggable": "true", "data-col": settings['cols' + tableName][i]}, hname);
+        const th = elCreateTextTn('th', {"class": [clickable], "draggable": "true", "data-col": settings['cols' + tableName][i]}, hname);
         if (hname === 'Track' ||
             hname === 'Pos')
         {
@@ -340,7 +488,7 @@ function setCols(tableName) {
            )
         {
             th.appendChild(
-                elCreateText('span', {"class": ["sort-dir", "mi", "float-end"]}, (app.cards.Search.sort.desc === true ? 'arrow_drop_up' : 'arrow_drop_down'))
+                elCreateText('span', {"class": ["sort-dir", "mi", "float-end"]}, (app.cards.Search.sort.desc === true ? ligatures['sortUp'] : ligatures['sortDown']))
             );
         }
         thead.appendChild(th);
@@ -349,10 +497,12 @@ function setCols(tableName) {
     const th = elCreateEmpty('th', {"data-col": "Action"});
     if (features.featTags === true) {
         th.appendChild(
-            elCreateText('a', {"href": "#", "data-action": "popover", "data-contextmenu": "columns",
-                "class": ["align-middle", "mi", "mi-small", "clickable"], "data-title-phrase": "Columns"}, 'settings')
+            pEl.columnsBtn.cloneNode(true)
         );
     }
+    th.appendChild(
+        pEl.selectAllBtn.cloneNode(true)
+    );
     thead.appendChild(th);
 }
 
@@ -450,20 +600,21 @@ function toggleSort(th, colName) {
     //set new sort indicator
     // @ts-ignore
     th.appendChild(
-        elCreateText('span', {"class": ["sort-dir", "mi", "float-end"]}, (app.current.sort.desc === true ? 'arrow_drop_up' : 'arrow_drop_down'))
+        elCreateText('span', {"class": ["sort-dir", "mi", "float-end"]}, (app.current.sort.desc === true ? ligatures['sortUp'] : ligatures['sortDown']))
     );
 }
 
 /**
- * Replaces a table row
+ * Conditionally replaces a table row, if uri or cols are changed.
  * @param {HTMLElement} row row to replace
  * @param {HTMLElement} el replacement row
  * @returns {void}
  */
 function replaceTblRow(row, el) {
-    const menuEl = row.querySelector('[data-contextmenu]');
-    if (menuEl) {
-        hidePopover();
+    if (getData(row, 'uri') === getData(el, 'uri') &&
+        getData(row, 'cols') === getData(el, 'cols'))
+    {
+        return;
     }
     row.replaceWith(el);
 }
@@ -471,12 +622,11 @@ function replaceTblRow(row, el) {
 /**
  * Adds a row with discnumber to the table
  * @param {number} disc discnumber
- * @param {string} album album
- * @param {object} albumartist album artists 
+ * @param {string} albumId the albumid
  * @param {number} colspan column count
  * @returns {HTMLElement} the created row
  */
-function addDiscRow(disc, album, albumartist, colspan) {
+function addDiscRow(disc, albumId, colspan) {
     const row = elCreateNodes('tr', {"class": ["not-clickable"]}, [
         elCreateNode('td', {},
             elCreateText('span', {"class": ["mi"]}, 'album')
@@ -484,12 +634,11 @@ function addDiscRow(disc, album, albumartist, colspan) {
         elCreateTextTnNr('td', {"colspan": (colspan - 1)}, 'Discnum', disc),
         elCreateNode('td', {"data-col": "Action"},
             elCreateText('a', {"data-action": "popover", "data-contextmenu": "disc", "href": "#", "class": ["mi", "color-darkgrey"],
-                "data-title-phrase":"Actions"}, ligatureMore)
+                "data-title-phrase":"Actions"}, ligatures['more'])
         )
     ]);
     setData(row, 'Disc', disc);
-    setData(row, 'Album', album);
-    setData(row, 'AlbumArtist', albumartist);
+    setData(row, 'AlbumId', albumId);
     return row;
 }
 
@@ -521,7 +670,7 @@ function updateTable(obj, list, perRowCallback, createRowCellsCallback) {
     let z = 0;
     let lastDisc = obj.result.data.length > 0 && obj.result.data[0].Disc !== undefined ? Number(obj.result.data[0].Disc) : 0;
     if (obj.result.Discs !== undefined && obj.result.Discs > 1) {
-        const row = addDiscRow(1, obj.result.data[0].Album, obj.result.data[0][tagAlbumArtist], colspan);
+        const row = addDiscRow(1, obj.result.AlbumId, colspan);
         if (z < tr.length) {
             replaceTblRow(tr[z], row);
         }
@@ -533,7 +682,7 @@ function updateTable(obj, list, perRowCallback, createRowCellsCallback) {
     for (let i = 0; i < nrItems; i++) {
         //disc handling for album view
         if (obj.result.data[0].Disc !== undefined && lastDisc < Number(obj.result.data[i].Disc)) {
-            const row = addDiscRow(obj.result.data[i].Disc, obj.result.data[i].Album, obj.result.data[i][tagAlbumArtist], colspan);
+            const row = addDiscRow(obj.result.data[i].Disc, obj.result.AlbumId, colspan);
             if (i + z < tr.length) {
                 replaceTblRow(tr[i + z], row);
             }
@@ -637,6 +786,7 @@ function tableRow(row, data, list, colspan, smallWidth) {
                 );
             }
         }
+        setData(row, 'cols', settings['cols' + list].join(':'));
         switch(app.id) {
             case 'BrowsePlaylistDetail':
                 // add quick play and remove action
@@ -734,28 +884,32 @@ function checkResultId(obj, id) {
  * Checks the json response for an error object and displays the error in the table body
  * @param {object} obj jsonrpc object to check
  * @param {HTMLElement} tbody body of the table
- * @returns {boolean} true = result is not an error, else false
+ * @returns {boolean} false = result is  empty or an error, else true
  */
 function checkResult(obj, tbody) {
-    const thead = tbody.parentNode.querySelector('tr');
-    const colspan = thead !== null ? thead.querySelectorAll('th').length : 0;
-    const tfoot = tbody.parentNode.querySelector('tfoot');
-    if (obj.error) {
-        elClear(tbody);
-        if (tfoot !== null) {
-            elClear(tfoot);
-        }
-        tbody.appendChild(errorRow(obj, colspan));
-        unsetUpdateView(tbody.parentNode);
-        setPagination(0, 0);
-        return false;
+    //remove old alerts
+    const alert = tbody.querySelector('.alert');
+    if (alert) {
+        alert.parentNode.parentNode.remove();
     }
-    if (obj.result.returnedEntities === 0) {
+    if (obj.error ||
+        obj.result.returnedEntities === 0)
+    {
+        const thead = tbody.parentNode.querySelector('tr');
+        const colspan = thead !== null
+            ? thead.querySelectorAll('th').length
+            : 0;
         elClear(tbody);
+        const tfoot = tbody.parentNode.querySelector('tfoot');
         if (tfoot !== null) {
             elClear(tfoot);
         }
-        tbody.appendChild(emptyRow(colspan));
+        if (obj.error) {
+            tbody.appendChild(errorRow(obj, colspan));
+        }
+        else {
+            tbody.appendChild(emptyRow(colspan));
+        }
         unsetUpdateView(tbody.parentNode);
         setPagination(0, 0);
         return false;

@@ -5,10 +5,10 @@
 */
 
 #include "compile_time.h"
-#include "src/lib/list.h"
 #include "src/mpd_client/jukebox.h"
 
 #include "dist/utf8/utf8.h"
+#include "src/lib/album_cache.h"
 #include "src/lib/filehandler.h"
 #include "src/lib/jsonrpc.h"
 #include "src/lib/log.h"
@@ -23,7 +23,6 @@
 #include "src/mpd_client/tags.h"
 #include "src/mympd_api/queue.h"
 #include "src/mympd_api/sticker.h"
-
 
 #include <errno.h>
 #include <string.h>
@@ -214,6 +213,9 @@ sds jukebox_list(struct t_partition_state *partition_state, sds buffer, enum mym
                     buffer = tojson_char(buffer, "uri", "Album", true);
                     buffer = tojson_char(buffer, "Title", "", true);
                     buffer = tojson_char(buffer, "Album", current->key, true);
+                    sds albumkey = album_cache_get_key(album);
+                    buffer = tojson_char(buffer, "AlbumId", albumkey, true);
+                    FREE_SDS(albumkey);
                     buffer = sdscat(buffer, "\"AlbumArtist\":");
                     buffer = mpd_client_get_tag_values(album, MPD_TAG_ALBUM_ARTIST, buffer);
                     buffer = sdscat(buffer, ",\"Artist\":");
@@ -431,17 +433,7 @@ bool jukebox_add_to_queue(struct t_partition_state *partition_state, long add_so
  * @return true on success, else false
  */
 static bool add_album_to_queue(struct t_partition_state *partition_state, struct mpd_song *album) {
-    const char *value = NULL;
-    unsigned i = 0;
-    sds expression = sdsnewlen("(", 1);
-    while ((value = mpd_song_get_tag(album, partition_state->mpd_state->tag_albumartist, i)) != NULL) {
-        expression = escape_mpd_search_expression(expression, mpd_tag_name(partition_state->mpd_state->tag_albumartist), "==", value);
-        expression = sdscat(expression, " AND ");
-        i++;
-    }
-    expression = escape_mpd_search_expression(expression, "Album", "==", mpd_song_get_tag(album, MPD_TAG_ALBUM, 0));
-    expression = sdscatlen(expression, ")", 1);
-
+    sds expression = get_search_expression_album(partition_state->mpd_state->tag_albumartist, album);
     if (mpd_search_add_db_songs(partition_state->conn, true) &&
         mpd_search_add_expression(partition_state->conn, expression))
     {

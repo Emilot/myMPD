@@ -41,9 +41,15 @@ bool mympd_api_playlist_content_rm_positions(struct t_partition_state *partition
 bool mympd_api_playlist_content_append(struct t_partition_state *partition_state, sds plist, struct t_list *uris, sds *error);
 bool mympd_api_playlist_content_insert(struct t_partition_state *partition_state, sds plist, struct t_list *uris, unsigned to, sds *error);
 bool mympd_api_playlist_content_replace(struct t_partition_state *partition_state, sds plist, struct t_list *uris, sds *error);
+bool mympd_api_playlist_content_append_albums(struct t_partition_state *partition_state, sds plist, struct t_list *albumids, sds *error);
+bool mympd_api_playlist_content_insert_albums(struct t_partition_state *partition_state, sds plist, struct t_list *albumids, unsigned to, sds *error);
+bool mympd_api_playlist_content_replace_albums(struct t_partition_state *partition_state, sds plist, struct t_list *albumids, sds *error);
+bool mympd_api_playlist_content_append_album_disc(struct t_partition_state *partition_state, sds plist, sds albumid, sds disc, sds *error);
+bool mympd_api_playlist_content_insert_album_disc(struct t_partition_state *partition_state, sds plist, sds albumid, sds disc, unsigned to, sds *error);
+bool mympd_api_playlist_content_replace_album_disc(struct t_partition_state *partition_state, sds plist, sds albumid, sds disc, sds *error);
 bool mympd_api_playlist_copy(struct t_partition_state *partition_state,
         struct t_list *src_plists, sds dst_plist, enum plist_copy_modes mode, sds *error);
 bool mympd_api_playlist_content_move_to_playlist(struct t_partition_state *partition_state, sds src_plist, sds dst_plist,
         struct t_list *positions, unsigned mode, sds *error);
-bool mympd_api_playlist_delete(struct t_partition_state *partition_state, struct t_list *playlists, bool smartpls_only, sds *error);
+bool mympd_api_playlist_delete(struct t_partition_state *partition_state, struct t_list *playlists, sds *error);
 #endif

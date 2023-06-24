@@ -155,21 +155,18 @@ function createSeverityIcon(severity) {
 
 /**
  * Shows a toast notification or an appinit alert
- * @param {string} title title of the notification 
- * @param {string} text notification text
+ * @param {string} message message
  * @param {string} facility facility
  * @param {string} severity one off info, warn, error
  * @returns {void}
  */
-function showNotification(title, text, facility, severity) {
+function showNotification(message, facility, severity) {
     if (appInited === false) {
-        showAppInitAlert(
-            title + (text === '' ? '' : ': ' + text)
-        );
+        showAppInitAlert(message);
         return;
     }
     setStateIcon();
-    logMessage(title, text, facility, severity);
+    logMessage(message, facility, severity);
     if (severity === 'info') {
         //notifications with severity info can be hidden
         if (settings.webuiSettings.notifyPage === false &&
@@ -190,22 +187,17 @@ function showNotification(title, text, facility, severity) {
     }
 
     if (settings.webuiSettings.notifyWeb === true) {
-        const notification = new Notification(title, {icon: 'assets/favicon.ico', body: text});
+        const notification = new Notification(message, {icon: 'assets/favicon.ico'});
         setTimeout(notification.close.bind(notification), 3000);
     }
     if (settings.webuiSettings.notifyPage === true) {
-        const toast = elCreateNode('div', {"class": ["toast"]},
+        const toast = elCreateNodes('div', {"class": ["toast", "mt-2"]}, [
             elCreateNodes('div', {"class": ["toast-header"]}, [
                 createSeverityIcon(severity),
-                elCreateText('strong', {"class": ["me-auto"]}, title),
-                elCreateEmpty('button', {"type": "button", "class": ["btn-close"], "data-bs-dismiss": "toast"})
+                elCreateText('span', {"class": ["me-auto"]}, message),
+                elCreateEmpty('button', {"type": "button", "class": ["btn-close"], "data-bs-dismiss": "toast"}),
             ])
-        );
-        if (text !== '') {
-            toast.appendChild(
-                elCreateText('div', {"class": ["toast-body"]}, text)
-            );
-        }
+        ]);
         document.getElementById('alertBox').prepend(toast);
         const toastInit = new BSN.Toast(toast, {delay: 2500});
         toast.addEventListener('hidden.bs.toast', function() {
@@ -217,25 +209,23 @@ function showNotification(title, text, facility, severity) {
 
 /**
  * Appends a log message to the log buffer
- * @param {string} title title
- * @param {string} text message
+ * @param {string} message message
  * @param {string} facility facility
  * @param {string} severity one off info, warn, error
  * @returns {void}
  */
-function logMessage(title, text, facility, severity) {
+function logMessage(message, facility, severity) {
     let messagesLen = messages.length;
     const lastMessage = messagesLen > 0 ? messages[messagesLen - 1] : null;
     if (lastMessage !== null &&
-        lastMessage.title === title)
+        lastMessage.message === message)
     {
         lastMessage.occurrence++;
         lastMessage.timestamp = getTimestamp();
     }
     else {
         messages.push({
-            "title": title,
-            "text": text,
+            "message": message,
             "facility": facility,
             "severity": severity,
             "occurrence": 1,
@@ -271,8 +261,7 @@ function showMessages() {
                 ]),
                 elCreateText('td', {}, message.occurrence),
                 elCreateNodes('td', {}, [
-                    elCreateText('p', {"class": ["mb-0"]}, message.title),
-                    elCreateText('p', {"class": ["mb-0"]}, message.text)
+                    elCreateText('p', {"class": ["mb-0"]}, message.message)
                 ])
             ]),
         overview.firstElementChild);
@@ -303,59 +292,20 @@ function notificationsSupported() {
 }
 
 /**
- * Toggles the disabled state of elements
- * @param {string} selector query selector
- * @param {string} state disabled or enabled
- * @returns {void}
- */
-function setElsState(selector, state) {
-    const els = document.querySelectorAll(selector);
-    for (const el of els) {
-        if (el.classList.contains('close')) {
-            continue;
-        }
-        if (state === 'disabled') {
-            if (el.classList.contains('alwaysEnabled') === false &&
-                el.getAttribute('disabled') !== 'disabled')
-            {
-                //disable only elements that are not already disabled
-                elDisable(el);
-                el.classList.add('disabled');
-            }
-        }
-        else if (el.classList.contains('disabled')) {
-            //enable only elements that are disabled through this function
-            elEnable(el);
-            el.classList.remove('disabled');
-        }
-    }
-}
-
-/**
  * Toggles the ui state
  * @returns {void}
  */
 function toggleUI() {
-    let state = 'disabled';
-    if (getWebsocketState() === true &&
-        settings.partition.mpdConnected === true)
-    {
-        state = 'enabled';
-    }
+    /** @type {string} */
+    const state = getWebsocketState() && settings.partition.mpdConnected
+        ? 'enabled'
+        : 'disabled';
+    /** @type {boolean} */
     const enabled = state === 'disabled' ? false : true;
     if (enabled !== uiEnabled) {
         logDebug('Setting ui state to ' + state);
-        setElsState('a', state);
-        setElsState('input', state);
-        setElsState('select', state);
-        setElsState('button', state);
-        setElsState('textarea', state);
-        if (enabled === false) {
-            setElsState('.clickable', state);
-        }
-        else {
-            setElsState('.not-clickable', state);
-        }
+        domCache.body.setAttribute('data-uiState', state);
+        //remember current state
         uiEnabled = enabled;
     }
 
@@ -364,7 +314,7 @@ function toggleUI() {
     }
     else {
         toggleAlert('alertMpdState', true, tn('MPD disconnected'));
-        logMessage(tn('MPD disconnected'), '', 'mpd', 'error');
+        logMessage(tn('MPD disconnected'), 'mpd', 'error');
     }
 
     if (getWebsocketState() === true) {
@@ -372,7 +322,7 @@ function toggleUI() {
     }
     else if (appInited === true) {
         toggleAlert('alertMympdState', true, tn('Websocket is disconnected'));
-        logMessage(tn('Websocket is disconnected'), '', 'general', 'error');
+        logMessage(tn('Websocket is disconnected'), 'general', 'error');
     }
 
     setStateIcon();
@@ -422,4 +372,14 @@ function hideModalAlert(el) {
     for (let i = 0, j = activeAlerts.length; i < j; i++) {
         activeAlerts[i].remove();
     }
+}
+
+/**
+ * Hides a dismissible alert
+ * @param {EventTarget} target close button of the alert
+ * @returns {void}
+ */
+//eslint-disable-next-line no-unused-vars
+function hideAlert(target) {
+    elHide(target.parentNode);
 }

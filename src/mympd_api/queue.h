@@ -10,7 +10,6 @@
 #include "src/lib/api.h"
 #include "src/lib/mympd_state.h"
 
-bool mympd_api_queue_play_newly_inserted(struct t_partition_state *partition_state);
 sds mympd_api_queue_status(struct t_partition_state *partition_state, sds buffer);
 sds mympd_api_queue_list(struct t_partition_state *partition_state, sds buffer, long request_id,
         long offset, long limit, const struct t_tags *tagcols);
@@ -32,4 +31,10 @@ bool mympd_api_queue_append_plist(struct t_partition_state *partition_state, str
 bool mympd_api_queue_insert_plist(struct t_partition_state *partition_state, struct t_list *plists, unsigned to, unsigned whence, sds *error);
 bool mympd_api_queue_replace_plist(struct t_partition_state *partition_state, struct t_list *plists, sds *error);
 bool mympd_api_queue_move_relative(struct t_partition_state *partition_state, struct t_list *song_ids, unsigned to, unsigned whence, sds *error);
+bool mympd_api_queue_append_albums(struct t_partition_state *partition_state, struct t_list *albumids, sds *error);
+bool mympd_api_queue_insert_albums(struct t_partition_state *partition_state, struct t_list *albumids, unsigned to, unsigned whence, sds *error);
+bool mympd_api_queue_replace_albums(struct t_partition_state *partition_state, struct t_list *albumids, sds *error);
+bool mympd_api_queue_append_album_disc(struct t_partition_state *partition_state, sds albumid, sds disc, sds *error);
+bool mympd_api_queue_insert_album_disc(struct t_partition_state *partition_state, sds albumid, sds disc, unsigned to, unsigned whence, sds *error);
+bool mympd_api_queue_replace_album_disc(struct t_partition_state *partition_state, sds albumid, sds disc, sds *error);
 #endif

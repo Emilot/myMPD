@@ -147,42 +147,26 @@ void *web_server_loop(void *arg_mgr) {
         MYMPD_LOG_DEBUG(NULL, "Using certificate: %s", mg_user_data->config->ssl_cert);
         MYMPD_LOG_DEBUG(NULL, "Using private key: %s", mg_user_data->config->ssl_key);
     }
-
-    sds last_notify = sdsempty();
-    time_t last_time = 0;
     while (s_signal_received == 0) {
+        //poll webserver response queue
         struct t_work_response *response = mympd_queue_shift(web_server_queue, 50, 0);
         if (response != NULL) {
             switch(response->conn_id) {
-                case -2:
+                case CONN_ID_NOTIFY_CLIENT:
                     //websocket notify for specific clients
                     send_ws_notify_client(mgr, response);
                     break;
-                case -1:
+                case CONN_ID_INTERNAL:
                     //internal message
-                    MYMPD_LOG_DEBUG(NULL, "Got internal message");
                     parse_internal_message(response, mg_user_data);
                     break;
-                case 0: {
-                    MYMPD_LOG_DEBUG(NULL, "Got websocket notify");
+                case CONN_ID_NOTIFY_ALL:
                     //websocket notify for all clients
-                    time_t now = time(NULL);
-                    if (strcmp(response->data, last_notify) != 0 ||
-                        last_time < now - 1)
-                    {
-                        last_notify = sds_replace(last_notify, response->data);
-                        last_time = now;
-                        send_ws_notify(mgr, response);
-                    }
-                    else {
-                        MYMPD_LOG_DEBUG(NULL, "Discarding repeated notify");
-                        free_response(response);
-                    }
+                    send_ws_notify(mgr, response);
                     break;
-                }
                 default:
-                    MYMPD_LOG_DEBUG(response->partition, "Got API response for id \"%lld\"", response->conn_id);
                     //api response
+                    MYMPD_LOG_DEBUG(response->partition, "Got API response for id \"%lld\"", response->conn_id);
                     send_api_response(mgr, response);
             }
         }
@@ -191,7 +175,6 @@ void *web_server_loop(void *arg_mgr) {
     }
     MYMPD_LOG_DEBUG(NULL, "Stopping web_server thread");
     FREE_SDS(thread_logname);
-    FREE_SDS(last_notify);
     return NULL;
 }
 
@@ -201,7 +184,7 @@ void *web_server_loop(void *arg_mgr) {
 
 /**
  * Sets the mg_user_data values from set_mg_user_data_request.
- * Message is sent by the feature detection function in the mympd_api thread.
+ * Message is sent from the mympd_api thread.
  * @param response 
  * @param mg_user_data t_mg_user_data to configure
  * @return true on success, else false
@@ -346,11 +329,13 @@ static void send_ws_notify(struct mg_mgr *mgr, struct t_work_response *response)
 static void send_ws_notify_client(struct mg_mgr *mgr, struct t_work_response *response) {
     struct mg_connection *nc = mgr->conns;
     int send_count = 0;
+    const long clientId = response->id / 1000;
+    //const long requestId = response->id % 1000;
     while (nc != NULL) {
         if ((int)nc->is_websocket == 1) {
             struct t_frontend_nc_data *frontend_nc_data = (struct t_frontend_nc_data *)nc->fn_data;
-            if (response->id == frontend_nc_data->id) {
-                MYMPD_LOG_DEBUG(response->partition, "Sending notify to conn_id %lu: %s", nc->id, response->data);
+            if (clientId == frontend_nc_data->id) {
+                MYMPD_LOG_DEBUG(response->partition, "Sending notify to conn_id %lu, jsonrpc client id %ld: %s", nc->id, clientId, response->data);
                 mg_ws_send(nc, response->data, sdslen(response->data), WEBSOCKET_OP_TEXT);
                 send_count++;
                 break;
@@ -359,26 +344,28 @@ static void send_ws_notify_client(struct mg_mgr *mgr, struct t_work_response *re
         nc = nc->next;
     }
     if (send_count == 0) {
-        MYMPD_LOG_DEBUG(NULL, "No websocket client not connected, discarding message: %s", response->data);
+        MYMPD_LOG_DEBUG(NULL, "No websocket client connected, discarding message: %s", response->data);
     }
     free_response(response);
 }
 
 /**
- * Sends a api response
+ * Sends an api response
  * @param mgr mongoose mgr
  * @param response jsonrpc response
  */
 static void send_api_response(struct mg_mgr *mgr, struct t_work_response *response) {
     struct mg_connection *nc = mgr->conns;
     while (nc != NULL) {
-        if ((int)nc->is_websocket == 0 && nc->id == (long unsigned)response->conn_id) {
+        if ((int)nc->is_websocket == 0 &&
+            nc->id == (long unsigned)response->conn_id)
+        {
             if (response->cmd_id == INTERNAL_API_ALBUMART) {
                 webserver_send_albumart(nc, response->data, response->binary);
             }
             else {
                 MYMPD_LOG_DEBUG(response->partition, "Sending response to conn_id %lu (length: %lu): %s", nc->id, (unsigned long)sdslen(response->data), response->data);
-                webserver_send_data(nc, response->data, sdslen(response->data), "Content-Type: application/json\r\n");
+                webserver_send_data(nc, response->data, sdslen(response->data), EXTRA_HEADERS_JSON_CONTENT);
             }
             break;
         }
@@ -499,7 +486,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data, void *fn
             struct mg_str matches[1];
             size_t sent = 0;
             MYMPD_LOG_DEBUG(frontend_nc_data->partition, "Websocket message (%lu): %.*s", nc->id, (int)wm->data.len, wm->data.ptr);
-            if (wm->data.len > 13) {
+            if (wm->data.len > 9) {
                 MYMPD_LOG_ERROR(frontend_nc_data->partition, "Websocket message too long: %lu", (long unsigned)wm->data.len);
                 sent = mg_ws_send(nc, "too long", 8, WEBSOCKET_OP_TEXT);
             }
@@ -540,6 +527,11 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data, void *fn
             }
             else if (mg_vcmp(&hm->method, "POST") == 0) {
                 nc->data[1] = 'P';
+            }
+            else if (mg_vcmp(&hm->method, "OPTIONS") == 0) {
+                nc->data[1] = 'O';
+                webserver_send_cors_reply(nc);
+                return;
             }
             else {
                 MYMPD_LOG_ERROR(NULL, "Invalid http method \"%.*s\" (%lu)", (int)hm->method.len, hm->method.ptr, nc->id);
@@ -591,7 +583,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data, void *fn
                     MYMPD_LOG_ERROR(frontend_nc_data->partition, "Invalid API request");
                     sds response = jsonrpc_respond_message(sdsempty(), GENERAL_API_UNKNOWN, 0,
                         JSONRPC_FACILITY_GENERAL, JSONRPC_SEVERITY_ERROR, "Invalid API request");
-                    webserver_send_data(nc, response, sdslen(response), "Content-Type: application/json\r\n");
+                    webserver_send_data(nc, response, sdslen(response), EXTRA_HEADERS_JSON_CONTENT);
                     FREE_SDS(response);
                 }
             }
@@ -658,7 +650,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data, void *fn
                     MYMPD_LOG_ERROR(frontend_nc_data->partition, "Invalid script API request");
                     sds response = jsonrpc_respond_message(sdsempty(), GENERAL_API_UNKNOWN, 0,
                         JSONRPC_FACILITY_SCRIPT, JSONRPC_SEVERITY_ERROR, "Invalid script API request");
-                    webserver_send_data(nc, response, sdslen(response), "Content-Type: application/json\r\n");
+                    webserver_send_data(nc, response, sdslen(response), EXTRA_HEADERS_JSON_CONTENT);
                     FREE_SDS(response);
                 }
             }

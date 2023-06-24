@@ -7,7 +7,6 @@
 
 /**
  * Initializes / starts the myMPD app
- * @returns {void}
  */
 
 /**
@@ -107,7 +106,6 @@ function appInitStart() {
 
     setMobileView();
 
-    subdir = window.location.pathname.replace('/index.html', '').replace(/\/$/, '');
     i18nHtml(document.getElementById('splashScreenAlert'));
 
     //set loglevel
@@ -195,11 +193,9 @@ function appInit() {
         if (href.classList.contains('not-clickable') === false) {
             href.classList.add('clickable');
         }
-        let parentInit = href.parentNode.classList.contains('noInitChilds') ? true : false;
-        if (parentInit === false) {
-            parentInit = href.parentNode.parentNode.classList.contains('noInitChilds') ? true : false;
-        }
-        if (parentInit === true) {
+        if (href.parentNode.classList.contains('noInitChilds') ||
+            href.parentNode.parentNode.classList.contains('noInitChilds'))
+        {
             //handler on parentnode
             continue;
         }
@@ -243,6 +239,7 @@ function appInit() {
     initSession();
     initNotifications();
     initContextMenuOffcanvas();
+    initSelectActions();
     //init drag and drop
     for (const table of ['QueueCurrentList', 'BrowsePlaylistDetailList']) {
         dragAndDropTable(table);
@@ -376,7 +373,7 @@ function initGlobalModals() {
         }
         const k = elCreateText('div', {"class": ["key", "float-start"]}, (keymap[key].key !== undefined ? keymap[key].key : key));
         if (keymap[key].key && keymap[key].key.length > 1) {
-            k.classList.add('mi', 'mi-small');
+            k.classList.add('mi', 'mi-sm');
         }
         col.appendChild(k);
         col.appendChild(
@@ -459,10 +456,8 @@ function initNavs() {
         event.preventDefault();
         const target = event.target.nodeName === 'SPAN' ? event.target.parentNode : event.target;
         if (target.nodeName === 'A') {
-            // @ts-ignore:
             target.firstElementChild.textContent = 'start';
             setTimeout(function() {
-                // @ts-ignore:
                 target.firstElementChild.textContent = 'code';
             }, 400);
             execScript(getData(target, 'href'));
@@ -494,7 +489,7 @@ function getAssets() {
  */
 window.onerror = function(msg, url, line, col) {
     if (settings.loglevel >= 4) {
-        showNotification(tn('JavaScript error'), msg + ' (' + url + ': ' + line + ':' + col + ')', 'general', 'error');
+        showNotification(tn('JavaScript error') + ': ' + msg + ' (' + url + ': ' + line + ':' + col + ')', 'general', 'error');
     }
     //show error also in the console
     return false;

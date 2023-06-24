@@ -140,8 +140,7 @@ sds jsonrpc_event(sds buffer, enum jsonrpc_events event) {
     sdsclear(buffer);
     buffer = sdscat(buffer, "{\"jsonrpc\":\"2.0\",");
     buffer = tojson_char(buffer, "method", event_name, true);
-    buffer = sdscat(buffer, "\"params\":{");
-    buffer = sdscatlen(buffer, "}}", 2);
+    buffer = sdscat(buffer, "\"params\":{}}");
     return buffer;
 }
 
@@ -259,16 +258,33 @@ sds jsonrpc_respond_ok(sds buffer, enum mympd_cmd_ids cmd_id, long request_id, e
  * @param request_id jsonrpc request id to respond
  * @param rc return code to check
  * @param facility one of enum jsonrpc_facilities
- * @param severity one of enum jsonrpc_severities
- * @param message the response message, if rc == false
+ * @param error the response message, if rc == false
  * @return pointer to buffer
  */
-sds jsonrpc_respond_with_message_or_ok(sds buffer, enum mympd_cmd_ids cmd_id, long request_id,
-        bool rc, enum jsonrpc_facilities facility, enum jsonrpc_severities severity, sds message)
+sds jsonrpc_respond_with_ok_or_error(sds buffer, enum mympd_cmd_ids cmd_id, long request_id,
+        bool rc, enum jsonrpc_facilities facility, const char *error)
+{
+    return jsonrpc_respond_with_message_or_error(buffer, cmd_id, request_id,
+        rc, facility, "ok", error);
+}
+
+/**
+ * Checks rc and responses with ok or the message
+ * @param buffer already allocated sds string for the jsonrpc response
+ * @param cmd_id enum mympd_cmd_ids
+ * @param request_id jsonrpc request id to respond
+ * @param rc return code to check
+ * @param facility one of enum jsonrpc_facilities
+ * @param message the response message, if rc == true
+ * @param error the response message, if rc == false
+ * @return pointer to buffer
+ */
+sds jsonrpc_respond_with_message_or_error(sds buffer, enum mympd_cmd_ids cmd_id, long request_id,
+        bool rc, enum jsonrpc_facilities facility, const char *message, const char *error)
 {
     return rc == true
-        ? jsonrpc_respond_ok(buffer, cmd_id, request_id, JSONRPC_FACILITY_MPD)
-        : jsonrpc_respond_message(buffer, cmd_id, request_id, facility, severity, message);
+        ? jsonrpc_respond_message(buffer, cmd_id, request_id, facility, JSONRPC_SEVERITY_INFO, message)
+        : jsonrpc_respond_message(buffer, cmd_id, request_id, facility, JSONRPC_SEVERITY_ERROR, error);
 }
 
 /**

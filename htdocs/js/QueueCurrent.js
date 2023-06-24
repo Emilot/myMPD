@@ -74,6 +74,10 @@ function handleQueueCurrent() {
  */
 function initQueueCurrent() {
     document.getElementById('QueueCurrentList').addEventListener('click', function(event) {
+        //select mode
+        if (selectRow(event) === true) {
+            return;
+        }
         //action td
         if (event.target.nodeName === 'A') {
             handleActionTdClick(event);
@@ -89,6 +93,7 @@ function initQueueCurrent() {
                 colName === 'Duration' ||
                 colName.indexOf('sticker') === 0)
             {
+                //by this fields can not be sorted
                 return;
             }
             toggleSort(event.target, colName);
@@ -97,8 +102,10 @@ function initQueueCurrent() {
             return;
         }
         //table body
-        const target = getParent(event.target, 'TR');
-        if (checkTargetClick(target) === true) {
+        const target = event.target.closest('TR');
+        if (target.parentNode.nodeName === 'TBODY' &&
+            checkTargetClick(target) === true)
+        {
             clickQueueSong(getData(target, 'songid'), getData(target, 'uri'), event);
         }
     }, false);
@@ -308,7 +315,9 @@ function parseQueue(obj) {
         tableRow(row, data, app.id, colspan, smallWidth);
         if (currentState.currentSongId === data.id) {
             setPlayingRow(row);
-            setQueueCounter(row, getCounterText());
+            if (currentState.state === 'play') {
+                setQueueCounter(row, getCounterText());
+            }
         }
     });
 
@@ -346,23 +355,49 @@ function parseQueue(obj) {
 function queueSetCurrentSong() {
     //remove old playing row
     const old = document.getElementById('queueSongId' + currentState.lastSongId);
-    if (old !== null &&
-        old.classList.contains('queue-playing'))
-    {
-        const durationTd = old.querySelector('[data-col=Duration]');
-        if (durationTd) {
-            durationTd.textContent = fmtSongDuration(getData(old, 'duration'));
-        }
-        const posTd = old.querySelector('[data-col=Pos]');
-        if (posTd) {
-            posTd.classList.remove('mi');
-            posTd.textContent = getData(old, 'songpos') + 1;
-        }
-        old.classList.remove('queue-playing');
-        old.style.removeProperty('background');
+    if (old !== null) {
+        resetDuration(old);
+        resetSongPos(old);
     }
     //set playing row
     setPlayingRow();
+}
+
+/**
+ * Resets the duration in playing row and footer
+ * @param {HTMLElement} [playingRow] current playing row in queue card
+ * @returns {void}
+ */
+function resetDuration(playingRow) {
+    //counter in footer
+    elClear(domCache.counter);
+    //counter in queue
+    if (playingRow === undefined) {
+        playingRow = document.getElementById('queueSongId' + currentState.currentSongId);
+    }
+    const durationTd = playingRow.querySelector('[data-col=Duration]');
+    if (durationTd) {
+        durationTd.textContent = fmtSongDuration(getData(playingRow, 'duration'));
+    }
+    
+    playingRow.classList.remove('queue-playing');
+    playingRow.style.removeProperty('background');
+}
+
+/**
+ * Resets the position in playing row
+ * @param {HTMLElement} [playingRow] current playing row in queue card
+ * @returns {void}
+ */
+function resetSongPos(playingRow) {
+    if (playingRow === undefined) {
+        playingRow = document.getElementById('queueSongId' + currentState.currentSongId);
+    }
+    const posTd = playingRow.querySelector('[data-col=Pos]');
+    if (posTd) {
+        posTd.classList.remove('mi');
+        posTd.textContent = getData(playingRow, 'songpos') + 1;
+    }
 }
 
 /**
@@ -433,41 +468,44 @@ function setQueueCurrentHeaderClickable() {
 
 /**
  * Appends an element to the queue
- * @param {string} type element type: song, dir, stream, plist, smartpls, webradio, search
- * @param {string} uri element uri
+ * @param {string} type element type: song, dir, stream, plist, smartpls, webradio, search, album
+ * @param {Array} uris element uris
  * @param {Function} [callback] callback function
  * @returns {void}
  */
-function appendQueue(type, uri, callback) {
-    _appendQueue(type, uri, false, callback);
+function appendQueue(type, uris, callback) {
+    _appendQueue(type, uris, false, callback);
 }
 
 /**
  * Appends an element to the queue and plays it
- * @param {string} type element type: song, dir, stream, plist, smartpls, webradio, search
- * @param {string} uri element uri
+ * @param {string} type element type: song, dir, stream, plist, smartpls, webradio, search, album
+ * @param {Array} uris element uris
  * @param {Function} [callback] callback function
  * @returns {void}
  */
-function appendPlayQueue(type, uri, callback) {
-    _appendQueue(type, uri, true, callback);
+function appendPlayQueue(type, uris, callback) {
+    _appendQueue(type, uris, true, callback);
 }
 
 /**
  * Appends elements to the queue
- * @param {string} type element type: song, dir, stream, plist, smartpls, webradio, search
- * @param {string} uri element uri
+ * @param {string} type element type: song, dir, stream, plist, smartpls, webradio, search, album
+ * @param {Array} uris element uris
  * @param {boolean} play true = play added entry, false = append only
  * @param {Function} callback callback function
  * @returns {void}
  */
-function _appendQueue(type, uri, play, callback) {
+function _appendQueue(type, uris, play, callback) {
+    if (type === 'webradio') {
+        uris = getRadioFavoriteUris(uris);
+    }
     switch(type) {
         case 'song':
         case 'dir':
         case 'stream':
             sendAPI("MYMPD_API_QUEUE_APPEND_URIS", {
-                "uris": [uri],
+                "uris": uris,
                 "play": play
             }, callback, true);
             break;
@@ -475,13 +513,27 @@ function _appendQueue(type, uri, play, callback) {
         case 'smartpls':
         case 'webradio':
             sendAPI("MYMPD_API_QUEUE_APPEND_PLAYLISTS", {
-                "plists": [uri],
+                "plists": uris,
                 "play": play
             }, callback, true);
             break;
         case 'search':
+            //search is limited to one at a time
             sendAPI("MYMPD_API_QUEUE_APPEND_SEARCH", {
-                "expression": uri,
+                "expression": uris[0],
+                "play": play
+            }, callback, true);
+            break;
+        case 'album':
+            sendAPI("MYMPD_API_QUEUE_APPEND_ALBUMS", {
+                "albumids": uris,
+                "play": play
+            }, callback, true);
+            break;
+        case 'disc':
+            sendAPI("MYMPD_API_QUEUE_APPEND_ALBUM_DISC", {
+                "albumid": uris[0],
+                "disc": uris[1].toString(),
                 "play": play
             }, callback, true);
             break;
@@ -490,45 +542,48 @@ function _appendQueue(type, uri, play, callback) {
 
 /**
  * Inserts the element after the current playing song
- * @param {string} type element type: song, dir, stream, plist, smartpls, webradio, search
- * @param {string} uri element uri
+ * @param {string} type element type: song, dir, stream, plist, smartpls, webradio, search, album
+ * @param {Array} uris element uris
  * @param {Function} [callback] callback function
  * @returns {void}
  */
 //eslint-disable-next-line no-unused-vars
-function insertAfterCurrentQueue(type, uri, callback) {
-    insertQueue(type, uri, 0, 1, false, callback);
+function insertAfterCurrentQueue(type, uris, callback) {
+    insertQueue(type, uris, 0, 1, false, callback);
 }
 
 /**
  * Inserts the element after the current playing song
- * @param {string} type element type: song, dir, stream, plist, smartpls, webradio, search
- * @param {string} uri element uri
+ * @param {string} type element type: song, dir, stream, plist, smartpls, webradio, search, album
+ * @param {Array} uris element uris
  * @param {Function} [callback] callback function
  * @returns {void}
  */
 //eslint-disable-next-line no-unused-vars
-function insertPlayAfterCurrentQueue(type, uri, callback) {
-    insertQueue(type, uri, 0, 1, true, callback);
+function insertPlayAfterCurrentQueue(type, uris, callback) {
+    insertQueue(type, uris, 0, 1, true, callback);
 }
 
 /**
  * Inserts elements into the queue
- * @param {string} type element type: song, dir, stream, plist, smartpls, webradio, search
- * @param {string} uri element uri
+ * @param {string} type element type: song, dir, stream, plist, smartpls, webradio, search, album
+ * @param {Array} uris element uris
  * @param {number} to position to insert
  * @param {number} whence how t interpret the to parameter: 0 = absolute, 1 = after, 2 = before current song
  * @param {boolean} play true = play added entry, false = insert only
  * @param {Function} callback callback function
  * @returns {void}
  */
-function insertQueue(type, uri, to, whence, play, callback) {
+function insertQueue(type, uris, to, whence, play, callback) {
+    if (type === 'webradio') {
+        uris = getRadioFavoriteUris(uris);
+    }
     switch(type) {
         case 'song':
         case 'dir':
         case 'stream':
             sendAPI("MYMPD_API_QUEUE_INSERT_URIS", {
-                "uris": [uri],
+                "uris": uris,
                 "to": to,
                 "whence": whence,
                 "play": play
@@ -538,15 +593,33 @@ function insertQueue(type, uri, to, whence, play, callback) {
         case 'smartpls':
         case 'webradio':
             sendAPI("MYMPD_API_QUEUE_INSERT_PLAYLISTS", {
-                "plists": [uri],
+                "plists": uris,
                 "to": to,
                 "whence": whence,
                 "play": play
             }, callback, true);
             break;
         case 'search':
+            //search is limited to one at a time
             sendAPI("MYMPD_API_QUEUE_INSERT_SEARCH", {
-                "expression": uri,
+                "expression": uris[0],
+                "to": to,
+                "whence": whence,
+                "play": play
+            }, callback, true);
+            break;
+        case 'album':
+            sendAPI("MYMPD_API_QUEUE_INSERT_ALBUMS", {
+                "albumids": uris,
+                "to": to,
+                "whence": whence,
+                "play": play
+            }, callback, true);
+            break;
+        case 'disc':
+            sendAPI("MYMPD_API_QUEUE_INSERT_ALBUM_DISC", {
+                "albumid": uris[0],
+                "disc": uris[1].toString(),
                 "to": to,
                 "whence": whence,
                 "play": play
@@ -557,41 +630,44 @@ function insertQueue(type, uri, to, whence, play, callback) {
 
 /**
  * Replaces the queue with the element
- * @param {string} type element type: song, dir, stream, plist, smartpls, webradio, search
- * @param {string} uri element uri
+ * @param {string} type element type: song, dir, stream, plist, smartpls, webradio, search, album
+ * @param {Array} uris element uris
  * @param {Function} [callback] callback function
  * @returns {void}
  */
-function replaceQueue(type, uri, callback) {
-    _replaceQueue(type, uri, false, callback)
+function replaceQueue(type, uris, callback) {
+    _replaceQueue(type, uris, false, callback)
 }
 
 /**
  * Replaces the queue with the element and plays it
- * @param {string} type element type: song, dir, stream, plist, smartpls, webradio, search
- * @param {string} uri element uri
+ * @param {string} type element type: song, dir, stream, plist, smartpls, webradio, search, album
+ * @param {Array} uris element uris
  * @param {Function} [callback] callback function
  * @returns {void}
  */
-function replacePlayQueue(type, uri, callback) {
-    _replaceQueue(type, uri, true, callback)
+function replacePlayQueue(type, uris, callback) {
+    _replaceQueue(type, uris, true, callback)
 }
 
 /**
  * Replaces the queue with the elements
- * @param {string} type element type: song, dir, stream, plist, smartpls, webradio, search
- * @param {string} uri element uri
+ * @param {string} type element type: song, dir, stream, plist, smartpls, webradio, search, album
+ * @param {Array} uris element uris
  * @param {boolean} play true = play added entry, false = insert only
  * @param {Function} callback callback function
  * @returns {void}
  */
-function _replaceQueue(type, uri, play, callback) {
+function _replaceQueue(type, uris, play, callback) {
+    if (type === 'webradio') {
+        uris = getRadioFavoriteUris(uris);
+    }
     switch(type) {
         case 'song':
         case 'stream':
         case 'dir':
             sendAPI("MYMPD_API_QUEUE_REPLACE_URIS", {
-                "uris": [uri],
+                "uris": uris,
                 "play": play
             }, callback, true);
             break;
@@ -599,13 +675,27 @@ function _replaceQueue(type, uri, play, callback) {
         case 'smartpls':
         case 'webradio':
             sendAPI("MYMPD_API_QUEUE_REPLACE_PLAYLISTS", {
-                "plists": [uri],
+                "plists": uris,
                 "play": play
             }, callback, true);
             break;
         case 'search':
+            //search is limited to one at a time
             sendAPI("MYMPD_API_QUEUE_REPLACE_SEARCH", {
-                "expression": uri,
+                "expression": uris[0],
+                "play": play
+            }, callback, true);
+            break;
+        case 'album':
+            sendAPI("MYMPD_API_QUEUE_REPLACE_ALBUMS", {
+                "albumids": uris,
+                "play": play
+            }, callback, true);
+            break;
+        case 'disc':
+            sendAPI("MYMPD_API_QUEUE_REPLACE_ALBUM_DISC", {
+                "albumid": uris[0],
+                "disc": uris[1].toString(),
                 "play": play
             }, callback, true);
             break;
@@ -872,17 +962,17 @@ function queueMoveSong(from, to) {
 }
 
 /**
- * Plays the selected song after the current song.
- * Sets the priority if MPD is in random mode, else moves the song after current playing song.
- * @param {number} songId current playing song id (for priority mode)
+ * Plays the selected song(s) after the current song.
+ * Sets the priority if MPD is in random mode, else moves the song(s) after current playing song.
+ * @param {Array} songIds current playing song ids
  * @returns {void}
  */
 //eslint-disable-next-line no-unused-vars
-function playAfterCurrent(songId) {
+function playAfterCurrent(songIds) {
     if (settings.partition.random === false) {
         //not in random mode - move song after current playing song
         sendAPI("MYMPD_API_QUEUE_MOVE_RELATIVE", {
-            "songIds": [songId],
+            "songIds": songIds,
             "to": 0,
             "whence": 1
         }, null, false);
@@ -890,7 +980,7 @@ function playAfterCurrent(songId) {
     else {
         //in random mode - set song priority
         sendAPI("MYMPD_API_QUEUE_PRIO_SET_HIGHEST", {
-            "songIds": [songId]
+            "songIds": songIds
         }, null, false);
     }
 }

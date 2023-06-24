@@ -10,10 +10,12 @@ const startTime = Date.now();
 
 // generate uniq id for this browser session
 /** @type {number} */
-const jsonrpcId = Math.floor(Math.random() * 1000000000);
+const jsonrpcClientIdMin = 100000;
+const jsonrpcClientIdMax = 999999;
+const jsonrpcClientId = Math.floor(Math.random() * (jsonrpcClientIdMax - jsonrpcClientIdMin + 1) + jsonrpcClientIdMin);
+let jsonrpcRequestId = 0;
 
 let socket = null;
-let websocketTimer = null;
 let websocketKeepAliveTimer = null;
 let searchTimer = null;
 let resizeTimer = null;
@@ -32,8 +34,10 @@ let settings = {
 let settingsParsed = 'no';
 
 let progressTimer = null;
-let dragSrc;
-let dragEl;
+
+// Reference to dom node for drag & drop
+/** @type {EventTarget} */
+let dragEl = undefined;
 
 /** @type {boolean} */
 let showSyncedLyrics = false;
@@ -46,15 +50,23 @@ let appInited = false;
 
 /** @type {boolean} */
 let scriptsInited = false;
-let subdir = '';
+
+/** @type {string} */
+const subdir = window.location.pathname.replace('/index.html', '').replace(/\/$/, '');
 
 /** @type {boolean} */
 let uiEnabled = true;
 
 let allOutputs = null;
 
-/** @type {string} */
-const ligatureMore = 'menu';
+/** @type {object} */
+const ligatures = {
+    'sortUp': 'arrow_drop_up',
+    'sortDown': 'arrow_drop_down',
+    'checked': 'task_alt',
+    'more': 'menu',
+    'unchecked': 'radio_button_unchecked'
+};
 
 /** @type {string} */
 const smallSpace = '\u2009';
@@ -66,8 +78,15 @@ const nDash = '\u2013';
 let tagAlbumArtist = 'AlbumArtist';
 
 /** @type {object} */
-const albumFilters = ["Composer", "Performer", "Conductor", "Ensemble"];
+const albumFilters = [
+    'AlbumArtist',
+    'Composer',
+    'Performer',
+    'Conductor',
+    'Ensemble'
+];
 
+/** @type {object} */
 const session = {
     "token": "",
     "timeout": 0
@@ -189,8 +208,14 @@ const mpdVersion = {
 const browseFilesystemHistory = {};
 
 //list of stickers
-const stickerList = ['stickerPlayCount', 'stickerSkipCount', 'stickerLastPlayed',
-    'stickerLastSkipped', 'stickerLike', 'stickerElapsed'];
+const stickerList = [
+    'stickerPlayCount',
+    'stickerSkipCount',
+    'stickerLastPlayed',
+    'stickerLastSkipped',
+    'stickerLike',
+    'stickerElapsed'
+];
 
 //application state
 const app = {};

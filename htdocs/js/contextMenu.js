@@ -154,18 +154,17 @@ function addMenuItemsNavbarActions(target, popoverBody) {
 function addMenuItemsDiscActions(target, contextMenuTitle, contextMenuBody) {
     const dataNode = target.parentNode.parentNode;
     const disc = getData(dataNode, 'Disc');
-    const album = getData(dataNode, 'Album');
-    const albumArtist = getData(dataNode, 'AlbumArtist');
+    const albumId = getData(dataNode, 'AlbumId');
 
-    addMenuItem(contextMenuBody, {"cmd": "_addAlbum", "options": ["appendQueue", albumArtist, album, disc]}, 'Append to queue');
-    addMenuItem(contextMenuBody, {"cmd": "_addAlbum", "options": ["appendPlayQueue", albumArtist, album, disc]}, 'Append to queue and play');
+    addMenuItem(contextMenuBody, {"cmd": "addAlbumDisc", "options": ["appendQueue", albumId, disc]}, 'Append to queue');
+    addMenuItem(contextMenuBody, {"cmd": "addAlbumDisc", "options": ["appendPlayQueue", albumId, disc]}, 'Append to queue and play');
     if (features.featWhence === true) {
-        addMenuItem(contextMenuBody, {"cmd": "_addAlbum", "options": ["insertAfterCurrentQueue", albumArtist, album, disc]}, 'Insert after current playing song');
+        addMenuItem(contextMenuBody, {"cmd": "addAlbumDisc", "options": ["insertAfterCurrentQueue", albumId, disc]}, 'Insert after current playing song');
     }
-    addMenuItem(contextMenuBody, {"cmd": "_addAlbum", "options": ["replaceQueue", albumArtist, album, disc]}, 'Replace queue');
-    addMenuItem(contextMenuBody, {"cmd": "_addAlbum", "options": ["replacePlayQueue", albumArtist, album, disc]}, 'Replace queue and play');
+    addMenuItem(contextMenuBody, {"cmd": "addAlbumDisc", "options": ["replaceQueue", albumId, disc]}, 'Replace queue');
+    addMenuItem(contextMenuBody, {"cmd": "addAlbumDisc", "options": ["replacePlayQueue", albumId, disc]}, 'Replace queue and play');
     if (features.featPlaylists === true) {
-        addMenuItem(contextMenuBody, {"cmd": "_addAlbum", "options": ["addPlaylist", albumArtist, album, disc]}, 'Add to playlist');
+        addMenuItem(contextMenuBody, {"cmd": "addAlbumDisc", "options": ["addPlaylist", albumId, disc]}, 'Add to playlist');
     }
 }
 
@@ -200,43 +199,38 @@ function addMenuItemsSingleActions(contextMenuBody) {
  * @param {HTMLElement | EventTarget} dataNode element with the album data
  * @param {HTMLElement} contextMenuTitle element to set the menu header
  * @param {HTMLElement} contextMenuBody element to append the menu items
- * @param {object} [albumArtist] array of album artist names
- * @param {string} [album] album name
+ * @param {string} [albumId] the album id
  * @returns {void}
  */
-function addMenuItemsAlbumActions(dataNode, contextMenuTitle, contextMenuBody, albumArtist, album) {
+function addMenuItemsAlbumActions(dataNode, contextMenuTitle, contextMenuBody, albumId) {
     if (dataNode !== null) {
-        albumArtist = getData(dataNode, 'AlbumArtist');
-        album = getData(dataNode, 'Album');
+        albumId = getData(dataNode, 'AlbumId');
     }
     if (contextMenuTitle !== null) {
         contextMenuTitle.textContent = tn('Album');
     }
     if (app.id !== 'QueueCurrent') {
-        addMenuItem(contextMenuBody, {"cmd": "_addAlbum", "options": ["appendQueue", albumArtist, album, undefined]}, 'Append to queue');
-        addMenuItem(contextMenuBody, {"cmd": "_addAlbum", "options": ["appendPlayQueue", albumArtist, album, undefined]}, 'Append to queue and play');
+        addMenuItem(contextMenuBody, {"cmd": "appendQueue", "options": ["album", albumId]}, 'Append to queue');
+        addMenuItem(contextMenuBody, {"cmd": "appendPlayQueue", "options": ["album", albumId]}, 'Append to queue and play');
         if (features.featWhence === true) {
-            addMenuItem(contextMenuBody, {"cmd": "_addAlbum", "options": ["insertAfterCurrentQueue", albumArtist, album, undefined]}, 'Insert after current playing song');
+            addMenuItem(contextMenuBody, {"cmd": "insertAfterCurrentQueue", "options": ["album", albumId]}, 'Insert after current playing song');
         }
-        addMenuItem(contextMenuBody, {"cmd": "_addAlbum", "options": ["replaceQueue", albumArtist, album, undefined]}, 'Replace queue');
-        addMenuItem(contextMenuBody, {"cmd": "_addAlbum", "options": ["replacePlayQueue", albumArtist, album, undefined]}, 'Replace queue and play');
+        addMenuItem(contextMenuBody, {"cmd": "replaceQueue", "options": ["album", albumId]}, 'Replace queue');
+        addMenuItem(contextMenuBody, {"cmd": "replacePlayQueue", "options": ["album", albumId]}, 'Replace queue and play');
     }
     if (features.featPlaylists === true &&
         app.id !== 'Home')
     {
         addDivider(contextMenuBody);
-        addMenuItem(contextMenuBody, {"cmd": "_addAlbum", "options": ["addPlaylist", albumArtist, album, undefined]}, 'Add to playlist');
+        addMenuItem(contextMenuBody, {"cmd": "showAddToPlaylist", "options": [["addPlaylist", albumId], ""]}, 'Add to playlist');
     }
     addDivider(contextMenuBody);
     if (app.id !== 'BrowseDatabaseAlbumDetail') {
-        addMenuItem(contextMenuBody, {"cmd": "gotoAlbum", "options": [albumArtist, album]}, 'Album details');
+        addMenuItem(contextMenuBody, {"cmd": "gotoAlbum", "options": [albumId]}, 'Album details');
     }
     for (const tag of settings.tagListBrowse) {
-        if (tag === tagAlbumArtist) {
-            addMenuItem(contextMenuBody, {"cmd": "gotoAlbumList", "options": [tagAlbumArtist, albumArtist]}, 'Show all albums from artist');
-        }
-        else if (dataNode !== null &&
-                 albumFilters.includes(tag))
+        if (dataNode !== null &&
+            albumFilters.includes(tag))
         {
             const value = getData(dataNode, tag);
             if (value !== undefined) {
@@ -248,7 +242,7 @@ function addMenuItemsAlbumActions(dataNode, contextMenuTitle, contextMenuBody, a
         app.id !== 'Home')
     {
         addDivider(contextMenuBody);
-        addMenuItem(contextMenuBody, {"cmd": "addAlbumToHome", "options": [albumArtist, album]}, 'Add to homescreen');
+        addMenuItem(contextMenuBody, {"cmd": "addAlbumToHome", "options": [albumId, ""]}, 'Add to homescreen');
     }
 }
 
@@ -263,19 +257,26 @@ function addMenuItemsAlbumActions(dataNode, contextMenuTitle, contextMenuBody, a
  */
 function addMenuItemsSongActions(dataNode, contextMenuBody, uri, type, name) {
     if (app.id !== 'QueueCurrent') {
-        addMenuItem(contextMenuBody, {"cmd": "appendQueue", "options": [type, uri]}, 'Append to queue');
-        addMenuItem(contextMenuBody, {"cmd": "appendPlayQueue", "options": [type, uri]}, 'Append to queue and play');
+        addMenuItem(contextMenuBody, {"cmd": "appendQueue", "options": [type, [uri]]}, 'Append to queue');
+        addMenuItem(contextMenuBody, {"cmd": "appendPlayQueue", "options": [type, [uri]]}, 'Append to queue and play');
         if (features.featWhence === true) {
-            addMenuItem(contextMenuBody, {"cmd": "insertAfterCurrentQueue", "options": [type, uri, 0, 1, false]}, 'Insert after current playing song');
+            addMenuItem(contextMenuBody, {"cmd": "insertAfterCurrentQueue", "options": [type, [uri], 0, 1, false]}, 'Insert after current playing song');
         }
-        addMenuItem(contextMenuBody, {"cmd": "replaceQueue", "options": [type, uri]}, 'Replace queue');
-        addMenuItem(contextMenuBody, {"cmd": "replacePlayQueue", "options": [type, uri]}, 'Replace queue and play');
+        addMenuItem(contextMenuBody, {"cmd": "replaceQueue", "options": [type, [uri]]}, 'Replace queue');
+        addMenuItem(contextMenuBody, {"cmd": "replacePlayQueue", "options": [type, [uri]]}, 'Replace queue and play');
     }
     if (features.featPlaylists === true &&
         app.id !== 'Home')
     {
         addDivider(contextMenuBody);
-        addMenuItem(contextMenuBody, {"cmd": "showAddToPlaylist", "options": [uri, ""]}, 'Add to playlist');
+        addMenuItem(contextMenuBody, {"cmd": "showAddToPlaylist", "options": [[uri], ""]}, 'Add to playlist');
+        if (app.id === 'BrowsePlaylistDetail' &&
+            getData(dataNode.parentNode.parentNode, 'type') === 'plist')
+        {
+            const plist = getData(dataNode.parentNode.parentNode, 'uri');
+            const pos = getData(dataNode, 'pos');
+            addMenuItem(contextMenuBody, {"cmd": "showMoveToPlaylist", "options": [plist, [pos]]}, 'Move to playlist');
+        }
     }
     if (type === 'song') {
         addDivider(contextMenuBody);
@@ -352,7 +353,7 @@ function addMenuItemsSearchActions(contextMenuBody, expression) {
         app.id !== 'Home')
     {
         addDivider(contextMenuBody);
-        addMenuItem(contextMenuBody, {"cmd": "showAddToPlaylist", "options": ["SEARCH", expression]}, 'Add to playlist');
+        addMenuItem(contextMenuBody, {"cmd": "showAddToPlaylist", "options": [["SEARCH"], expression]}, 'Add to playlist');
     }
     addDivider(contextMenuBody);
     addMenuItem(contextMenuBody, {"cmd": "appGoto", "options": ["Search", undefined, undefined, 0, undefined, "any", "Title", "-", expression]}, 'Show search');
@@ -366,18 +367,18 @@ function addMenuItemsSearchActions(contextMenuBody, expression) {
  */
 function addMenuItemsDirectoryActions(contextMenuBody, baseuri) {
     //songs must be arranged in one album per folder
-    addMenuItem(contextMenuBody, {"cmd": "appendQueue", "options": ["dir", baseuri]}, 'Append to queue');
-    addMenuItem(contextMenuBody, {"cmd": "appendPlayQueue", "options": ["dir", baseuri]}, 'Append to queue and play');
+    addMenuItem(contextMenuBody, {"cmd": "appendQueue", "options": ["dir", [baseuri]]}, 'Append to queue');
+    addMenuItem(contextMenuBody, {"cmd": "appendPlayQueue", "options": ["dir", [baseuri]]}, 'Append to queue and play');
     if (features.featWhence === true) {
-        addMenuItem(contextMenuBody, {"cmd": "insertAfterCurrentQueue", "options": ["dir", baseuri, 0, 1, false]}, 'Insert after current playing song');
+        addMenuItem(contextMenuBody, {"cmd": "insertAfterCurrentQueue", "options": ["dir", [baseuri], 0, 1, false]}, 'Insert after current playing song');
     }
-    addMenuItem(contextMenuBody, {"cmd": "replaceQueue", "options": ["dir", baseuri]}, 'Replace queue');
-    addMenuItem(contextMenuBody, {"cmd": "replacePlayQueue", "options": ["dir", baseuri]}, 'Replace queue and play');
+    addMenuItem(contextMenuBody, {"cmd": "replaceQueue", "options": ["dir", [baseuri]]}, 'Replace queue');
+    addMenuItem(contextMenuBody, {"cmd": "replacePlayQueue", "options": ["dir", [baseuri]]}, 'Replace queue and play');
     if (features.featPlaylists === true &&
         app.id !== 'Home')
     {
         addDivider(contextMenuBody);
-        addMenuItem(contextMenuBody, {"cmd": "showAddToPlaylist", "options": [baseuri, ""]}, 'Add to playlist');
+        addMenuItem(contextMenuBody, {"cmd": "showAddToPlaylist", "options": [[baseuri], ""]}, 'Add to playlist');
     }
     if (app.id === 'BrowseFilesystem') {
         addDivider(contextMenuBody);
@@ -404,12 +405,11 @@ function addMenuItemsDirectoryActions(contextMenuBody, baseuri) {
 function addMenuItemsWebradioFavoritesActions(target, contextMenuTitle, contextMenuBody) {
     const type = getData(target, 'type');
     const uri = getData(target, 'uri');
-    const plistUri = getRadioFavoriteUri(uri);
     const name = getData(target, 'name');
-    addMenuItemsPlaylistActions(target, contextMenuBody, type, plistUri, name);
+    addMenuItemsPlaylistActions(target, contextMenuBody, type, uri, name);
     addDivider(contextMenuBody);
     addMenuItem(contextMenuBody, {"cmd": "editRadioFavorite", "options": [uri]}, 'Edit webradio favorite');
-    addMenuItem(contextMenuBody, {"cmd": "deleteRadioFavorite", "options": [uri]}, 'Delete webradio favorite');
+    addMenuItem(contextMenuBody, {"cmd": "deleteRadioFavorites", "options": [[uri]]}, 'Delete webradio favorite');
 }
 
 /**
@@ -433,13 +433,13 @@ function addMenuItemsWebradioFavoritesHomeActions(contextMenuBody, uri) {
  * @returns {void}
  */
 function addMenuItemsPlaylistActions(dataNode, contextMenuBody, type, uri, name) {
-    addMenuItem(contextMenuBody, {"cmd": "appendQueue", "options": [type, uri]}, 'Append to queue');
-    addMenuItem(contextMenuBody, {"cmd": "appendPlayQueue", "options": [type, uri]}, 'Append to queue and play');
+    addMenuItem(contextMenuBody, {"cmd": "appendQueue", "options": [type, [uri]]}, 'Append to queue');
+    addMenuItem(contextMenuBody, {"cmd": "appendPlayQueue", "options": [type, [uri]]}, 'Append to queue and play');
     if (features.featWhence === true) {
-        addMenuItem(contextMenuBody, {"cmd": "insertAfterCurrentQueue", "options": [type, uri, 0, 1, false]}, 'Add after current playing song');
+        addMenuItem(contextMenuBody, {"cmd": "insertAfterCurrentQueue", "options": [type, [uri], 0, 1, false]}, 'Add after current playing song');
     }
-    addMenuItem(contextMenuBody, {"cmd": "replaceQueue", "options": [type, uri]}, 'Replace queue');
-    addMenuItem(contextMenuBody, {"cmd": "replacePlayQueue", "options": [type, uri]}, 'Replace queue and play');
+    addMenuItem(contextMenuBody, {"cmd": "replaceQueue", "options": [type, [uri]]}, 'Replace queue');
+    addMenuItem(contextMenuBody, {"cmd": "replacePlayQueue", "options": [type, [uri]]}, 'Replace queue and play');
     if (features.featHome === true) {
         if (app.id !== 'Home') {
             addDivider(contextMenuBody);
@@ -522,8 +522,10 @@ function createMenuLists(target, contextMenuTitle, contextMenuBody) {
                     addMenuItem(contextMenuBody, {"cmd": "playlistDetails", "options": [uri]}, 'Edit playlist');
                 }
                 addMenuItem(contextMenuBody, {"cmd": "showRenamePlaylist", "options": [uri]}, 'Rename playlist');
+                addMenuItem(contextMenuBody, {"cmd": "showCopyPlaylist", "options": [uri]}, 'Copy playlist');
+                addMenuItem(contextMenuBody, {"cmd": "playlistValidateDedup", "options": [uri, true]}, 'Validate and deduplicate playlist');
             }
-            addMenuItem(contextMenuBody, {"cmd": "showDelPlaylist", "options": [uri, smartplsOnly]}, 'Delete playlist');
+            addMenuItem(contextMenuBody, {"cmd": "showDelPlaylist", "options": [[uri]]}, 'Delete playlist');
             if (settings.smartpls === true &&
                 type === 'smartpls')
             {
@@ -536,7 +538,7 @@ function createMenuLists(target, contextMenuTitle, contextMenuBody) {
         case 'BrowsePlaylistDetail': {
             const table = document.getElementById('BrowsePlaylistDetailList');
             addMenuItemsSongActions(dataNode, contextMenuBody, uri, type, name);
-            if (getData(table, 'ro') === 'false') {
+            if (getData(table, 'ro') === false) {
                 addDivider(contextMenuBody);
                 const plist = getData(table, 'uri');
                 const songpos = getData(dataNode, 'songpos');
@@ -563,7 +565,7 @@ function createMenuLists(target, contextMenuTitle, contextMenuBody) {
                 songid !== currentState.currentSongId &&
                 features.featWhence === true)
             {
-                addMenuItem(contextMenuBody, {"cmd": "playAfterCurrent", "options": [songid]}, 'Play after current playing song');
+                addMenuItem(contextMenuBody, {"cmd": "playAfterCurrent", "options": [[songid]]}, 'Play after current playing song');
             }
             if (settings.partition.random === true) {
                 addMenuItem(contextMenuBody, {"cmd": "showSetSongPriority", "options": [songid]}, 'Set priority');
@@ -597,7 +599,7 @@ function createMenuLists(target, contextMenuTitle, contextMenuBody) {
                 addMenuItemsAlbumActions(dataNode, null, contextMenuBody);
             }
             addDivider(contextMenuBody);
-            addMenuItem(contextMenuBody, {"cmd": "delQueueJukeboxSong", "options": [pos]}, 'Remove');
+            addMenuItem(contextMenuBody, {"cmd": "delQueueJukeboxEntries", "options": [[pos]]}, 'Remove');
             return true;
         }
     }
@@ -710,7 +712,7 @@ function createMenuHome(target, contextMenuTitle, contextMenuBody) {
             addMenuItemsSearchActions(contextMenuBody, href.options[1]);
             break;
         case 'album':
-            addMenuItemsAlbumActions(null, null, contextMenuBody, href.options[1], href.options[2]);
+            addMenuItemsAlbumActions(null, null, contextMenuBody, href.options[1]);
             break;
         case 'view':
         case 'externalLink':

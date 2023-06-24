@@ -62,6 +62,9 @@ function elCreateText(tagName, attributes, text) {
             tag.appendChild(document.createTextNode(lines[i]));
         }
     }
+    else {
+        tag.textContent = text;
+    }
     return tag;
 }
 
@@ -199,7 +202,7 @@ function elClear(el) {
  * @returns {void}
  */
 function elDisableId(id) {
-    document.getElementById(id).setAttribute('disabled', 'disabled');
+    elDisable(document.getElementById(id));
 }
 
 /**
@@ -209,8 +212,6 @@ function elDisableId(id) {
  */
 function elDisable(el) {
     el.setAttribute('disabled', 'disabled');
-    //manually disabled, remove disabled class
-    el.classList.remove('disabled');
     el.classList.replace('clickable', 'not-clickable');
 }
 
@@ -220,7 +221,7 @@ function elDisable(el) {
  * @returns {void}
  */
 function elEnableId(id) {
-    document.getElementById(id).removeAttribute('disabled');
+    elEnable(document.getElementById(id));
 }
 
 /**
@@ -243,7 +244,7 @@ function elReflow(el) {
 }
 
 /**
- * Sets the focus on the element with given id
+ * Sets the focus on the element with given id for desktop view.
  * @param {string} id element id
  * @returns {void}
  */
@@ -252,7 +253,7 @@ function elReflow(el) {
 }
 
 /**
- * Set the focus on the given element.
+ * Set the focus on the given element for desktop view.
  * @param {HTMLElement} el element to focus
  * @returns {void}
  */
@@ -275,13 +276,35 @@ function setDataId(id, attribute, value) {
 
 /**
  * Sets an attribute on the given element.
- * @param {Element | Node} el element
+ * @param {Element | Node | EventTarget} el element
  * @param {string} attribute attribute name
  * @param {object} value could be any type
  * @returns {void}
  */
 function setData(el, attribute, value) {
     el['myMPD-' + attribute] = value;
+}
+
+/**
+ * Removes an attribute on the element given by id.
+ * @param {string} id element id
+ * @param {string} attribute attribute name
+ * @returns {void}
+ */
+//eslint-disable-next-line no-unused-vars
+function rmDataId(id, attribute) {
+    document.getElementById(id)['myMPD-' + attribute] = undefined;
+}
+
+/**
+ * Removes an attribute on the given element.
+ * @param {Element | Node} el element
+ * @param {string} attribute attribute name
+ * @returns {void}
+ */
+//eslint-disable-next-line no-unused-vars
+function rmData(el, attribute) {
+    el['myMPD-' + attribute] = undefined;
 }
 
 /**
@@ -298,7 +321,7 @@ function getDataId(id, attribute) {
  * Gets the attributes value from the element
  * @param {Element | EventTarget} el element
  * @param {string} attribute attribute name
- * @returns {object} attribute value
+ * @returns {object} attribute value or undefined
  */
 function getData(el, attribute) {
     let value = el['myMPD-' + attribute];
@@ -325,6 +348,7 @@ function getSelectValueId(id) {
 
 /**
  * Gets the value of the selected option of a select element
+ * or undefined if no option is selected
  * @param {Element | EventTarget} el element
  * @returns {string} selected option value
  */
@@ -411,26 +435,12 @@ function getYpos(el) {
 }
 
 /**
- * Returns the nearest parent of type nodeName
- * @param {HTMLElement | EventTarget} el start element for search
- * @param {string} nodeName nodeName to search
- * @returns {HTMLElement} the nearest parent node with the given nodeName
+ * Gets the index of the element in the parent html collection
+ * @param {HTMLElement} el element to get the index
+ * @returns {number} the index
  */
- function getParent(el, nodeName) {
-    let target = el;
-    let i = 0;
-    while (target.nodeName !== nodeName) {
-        i++;
-        if (i > 10) {
-            return null;
-        }
-        target = target.parentNode;
-        if (target === null) {
-            return null;
-        }
-    }
-    // @ts-ignore
-    return target;
+function elGetIndex(el) {
+    return [...el.parentNode.children].indexOf(el);
 }
 
 /**
@@ -587,7 +597,7 @@ function getBtnGroupValueId(id) {
 /**
  * Toggles the active state of a button
  * @param {string} id id of button to toggle
- * @param {boolean | number} state true, 1 = active, false, 0 = inactive
+ * @param {boolean | number} state true, 1 = active; false, 0 = inactive
  * @returns {void}
  */
 //eslint-disable-next-line no-unused-vars
@@ -598,7 +608,7 @@ function toggleBtnId(id, state) {
 /**
  * Toggles the active state of a button
  * @param {HTMLElement | EventTarget} btn button to toggle
- * @param {boolean | number} state true, 1 = active, false, 0 = inactive
+ * @param {boolean | number} state true, 1 = active; false, 0 = inactive
  * @returns {void}
  */
 function toggleBtn(btn, state) {
@@ -607,9 +617,7 @@ function toggleBtn(btn, state) {
         state = btn.classList.contains('active') ? false : true;
     }
 
-    if (state === true ||
-        state === 1)
-    {
+    if (state === true) {
         btn.classList.add('active');
     }
     else {
@@ -663,7 +671,7 @@ function getBtnChkValue(btn) {
 /**
  * Toggles a check button
  * @param {string} id id of the button to toggle
- * @param {boolean} state true = active, false = inactive
+ * @param {boolean} state true, 1 = active; false, 0 = inactive
  * @returns {void}
  */
 function toggleBtnChkId(id, state) {
@@ -673,7 +681,7 @@ function toggleBtnChkId(id, state) {
 /**
  * Toggles a check button
  * @param {HTMLElement | EventTarget} btn the button to toggle
- * @param {boolean | number} state true = active, false = inactive 
+ * @param {boolean | number} state true, 1 = active; false, 0 = inactive
  * @returns {boolean} true if button is checked, else false
  */
 function toggleBtnChk(btn, state) {
@@ -682,9 +690,7 @@ function toggleBtnChk(btn, state) {
         state = btn.classList.contains('active') ? false : true;
     }
 
-    if (state === true ||
-        state === 1)
-    {
+    if (state === true) {
         btn.classList.add('active');
         btn.textContent = 'check';
         return true;

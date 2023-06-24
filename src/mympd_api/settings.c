@@ -5,8 +5,6 @@
 */
 
 #include "compile_time.h"
-#include "mpd/response.h"
-#include "mpd/status.h"
 #include "src/mympd_api/settings.h"
 
 #include "dist/mjson/mjson.h"
@@ -64,7 +62,7 @@ bool settings_to_webserver(struct t_mympd_state *mympd_state) {
         partition_state = partition_state->next;
     }
 
-    struct t_work_response *web_server_response = create_response_new(-1, 0, INTERNAL_API_WEBSERVER_SETTINGS, MPD_PARTITION_DEFAULT);
+    struct t_work_response *web_server_response = create_response_new(CONN_ID_INTERNAL, 0, INTERNAL_API_WEBSERVER_SETTINGS, MPD_PARTITION_DEFAULT);
     web_server_response->extra = extra;
     return mympd_queue_push(web_server_queue, web_server_response, 0);
 }
@@ -222,6 +220,7 @@ bool mympd_api_settings_cols_save(struct t_mympd_state *mympd_state, sds table, 
         mympd_state->cols_browse_radio_radiobrowser = sds_replace(mympd_state->cols_browse_radio_radiobrowser, cols);
     }
     else {
+        MYMPD_LOG_ERROR(NULL, "MYMPD_API_COLS_SAVE: Unknown table %s", table);
         return false;
     }
     sds tablename = camel_to_snake(table);

@@ -273,7 +273,7 @@ void partition_state_default(struct t_partition_state *partition_state, const ch
     partition_state->highlight_color_contrast = sdsnew(PARTITION_HIGHLIGHT_COLOR_CONTRAST);
     sds partition_dir = sdsnew(name);
     sanitize_filename(partition_dir);
-    partition_state->state_dir = sdscatfmt(sdsempty(), "state/%S", partition_dir);
+    partition_state->state_dir = sdscatfmt(sdsempty(), "%s/%S", DIR_WORK_STATE, partition_dir);
     FREE_SDS(partition_dir);
     partition_state->conn = NULL;
     partition_state->conn_state = MPD_DISCONNECTED;
@@ -298,6 +298,7 @@ void partition_state_default(struct t_partition_state *partition_state, const ch
     partition_state->crossfade = 0;
     partition_state->auto_play = MYMPD_AUTO_PLAY;
     partition_state->next = NULL;
+    partition_state->player_error = false;
     //jukebox
     list_init(&partition_state->jukebox_queue);
     list_init(&partition_state->jukebox_queue_tmp);
