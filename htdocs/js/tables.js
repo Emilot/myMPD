@@ -17,13 +17,13 @@ function switchTableMode(target) {
 
     if (mode === null) {
         table.setAttribute('data-mode', 'select');
-        target.classList.add('active');
+        target.classList.add('selected');
         target.classList.remove('rounded-end');
         target.nextElementSibling.classList.remove('d-none');
     }
     else {
         table.removeAttribute('data-mode');
-        target.classList.remove('active');
+        target.classList.remove('selected');
         target.classList.add('rounded-end');
         target.nextElementSibling.classList.add('d-none');
         selectAllRows(table, false);
@@ -56,11 +56,11 @@ function selectAllRows(table, select) {
             continue;
         }
         if (select === true) {
-            row.classList.add('active');
+            row.classList.add('selected');
             check.textContent = ligatures['checked'];
         }
         else {
-            row.classList.remove('active');
+            row.classList.remove('selected');
             check.textContent = ligatures['unchecked'];
         }
     }
@@ -86,7 +86,8 @@ function selectRow(event) {
     }
     //in row select mode
     const row = event.target.closest('TR');
-    if (row.classList.contains('not-clickable')) {
+    if (row.classList.contains('not-clickable') &&
+        event.target.parentNode.nodeName !== 'TH') {
         return true;
     }
     if (event.target.parentNode.nodeName === 'TH') {
@@ -145,15 +146,15 @@ function selectSingleRow(row, select) {
     if (check === null) {
         return;
     }
-    if ((select === null && row.classList.contains('active')) ||
+    if ((select === null && row.classList.contains('selected')) ||
         select === false)
     {
         check.textContent = ligatures['unchecked'];
-        row.classList.remove('active');
+        row.classList.remove('selected');
     }
     else {
         check.textContent = ligatures['checked'];
-        row.classList.add('active');
+        row.classList.add('selected');
     }
 }
 
@@ -164,7 +165,7 @@ function selectSingleRow(row, select) {
 function showTableSelectionCount() {
     const table = document.getElementById(app.id + 'List');
     const dropdown = document.querySelector('#dropdown' + app.id + 'Selection');
-    const rows = table.querySelectorAll('tbody > tr.active');
+    const rows = table.querySelectorAll('tbody > tr.selected');
     const count = rows.length;
     let validSelection = true;
     if (count > 1) {
@@ -434,7 +435,7 @@ function setColsChecklist(tableName, menu) {
                 "name": tags[i]}, 'radio_button_unchecked');
             if (settings['cols' + tableName].includes(tags[i])) {
                 btn.classList.add('active');
-                btn.textContent = 'check'
+                btn.textContent = 'check';
             }
             const div = elCreateNodes('div', {"class": ["form-check"]}, [
                 btn,
@@ -697,14 +698,11 @@ function updateTable(obj, list, perRowCallback, createRowCellsCallback) {
             perRowCallback(row, obj.result.data[i]);
         }
         //data row
-        //set artist and album data
-        if (obj.result.data[i].Album !== undefined) {
-            setData(row, 'Album', obj.result.data[i].Album);
+        //set AlbumId
+        if (obj.result.data[i].AlbumId !== undefined) {
+            setData(row, 'AlbumId', obj.result.data[i].AlbumId);
         }
-        if (obj.result.data[i][tagAlbumArtist] !== undefined) {
-            setData(row, 'AlbumArtist', obj.result.data[i][tagAlbumArtist]);
-        }
-        //and other browse tags
+        //and browse tags
         for (const tag of settings.tagListBrowse) {
             if (albumFilters.includes(tag) &&
                 obj.result.data[i][tag] !== undefined &&

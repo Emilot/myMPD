@@ -295,14 +295,11 @@ function parseQueue(obj) {
         if (data.type === 'webradio') {
             setData(row, 'webradioUri', data.webradio.filename);
         }
-        //set artist and album data
-        if (data.Album !== undefined) {
-            setData(row, 'Album', data.Album);
+        //set AlbumId
+        if (data.AlbumId !== undefined) {
+            setData(row, 'AlbumId', data.AlbumId);
         }
-        if (data[tagAlbumArtist] !== undefined) {
-            setData(row, 'AlbumArtist', data[tagAlbumArtist]);
-        }
-        //and other browse tags
+        //and browse tags
         for (const tag of settings.tagListBrowse) {
             if (albumFilters.includes(tag) &&
                 data[tag] !== undefined &&
@@ -636,7 +633,7 @@ function insertQueue(type, uris, to, whence, play, callback) {
  * @returns {void}
  */
 function replaceQueue(type, uris, callback) {
-    _replaceQueue(type, uris, false, callback)
+    _replaceQueue(type, uris, false, callback);
 }
 
 /**
@@ -647,7 +644,7 @@ function replaceQueue(type, uris, callback) {
  * @returns {void}
  */
 function replacePlayQueue(type, uris, callback) {
-    _replaceQueue(type, uris, true, callback)
+    _replaceQueue(type, uris, true, callback);
 }
 
 /**

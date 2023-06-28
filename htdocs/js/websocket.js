@@ -10,7 +10,8 @@
  * @returns {boolean} true if websocket is connected, else false
  */
 function getWebsocketState() {
-    return socket !== null && socket.readyState === WebSocket.OPEN;
+    return socket !== null &&
+        socket.readyState === WebSocket.OPEN;
 }
 
 /**
@@ -47,13 +48,10 @@ function webSocketConnect() {
         };
 
         socket.onmessage = function(msg) {
-            if (msg.data === 'pong') {
-                //websocket keepalive
-                logDebug('Got websocket pong');
-                return;
-            }
-            if (msg.data === 'ok') {
-                logDebug('Jsonrpc id registered successfuly');
+            logDebug('Websocket message: ' + msg.data);
+            if (msg.data === 'pong' ||
+                msg.data === 'ok') {
+                // websocket keepalive or jsonrpc id registration
                 return;
             }
             if (msg.data.length > 100000) {
@@ -63,7 +61,6 @@ function webSocketConnect() {
             let obj;
             try {
                 obj = JSON.parse(msg.data);
-                logDebug('Websocket notification: ' + JSON.stringify(obj));
             }
             catch(error) {
                 logError('Invalid websocket notification received: ' + msg.data);
@@ -90,7 +87,7 @@ function webSocketConnect() {
                     if (session.token !== '') {
                         validateSession();
                     }
-                    toggleAlert('alertMympdState', false, '');
+                    toggleUI();
                     break;
                 case 'update_queue':
                 case 'update_state':
@@ -217,7 +214,7 @@ function webSocketConnect() {
                 }
             }
             else {
-                showAppInitAlert(tn('Websocket connection closed'));
+                showAppInitAlert(tn('myMPD connection closed'));
             }
             socket = null;
         };
@@ -262,7 +259,7 @@ function websocketKeepAlive() {
     }
     else {
         logDebug('Reconnecting websocket');
-        toggleAlert('alertMympdState', true, tn('Websocket connection failed, trying to reconnect'));
+        toggleAlert('alertMympdState', true, tn('myMPD connection failed, trying to reconnect'));
         webSocketConnect();
     }
 }

@@ -336,6 +336,7 @@ function parseSettings(obj) {
     btnWaiting(document.getElementById('btnApplySettings'), false);
     applyFeatures();
     settingsParsed = 'parsed';
+    myMPDready = true;
 }
 
 /**

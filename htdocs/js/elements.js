@@ -366,7 +366,7 @@ function getSelectValue(el) {
  * @returns {object} selected option data value
  */
 function getSelectedOptionDataId(id, attribute) {
-    return getSelectedOptionData(document.getElementById(id), attribute)
+    return getSelectedOptionData(document.getElementById(id), attribute);
 }
 
 /**
@@ -488,7 +488,7 @@ function btnWaiting(btn, waiting) {
  * @returns {HTMLElement} selected button
  */
 function toggleBtnGroupValueId(id, value) {
-    return toggleBtnGroupValue(document.getElementById(id), value)
+    return toggleBtnGroupValue(document.getElementById(id), value);
 }
 
 /**
@@ -665,7 +665,7 @@ function getBtnChkValueId(id) {
  * @returns {boolean} enabled = true, disabled = false
  */
 function getBtnChkValue(btn) {
-    return btn.classList.contains('active') ? true : false
+    return btn.classList.contains('active') ? true : false;
 }
 
 /**
@@ -732,21 +732,29 @@ function toggleBtnChkCollapse(btn, collapseId, state) {
 
 /**
  * Gets the y-scrolling position
+ * @param {HTMLElement | Element} [el] element
  * @returns {number} the vertical scrolling position
  */
- function getScrollPosY() {
+function getScrollPosY(el) {
+    // element in scrolling modal
+    if (el) {
+        const modal = el.closest('.modal');
+        if (modal) {
+            let scrollPos = window.scrollY;
+            scrollPos += modal.scrollTop;
+            return scrollPos;
+        }
+    }
     if (userAgentData.isMobile === true) {
+        // scrolling body
         return document.body.scrollTop ? document.body.scrollTop : document.documentElement.scrollTop;
     }
-    else {
-        const container = document.getElementById(app.id + 'List');
-        if (container) {
-            return container.parentNode.scrollTop;
-        }
-        else {
-            return 0;
-        }
+    // scrolling container
+    const container = document.getElementById(app.id + 'List');
+    if (container) {
+        return container.parentNode.scrollTop;
     }
+    return 0;
 }
 
 /**

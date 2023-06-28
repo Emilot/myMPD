@@ -579,7 +579,7 @@
         <div id="viewBrowseDatabaseAlbumDetail">
           <div class="btn-toolbar card-toolbar">
             <div class="input-group me-2">
-              <button class="btn btn-secondary mi" data-href='{"cmd": "backToAlbumGrid", "options": []}'>apps</button>
+              <button class="btn btn-secondary mi" data-title-phrase="Back to album list" data-href='{"cmd": "backToAlbumGrid", "options": []}'>apps</button>
             </div>
             <div class="btn-group me-2">
               <button data-title-phrase="Append to queue" class="btn btn-secondary mi" data-href='{"cmd": "addAlbum", "options": ["appendQueue"]}'>library_add</button>
@@ -1541,6 +1541,10 @@
           <div class="tab-content">
             <div class="tab-pane" id="tabInterfaceSettings">
               <form id="InterfaceSettingsFrm">
+                <h4 data-phrase="Locale"></h4>
+                <div id="localeFrm"></div>
+                <div id="warnMissingPhrases" class="alert alert-warning d-none mt-2"></div>
+                <hr/>
                 <h4 data-phrase="Theme"></h4>
                 <div class="row mb-3">
                   <label class="col-sm-4 col-form-label" for="inputHighlightColor">
@@ -1583,35 +1587,6 @@
                 <hr/>
                 <h4 data-phrase="Background"></h4>
                 <div id="bgFrm"></div>
-                <hr/>
-                <h4 data-phrase="Albumart"></h4>
-                <div class="alert alert-warning notfeatLibrary" data-phrase="Music directory not available"></div>
-                <div class="mb-3 row featLibrary">
-                  <label class="col-sm-4 col-form-label" for="inputCoverimageNames" data-phrase="Filenames"></label>
-                  <div class="col-sm-8 position-relative">
-                    <input data-is="mympd-input-reset" id="inputCoverimageNames" class="form-control" placeholder="folder,cover"/>
-                    <div class="invalid-feedback" data-phrase="Invalid filename"></div>
-                  </div>
-                </div>
-                <div class="mb-3 row featLibrary">
-                  <label class="col-sm-4 col-form-label" for="inputThumbnailNames" data-phrase="Thumbnail names"></label>
-                  <div class="col-sm-8 position-relative">
-                    <input data-is="mympd-input-reset" id="inputThumbnailNames" class="form-control" placeholder="folder-sm,cover-sm"/>
-                    <div class="invalid-feedback" data-phrase="Invalid filename"></div>
-                  </div>
-                </div>
-                <div id="coverimageFrm"></div>
-                <div class="mb-3 row featLibrary">
-                  <label class="col-sm-4 col-form-label" for="inputBookletName" data-phrase="Booklet filename"></label>
-                  <div class="col-sm-8 position-relative">
-                    <input data-is="mympd-input-reset" id="inputBookletName" class="form-control" placeholder="booklet.pdf"/>
-                    <div class="invalid-feedback" data-phrase="Invalid filename"></div>
-                  </div>
-                </div>
-                <hr/>
-                <h4 data-phrase="Locale"></h4>
-                <div id="localeFrm"></div>
-                <div id="warnMissingPhrases" class="alert alert-warning d-none mt-2"></div>
                 <hr/>
                 <h4 data-phrase="Footer"></h4>
                 <div id="footerFrm"></div>
@@ -1672,6 +1647,31 @@
                         </div>
                       </div>
                     </div>
+                  </div>
+                </div>
+                <hr/>
+                <h4 data-phrase="Albumart"></h4>
+                <div class="alert alert-warning notfeatLibrary" data-phrase="Music directory not available"></div>
+                <div class="mb-3 row featLibrary">
+                  <label class="col-sm-4 col-form-label" for="inputCoverimageNames" data-phrase="Filenames"></label>
+                  <div class="col-sm-8 position-relative">
+                    <input data-is="mympd-input-reset" id="inputCoverimageNames" class="form-control" placeholder="folder,cover"/>
+                    <div class="invalid-feedback" data-phrase="Invalid filename"></div>
+                  </div>
+                </div>
+                <div class="mb-3 row featLibrary">
+                  <label class="col-sm-4 col-form-label" for="inputThumbnailNames" data-phrase="Thumbnail names"></label>
+                  <div class="col-sm-8 position-relative">
+                    <input data-is="mympd-input-reset" id="inputThumbnailNames" class="form-control" placeholder="folder-sm,cover-sm"/>
+                    <div class="invalid-feedback" data-phrase="Invalid filename"></div>
+                  </div>
+                </div>
+                <div id="coverimageFrm"></div>
+                <div class="mb-3 row featLibrary">
+                  <label class="col-sm-4 col-form-label" for="inputBookletName" data-phrase="Booklet filename"></label>
+                  <div class="col-sm-8 position-relative">
+                    <input data-is="mympd-input-reset" id="inputBookletName" class="form-control" placeholder="booklet.pdf"/>
+                    <div class="invalid-feedback" data-phrase="Invalid filename"></div>
                   </div>
                 </div>
                 <hr/>

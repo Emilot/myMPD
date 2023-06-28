@@ -20,11 +20,11 @@
     spa.appendChild(
         elCreateTextTn('p', {"class": ["text-light"]}, text)
     );
-    const reloadBtn = elCreateTextTn('button', {"class": ["btn", "btn-light", "me-2"]}, 'Reload');
+    const reloadBtn = elCreateTextTn('button', {"class": ["btn", "btn-light", "me-2", "alwaysEnabled"]}, 'Reload');
     reloadBtn.addEventListener('click', function() {
         clearAndReload();
     }, false);
-    const resetBtn = elCreateTextTn('button', {"class": ["btn", "btn-light"]}, 'Reset');
+    const resetBtn = elCreateTextTn('button', {"class": ["btn", "btn-light", "alwaysEnabled"]}, 'Reset');
     resetBtn.addEventListener('click', function() {
         resetLocalSettings();
         clearAndReload();
@@ -272,7 +272,8 @@ function appInit() {
                 menu.style.removeProperty('max-height');
                 const menuHeight = menu.offsetHeight;
                 const offset = getYpos(menu);
-                const bottomPos = window.innerHeight - menuHeight - offset;
+                const scrollY = getScrollPosY(dropdown);
+                const bottomPos = window.innerHeight + scrollY - menuHeight - offset;
                 if (bottomPos < 0) {
                     menu.style.overflowY = 'auto';
                     menu.style.overflowX = 'hidden';
@@ -351,7 +352,7 @@ function initGlobalModals() {
     const tab = document.getElementById('tabShortcuts');
     elClear(tab);
     const keys = Object.keys(keymap).sort((a, b) => {
-        return keymap[a].order - keymap[b].order
+        return keymap[a].order - keymap[b].order;
     });
     for (const key of keys) {
         if (keymap[key].cmd === undefined) {
@@ -504,7 +505,7 @@ if (window.trustedTypes &&
     window.trustedTypes.createPolicy('default', {
         createScriptURL(dirty) {
             if (dirty === 'sw.js') {
-                return 'sw.js'
+                return 'sw.js';
             }
             throw new Error('Script not allowed: ' + dirty);
        }
