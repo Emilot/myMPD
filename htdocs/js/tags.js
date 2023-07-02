@@ -191,6 +191,21 @@ function parseBits(bits) {
 }
 
 /**
+ * Combines name and title to display extm3u name
+ * @param {string} name name tag
+ * @param {string} title title tag
+ * @returns {string} the title to display
+ */
+function getDisplayTitle(name, title) {
+    if (title === name) {
+        return title;
+    }
+    return name !== undefined && name !== '-'
+        ? name + ': ' + title
+        : title;
+}
+
+/**
  * Returns a tag value as dom element
  * @param {string} key the tag type
  * @param {string | number | object} value the tag value
@@ -405,7 +420,9 @@ function addMusicbrainzFields(songObj, showArtists) {
         //show albumartists or artists
         for (let i = 0, j = songObj[artist].length; i < j; i++) {
             const artistLink = getMBtagLink(artist, songObj[artist][i]);
-            artistLink.textContent = songObj.AlbumArtist[i];
+            artistLink.textContent = artist === 'MUSICBRAINZ_ALBUMARTISTID'
+                ? songObj.AlbumArtist[i]
+                : songObj.Artist[i];
             mbField.appendChild(
                 elCreateNode('p', {"class": ["mb-1"]}, artistLink)
             );

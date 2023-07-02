@@ -63,10 +63,7 @@ function initSearch() {
         //table header
         if (event.target.nodeName === 'TH') {
             const colName = event.target.getAttribute('data-col');
-            if (colName === null ||
-                colName === 'Duration' ||
-                colName.indexOf('sticker') === 0)
-            {
+            if (isColSortable('Search', colName) === false) {
                 //by this fields can not be sorted
                 return;
             }
@@ -77,6 +74,9 @@ function initSearch() {
         }
         //table body
         const target = event.target.closest('TR');
+        if (target === null) {
+            return;
+        }
         if (target.parentNode.nodeName === 'TBODY' &&
             checkTargetClick(target) === true)
         {
@@ -193,9 +193,9 @@ function parseSearch(obj) {
     updateTable(obj, 'Search', function(row, data) {
         setData(row, 'type', data.Type);
         setData(row, 'uri', data.uri);
+        setData(row, 'name', data.Title);
         row.setAttribute('tabindex', 0);
         row.setAttribute('title', rowTitle);
-        setData(row, 'name', data.Title);
     });
 
     if (obj.result.totalEntities > 0) {

@@ -915,8 +915,9 @@ body.locked button.protected::before {
   margin-right: 0.5rem;
 }
 
-a.external::before {
-  content: "open_in_browser";
+a.external::before,
+a.download::before,
+a.launch::before {
   font-family: "Material Icons";
   font-weight: normal;
   font-style: normal;
@@ -929,38 +930,18 @@ a.external::before {
   text-rendering: optimizelegibility;
   font-feature-settings: "liga";
   margin-right: 0.5rem;
+}
+
+a.external::before {
+  content: "open_in_browser";
 }
 
 a.download::before {
   content: "download";
-  font-family: "Material Icons";
-  font-weight: normal;
-  font-style: normal;
-  font-size: 1.4rem;
-  line-height: 1;
-  text-transform: none;
-  letter-spacing: normal;
-  word-wrap: normal;
-  vertical-align: top;
-  text-rendering: optimizelegibility;
-  font-feature-settings: "liga";
-  margin-right: 0.5rem;
 }
 
 a.launch::before {
   content: "launch";
-  font-family: "Material Icons";
-  font-weight: normal;
-  font-style: normal;
-  font-size: 1.4rem;
-  line-height: 1;
-  text-transform: none;
-  letter-spacing: normal;
-  word-wrap: normal;
-  vertical-align: top;
-  text-rendering: optimizelegibility;
-  font-feature-settings: "liga";
-  margin-right: 0.5rem;
 }
 
 /* inner button for inputs */
@@ -1003,22 +984,35 @@ button.select-inner-button {
   min-width: 6rem;
 }
 
-.sort-dir {
-  margin-right: -1.5rem;
+.sort-dir::before {
+  font-family: "Material Icons";
+  font-weight: normal;
+  font-style: normal;
+  font-size: 1.2rem;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  text-rendering: optimizelegibility;
+  font-feature-settings: "liga";
 }
 
-#SearchList > thead > tr > th,
-#BrowseRadioWebradiodbList > thead > tr > th,
-#QueueCurrentList > thead > tr > th {
-  padding-right: 1.5rem;
+.sort-asc::before {
+  content: 'arrow_drop_down';
+}
+
+.sort-desc::before {
+  content: 'arrow_drop_up';
 }
 
 .dropdownWide {
   min-width: 20rem;
 }
 
-div.alert-warning::before {
-  content: "warning";
+div.alert-warning::before,
+div.alert-danger::before,
+div.alert-secondary::before,
+div.alert-success::before {
   float: left;
   font-family: "Material Icons";
   font-weight: normal;
@@ -1031,54 +1025,22 @@ div.alert-warning::before {
   text-rendering: optimizelegibility;
   font-feature-settings: "liga";
   margin-right: 0.5rem;
+}
+
+div.alert-warning::before {
+  content: "warning";
 }
 
 div.alert-danger::before {
   content: "error_outline";
-  float: left;
-  font-family: "Material Icons";
-  font-weight: normal;
-  font-style: normal;
-  font-size: 1.4rem;
-  line-height: 1;
-  text-transform: none;
-  letter-spacing: normal;
-  word-wrap: normal;
-  text-rendering: optimizelegibility;
-  font-feature-settings: "liga";
-  margin-right: 0.5rem;
 }
 
 div.alert-secondary::before {
   content: "info";
-  float: left;
-  font-family: "Material Icons";
-  font-weight: normal;
-  font-style: normal;
-  font-size: 1.4rem;
-  line-height: 1;
-  text-transform: none;
-  letter-spacing: normal;
-  word-wrap: normal;
-  text-rendering: optimizelegibility;
-  font-feature-settings: "liga";
-  margin-right: 0.5rem;
 }
 
 div.alert-success::before {
   content: "info";
-  float: left;
-  font-family: "Material Icons";
-  font-weight: normal;
-  font-style: normal;
-  font-size: 1.4rem;
-  line-height: 1;
-  text-transform: none;
-  letter-spacing: normal;
-  word-wrap: normal;
-  text-rendering: optimizelegibility;
-  font-feature-settings: "liga";
-  margin-right: 0.5rem;
 }
 
 div.alert-secondary {
@@ -1226,4 +1188,66 @@ body[data-uiState="disabled"] th,
   pointer-events: none !important;
   cursor: not-allowed !important;
   opacity: 0.4 !important;
+}
+
+h4.offcanvas-title::before {
+  font-family: "Material Icons";
+  font-weight: normal;
+  font-style: normal;
+  font-size: 1.4rem;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  text-rendering: optimizelegibility;
+  font-feature-settings: "liga";
+  margin-right: 0.5rem;
+}
+
+h4.offcanvas-title-webradio::before {
+  content: "radio";
+}
+
+h4.offcanvas-title-homeicon::before {
+  content: "home";
+}
+
+h4.offcanvas-title-search::before {
+  content: "saved_search";
+}
+
+h4.offcanvas-title-album::before {
+  content: "album";
+}
+
+h4.offcanvas-title-dir::before {
+  content: "folder_open";
+}
+
+h4.offcanvas-title-song::before {
+  content: "music_note";
+}
+
+h4.offcanvas-title-plist::before {
+  content: "list";
+}
+
+h4.offcanvas-title-smartpls::before {
+  content: "queue_music";
+}
+
+h4.offcanvas-title-script::before {
+  content: "code";
+}
+
+h4.offcanvas-title-modal::before {
+  content: "web_asset";
+}
+
+h4.offcanvas-title-externalLink::before {
+  content: "link";
+}
+
+h4.offcanvas-title-stream::before {
+  content: "stream";
 }

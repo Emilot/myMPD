@@ -251,7 +251,9 @@ function addMenuItemsAlbumActions(dataNode, contextMenuTitle, contextMenuBody, a
             albumFilters.includes(tag))
         {
             const value = getData(dataNode, tag);
-            if (value !== undefined) {
+            if (value !== undefined &&
+                value.length > 0)
+            {
                 addMenuItem(contextMenuBody, {"cmd": "gotoAlbumList", "options": [tag, value]}, 'Show all albums from ' + tag);
             }
         }
@@ -502,6 +504,7 @@ function createMenuLists(target, contextMenuTitle, contextMenuBody) {
     const name = getData(dataNode, 'name');
 
     contextMenuTitle.textContent = tn(typeFriendly[type]);
+    contextMenuTitle.classList.add('offcanvas-title-' + type);
 
     switch(app.id) {
         case 'BrowseFilesystem':
@@ -533,7 +536,7 @@ function createMenuLists(target, contextMenuTitle, contextMenuBody) {
             {
                 addMenuItemsPlaylistActions(dataNode, contextMenuBody, type, uri, name);
                 addDivider(contextMenuBody);
-                if (settings.smartpls === true && type === 'smartpls') {
+                if (type === 'smartpls') {
                     addMenuItem(contextMenuBody, {"cmd": "playlistDetails", "options": [uri]}, 'View playlist');
                 }
                 else {
@@ -541,7 +544,9 @@ function createMenuLists(target, contextMenuTitle, contextMenuBody) {
                 }
                 addMenuItem(contextMenuBody, {"cmd": "showRenamePlaylist", "options": [uri]}, 'Rename playlist');
                 addMenuItem(contextMenuBody, {"cmd": "showCopyPlaylist", "options": [uri]}, 'Copy playlist');
-                addMenuItem(contextMenuBody, {"cmd": "playlistValidateDedup", "options": [uri, true]}, 'Validate and deduplicate playlist');
+                if (type === 'plist') {
+                    addMenuItem(contextMenuBody, {"cmd": "playlistValidateDedup", "options": [uri, true]}, 'Validate and deduplicate playlist');
+                }
             }
             addMenuItem(contextMenuBody, {"cmd": "showDelPlaylist", "options": [[uri]]}, 'Delete playlist');
             if (settings.smartpls === true &&
@@ -656,10 +661,12 @@ function createMenuListsSecondary(target, contextMenuTitle, contextMenuBody) {
             const albumid = getData(dataNode, 'AlbumId');
             if (albumid !== undefined) {
                 contextMenuTitle.textContent = tn('Album');
+                contextMenuTitle.classList.add('offcanvas-title-album');
                 addMenuItemsAlbumActions(dataNode, null, contextMenuBody);
             }
             else {
                 contextMenuTitle.textContent = tn('Directory');
+                contextMenuTitle.classList.add('offcanvas-title-dir');
                 const baseuri = dirname(uri);
                 addMenuItemsDirectoryActions(contextMenuBody, baseuri);
             }
@@ -706,6 +713,7 @@ function createMenuHome(target, contextMenuTitle, contextMenuBody) {
             actionDesc = friendlyActions[href.cmd];
     }
     contextMenuTitle.textContent = tn(typeFriendly[type]);
+    contextMenuTitle.classList.add('offcanvas-title-' + type);
     switch(type) {
         case 'plist':
         case 'smartpls':
@@ -751,6 +759,7 @@ function createMenuHome(target, contextMenuTitle, contextMenuBody) {
 function createMenuHomeSecondary(target, contextMenuTitle, contextMenuBody) {
     const pos = getData(target, 'pos');
     contextMenuTitle.textContent = tn('Homeicon');
+    contextMenuTitle.classList.add('offcanvas-title-homeicon');
     addMenuItem(contextMenuBody, {"cmd": "editHomeIcon", "options": [pos]}, 'Edit home icon');
     addMenuItem(contextMenuBody, {"cmd": "duplicateHomeIcon", "options": [pos]}, 'Duplicate home icon');
     addMenuItem(contextMenuBody, {"cmd": "deleteHomeIcon", "options": [pos]}, 'Delete home icon');

@@ -83,8 +83,6 @@ let allOutputs = null;
 
 /** @type {object} */
 const ligatures = {
-    'sortUp': 'arrow_drop_up',
-    'sortDown': 'arrow_drop_down',
     'checked': 'task_alt',
     'more': 'menu',
     'unchecked': 'radio_button_unchecked'
@@ -274,7 +272,7 @@ app.cards = {
                 "limit": 100,
                 "filter": "any",
                 "sort": {
-                    "tag": "Priority",
+                    "tag": "Pos",
                     "desc": false
                 },
                 "tag": "-",
@@ -451,7 +449,7 @@ app.cards = {
         "limit": 100,
         "filter": "any",
         "sort": {
-            "tag": "-",
+            "tag": "Title",
             "desc": false
         },
         "tag": "-",
@@ -1031,7 +1029,9 @@ const typeFriendly = {
     'song': 'Song',
     'stream': 'Stream',
     'view': 'View',
-    'webradio': 'Webradio'
+    'webradio': 'Webradio',
+    'cols': 'Columns',
+    'disc': 'Disc'
 };
 
 const friendlyActions = {

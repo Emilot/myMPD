@@ -89,10 +89,7 @@ function initQueueCurrent() {
                 return;
             }
             const colName = event.target.getAttribute('data-col');
-            if (colName === null ||
-                colName === 'Duration' ||
-                colName.indexOf('sticker') === 0)
-            {
+            if (isColSortable('QueueCurrent', colName) === false) {
                 //by this fields can not be sorted
                 return;
             }
@@ -103,6 +100,9 @@ function initQueueCurrent() {
         }
         //table body
         const target = event.target.closest('TR');
+        if (target === null) {
+            return;
+        }
         if (target.parentNode.nodeName === 'TBODY' &&
             checkTargetClick(target) === true)
         {
@@ -290,24 +290,29 @@ function parseQueue(obj) {
         setData(row, 'songpos', data.Pos);
         setData(row, 'duration', data.Duration);
         setData(row, 'uri', data.uri);
-        setData(row, 'type', data.type);
-        setData(row, 'name', data.Title);
-        if (data.type === 'webradio') {
+        setData(row, 'type', data.Type);
+        if (data.Type === 'webradio') {
             setData(row, 'webradioUri', data.webradio.filename);
+            setData(row, 'name', data.webradio.Name);
         }
-        //set AlbumId
-        if (data.AlbumId !== undefined) {
-            setData(row, 'AlbumId', data.AlbumId);
-        }
-        //and browse tags
-        for (const tag of settings.tagListBrowse) {
-            if (albumFilters.includes(tag) &&
-                data[tag] !== undefined &&
-                checkTagValue(data[tag], '-') === false)
-            {
-                setData(row, tag, data[tag]);
+        else {
+            setData(row, 'name', data.Title);
+            //set AlbumId
+            if (data.AlbumId !== undefined) {
+                setData(row, 'AlbumId', data.AlbumId);
+            }
+            //and browse tags
+            for (const tag of settings.tagListBrowse) {
+                if (albumFilters.includes(tag) &&
+                    data[tag] !== undefined &&
+                    checkTagValue(data[tag], '-') === false)
+                {
+                    setData(row, tag, data[tag]);
+                }
             }
         }
+        //set Title to Name + Title for streams
+        data.Title = getDisplayTitle(data.Name, data.Title);
     }, function(row, data) {
         tableRow(row, data, app.id, colspan, smallWidth);
         if (currentState.currentSongId === data.id) {
@@ -436,30 +441,6 @@ function setPlayingRow(playingRow) {
                 currentState.state === 'pause' ? 'pause' : 'stop';
         }
         playingRow.classList.add('queue-playing');
-    }
-}
-
-/**
- * Sets the clickable class for current queue table header,
- * if mpd supports queue sorting (since MPD 0.24)
- * @returns {void}
- */
-function setQueueCurrentHeaderClickable() {
-    const ths = document.querySelectorAll('#QueueCurrentList > thead > tr > th');
-    for (const th of ths) {
-        const colName = th.getAttribute('data-col');
-        if (colName === null ||
-            colName === 'Duration' ||
-            colName.indexOf('sticker') === 0)
-        {
-            continue;
-        }
-        if (features.featAdvqueue === true) {
-            th.classList.add('clickable');
-        }
-        else {
-            th.classList.remove('clickable');
-        }
     }
 }
 

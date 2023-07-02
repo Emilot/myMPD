@@ -17,7 +17,6 @@
 #include "src/mpd_client/search.h"
 #include "src/mpd_client/shortcuts.h"
 #include "src/mpd_client/tags.h"
-#include "src/mympd_api/status.h"
 #include "src/mympd_api/sticker.h"
 #include "src/mympd_api/webradios.h"
 
@@ -218,7 +217,9 @@ bool mympd_api_queue_insert(struct t_partition_state *partition_state, struct t_
                 mympd_set_mpd_failure(partition_state, "Error adding command to command list mpd_send_add");
                 break;
             }
-            to++;
+            if (to != UINT_MAX) {
+                to++;
+            }
         }
         mpd_client_command_list_end_check(partition_state);
     }
@@ -259,7 +260,9 @@ bool mympd_api_queue_replace(struct t_partition_state *partition_state, struct t
  * @return true on success, else false
  */
 bool mympd_api_queue_insert_search(struct t_partition_state *partition_state, sds expression, unsigned to, unsigned whence, sds *error) {
-    return mpd_client_search_add_to_queue(partition_state, expression, to, whence, error);
+    const char *sort = NULL;
+    bool sortdesc = false;
+    return mpd_client_search_add_to_queue(partition_state, expression, to, whence, sort, sortdesc, error);
 }
 
 /**
@@ -307,7 +310,9 @@ bool mympd_api_queue_insert_albums(struct t_partition_state *partition_state, st
             return false;
         }
         sds expression = get_search_expression_album(partition_state->mpd_state->tag_albumartist, mpd_album);
-        rc = mpd_client_search_add_to_queue(partition_state, expression, to, whence, error);
+        const char *sort = NULL;
+        bool sortdesc = false;
+        rc = mpd_client_search_add_to_queue(partition_state, expression, to, whence, sort, sortdesc, error);
         FREE_SDS(expression);
         if (rc == false) {
             break;
@@ -356,7 +361,9 @@ bool mympd_api_queue_insert_album_disc(struct t_partition_state *partition_state
         return false;
     }
     sds expression = get_search_expression_album_disc(partition_state->mpd_state->tag_albumartist, mpd_album, disc);
-    bool rc = mpd_client_search_add_to_queue(partition_state, expression, to, whence, error);
+    const char *sort = NULL;
+    bool sortdesc = false;
+    bool rc = mpd_client_search_add_to_queue(partition_state, expression, to, whence, sort, sortdesc, error);
     FREE_SDS(expression);
     return rc;
 }
@@ -412,7 +419,6 @@ bool mympd_api_queue_insert_plist(struct t_partition_state *partition_state, str
                 break;
             }
             current = current->next;
-            to++;
         }
         mpd_client_command_list_end_check(partition_state);
     }
@@ -776,15 +782,15 @@ sds print_queue_entry(struct t_partition_state *partition_state, sds buffer, con
             buffer = sdscat(buffer, "\"webradio\":{");
             buffer = sdscatsds(buffer, webradio);
             buffer = sdscatlen(buffer, "},", 2);
-            buffer = tojson_char(buffer, "type", "webradio", false);
+            buffer = tojson_char(buffer, "Type", "webradio", false);
         }
         else {
-            buffer = tojson_char(buffer, "type", "stream", false);
+            buffer = tojson_char(buffer, "Type", "stream", false);
         }
         FREE_SDS(webradio);
     }
     else {
-        buffer = tojson_char(buffer, "type", "song", false);
+        buffer = tojson_char(buffer, "Type", "song", false);
     }
     if (partition_state->mpd_state->feat_stickers == true) {
         buffer = sdscatlen(buffer, ",", 1);
