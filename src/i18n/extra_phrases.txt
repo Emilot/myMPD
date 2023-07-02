@@ -158,6 +158,7 @@ MUSICBRAINZ_ARTISTID
 MUSICBRAINZ_RELEASETRACKID
 MUSICBRAINZ_TRACKID
 MUSICBRAINZ_WORKID
+MUSICBRAINZ_RELEASEGROUPID
 mympd_connected
 mympd_disconnected
 mympd_feedback
@@ -273,3 +274,14 @@ snapcast
 solaris
 wasapi
 any
+Script syntax is valid
+Copy
+Copy playlist
+Playlist successfully copied
+Playlist successfully moved
+Playlist successfully replaced
+Show all albums from AlbumArtist
+Show all albums from Composer
+Show all albums from Performer
+Show all albums from Conductor
+Show all albums from Ensemble

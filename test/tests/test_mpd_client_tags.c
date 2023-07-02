@@ -5,9 +5,9 @@
 */
 
 #include "compile_time.h"
+#include "utility.h"
 
 #include "dist/utest/utest.h"
-
 #include "dist/libmympdclient/src/isong.h"
 #include "src/lib/album_cache.h"
 #include "src/mpd_client/search_local.h"
@@ -57,9 +57,8 @@ struct mpd_song *new_song(void) {
 
 UTEST(album_cache, test_album_cache_get_key) {
     struct mpd_song *song = new_song();
-    sds key = sdsempty();
-    key = album_cache_get_key(song, key);
-    ASSERT_STREQ("tabula rasa::einstürzende neubauten", key);
+    sds key = album_cache_get_key(song);
+    ASSERT_STREQ("f8f1a4e3c194a62ccb1a7926b78b0aaf6cb61757", key);
     sdsfree(key);
     mpd_song_free(song);
 

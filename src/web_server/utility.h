@@ -34,6 +34,7 @@ struct t_mg_user_data {
     sds custom_mympd_image;      //!< name of custom mympd image
     sds custom_na_image;         //!< name of custom not available image
     sds custom_stream_image;     //!< name of custom stream image
+    bool mympd_api_started;      //!< true if the mympd_api thread is ready, else false
 };
 
 /**
@@ -41,7 +42,9 @@ struct t_mg_user_data {
  */
 struct t_frontend_nc_data {
     struct mg_connection *backend_nc;  //!< pointer to backend connection
-    sds partition;                     //!< partition (for websocket connections only)
+    //for websocket connections only
+    sds partition;                     //!< partition
+    long id;                           //!< jsonrpc id (client id)
 };
 
 #ifdef MYMPD_EMBEDDED_ASSETS
@@ -60,6 +63,7 @@ void webserver_serve_booklet_image(struct mg_connection *nc);
 void webserver_send_header_ok(struct mg_connection *nc, size_t len, const char *headers);
 void webserver_send_header_redirect(struct mg_connection *nc, const char *location);
 void webserver_send_header_found(struct mg_connection *nc, const char *location);
+void webserver_send_cors_reply(struct mg_connection *nc);
 void webserver_send_data(struct mg_connection *nc, const char *data, size_t len, const char *headers);
 void webserver_handle_connection_close(struct mg_connection *nc);
 void *mg_user_data_free(struct t_mg_user_data *mg_user_data);
