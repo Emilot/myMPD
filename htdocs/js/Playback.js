@@ -88,7 +88,7 @@ function parseCurrentSong(obj) {
         textNotification.push(obj.result.Album);
         footerAlbumEl.textContent = obj.result.Album;
         setData(footerAlbumEl, 'name', obj.result.Album);
-        setData(footerAlbumEl, 'AlbumArtist', obj.result[tagAlbumArtist]);
+        setData(footerAlbumEl, 'AlbumId', obj.result.AlbumId);
         footerAlbumEl.classList.add('clickable');
         footerAlbumEl.setAttribute('data-tag', 'Album');
         footerDividerEl.classList.remove('d-none');
@@ -105,7 +105,7 @@ function parseCurrentSong(obj) {
     else {
         elClear(footerAlbumEl);
         setData(footerAlbumEl, 'name', '');
-        setData(footerAlbumEl, 'AlbumArtist', ['']);
+        setData(footerAlbumEl, 'AlbumId', '');
         footerAlbumEl.setAttribute('data-tag', 'undefined');
         footerAlbumEl.classList.remove('clickable');
         footerDividerEl.classList.add('d-none');
@@ -124,9 +124,15 @@ function parseCurrentSong(obj) {
         footerCoverEl.classList.add('clickable');
     }
     else {
-        elClear(currentTitleEl);
+        if (currentState.songPos === -1) {
+            currentTitleEl.textContent = tn('Not playing');
+            footerTitleEl.textContent = tn('Not playing');
+        }
+        else {
+            elClear(currentTitleEl);
+            elClear(footerTitleEl);
+        }
         setData(currentTitleEl, 'uri', '');
-        elClear(footerTitleEl);
         currentTitleEl.classList.remove('clickable');
         footerTitleEl.classList.remove('clickable');
         footerCoverEl.classList.remove('clickable');
@@ -230,20 +236,19 @@ function setPlaybackCardTags(songObj) {
                     if (value === undefined) {
                         value = '-';
                     }
-                    elReplaceChild(c.querySelector('p'), printValue(col, value));
                     if (checkTagValue(value, '-') === true ||
                         settings.tagListBrowse.includes(col) === false)
                     {
+                        elClear(c.querySelector('p'));
                         c.querySelector('p').classList.remove('clickable');
                     }
                     else {
+                        elReplaceChild(c.querySelector('p'), printValue(col, value));
                         c.querySelector('p').classList.add('clickable');
                     }
                     setData(c, 'name', value);
-                    if (col === 'Album' &&
-                        songObj[tagAlbumArtist] !== undefined)
-                    {
-                        setData(c, 'AlbumArtist', songObj[tagAlbumArtist]);
+                    if (col === 'Album') {
+                        setData(c, 'AlbumId', songObj.AlbumId);
                     }
                 }
             }

@@ -136,7 +136,7 @@ bool mympd_api_queue_prio_set_highest(struct t_partition_state *partition_state,
         mpd_status_free(status);
     }
     mpd_response_finish(partition_state->conn);
-    if (mympd_check_error_and_recover(partition_state, NULL, "mpd_run_status") == false) {
+    if (mympd_check_error_and_recover(partition_state, error, "mpd_run_status") == false) {
         return false;
     }
     
@@ -151,7 +151,7 @@ bool mympd_api_queue_prio_set_highest(struct t_partition_state *partition_state,
             }
         }
         mpd_response_finish(partition_state->conn);
-        if (mympd_check_error_and_recover(partition_state, NULL, "mpd_send_get_queue_song_id") == false) {
+        if (mympd_check_error_and_recover(partition_state, error, "mpd_send_get_queue_song_id") == false) {
             return false;
         }
     }
@@ -307,6 +307,7 @@ bool mympd_api_queue_insert_albums(struct t_partition_state *partition_state, st
     while (current != NULL) {
         struct mpd_song *mpd_album = album_cache_get_album(&partition_state->mpd_state->album_cache, current->key);
         if (mpd_album == NULL) {
+            *error = sdscat(*error, "Album not found");
             return false;
         }
         sds expression = get_search_expression_album(partition_state->mpd_state->tag_albumartist, mpd_album);
@@ -358,6 +359,7 @@ bool mympd_api_queue_replace_albums(struct t_partition_state *partition_state, s
 bool mympd_api_queue_insert_album_disc(struct t_partition_state *partition_state, sds albumid, sds disc, unsigned to, unsigned whence, sds *error) {
     struct mpd_song *mpd_album = album_cache_get_album(&partition_state->mpd_state->album_cache, albumid);
     if (mpd_album == NULL) {
+        *error = sdscat(*error, "Album not found");
         return false;
     }
     sds expression = get_search_expression_album_disc(partition_state->mpd_state->tag_albumartist, mpd_album, disc);
