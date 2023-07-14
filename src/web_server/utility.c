@@ -25,6 +25,30 @@
  */
 
 /**
+ * Converts a mg_str to int
+ * @param str pointer to struct mg_str
+ * @return parsed integer
+ */
+int mg_str_to_int(struct mg_str *str) {
+    sds s = sdsnewlen(str->ptr, str->len);
+    int i = (int)strtoimax(s, NULL, 10);
+    FREE_SDS(s);
+    return i;
+}
+
+/**
+ * Converts a mg_str to long
+ * @param str pointer to struct mg_str
+ * @return parsed integer
+ */
+long mg_str_to_long(struct mg_str *str) {
+    sds s = sdsnewlen(str->ptr, str->len);
+    long l = strtol(s, NULL, 10);
+    FREE_SDS(s);
+    return l;
+}
+
+/**
  * Prints the ip address from a mg_addr struct
  * @param s already allocated sds string to append the ip
  * @param addr pointer to struct mg_addr
@@ -32,17 +56,15 @@
  */
 sds print_ip(sds s, struct mg_addr *addr) {
     if (addr->is_ip6 == false) {
-        uint8_t p[4];
-        memcpy(p, &addr->ip, sizeof(p));
-        s = sdscatprintf(s, "%d.%d.%d.%d", (int) p[0], (int) p[1], (int) p[2], (int) p[3]);
+        //IPv4
+        uint8_t *p = (uint8_t *)&addr->ip;
+        return sdscatprintf(s, "%d.%d.%d.%d", (int) p[0], (int) p[1], (int) p[2], (int) p[3]);
     }
-    else {
-        uint16_t *p = (uint16_t *) addr->ip6;
-        s = sdscatprintf(s, "[%x:%x:%x:%x:%x:%x:%x:%x]", mg_htons(p[0]),
-                 mg_htons(p[1]), mg_htons(p[2]), mg_htons(p[3]), mg_htons(p[4]),
-                 mg_htons(p[5]), mg_htons(p[6]), mg_htons(p[7]));
-    }
-    return s;
+    //IPv6
+    uint16_t *p = (uint16_t *)&addr->ip;
+    return sdscatprintf(s, "[%x:%x:%x:%x:%x:%x:%x:%x]",
+            mg_ntohs(p[0]), mg_ntohs(p[1]), mg_ntohs(p[2]), mg_ntohs(p[3]),
+            mg_ntohs(p[4]), mg_ntohs(p[5]), mg_ntohs(p[6]), mg_ntohs(p[7]));
 }
 
 /**

@@ -13,7 +13,6 @@
     "Actions": "Actions",
     "Active partition": "Partition active",
     "Add": "Ajouter",
-    "Add after current playing song": "Ajouter après la chanson en cours",
     "Add random": "Ajout aléatoire",
     "Add smart playlist": "Ajouter une liste de lecture intelligente",
     "Add stream": "Ajouter flux",
@@ -206,8 +205,6 @@
     "Edit webradio favorite": "Editer la webradio favorite",
     "Elements per page": "Éléments par page",
     "Empty list": "Liste vide",
-    "Empty response from radio-browser.info": "Réponse vide reçue de radio-browser.info",
-    "Empty response from webradiodb backend": "Réponse vide reçue du backend webradiodb",
     "Empty uri": "URI vide",
     "Enable": "Activer",
     "Enable random": "Activer mode aléatoire",
@@ -977,5 +974,7 @@
     "Show all albums from Conductor": "Montrer tous les albums du conducteur",
     "Show all albums from Ensemble": "Montrer tous les albums de l'ensemble",
     "Show all albums from Performer": "Montrer tous les albums de l'interprète",
-    "Album not found": "Album non trouvé"
+    "Album not found": "Album non trouvé",
+    "Invalid response from radio-browser.info": "Réponse non valide de radio-browser.info",
+    "Invalid response from webradiodb backend": "Réponse non valide du backend webradiodb"
 }
