@@ -69,7 +69,7 @@ function initBrowseDatabase() {
         }
         app.current.search = '';
         document.getElementById('searchDatabaseTagListStr').value = '';
-        appGoto(app.current.card, app.current.tab, 'AlbumList', 0, undefined, 'Album', tagAlbumArtist, 'Album',
+        appGoto(app.current.card, app.current.tab, 'AlbumList', 0, undefined, 'Album', {'tag': tagAlbumArtist, 'desc': false}, 'Album',
             '((' + app.current.tag + ' == \'' + escapeMPD(getData(event.target.parentNode, 'tag')) + '\'))');
     }, false);
 
@@ -572,11 +572,14 @@ function addAlbum(action) {
             replacePlayQueue('album', [app.current.filter]);
             break;
         case 'addPlaylist':
-            showAddToPlaylist(['ALBUM', app.current.filter], '');
+            showAddToPlaylist('album', [app.current.filter]);
             break;
-        case 'addAlbumToHome':
-            addAlbumToHome(app.current.filter, '');
+        case 'addAlbumToHome': {
+            const name = document.querySelector('#viewDatabaseAlbumDetailInfoTags > h1').textContent;
+            const images = getDataId('viewDatabaseAlbumDetailCover', 'images');
+            addAlbumToHome(app.current.filter, name, (images.length > 0 ? images[0]: ''));
             break;
+        }
     }
 }
 
@@ -606,7 +609,7 @@ function addAlbumDisc(action, albumId, disc) {
             replacePlayQueue('disc', [albumId, disc]);
             break;
         case 'addPlaylist':
-            showAddToPlaylist(['DISC', albumId, disc], '');
+            showAddToPlaylist('disc', [albumId, disc]);
             break;
     }
 }

@@ -13,7 +13,6 @@
     "Actions": "アクション",
     "Active partition": "アクティブなパーティション",
     "Add": "追加",
-    "Add after current playing song": "再生中の楽曲の後に追加",
     "Add random": "ランダムに追加",
     "Add smart playlist": "スマートプレイリストを追加",
     "Add stream": "ストリームを追加",
@@ -206,8 +205,6 @@
     "Edit webradio favorite": "ウェブラジオのお気に入りを編集",
     "Elements per page": "1ページに表示する要素数",
     "Empty list": "空のリスト",
-    "Empty response from radio-browser.info": "radio-browser.infoからのレスポンスが空です",
-    "Empty response from webradiodb backend": "WebradioDBバックエンドからのレスポンスが空です",
     "Empty uri": "空のURI",
     "Enable": "有効化",
     "Enable random": "ランダム再生を有効化",
@@ -611,7 +608,7 @@
     "Thumbnail size": "サムネイルサイズ",
     "Timeout": "タイムアウト",
     "Timer": "タイマー",
-    "Timer with given id not found": "与えられたIDのタイマーが見つかりませんでした",
+    "Timer with given id not found": "与えられたIDのタイマーが見つかりません",
     "Timerange (days)": "時間範囲 (日付)",
     "Title": "タイトル",
     "To": "変更後",
@@ -654,7 +651,7 @@
     "Updating MPD database": "MPDデータベースを更新中",
     "Updating smart playlist %{playlist} failed": "スマートプレイリスト %{playlist} の更新に失敗しました",
     "Uri": "URI",
-    "Uri not found in WebradioDB": "WebradioDBにURIが見つかりませんでした",
+    "Uri not found in WebradioDB": "WebradioDBにURIが見つかりません",
     "Use ligature": "リガチャーを使用",
     "Value": "値",
     "Version": "バージョン",
@@ -976,5 +973,6 @@
     "Show all albums from Composer": "作曲者からのアルバムをすべて表示",
     "Show all albums from Conductor": "指揮者からのアルバムをすべて表示",
     "Show all albums from Ensemble": "アンサンブルからのアルバムをすべて表示",
-    "Show all albums from Performer": "演奏者からのアルバムをすべて表示"
+    "Show all albums from Performer": "演奏者からのアルバムをすべて表示",
+    "Album not found": "アルバムが見つかりません"
 }

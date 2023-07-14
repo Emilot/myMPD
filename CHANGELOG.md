@@ -11,7 +11,7 @@ This release improves the queue and playlist management in many ways. You can no
 ### Notes
 
 - This is the first release that enforces the OpenSSL dependency.
-- Albums and Webradios must be readded to the homescreen.
+- Some home icons are invalid, you must re-add the icons, sorry for that.
 
 ### API changes
 
@@ -71,7 +71,7 @@ This release changes definitions of many API methods.
 - Feat: support MUSICBRAINZ_RELEASEGROUPID tag (MPD 0.24)
 - Feat: handle preflighted requests in CORS
 - Feat: add consume one shot to queue context menu
-- Upd: Mongoose 7.10 #1024
+- Upd: Mongoose 7.11 #1060
 - Upd: Bootstrap 5.3.0 final
 - Upd: libmympdclient 1.0.21
 - Upd: OpenSSL is now required #1033
@@ -84,6 +84,7 @@ This release changes definitions of many API methods.
 - Fix: improve Mongoose logging #1032
 - Fix: set correct song start time sticker #1044
 - Fix: Fall back from AlbumArtist to Artist tag for MusicBrainz tags #1056
+- Fix: correct position in last played list #1063
 
 ***
 

@@ -153,6 +153,8 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
             if (async == false) {
                 response->data = jsonrpc_respond_message(response->data, request->cmd_id, request->id,
                         JSONRPC_FACILITY_GENERAL, JSONRPC_SEVERITY_ERROR, "Error starting worker thread");
+                mympd_state->mpd_state->album_cache.building = false;
+                mympd_state->mpd_state->sticker_cache.building = false;
             }
             break;
         case INTERNAL_API_ALBUMCACHE_SKIPPED:
@@ -327,7 +329,6 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
                 response->data = jsonrpc_respond_message(response->data, request->cmd_id, request->id,
                         JSONRPC_FACILITY_SCRIPT, JSONRPC_SEVERITY_ERROR, "Invalid script name");
                 list_free(arguments);
-                FREE_PTR(arguments);
             }
             break;
         }
@@ -524,19 +525,17 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
             break;
         }
         case MYMPD_API_COVERCACHE_CROP:
-            int_buf1 = covercache_clear(config->cachedir, mympd_state->config->covercache_keep_days);
-            rc = int_buf1 >= 0
+            rc = covercache_clear(config->cachedir, mympd_state->config->covercache_keep_days) >= 0
                 ? true
                 : false;
-            response->data = jsonrpc_respond_with_message_or_error(response->data, request->cmd_id, request->id, 0,
+            response->data = jsonrpc_respond_with_message_or_error(response->data, request->cmd_id, request->id, rc,
                     JSONRPC_FACILITY_GENERAL, "Successfully croped covercache", "Error cropping the covercache");
             break;
         case MYMPD_API_COVERCACHE_CLEAR:
-            int_buf1 = covercache_clear(config->cachedir, 0);
-            rc = int_buf1 >= 0
+            rc = covercache_clear(config->cachedir, 0) >= 0
                 ? true
                 : false;
-            response->data = jsonrpc_respond_with_message_or_error(response->data, request->cmd_id, request->id, 0,
+            response->data = jsonrpc_respond_with_message_or_error(response->data, request->cmd_id, request->id, rc,
                     JSONRPC_FACILITY_GENERAL, "Successfully cleared covercache", "Error clearing the covercache");
             break;
         case MYMPD_API_TIMER_SAVE: {
@@ -583,7 +582,7 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
             {
                 rc = mympd_api_jukebox_rm_entries(&partition_state->jukebox_queue, &positions, partition_state->name, &error);
                 response->data = jsonrpc_respond_with_ok_or_error(response->data, request->cmd_id, request->id, rc,
-                        JSONRPC_FACILITY_JUKEBOX, "Could not remove song from jukebox queue");
+                        JSONRPC_FACILITY_JUKEBOX, error);
             }
             list_clear(&positions);
             break;
@@ -631,9 +630,9 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
             {
                 rc = mympd_api_trigger_save(&mympd_state->trigger_list, sds_buf1, int_buf1, int_buf2, sds_buf2, trigger_data, &error);
                 response->data = jsonrpc_respond_with_ok_or_error(response->data, request->cmd_id, request->id, rc,
-                        JSONRPC_FACILITY_TRIGGER, "Could not save trigger");
+                        JSONRPC_FACILITY_TRIGGER, error);
                 if (rc == true) {
-                    //trigger_data is onw referenced by the trigger list
+                    //trigger_data is now referenced by the trigger list
                     break;
                 }
             }
@@ -642,9 +641,9 @@ void mympd_api_handler(struct t_partition_state *partition_state, struct t_work_
         }
         case MYMPD_API_TRIGGER_RM:
             if (json_get_long(request->data, "$.params.id", 0, LIST_TRIGGER_MAX, &long_buf1, &error) == true) {
-                rc = mympd_api_trigger_delete(&mympd_state->trigger_list, long_buf1);
+                rc = mympd_api_trigger_delete(&mympd_state->trigger_list, long_buf1, &error);
                 response->data = jsonrpc_respond_with_ok_or_error(response->data, request->cmd_id, request->id, rc,
-                        JSONRPC_FACILITY_TRIGGER, "Could not delete trigger");
+                        JSONRPC_FACILITY_TRIGGER, error);
             }
             break;
         case INTERNAL_API_SCRIPT_INIT: {

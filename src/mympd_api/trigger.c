@@ -180,7 +180,7 @@ void mympd_api_trigger_execute_feedback(struct t_list *trigger_list, sds uri, in
 
 /**
  * Saves a trigger
- * @param trigger_list trigger öist
+ * @param trigger_list trigger list
  * @param name trigger name
  * @param trigger_id existing trigger id to replace or -1
  * @param event trigger event
@@ -196,7 +196,7 @@ bool mympd_api_trigger_save(struct t_list *trigger_list, sds name, int trigger_i
     if (rc == true) {
         if (trigger_id >= 0) {
             //delete old entry
-            mympd_api_trigger_delete(trigger_list, trigger_id);
+            return mympd_api_trigger_delete(trigger_list, trigger_id, error);
         }
         return true;
     }
@@ -300,14 +300,16 @@ sds mympd_api_trigger_get(struct t_list *trigger_list, sds buffer, long request_
  * Deletes a trigger
  * @param trigger_list trigger list
  * @param idx index of trigger node to remove
+ * @param error already allocated sds string to append the error message
  * @return true on success, else false
  */
-bool mympd_api_trigger_delete(struct t_list *trigger_list, long idx) {
+bool mympd_api_trigger_delete(struct t_list *trigger_list, long idx, sds *error) {
     struct t_list_node *to_remove = list_node_extract(trigger_list, idx);
     if (to_remove != NULL) {
         list_node_free_user_data(to_remove, list_free_cb_trigger_data);
         return true;
     }
+    *error = sdscat(*error, "Could not delete trigger");
     return false;
 }
 
