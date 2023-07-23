@@ -4,13 +4,17 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
-## myMPD v11.0.1 (not yet released)
+## myMPD v11.0.1 (2023-07-23)
 
 This is a small bug fix release.
 
 ### Changelog
 
+- Upd: translations
 - Fix: memory leak after script execution
+- Fix: always enable connection save button
+- Fix: add missing jukebox list remove action
+- Fix: IPv4-mapped address broken #1066
 
 ***
 
