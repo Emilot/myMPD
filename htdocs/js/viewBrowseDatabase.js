@@ -3,22 +3,19 @@
 // myMPD (c) 2018-2023 Juergen Mang <mail@jcgames.de>
 // https://github.com/jcorporation/mympd
 
-/** @module BrowseDatabase_js */
+/** @module viewBrowseDatabase_js */
 
 /**
  * BrowseDatabaseAlbumList handler
  * @returns {void}
  */
 function handleBrowseDatabaseAlbumList() {
-    setFocusId('searchDatabaseAlbumListStr');
-    selectTag('searchDatabaseAlbumListTags', 'searchDatabaseAlbumListTagsDesc', app.current.filter);
+    handleSearchExpression('BrowseDatabaseAlbumList');
+
     selectTag('BrowseDatabaseAlbumListTagDropdown', 'btnBrowseDatabaseAlbumListTagDesc', app.current.tag);
     toggleBtnChkId('databaseAlbumListSortDesc', app.current.sort.desc);
     selectTag('databaseAlbumListSortTags', undefined, app.current.sort.tag);
-    createSearchCrumbs(app.current.search, document.getElementById('searchDatabaseAlbumListStr'), document.getElementById('searchDatabaseAlbumListCrumb'));
-    if (app.current.search === '') {
-        document.getElementById('searchDatabaseAlbumListStr').value = '';
-    }
+
     sendAPI("MYMPD_API_DATABASE_ALBUM_LIST", {
         "offset": app.current.offset,
         "limit": app.current.limit,
@@ -34,8 +31,7 @@ function handleBrowseDatabaseAlbumList() {
  * @returns {void}
  */
 function handleBrowseDatabaseTagList() {
-    setFocusId('searchDatabaseTagListStr');
-    document.getElementById('searchDatabaseTagListStr').value = app.current.search;
+    handleSearchSimple('BrowseDatabaseTag');
     selectTag('BrowseDatabaseTagListTagDropdown', 'btnBrowseDatabaseTagListTagDesc', app.current.tag);
     mirrorBtnId('databaseTagListSortDesc', app.current.sort.desc);
     sendAPI("MYMPD_API_DATABASE_TAG_LIST", {
@@ -68,22 +64,12 @@ function initBrowseDatabase() {
             return;
         }
         app.current.search = '';
-        document.getElementById('searchDatabaseTagListStr').value = '';
+        document.getElementById('BrowseDatabaseTagSearchStr').value = '';
         appGoto(app.current.card, app.current.tab, 'AlbumList', 0, undefined, 'Album', {'tag': tagAlbumArtist, 'desc': false}, 'Album',
             '((' + app.current.tag + ' == \'' + escapeMPD(getData(event.target.parentNode, 'tag')) + '\'))');
     }, false);
 
-    document.getElementById('searchDatabaseTagListStr').addEventListener('keyup', function(event) {
-        if (ignoreKeys(event) === true) {
-            return;
-        }
-        clearSearchTimer();
-        const value = this.value;
-        searchTimer = setTimeout(function() {
-            appGoto(app.current.card, app.current.tab, app.current.view,
-                0, app.current.limit, app.current.filter, app.current.sort, app.current.tag, value);
-        }, searchTimerTimeout);
-    }, false);
+    initSearchSimple('BrowseDatabaseTag');
 
     document.getElementById('databaseTagListSortDesc').addEventListener('click', function(event) {
         event.stopPropagation();
@@ -173,13 +159,6 @@ function initBrowseDatabase() {
         }
     }, false);
 
-    document.getElementById('searchDatabaseAlbumListTags').addEventListener('click', function(event) {
-        if (event.target.nodeName === 'BUTTON') {
-            app.current.filter = getData(event.target, 'tag');
-            searchDatabaseAlbumList(document.getElementById('searchDatabaseAlbumListStr').value);
-        }
-    }, false);
-
     document.getElementById('databaseAlbumListSortDesc').addEventListener('click', function(event) {
         event.stopPropagation();
         event.preventDefault();
@@ -197,68 +176,7 @@ function initBrowseDatabase() {
         }
     }, false);
 
-    document.getElementById('searchDatabaseAlbumListStr').addEventListener('keydown', function(event) {
-        //handle Enter key on keydown for IME composing compatibility
-        if (event.key !== 'Enter') {
-            return;
-        }
-        clearSearchTimer();
-        const value = this.value;
-        if (value !== '') {
-            const op = getSelectValueId('searchDatabaseAlbumListMatch');
-            const crumbEl = document.getElementById('searchDatabaseAlbumListCrumb');
-            crumbEl.appendChild(createSearchCrumb(app.current.filter, op, value));
-            elShow(crumbEl);
-            this.value = '';
-        }
-        else {
-            searchTimer = setTimeout(function() {
-                searchDatabaseAlbumList(value);
-            }, searchTimerTimeout);
-        }
-    }, false);
-
-    document.getElementById('searchDatabaseAlbumListStr').addEventListener('keyup', function(event) {
-        if (ignoreKeys(event) === true) {
-            return;
-        }
-        clearSearchTimer();
-        const value = this.value;
-        searchTimer = setTimeout(function() {
-            searchDatabaseAlbumList(value);
-        }, searchTimerTimeout);
-    }, false);
-
-    document.getElementById('searchDatabaseAlbumListMatch').addEventListener('change', function() {
-        searchDatabaseAlbumList(document.getElementById('searchDatabaseAlbumListStr').value);
-    });
-
-    document.getElementById('searchDatabaseAlbumListCrumb').addEventListener('click', function(event) {
-        if (event.target.nodeName === 'SPAN') {
-            //remove search expression
-            event.preventDefault();
-            event.stopPropagation();
-            event.target.parentNode.remove();
-            searchDatabaseAlbumList('');
-            document.getElementById('searchDatabaseAlbumListStr').updateBtn();
-        }
-        else if (event.target.nodeName === 'BUTTON') {
-            //edit search expression
-            event.preventDefault();
-            event.stopPropagation();
-            selectTag('searchDatabaseAlbumListTags', 'searchDatabaseAlbumListTagsDesc', getData(event.target,'filter-tag'));
-            const searchDatabaseAlbumListStrEl = document.getElementById('searchDatabaseAlbumListStr');
-            searchDatabaseAlbumListStrEl.value = unescapeMPD(getData(event.target, 'filter-value'));
-            document.getElementById('searchDatabaseAlbumListMatch').value = getData(event.target, 'filter-op');
-            event.target.remove();
-            app.current.filter = getData(event.target,'filter-tag');
-            searchDatabaseAlbumList(searchDatabaseAlbumListStrEl.value);
-            if (document.getElementById('searchDatabaseAlbumListCrumb').childElementCount === 0) {
-                elHideId('searchDatabaseAlbumListCrumb');
-            }
-            searchDatabaseAlbumListStrEl.updateBtn();
-        }
-    }, false);
+    initSearchExpression('BrowseDatabaseAlbumList');
 }
 
 /**
@@ -612,16 +530,4 @@ function addAlbumDisc(action, albumId, disc) {
             showAddToPlaylist('disc', [albumId, disc]);
             break;
     }
-}
-
-/**
- * Creates and executes the mpd filter expression from the search crumbs and current search values
- * for the album grid search.
- * @param {string} searchStr string to search
- * @returns {void}
- */
-function searchDatabaseAlbumList(searchStr) {
-    const expression = createSearchExpression(document.getElementById('searchDatabaseAlbumListCrumb'), app.current.filter, getSelectValueId('searchDatabaseAlbumListMatch'), searchStr);
-    appGoto(app.current.card, app.current.tab, app.current.view,
-        0, app.current.limit, app.current.filter, app.current.sort, app.current.tag, expression, 0);
 }

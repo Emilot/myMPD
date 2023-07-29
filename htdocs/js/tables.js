@@ -250,8 +250,8 @@ function dragAndDropTable(tableId) {
         }
         const target = event.target.closest('TR');
         target.classList.remove('dragover');
-        const newSongPos = getData(target, 'songpos');
-        const oldSongPos = getData(dragEl, 'songpos');
+        const newSongPos = getData(target, 'pos');
+        const oldSongPos = getData(dragEl, 'pos');
         if (oldSongPos === newSongPos) {
             return;
         }
@@ -371,6 +371,13 @@ function setColTags(tableName) {
                        value !== 'Album';
             });
         }
+        case 'QueueJukeboxAlbum': {
+            const tags = settings.tagListAlbum.slice();
+            tags.push('Pos', 'Discs', 'SongCount', 'Duration', 'LastModified');
+            return tags.filter(function(value) {
+                return value !== 'Disc';
+            });
+        }
     }
 
     const tags = settings.tagList.slice();
@@ -384,7 +391,8 @@ function setColTags(tableName) {
             tags.push('AudioFormat', 'Priority');
             //fall through
         case 'BrowsePlaylistDetail':
-        case 'QueueJukebox':
+        case 'QueueJukeboxSong':
+        case 'QueueJukeboxAlbum':
             tags.push('Pos');
             break;
         case 'BrowseFilesystem':
@@ -400,8 +408,9 @@ function setColTags(tableName) {
             tags.push('Pos', 'LastPlayed');
             break;
     }
-    //sort tags and append stickers
+    //sort tags 
     tags.sort();
+    //append stickers
     if (features.featStickers === true) {
         tags.push('dropdownTitleSticker');
         for (const sticker of stickerList) {
@@ -644,7 +653,7 @@ function addSortIndicator(th, desc) {
 }
 
 /**
- * Conditionally replaces a table row, if uri or cols are changed.
+ * Conditionally replaces a table row, if metadata or cols are changed.
  * @param {HTMLElement} row row to replace
  * @param {HTMLElement} el replacement row
  * @returns {void}
@@ -653,7 +662,8 @@ function replaceTblRow(row, el) {
     if (getData(row, 'uri') === getData(el, 'uri') &&
         getData(row, 'cols') === getData(el, 'cols') &&
         getData(row, 'name') === getData(el, 'name') &&
-        getData(row, 'songid') === getData(el, 'songid'))
+        getData(row, 'songid') === getData(el, 'songid') &&
+        getData(row, 'AlbumId') === getData(el, 'AlbumId'))
     {
         return;
     }
@@ -745,8 +755,7 @@ function updateTable(obj, list, perRowCallback, createRowCellsCallback) {
         //and browse tags
         for (const tag of settings.tagListBrowse) {
             if (albumFilters.includes(tag) &&
-                obj.result.data[i][tag] !== undefined &&
-                checkTagValue(obj.result.data[i][tag], '-') === false)
+                isEmptyTag(obj.result.data[i][tag]) === false)
             {
                 setData(row, tag, obj.result.data[i][tag]);
             }
@@ -838,7 +847,8 @@ function tableRow(row, data, list, colspan, smallWidth) {
                     pEl.actionQueueTd.cloneNode(true)
                 );
                 break;
-            case 'QueueJukebox':
+            case 'QueueJukeboxSong':
+            case 'QueueJukeboxAlbum':
                 // add quick play and remove action
                 row.appendChild(
                     pEl.actionJukeboxTd.cloneNode(true)

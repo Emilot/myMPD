@@ -190,7 +190,10 @@ function appInit() {
     //init links
     const hrefs = document.querySelectorAll('[data-href]');
     for (const href of hrefs) {
-        if (href.classList.contains('not-clickable') === false) {
+        if (href.nodeName !== 'A' &&
+            href.nodeName !== 'BUTTON' &&
+            href.classList.contains('not-clickable') === false)
+        {
             href.classList.add('clickable');
         }
         if (href.parentNode.classList.contains('noInitChilds') ||
@@ -210,7 +213,7 @@ function appInit() {
     //init modules
     initCollybia();
     initGlobalModals();
-    initSong();
+    initSongDetails();
     initHome();
     initBrowse();
     initBrowseDatabase();
@@ -219,7 +222,8 @@ function appInit() {
     initBrowseRadioRadiobrowser();
     initBrowseRadioWebradiodb();
     initQueueCurrent();
-    initQueueJukebox();
+    initQueueJukebox('QueueJukeboxSong');
+    initQueueJukebox('QueueJukeboxAlbum');
     initQueueLastPlayed();
     initSearch();
     initScripts();
@@ -247,7 +251,8 @@ function appInit() {
     const dndTableHeader = [
         'QueueCurrent',
         'QueueLastPlayed',
-        'QueueJukebox',
+        'QueueJukeboxSong',
+        'QueueJukeboxAlbum',
         'Search',
         'BrowseFilesystem',
         'BrowsePlaylistDetail',
@@ -313,7 +318,7 @@ function appInit() {
     }, false);
     //contextmenu for tables
     const tables = ['BrowseFilesystemList', 'BrowseDatabaseAlbumDetailList', 'QueueCurrentList', 'QueueLastPlayedList',
-        'QueueJukeboxList', 'SearchList', 'BrowsePlaylistListList', 'BrowsePlaylistDetailList',
+        'QueueJukeboxSongList', 'QueueJukeboxAlbumList', 'SearchList', 'BrowsePlaylistListList', 'BrowsePlaylistDetailList',
         'BrowseRadioRadiobrowserList', 'BrowseRadioWebradiodbList'];
     for (const tableId of tables) {
         const tbody = document.querySelector('#' + tableId + ' > tbody');

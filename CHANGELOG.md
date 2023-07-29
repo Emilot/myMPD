@@ -4,6 +4,49 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
+## myMPD v11.1.0 (not yet released)
+
+Describe the release here.
+
+### Changelog
+
+- Feat: move song fingerprint calculation in worker thread
+- Feat: display album tags in jukebox album list #1069
+- Upd: some code enhancements #1045
+- Upd: merge MYMPD_API_QUEUE_SEARCH_ADV and MYMPD_API_QUEUE_LIST into MYMPD_API_QUEUE_SEARCH
+- Fix: calculate correct position for jukebox list
+- Fix: calculate correct position for playlist content list
+
+***
+
+## myMPD v11.0.2 (not yet released)
+
+This is a small bug fix release.
+
+### Changelog
+
+- Upd: translations
+- Fix: set translated title for navbar icons
+- Fix: jukebox list context menu actions
+- Fix: calculate correct myMPDuri for IPv6 [::]
+- Fix: display all values in playback card #1076
+
+***
+
+## myMPD v11.0.1 (2023-07-23)
+
+This is a small bug fix release.
+
+### Changelog
+
+- Upd: translations
+- Fix: memory leak after script execution
+- Fix: always enable connection save button
+- Fix: add missing jukebox list remove action
+- Fix: IPv4-mapped address broken #1066
+
+***
+
 ## myMPD v11.0.0 (2023-07-18)
 
 This release improves the queue and playlist management in many ways. You can now select multiple songs or playlists and take actions on this selection. There are new methods to copy, merge, validate and deduplicate playlists. Further the mpd error handling and the mpd communication was improved by using command lists.

@@ -132,7 +132,7 @@ function addMenuItemsNavbarActions(target, popoverBody) {
             addDivider(popoverBody);
             addMenuItem(popoverBody, {"cmd": "appGoto", "options": ["Queue", "Current", undefined]}, 'Show queue');
             addMenuItem(popoverBody, {"cmd": "appGoto", "options": ["Queue", "LastPlayed", undefined]}, 'Show last played');
-            addMenuItem(popoverBody, {"cmd": "appGoto", "options": ["Queue", "Jukebox", undefined]}, 'Show jukebox queue');
+            addMenuItem(popoverBody, {"cmd": "gotoJukebox", "options": []}, 'Show jukebox queue');
             break;
         case 'NavbarBrowse':
             addMenuItem(popoverBody, {"cmd": "updateDB", "options": ["", false]}, 'Update database');
@@ -577,16 +577,16 @@ function createMenuLists(target, contextMenuTitle, contextMenuBody) {
             if (getData(table, 'ro') === false) {
                 addDivider(contextMenuBody);
                 const plist = getData(table, 'uri');
-                const songpos = getData(dataNode, 'songpos');
+                const pos = getData(dataNode, 'pos');
                 const playlistLength = getData(table, 'playlistlength');
-                addMenuItem(contextMenuBody, {"cmd": "showSetSongPos", "options": [plist, songpos, -1]}, 'Move song');
-                addMenuItem(contextMenuBody, {"cmd": "removeFromPlaylistPositions", "options": [plist, [songpos]]}, 'Remove');
+                addMenuItem(contextMenuBody, {"cmd": "showSetSongPos", "options": [plist, pos, -1]}, 'Move song');
+                addMenuItem(contextMenuBody, {"cmd": "removeFromPlaylistPositions", "options": [plist, [pos]]}, 'Remove');
                 if (features.featPlaylistRmRange === true) {
-                    if (songpos > 0) {
-                        addMenuItem(contextMenuBody, {"cmd": "removeFromPlaylistRange", "options": [plist, 0, songpos]}, 'Remove all upwards');
+                    if (pos > 0) {
+                        addMenuItem(contextMenuBody, {"cmd": "removeFromPlaylistRange", "options": [plist, 0, pos]}, 'Remove all upwards');
                     }
-                    if (songpos + 1 < playlistLength) {
-                        addMenuItem(contextMenuBody, {"cmd": "removeFromPlaylistRange", "options": [plist, songpos + 1, -1]}, 'Remove all downwards');
+                    if (pos + 1 < playlistLength) {
+                        addMenuItem(contextMenuBody, {"cmd": "removeFromPlaylistRange", "options": [plist, pos + 1, -1]}, 'Remove all downwards');
                     }
                 }
             }
@@ -594,7 +594,7 @@ function createMenuLists(target, contextMenuTitle, contextMenuBody) {
         }
         case 'QueueCurrent': {
             const songid = getData(dataNode, 'songid');
-            const songpos = getData(dataNode, 'songpos');
+            const pos = getData(dataNode, 'pos');
             addMenuItemsSongActions(dataNode, contextMenuBody, uri, type, name);
             addDivider(contextMenuBody);
             if (currentState.currentSongId !== -1 &&
@@ -607,7 +607,7 @@ function createMenuLists(target, contextMenuTitle, contextMenuBody) {
                 addMenuItem(contextMenuBody, {"cmd": "showSetSongPriority", "options": [songid]}, 'Set priority');
             }
             else {
-                addMenuItem(contextMenuBody, {"cmd": "showSetSongPos", "options": ["queue", songpos, songid]}, 'Move song');
+                addMenuItem(contextMenuBody, {"cmd": "showSetSongPos", "options": ["queue", pos, songid]}, 'Move song');
             }
             if (songid === currentState.currentSongId) {
                 addMenuItemsSingleActions(contextMenuBody);
@@ -615,11 +615,11 @@ function createMenuLists(target, contextMenuTitle, contextMenuBody) {
             }
             addDivider(contextMenuBody);
             addMenuItem(contextMenuBody, {"cmd": "removeFromQueueIDs", "options": [[songid]]}, 'Remove');
-            if (songpos > 0) {
-                addMenuItem(contextMenuBody, {"cmd": "removeFromQueueRange", "options": [0, songpos]}, 'Remove all upwards');
+            if (pos > 0) {
+                addMenuItem(contextMenuBody, {"cmd": "removeFromQueueRange", "options": [0, pos]}, 'Remove all upwards');
             }
-            if (songpos + 1 < currentState.queueLength) {
-                addMenuItem(contextMenuBody, {"cmd": "removeFromQueueRange", "options": [songpos + 1, -1]}, 'Remove all downwards');
+            if (pos + 1 < currentState.queueLength) {
+                addMenuItem(contextMenuBody, {"cmd": "removeFromQueueRange", "options": [pos + 1, -1]}, 'Remove all downwards');
             }
             return true;
         }
@@ -627,7 +627,8 @@ function createMenuLists(target, contextMenuTitle, contextMenuBody) {
             addMenuItemsSongActions(dataNode, contextMenuBody, uri, type, name);
             return true;
         }
-        case 'QueueJukebox': {
+        case 'QueueJukeboxSong':
+        case 'QueueJukeboxAlbum': {
             const pos = Number(getData(dataNode, 'pos'));
             if (settings.partition.jukeboxMode === 'song') {
                 addMenuItemsSongActions(dataNode, contextMenuBody, uri, type, name);
@@ -655,7 +656,8 @@ function createMenuListsSecondary(target, contextMenuTitle, contextMenuBody) {
         case 'Search':
         case 'QueueCurrent':
         case 'QueueLastPlayed':
-        case 'QueueJukebox':
+        case 'QueueJukeboxSong':
+        case 'QueueJukeboxAlbum':
         case 'BrowseFilesystem':
         case 'BrowseDatabaseAlbumDetail':
         case 'BrowsePlaylistDetail': {
@@ -667,7 +669,7 @@ function createMenuListsSecondary(target, contextMenuTitle, contextMenuBody) {
                 (app.id === 'BrowseFilesystem' && type === 'dir') ||
                 (app.id === 'BrowseFilesystem' && type === 'plist') ||
                 (app.id === 'BrowseFilesystem' && type === 'smartpls') ||
-                (app.id === 'QueueJukebox' && settings.partition.jukeboxMode === 'album'))
+                (app.id === 'QueueJukeboxAlbum'))
             {
                 return false;
             }
