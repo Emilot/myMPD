@@ -4,6 +4,20 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
+## myMPD v11.0.2 (not yet released)
+
+This is a small bug fix release.
+
+### Changelog
+
+- Upd: translations
+- Fix: set translated title for navbar icons
+- Fix: jukebox list context menu actions
+- Fix: calculate correct myMPDuri for IPv6 [::]
+- Fix: display all values in playback card #1076
+
+***
+
 ## myMPD v11.0.1 (2023-07-23)
 
 This is a small bug fix release.
