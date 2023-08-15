@@ -4,6 +4,18 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
+## myMPD v11.0.3 (2023-08-15)
+
+This is a small bug fix release.
+
+### Changelog
+
+- Upd: enable more tags by default
+- Upd: es-AR translation
+- Fix: set initial disc count to 1 #1086
+
+***
+
 ## myMPD v11.0.2 (2023-07-30)
 
 This is a small bug fix release.
