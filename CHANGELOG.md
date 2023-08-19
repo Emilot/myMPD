@@ -4,6 +4,19 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
+## myMPD v11.0.4 (2023-08-19)
+
+This is a small bug fix release.
+
+### Changelog
+
+- Fix: add playlist to queue from playlist view #1087
+- Fix: unselect all selected rows
+- Fix: set song priority
+- Fix: SEGFAULT on partition deletion
+
+***
+
 ## myMPD v11.0.3 (2023-08-15)
 
 This is a small bug fix release.
