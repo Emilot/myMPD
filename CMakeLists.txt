@@ -10,6 +10,7 @@ cmake_policy(SET CMP0003 NEW)
 # supported compilers: gcc, clang
 project(mympd
   VERSION 11.1.0
+  
   LANGUAGES C
 )
 
