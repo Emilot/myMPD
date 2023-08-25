@@ -5,11 +5,14 @@
 */
 
 #include "compile_time.h"
+#include "src/lib/list.h"
 #include "src/mympd_api/jukebox.h"
 
+#include "dist/utf8/utf8.h"
+#include "src/lib/album_cache.h"
 #include "src/lib/jsonrpc.h"
+#include "src/lib/sds_extras.h"
 #include "src/mpd_client/errorhandler.h"
-#include "src/mpd_client/jukebox.h"
 #include "src/mpd_client/search_local.h"
 #include "src/mpd_client/tags.h"
 #include "src/mympd_api/sticker.h"
@@ -63,18 +66,17 @@ bool mympd_api_jukebox_rm_entries(struct t_list *list, struct t_list *positions,
  * @param request_id jsonrpc request id
  * @param offset offset for printing
  * @param limit max entries to print
- * @param expression mpd search expression
+ * @param searchstr string to search
  * @param tagcols columns to print
  * @return pointer to buffer
  */
 sds mympd_api_jukebox_list(struct t_partition_state *partition_state, sds buffer, enum mympd_cmd_ids cmd_id, long request_id,
-        long offset, long limit, sds expression, const struct t_tags *tagcols)
+        long offset, long limit, sds searchstr, const struct t_tags *tagcols)
 {
     long entity_count = 0;
     long entities_returned = 0;
-    long entities_found = 0;
     long real_limit = offset + limit;
-    struct t_list *expr_list = parse_search_expression_to_list(expression);
+
     buffer = jsonrpc_respond_start(buffer, cmd_id, request_id);
     buffer = sdscat(buffer, "\"data\":[");
     if (partition_state->jukebox_mode == JUKEBOX_ADD_SONG) {
@@ -83,25 +85,24 @@ sds mympd_api_jukebox_list(struct t_partition_state *partition_state, sds buffer
             if (mpd_send_list_meta(partition_state->conn, current->key)) {
                 struct mpd_song *song;
                 if ((song = mpd_recv_song(partition_state->conn)) != NULL) {
-                    if (search_song_expression(song, expr_list, tagcols) == true) {
-                        if (entities_found >= offset &&
-                            entities_found < real_limit)
+                    if (search_mpd_song(song, searchstr, tagcols) == true) {
+                        if (entity_count >= offset &&
+                            entity_count < real_limit)
                         {
                             if (entities_returned++) {
                                 buffer = sdscatlen(buffer, ",", 1);
                             }
                             buffer = sdscat(buffer, "{\"Type\": \"song\",");
                             buffer = tojson_long(buffer, "Pos", entity_count, true);
-                            buffer = print_song_tags(buffer, partition_state->mpd_state->feat_tags, tagcols, song);
+                            buffer = get_song_tags(buffer, partition_state->mpd_state->feat_tags, tagcols, song);
                             if (partition_state->mpd_state->feat_stickers) {
                                 buffer = sdscatlen(buffer, ",", 1);
                                 buffer = mympd_api_sticker_get_print(buffer, &partition_state->mpd_state->sticker_cache, mpd_song_get_uri(song));
                             }
                             buffer = sdscatlen(buffer, "}", 1);
                         }
-                        entities_found++;
+                        entity_count++;
                     }
-                    entity_count++;
                     mpd_song_free(song);
                 }
             }
@@ -113,31 +114,39 @@ sds mympd_api_jukebox_list(struct t_partition_state *partition_state, sds buffer
     else if (partition_state->jukebox_mode == JUKEBOX_ADD_ALBUM) {
         struct t_list_node *current = partition_state->jukebox_queue.head;
         while (current != NULL) {
-            struct mpd_song *album = (struct mpd_song *)current->user_data;
-            if (search_song_expression(album, expr_list, tagcols) == true)
+            if (utf8casestr(current->key, searchstr) != NULL ||
+                utf8casestr(current->value_p, searchstr) != NULL)
             {
-                if (entities_found >= offset &&
-                    entities_found < real_limit)
+                if (entity_count >= offset &&
+                    entity_count < real_limit)
                 {
                     if (entities_returned++) {
                         buffer = sdscatlen(buffer, ",", 1);
                     }
+                    struct mpd_song *album = (struct mpd_song *)current->user_data;
                     buffer = sdscat(buffer, "{\"Type\": \"album\",");
                     buffer = tojson_long(buffer, "Pos", entity_count, true);
-                    buffer = print_album_tags(buffer, &partition_state->mpd_state->tags_album, album);
+                    buffer = tojson_char(buffer, "uri", "Album", true);
+                    buffer = tojson_char(buffer, "Title", "", true);
+                    buffer = tojson_char(buffer, "Album", current->key, true);
+                    sds albumkey = album_cache_get_key(album);
+                    buffer = tojson_char(buffer, "AlbumId", albumkey, true);
+                    FREE_SDS(albumkey);
+                    buffer = sdscat(buffer, "\"AlbumArtist\":");
+                    buffer = mpd_client_get_tag_values(album, MPD_TAG_ALBUM_ARTIST, buffer);
+                    buffer = sdscat(buffer, ",\"Artist\":");
+                    buffer = mpd_client_get_tag_values(album, MPD_TAG_ARTIST, buffer);
                     buffer = sdscatlen(buffer, "}", 1);
                 }
-                entities_found++;
+                entity_count++;
             }
-            entity_count++;
             current = current->next;
         }
     }
-    free_search_expression_list(expr_list);
+
     buffer = sdscatlen(buffer, "],", 2);
-    const char *jukebox_mode_str = jukebox_mode_lookup(partition_state->jukebox_mode);
-    buffer = tojson_char(buffer, "jukeboxMode", jukebox_mode_str, true);
-    buffer = tojson_long(buffer, "totalEntities", entities_found, true);
+    buffer = tojson_long(buffer, "jukeboxMode", partition_state->jukebox_mode, true);
+    buffer = tojson_long(buffer, "totalEntities", entity_count, true);
     buffer = tojson_long(buffer, "offset", offset, true);
     buffer = tojson_long(buffer, "returnedEntities", entities_returned, false);
     buffer = jsonrpc_end(buffer);
