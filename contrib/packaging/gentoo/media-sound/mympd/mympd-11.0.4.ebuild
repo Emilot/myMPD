@@ -1,9 +1,9 @@
-# Copyright 1999-2021 Gentoo Authors
+# Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=7
+EAPI=8
 
-inherit eutils cmake systemd
+inherit cmake systemd
 
 MY_PN="myMPD"
 
@@ -14,7 +14,7 @@ SRC_URI="https://github.com/jcorporation/${MY_PN}/archive/v${PV}.tar.gz -> ${PN}
 LICENSE="GPL-3"
 SLOT="0"
 KEYWORDS="~amd64 ~x86 ~arm ~arm64"
-IUSE="+flac +id3tag +ssl +lua systemd"
+IUSE="+flac +id3tag +lua systemd"
 
 BDEPEND="
     >=dev-util/cmake-3.13
@@ -26,7 +26,7 @@ RDEPEND="
     acct-user/mympd
     id3tag? ( media-libs/libid3tag )
     flac? ( media-libs/flac )
-    ssl? ( >=dev-libs/openssl-1.1 )
+    >=dev-libs/openssl-1.1
     lua? ( >=dev-lang/lua-5.3 )
     systemd? ( sys-apps/systemd )
     dev-libs/libpcre2"
@@ -39,12 +39,11 @@ S="${WORKDIR}/${MY_PN}-${PV}"
 
 src_compile() {
     default
-    MYMPD_ENABLE_SSL=$(usex ssl "ON" "OFF")
     MYMPD_ENABLE_LIBID3TAG=$(usex id3tag "ON" "OFF")
     MYMPD_ENABLE_FLAC=$(usex flac "ON" "OFF")
     MYMPD_ENABLE_LUA=$(usex lua "ON" "OFF")
     cmake -B release -DCMAKE_INSTALL_PREFIX:PATH=/usr -DCMAKE_BUILD_TYPE=Release \
-        -DMYMPD_ENABLE_SSL=$MYMPD_ENABLE_SSL -DMYMPD_ENABLE_LIBID3TAG=$MYMPD_ENABLE_LIBID3TAG \
+        -DMYMPD_ENABLE_LIBID3TAG=$MYMPD_ENABLE_LIBID3TAG \
         -DMYMPD_ENABLE_FLAC=$MYMPD_ENABLE_FLAC -DMYMPD_ENABLE_LUA=$MYMPD_ENABLE_LUA .
     make -C release || die
 }

@@ -273,19 +273,37 @@ function parseSettings(obj) {
     pEl.actionTdMenuPlayRemove.childNodes[2].title = tn('Actions');
 
     //update actions for table rows
-    pEl.actionTd = settings.webuiSettings.uiQuickPlayButton === true
-        ? pEl.actionTdMenuPlay
-        : pEl.actionTdMenu;
-    pEl.actionQueueTd = settings.webuiSettings.uiQuickRemoveButton === true
-        ? pEl.actionTdMenuRemove
-        : pEl.actionTdMenu;
-    pEl.actionJukeboxTd = settings.webuiSettings.uiQuickPlayButton === true && settings.webuiSettings.uiQuickRemoveButton === true
-        ? pEl.actionTdMenuPlayRemove
-        : settings.webuiSettings.uiQuickPlayButton === true 
-            ? pEl.actionTdMenuPlay
-            : settings.webuiSettings.uiQuickRemoveButton === true 
-                ? pEl.actionTdMenuRemove
-                : pEl.actionTdMenu;
+    if (settings.webuiSettings.uiQuickPlayButton === true &&
+        settings.webuiSettings.uiQuickRemoveButton === true)
+    {
+        pEl.actionTd = pEl.actionTdMenuPlay;
+        pEl.actionQueueTd = pEl.actionTdMenuRemove;
+        pEl.actionJukeboxTd = pEl.actionTdMenuPlayRemove;
+        pEl.actionPlaylistDetailTd = pEl.actionTdMenuPlayRemove;
+        pEl.actionPlaylistTd = pEl.actionTdMenuPlayRemove;
+    }
+    else if (settings.webuiSettings.uiQuickPlayButton === true) {
+        pEl.actionTd = pEl.actionTdMenuPlay;
+        pEl.actionQueueTd = pEl.actionTdMenu;
+        pEl.actionJukeboxTd = pEl.actionTdMenuPlay;
+        pEl.actionPlaylistDetailTd = pEl.actionTdMenuPlay;
+        pEl.actionPlaylistTd = pEl.actionTdMenuPlay;
+    }
+    else if (settings.webuiSettings.uiQuickRemoveButton === true) {
+        pEl.actionTd = pEl.actionTdMenu;
+        pEl.actionQueueTd = pEl.actionTdMenuRemove;
+        pEl.actionJukeboxTd = pEl.actionTdMenuRemove;
+        pEl.actionPlaylistDetailTd = pEl.actionTdMenuRemove;
+        pEl.actionPlaylistTd = pEl.actionTdMenuRemove;
+    }
+    else {
+        pEl.actionTd = pEl.actionTdMenu;
+        pEl.actionQueueTd = pEl.actionTdMenu;
+        pEl.actionJukeboxTd = pEl.actionTdMenu;
+        pEl.actionPlaylistDetailTd = pEl.actionTdMenu;
+        pEl.actionPlaylistTd = pEl.actionTdMenu;
+    }
+
     pEl.coverPlayBtn.title = tn(webuiSettingsDefault.clickQuickPlay.validValues[settings.webuiSettings.clickQuickPlay]);
 
     //goto view
@@ -318,6 +336,7 @@ function parseSettings(obj) {
     btnWaiting(document.getElementById('btnApplySettings'), false);
     applyFeatures();
     settingsParsed = 'parsed';
+    myMPDready = true;
 }
 
 /**
@@ -631,6 +650,7 @@ function setFeatures() {
     features.featTrigger = settings.webuiSettings.enableTrigger;
     features.featMediaSession = checkMediaSessionSupport();
     features.featFooterNotifications = settings.webuiSettings.uiFooterNotifications;
+    features.featSession = settings.pin;
 
     //mpd features
     if (settings.partition.mpdConnected === true) {
@@ -652,6 +672,7 @@ function setFeatures() {
         features.featPlaylistDirAuto = settings.features.featPlaylistDirAuto;
         features.featStartsWith = settings.features.featStartsWith;
         features.featPcre = settings.features.featPcre;
+        features.featPcreOrStartsWith = settings.features.featPcre || settings.features.featStartsWith;
     }
 }
 
@@ -673,7 +694,6 @@ function applyFeatures() {
             el.style.display = displayValue;
         }
     }
-    setQueueCurrentHeaderClickable();
 }
 
 /**
@@ -1084,7 +1104,7 @@ function initTagMultiSelect(inputId, listId, allTags, enabledTags) {
         if (enabledTags.includes(allTags[i])) {
             values.push(tn(allTags[i]));
         }
-        const btn = elCreateEmpty('button', {"class": ["btn", "btn-secondary", "btn-xs", "mi", "mi-small", "me-2"], "name": allTags[i]});
+        const btn = elCreateEmpty('button', {"class": ["btn", "btn-secondary", "btn-xs", "mi", "mi-sm", "me-2"], "name": allTags[i]});
         if (enabledTags.includes(allTags[i])) {
             btn.classList.add('active');
             btn.textContent = 'check';
@@ -1191,7 +1211,7 @@ function setNavbarIcons() {
         {
             elHide(btn);
         }
-        const a = elCreateNode('a', {"data-title-phrase": icon.title, "href": "#", "class": ["nav-link"]},
+        const a = elCreateNode('a', {"data-title-phrase": icon.title, "title": tn(icon.title), "href": "#", "class": ["nav-link"]},
             elCreateText('span', {"class": ["mi"]}, icon.ligature)
         );
         if (icon.options.length === 1 &&

@@ -7,7 +7,6 @@
 
 /**
  * Initializes / starts the myMPD app
- * @returns {void}
  */
 
 /**
@@ -21,11 +20,11 @@
     spa.appendChild(
         elCreateTextTn('p', {"class": ["text-light"]}, text)
     );
-    const reloadBtn = elCreateTextTn('button', {"class": ["btn", "btn-light", "me-2"]}, 'Reload');
+    const reloadBtn = elCreateTextTn('button', {"class": ["btn", "btn-light", "me-2", "alwaysEnabled"]}, 'Reload');
     reloadBtn.addEventListener('click', function() {
         clearAndReload();
     }, false);
-    const resetBtn = elCreateTextTn('button', {"class": ["btn", "btn-light"]}, 'Reset');
+    const resetBtn = elCreateTextTn('button', {"class": ["btn", "btn-light", "alwaysEnabled"]}, 'Reset');
     resetBtn.addEventListener('click', function() {
         resetLocalSettings();
         clearAndReload();
@@ -107,7 +106,6 @@ function appInitStart() {
 
     setMobileView();
 
-    subdir = window.location.pathname.replace('/index.html', '').replace(/\/$/, '');
     i18nHtml(document.getElementById('splashScreenAlert'));
 
     //set loglevel
@@ -192,14 +190,15 @@ function appInit() {
     //init links
     const hrefs = document.querySelectorAll('[data-href]');
     for (const href of hrefs) {
-        if (href.classList.contains('not-clickable') === false) {
+        if (href.nodeName !== 'A' &&
+            href.nodeName !== 'BUTTON' &&
+            href.classList.contains('not-clickable') === false)
+        {
             href.classList.add('clickable');
         }
-        let parentInit = href.parentNode.classList.contains('noInitChilds') ? true : false;
-        if (parentInit === false) {
-            parentInit = href.parentNode.parentNode.classList.contains('noInitChilds') ? true : false;
-        }
-        if (parentInit === true) {
+        if (href.parentNode.classList.contains('noInitChilds') ||
+            href.parentNode.parentNode.classList.contains('noInitChilds'))
+        {
             //handler on parentnode
             continue;
         }
@@ -243,6 +242,7 @@ function appInit() {
     initSession();
     initNotifications();
     initContextMenuOffcanvas();
+    initSelectActions();
     //init drag and drop
     for (const table of ['QueueCurrentList', 'BrowsePlaylistDetailList']) {
         dragAndDropTable(table);
@@ -275,7 +275,8 @@ function appInit() {
                 menu.style.removeProperty('max-height');
                 const menuHeight = menu.offsetHeight;
                 const offset = getYpos(menu);
-                const bottomPos = window.innerHeight - menuHeight - offset;
+                const scrollY = getScrollPosY(dropdown);
+                const bottomPos = window.innerHeight + scrollY - menuHeight - offset;
                 if (bottomPos < 0) {
                     menu.style.overflowY = 'auto';
                     menu.style.overflowX = 'hidden';
@@ -354,7 +355,7 @@ function initGlobalModals() {
     const tab = document.getElementById('tabShortcuts');
     elClear(tab);
     const keys = Object.keys(keymap).sort((a, b) => {
-        return keymap[a].order - keymap[b].order
+        return keymap[a].order - keymap[b].order;
     });
     for (const key of keys) {
         if (keymap[key].cmd === undefined) {
@@ -376,7 +377,7 @@ function initGlobalModals() {
         }
         const k = elCreateText('div', {"class": ["key", "float-start"]}, (keymap[key].key !== undefined ? keymap[key].key : key));
         if (keymap[key].key && keymap[key].key.length > 1) {
-            k.classList.add('mi', 'mi-small');
+            k.classList.add('mi', 'mi-sm');
         }
         col.appendChild(k);
         col.appendChild(
@@ -459,10 +460,8 @@ function initNavs() {
         event.preventDefault();
         const target = event.target.nodeName === 'SPAN' ? event.target.parentNode : event.target;
         if (target.nodeName === 'A') {
-            // @ts-ignore:
             target.firstElementChild.textContent = 'start';
             setTimeout(function() {
-                // @ts-ignore:
                 target.firstElementChild.textContent = 'code';
             }, 400);
             execScript(getData(target, 'href'));
@@ -494,7 +493,7 @@ function getAssets() {
  */
 window.onerror = function(msg, url, line, col) {
     if (settings.loglevel >= 4) {
-        showNotification(tn('JavaScript error'), msg + ' (' + url + ': ' + line + ':' + col + ')', 'general', 'error');
+        showNotification(tn('JavaScript error') + ': ' + msg + ' (' + url + ': ' + line + ':' + col + ')', 'general', 'error');
     }
     //show error also in the console
     return false;
@@ -509,7 +508,7 @@ if (window.trustedTypes &&
     window.trustedTypes.createPolicy('default', {
         createScriptURL(dirty) {
             if (dirty === 'sw.js') {
-                return 'sw.js'
+                return 'sw.js';
             }
             throw new Error('Script not allowed: ' + dirty);
        }
