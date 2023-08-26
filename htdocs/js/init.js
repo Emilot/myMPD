@@ -213,7 +213,7 @@ function appInit() {
     //init modules
     initCollybia();
     initGlobalModals();
-    initSongDetails();
+    initSong();
     initHome();
     initBrowse();
     initBrowseDatabase();
@@ -222,8 +222,7 @@ function appInit() {
     initBrowseRadioRadiobrowser();
     initBrowseRadioWebradiodb();
     initQueueCurrent();
-    initQueueJukebox('QueueJukeboxSong');
-    initQueueJukebox('QueueJukeboxAlbum');
+    initQueueJukebox();
     initQueueLastPlayed();
     initSearch();
     initScripts();
@@ -251,8 +250,7 @@ function appInit() {
     const dndTableHeader = [
         'QueueCurrent',
         'QueueLastPlayed',
-        'QueueJukeboxSong',
-        'QueueJukeboxAlbum',
+        'QueueJukebox',
         'Search',
         'BrowseFilesystem',
         'BrowsePlaylistDetail',
@@ -318,7 +316,7 @@ function appInit() {
     }, false);
     //contextmenu for tables
     const tables = ['BrowseFilesystemList', 'BrowseDatabaseAlbumDetailList', 'QueueCurrentList', 'QueueLastPlayedList',
-        'QueueJukeboxSongList', 'QueueJukeboxAlbumList', 'SearchList', 'BrowsePlaylistListList', 'BrowsePlaylistDetailList',
+        'QueueJukeboxList', 'SearchList', 'BrowsePlaylistListList', 'BrowsePlaylistDetailList',
         'BrowseRadioRadiobrowserList', 'BrowseRadioWebradiodbList'];
     for (const tableId of tables) {
         const tbody = document.querySelector('#' + tableId + ' > tbody');

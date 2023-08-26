@@ -347,7 +347,25 @@ const APImethods = {
             }
         }
     },
+    "MYMPD_API_QUEUE_LIST": {
+        "desc": "List the songs from the queue.",
+        "params": {
+            "offset": APIparams.offset,
+            "limit": APIparams.limit,
+            "cols": APIparams.cols
+        }
+    },
     "MYMPD_API_QUEUE_SEARCH": {
+        "desc": "Searches the queue.",
+        "params": {
+            "filter": APIparams.filter,
+            "searchstr": APIparams.searchstr,
+            "offset": APIparams.offset,
+            "limit": APIparams.limit,
+            "cols": APIparams.cols
+        }
+    },
+    "MYMPD_API_QUEUE_SEARCH_ADV": {
         "desc": "Searches the queue.",
         "params": {
             "expression": APIparams.expression,
@@ -539,7 +557,7 @@ const APImethods = {
             "offset": APIparams.offset,
             "limit": APIparams.limit,
             "cols": APIparams.cols,
-            "expression": APIparams.expression
+            "searchstr": APIparams.searchstr
         }
     },
     "MYMPD_API_PLAYLIST_RM": {
@@ -762,7 +780,7 @@ const APImethods = {
             "plist": APIparams.plist,
             "offset": APIparams.offset,
             "limit": APIparams.limit,
-            "expression": APIparams.expression,
+            "searchstr": APIparams.searchstr,
             "cols": APIparams.cols
         }
     },
@@ -1901,13 +1919,13 @@ const APImethods = {
             "offset": APIparams.offset,
             "limit": APIparams.limit,
             "cols": APIparams.cols,
-            "expression": APIparams.expression
+            "searchstr": APIparams.searchstr
         }
     },
     "MYMPD_API_JUKEBOX_RM": {
         "desc": "Removes a song or album from the jukebox queue.",
         "params": {
-            "positions": APIparams.positions
+            "posistions": APIparams.positions
         }
     },
     "MYMPD_API_JUKEBOX_CLEAR": {

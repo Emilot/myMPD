@@ -151,14 +151,6 @@ function parseSettings(obj) {
     }
     document.querySelector('html').setAttribute('data-bs-theme', setTheme);
 
-    //compact grids
-    if (settings.webuiSettings.uiCompactGrids === true) {
-        document.documentElement.style.setProperty('--mympd-card-footer-word-wrap', 'nowrap');
-    }
-    else {
-        document.documentElement.style.setProperty('--mympd-card-footer-word-wrap', 'unset');
-    }
-
     //background
     if (settings.webuiSettings.uiTheme === 'auto') {
         //in auto mode we set default background
@@ -315,14 +307,7 @@ function parseSettings(obj) {
     pEl.coverPlayBtn.title = tn(webuiSettingsDefault.clickQuickPlay.validValues[settings.webuiSettings.clickQuickPlay]);
 
     //goto view
-    if (app.id === 'QueueJukeboxSong' ||
-        app.id === 'QueueJukeboxAlbum')
-    {
-        gotoJukebox();
-    }
-    else {
-        appRoute();
-    }
+    appRoute();
 
     //mediaSession support
     if (features.featMediaSession === true) {
@@ -739,8 +724,7 @@ function parseMPDSettings() {
 
     filterCols('Playback');
 
-    for (const table of ['Search', 'QueueCurrent', 'QueueLastPlayed',
-            'QueueJukeboxSong', 'QueueJukeboxAlbum',
+    for (const table of ['Search', 'QueueCurrent', 'QueueLastPlayed', 'QueueJukebox',
             'BrowsePlaylistDetail', 'BrowseFilesystem', 'BrowseDatabaseAlbumDetail'])
     {
         filterCols(table);
@@ -788,8 +772,7 @@ function parseMPDSettings() {
         app.cards.Queue.tabs.Current.filter = 'filename';
         settings.colsQueueCurrent = ["Pos", "Title", "Duration"];
         settings.colsQueueLastPlayed = ["Pos", "Title", "LastPlayed"];
-        settings.colsQueueJukeboxSong = ["Pos", "Title"];
-        settings.colsQueueJukeboxAlbum = ["Pos", "Title"];
+        settings.colsQueueJukebox = ["Pos", "Title"];
         settings.colsSearch = ["Title", "Duration"];
         settings.colsBrowseFilesystem = ["Type", "Title", "Duration"];
         settings.colsPlayback = [];
@@ -854,13 +837,9 @@ function parseMPDSettings() {
     addTagList('BrowseNavWebradiodbDropdown', 'tagListBrowse');
     addTagList('BrowseNavRadiobrowserDropdown', 'tagListBrowse');
 
-    addTagList('QueueCurrentSearchTags', 'tagListSearch');
-    addTagList('QueueLastPlayedSearchTags', 'tagListSearch');
-    addTagList('QueueJukeboxSongSearchTags', 'tagListSearch');
-    addTagList('QueueJukeboxAlbumSearchTags', 'tagListSearch');
-    addTagList('BrowsePlaylistDetailSearchTags', 'tagListSearch');
-    addTagList('SearchSearchTags', 'tagListSearch');
-    addTagList('BrowseDatabaseAlbumListSearchTags', 'tagListBrowse');
+    addTagList('searchQueueTags', 'tagListSearch');
+    addTagList('searchTags', 'tagListSearch');
+    addTagList('searchDatabaseAlbumListTags', 'tagListBrowse');
     addTagList('databaseAlbumListSortTagsList', 'tagListBrowse');
     addTagList('dropdownSortPlaylistTags', 'tagList');
 
@@ -1221,18 +1200,6 @@ function setNavbarIcons() {
 
     const container = document.getElementById('navbar-main');
     elClear(container);
-
-    if (settings.webuiSettings.uiShowBackButton === true) {
-        container.appendChild(
-            elCreateNode('div', {"class": ["nav-item", "flex-fill", "text-center"]},
-                elCreateNode('a', {"data-title-phrase": "History back", "title": tn("History back"), "href": "#", "class": ["nav-link"]},
-                    elCreateText('span', {"class": ["mi"]}, "arrow_back_ios")
-                )
-            )
-        );
-        setData(container.firstElementChild.firstElementChild, 'href', {"cmd": "historyBack", "options": []});
-    }
-
     for (const icon of settings.navbarIcons) {
         const id = "nav" + icon.options.join('');
         const btn = elCreateEmpty('div', {"id": id, "class": ["nav-item", "flex-fill", "text-center"]});

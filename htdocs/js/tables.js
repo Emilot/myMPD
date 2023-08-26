@@ -369,13 +369,6 @@ function setColTags(tableName) {
                        value !== 'Album';
             });
         }
-        case 'QueueJukeboxAlbum': {
-            const tags = settings.tagListAlbum.slice();
-            tags.push('Pos', 'Discs', 'SongCount', 'Duration', 'LastModified');
-            return tags.filter(function(value) {
-                return value !== 'Disc';
-            });
-        }
     }
 
     const tags = settings.tagList.slice();
@@ -389,8 +382,7 @@ function setColTags(tableName) {
             tags.push('AudioFormat', 'Priority');
             //fall through
         case 'BrowsePlaylistDetail':
-        case 'QueueJukeboxSong':
-        case 'QueueJukeboxAlbum':
+        case 'QueueJukebox':
             tags.push('Pos');
             break;
         case 'BrowseFilesystem':
@@ -406,9 +398,8 @@ function setColTags(tableName) {
             tags.push('Pos', 'LastPlayed');
             break;
     }
-    //sort tags 
+    //sort tags and append stickers
     tags.sort();
-    //append stickers
     if (features.featStickers === true) {
         tags.push('dropdownTitleSticker');
         for (const sticker of stickerList) {
@@ -753,7 +744,8 @@ function updateTable(obj, list, perRowCallback, createRowCellsCallback) {
         //and browse tags
         for (const tag of settings.tagListBrowse) {
             if (albumFilters.includes(tag) &&
-                isEmptyTag(obj.result.data[i][tag]) === false)
+                obj.result.data[i][tag] !== undefined &&
+                checkTagValue(obj.result.data[i][tag], '-') === false)
             {
                 setData(row, tag, obj.result.data[i][tag]);
             }
@@ -845,8 +837,7 @@ function tableRow(row, data, list, colspan, smallWidth) {
                     pEl.actionQueueTd.cloneNode(true)
                 );
                 break;
-            case 'QueueJukeboxSong':
-            case 'QueueJukeboxAlbum':
+            case 'QueueJukebox':
                 // add quick play and remove action
                 row.appendChild(
                     pEl.actionJukeboxTd.cloneNode(true)

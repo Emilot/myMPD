@@ -57,7 +57,7 @@ function navBrowseHandler(event) {
             app.current.view = 'AlbumList';
         }
         app.current.search = '';
-        document.getElementById('BrowseDatabaseAlbumListSearchMatch').value = 'contains';
+        document.getElementById('searchDatabaseAlbumListMatch').value = 'contains';
         appGoto(app.current.card, app.current.tab, app.current.view,
             0, app.current.limit, app.current.filter, app.current.sort, tag, app.current.search);
     }
@@ -88,6 +88,7 @@ function gotoBrowse(event) {
     }
     if (tag !== '' &&
         name !== '' &&
+        name !== '-' &&
         settings.tagListBrowse.includes(tag))
     {
         if (tag === 'Album') {
@@ -133,7 +134,7 @@ function gotoAlbumList(tag, value) {
         //convert string to array
         value = [value];
     }
-    document.getElementById('BrowseDatabaseAlbumListSearchStr').value = '';
+    document.getElementById('searchDatabaseAlbumListStr').value = '';
     let expression = '(';
     for (let i = 0, j = value.length; i < j; i++) {
         if (i > 0) {
@@ -153,8 +154,8 @@ function gotoAlbumList(tag, value) {
  */
 //eslint-disable-next-line no-unused-vars
 function gotoFilesystem(uri, type) {
-    document.getElementById('BrowseFilesystemSearchStr').value = '';
-    appGoto('Browse', 'Filesystem', undefined, 0, undefined, uri, {'tag':'', 'desc': false}, type, '');
+    document.getElementById('searchFilesystemStr').value = '';
+    appGoto('Browse', 'Filesystem', undefined, 0, undefined, '-', {'tag':'-', 'desc': false}, type, uri);
 }
 
 /**

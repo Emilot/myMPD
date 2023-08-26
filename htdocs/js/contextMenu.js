@@ -132,7 +132,7 @@ function addMenuItemsNavbarActions(target, popoverBody) {
             addDivider(popoverBody);
             addMenuItem(popoverBody, {"cmd": "appGoto", "options": ["Queue", "Current", undefined]}, 'Show queue');
             addMenuItem(popoverBody, {"cmd": "appGoto", "options": ["Queue", "LastPlayed", undefined]}, 'Show last played');
-            addMenuItem(popoverBody, {"cmd": "gotoJukebox", "options": []}, 'Show jukebox queue');
+            addMenuItem(popoverBody, {"cmd": "appGoto", "options": ["Queue", "Jukebox", undefined]}, 'Show jukebox queue');
             break;
         case 'NavbarBrowse':
             addMenuItem(popoverBody, {"cmd": "updateDB", "options": ["", false]}, 'Update database');
@@ -627,8 +627,7 @@ function createMenuLists(target, contextMenuTitle, contextMenuBody) {
             addMenuItemsSongActions(dataNode, contextMenuBody, uri, type, name);
             return true;
         }
-        case 'QueueJukeboxSong':
-        case 'QueueJukeboxAlbum': {
+        case 'QueueJukebox': {
             const pos = Number(getData(dataNode, 'pos'));
             if (settings.partition.jukeboxMode === 'song') {
                 addMenuItemsSongActions(dataNode, contextMenuBody, uri, type, name);
@@ -656,8 +655,7 @@ function createMenuListsSecondary(target, contextMenuTitle, contextMenuBody) {
         case 'Search':
         case 'QueueCurrent':
         case 'QueueLastPlayed':
-        case 'QueueJukeboxSong':
-        case 'QueueJukeboxAlbum':
+        case 'QueueJukebox':
         case 'BrowseFilesystem':
         case 'BrowseDatabaseAlbumDetail':
         case 'BrowsePlaylistDetail': {
@@ -669,7 +667,7 @@ function createMenuListsSecondary(target, contextMenuTitle, contextMenuBody) {
                 (app.id === 'BrowseFilesystem' && type === 'dir') ||
                 (app.id === 'BrowseFilesystem' && type === 'plist') ||
                 (app.id === 'BrowseFilesystem' && type === 'smartpls') ||
-                (app.id === 'QueueJukeboxAlbum'))
+                (app.id === 'QueueJukebox' && settings.partition.jukeboxMode === 'album'))
             {
                 return false;
             }

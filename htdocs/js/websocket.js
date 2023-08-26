@@ -97,7 +97,7 @@ function webSocketConnect() {
                     if (app.id === 'QueueCurrent' &&
                         obj.method === 'update_queue')
                     {
-                        execSearchExpression(document.getElementById('searchQueueStr').value);
+                        getQueue(document.getElementById('searchQueueStr').value);
                     }
                     parseState(obj);
                     break;
@@ -170,10 +170,13 @@ function webSocketConnect() {
                     }
                     break;
                 case 'update_jukebox':
-                    if (app.id === 'QueueJukeboxSong' ||
-                        app.id === 'QueueJukeboxAlbum')
-                    {
-                        getJukeboxList(app.id);
+                    if (app.id === 'QueueJukebox') {
+                        sendAPI('MYMPD_API_JUKEBOX_LIST', {
+                            "offset": app.current.offset,
+                            "limit": app.current.limit,
+                            "cols": settings.colsQueueJukeboxFetch,
+                            "searchstr": app.current.search
+                        }, parseJukeboxList, false);
                     }
                     break;
                 case 'update_cache_started':
