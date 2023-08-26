@@ -4,23 +4,6 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
-## myMPD v11.1.0 (not yet released)
-
-Describe the release here.
-
-### Changelog
-
-- Feat: move song fingerprint calculation in worker thread
-- Feat: display album tags in jukebox album list #1069
-- Feat: add option for compact grids #1074
-- Feat: add advanced search to more views #1048
-- Upd: some code enhancements #1045
-- Upd: merge MYMPD_API_QUEUE_SEARCH_ADV and MYMPD_API_QUEUE_LIST into MYMPD_API_QUEUE_SEARCH
-- Fix: calculate correct position for jukebox list
-- Fix: calculate correct position for playlist content list
-
-***
-
 ## myMPD v11.0.4 (2023-08-19)
 
 This is a small bug fix release.
@@ -301,6 +284,8 @@ This is a small bugfix release.
 ***
 
 ## myMPD v10.2.1 (2023-01-31)
+
+This is a small bugfix release.
 
 ### Changelog
 
