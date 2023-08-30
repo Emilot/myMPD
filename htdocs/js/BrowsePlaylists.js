@@ -548,6 +548,7 @@ function saveSmartPlaylistClose(obj) {
 //eslint-disable-next-line no-unused-vars
 function addSmartpls(type) {
     const obj = {"jsonrpc": "2.0", "id": 0, "result": {"method": "MYMPD_API_SMARTPLS_GET"}};
+    obj.result.sort = '';
     switch(type) {
         case 'mostPlayed':
             obj.result.plist = settings.smartplsPrefix + (settings.smartplsPrefix !== '' ? '-' : '') + 'mostPlayed';
@@ -746,14 +747,14 @@ function showAddToPlaylist(type, entities) {
     document.getElementById('addToPlaylistPlaylist').filterInput.value = '';
     document.getElementById('addToPlaylistPosAppend').checked = 'checked';
     document.getElementById('streamUrl').value = '';
-    if (type === 'stream') {
-        //add stream
+    if (entities.length === 0) {
+        // manual add a stream
         toggleAddToPlaylistFrm(document.getElementById('toggleAddToPlaylistQueue'));
         elShowId('addStreamFrm');
         document.getElementById('addToPlaylistCaption').textContent = tn('Add stream');
     }
     else {
-        //add to playlist
+        // add selected to a playlist
         toggleAddToPlaylistFrm(document.getElementById('toggleAddToPlaylistPlaylist'));
         elHideId('addStreamFrm');
         document.getElementById('addToPlaylistCaption').textContent = tn('Add to playlist');
