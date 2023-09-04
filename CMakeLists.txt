@@ -9,7 +9,7 @@ cmake_policy(SET CMP0003 NEW)
 # myMPD is written in C
 # supported compilers: gcc, clang
 project(mympd
-  VERSION 11.0.5
+  VERSION 12.0.0
   LANGUAGES C
 )
 
@@ -59,6 +59,7 @@ option(MYMPD_ENABLE_LUA "Enables lua support, default ON" "ON")
 option(MYMPD_MANPAGES "Creates and installs manpages" "ON")
 option(MYMPD_MINIMAL "Enables minimal myMPD build, disables all MYMPD_ENABLE_* flags" "OFF")
 option(MYMPD_STRIP_BINARY "Enables stripping the binaries for Release, default ON" "ON")
+option(MYMPD_STARTUP_SCRIPT "Installs the startup script, default ON" "ON")
 
 if(MYMPD_MINIMAL)
   set(MYMPD_ENABLE_FLAC "OFF")
@@ -180,6 +181,9 @@ endif()
 
 # translation files
 if(MYMPD_EMBEDDED_ASSETS)
+  if(EXISTS "${PROJECT_BINARY_DIR}/htdocs/assets/i18n/bg-BG.json.gz")
+    set(I18N_bg_BG "ON")
+  endif()
   if(EXISTS "${PROJECT_BINARY_DIR}/htdocs/assets/i18n/de-DE.json.gz")
     set(I18N_de_DE "ON")
   endif()
