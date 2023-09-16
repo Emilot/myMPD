@@ -35,7 +35,7 @@ function initModalSongDetails() {
                 case 'gotoContainingFolder': {
                     uiElements.modalSongDetails.hide();
                     event.preventDefault();
-                    appGoto('Browse', 'Filesystem', undefined, 0, undefined, '', {'tag': '', 'desc': false}, '', getData(event.target, 'folder'), 0);
+                    appGoto('Browse', 'Filesystem', undefined, 0, undefined, getData(event.target, 'folder'), {'tag': '', 'desc': false}, '', '', 0);
                     break;
                 }
                 case 'downloadSong': {
@@ -234,7 +234,7 @@ function parseSongDetails(obj) {
                     thDown,
                     thUp
                 ]);
-                setData(grp, 'href', {"cmd": "voteSong", "options": []});
+                setData(grp, 'href', {"cmd": "voteSong", "options": ["target"]});
                 setData(grp, 'uri', obj.result.uri);
                 tbody.appendChild(
                     elCreateNodes('tr', {}, [

@@ -4,7 +4,26 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
-## myMPD v12.0.0 (not yet released)
+## myMPD v12.0.2 (not yet released)
+
+This is a small bug fix release.
+
+## Changelog
+
+- Upd: Bootstrap 5.3.2
+- Fix: listing of outputs to move to current partition #1106
+
+***
+
+## myMPD v12.0.1 (2023-09-15)
+
+This release fixes only a small packaging bug for alpine linux.
+
+## Changelog
+
+- Fix: Use perl to create defines.js
+
+## myMPD v12.0.0 (2023-09-15)
 
 This release improves hopefully the user experience by providing descriptive help texts, error messages and improved dialogs. Further the advanced search feature is now available for all reasonable views.
 
@@ -46,6 +65,7 @@ This release changes some API methods.
 - Upd: dependencies sds, utest, utf8
 - Fix: calculate correct position for jukebox list
 - Fix: calculate correct position for playlist content list
+- Fix: enable connection settings if myMPD can not connect to MPD #1102
 
 ***
 

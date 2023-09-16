@@ -388,22 +388,23 @@ copyassets() {
 
 builddebug() {
   echo "Compiling myMPD v${VERSION}"
-  if [ "$ACTION" = "memcheck" ]
-  then
-    MYMPD_ENABLE_LIBASAN=ON
-  else
-    MYMPD_ENABLE_LIBASAN=OFF
-  fi
+  CMAKE_SANITIZER_OPTIONS=""
+  case "$ACTION" in
+    asan)  CMAKE_SANITIZER_OPTIONS="-DMYMPD_ENABLE_ASAN=ON" ;;
+    tsan)  CMAKE_SANITIZER_OPTIONS="-DMYMPD_ENABLE_TSAN=ON" ;;
+    ubsan) CMAKE_SANITIZER_OPTIONS="-DMYMPD_ENABLE_UBSAN=ON" ;;
+  esac
+
   cmake -B debug \
     -DCMAKE_INSTALL_PREFIX:PATH=/usr \
     -DCMAKE_BUILD_TYPE=Debug \
     -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-    -DMYMPD_ENABLE_LIBASAN="$MYMPD_ENABLE_LIBASAN" \
+    $CMAKE_SANITIZER_OPTIONS \
     .
   make -C debug VERBOSE=1
   echo "Linking compilation database"
   sed -e 's/\\t/ /g' -e 's/-Wformat-truncation//g' -e 's/-Wformat-overflow=2//g' -e 's/-fsanitize=bounds-strict//g' \
-    -e 's/-static-libasan//g' -e 's/-Wno-stringop-overread//g' -e 's/-fstack-clash-protection//g' \
+    -e 's/-Wno-stringop-overread//g' -e 's/-fstack-clash-protection//g' \
     debug/compile_commands.json > src/compile_commands.json
 }
 
@@ -413,14 +414,14 @@ buildtest() {
     -DCMAKE_INSTALL_PREFIX:PATH=/usr \
     -DCMAKE_BUILD_TYPE=Debug \
     -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-    -DMYMPD_ENABLE_LIBASAN=ON\
+    -DMYMPD_ENABLE_ASAN=ON \
     -DMYMPD_BUILD_TESTING=ON \
     .
   make -C debug
   make -C debug test
   echo "Linking compilation database"
   sed -e 's/\\t/ /g' -e 's/-Wformat-truncation//g' -e 's/-Wformat-overflow=2//g' -e 's/-fsanitize=bounds-strict//g' \
-    -e 's/-static-libasan//g' -e 's/-Wno-stringop-overread//g' -e 's/-fstack-clash-protection//g' \
+    -e 's/-Wno-stringop-overread//g' -e 's/-fstack-clash-protection//g' \
     debug/compile_commands.json > test/compile_commands.json
 }
 
@@ -1044,10 +1045,12 @@ create_js_defines() {
   {
     I=0
     printf "{"
-    sed -E -z -e 's/"\\\n\s+"//g' -e 's/MPD_TAG_ARTIST/"Artist"/' "$STARTPATH/src/compile_time.h.in" \
-      | grep -v '\$' \
-      | awk '/^#define (MYMPD|PARTITION)_\w+ / {print $2"|"$3}' \
-      | while IFS="|" read -r KEY VALUE
+    perl -npe 's/\\\n//g; s/^\s+//g' < "$STARTPATH/src/compile_time.h.in" \
+      | perl -ne 's/MPD_TAG_ARTIST/"Artist"/g; s/""//g; 
+      if (not /\$/ and /^#define ((MYMPD|PARTITION)_\w+)\s+(\S+)/) {
+        print "$1|$3\n";
+      }
+    ' | while IFS="|" read -r KEY VALUE
       do
         [ "$I" -gt 0 ] && echo ","
         if JSON_VALUE=$(printf '{"value": %s}' "$VALUE" | jq -r '.value | fromjson' 2>/dev/null)
@@ -1059,7 +1062,7 @@ create_js_defines() {
         I=$((I+1))
       done
       printf "}"
-  } | jq >> "$STARTPATH/htdocs/js/defines.js"
+  } | jq -r "." >> "$STARTPATH/htdocs/js/defines.js"
   echo ";" >> "$STARTPATH/htdocs/js/defines.js"
 }
 
@@ -1359,10 +1362,7 @@ case "$ACTION" in
     buildrelease
     installrelease
   ;;
-  debug)
-    builddebug
-  ;;
-  memcheck)
+  debug|asan|tsan|ubsan)
     builddebug
   ;;
   test)
@@ -1524,8 +1524,8 @@ case "$ACTION" in
     echo "  releaseinstall:   calls release and install afterwards"
     echo "  debug:            builds debug files in directory debug,"
     echo "                    serves assets from htdocs"
-    echo "  memcheck:         builds debug files in directory debug"
-    echo "                    linked with libasan3 and serves assets from htdocs"
+    echo "  asan|tsan|ubsan:  builds debug files in directory debug"
+    echo "                    linked with the sanitizer and serves assets from htdocs"
     echo "  test:             builds and runs the unit tests in directory debug"
     echo "                    linked with libasan3"
     echo "  installdeps:      installs build and runtime dependencies"
