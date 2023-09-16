@@ -44,7 +44,7 @@ bool mympd_api_timer_add(struct t_timer_list *l, time_t timeout, int interval,
 bool mympd_api_timer_replace(struct t_timer_list *l, time_t timeout, int interval,
     timer_handler handler, int timer_id, struct t_timer_definition *definition);
 bool mympd_api_timer_remove(struct t_timer_list *l, int timer_id);
-bool mympd_api_timer_toggle(struct t_timer_list *l, int timer_id);
+bool mympd_api_timer_toggle(struct t_timer_list *l, int timer_id, sds *error);
 void *mympd_api_timer_free_definition(struct t_timer_definition *timer_def);
 struct t_timer_definition *mympd_api_timer_parse(sds str, const char *partition, struct t_jsonrpc_parse_error *error);
 time_t mympd_api_timer_calc_starttime(int start_hour, int start_minute, int interval);
