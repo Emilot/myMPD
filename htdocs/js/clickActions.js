@@ -28,7 +28,8 @@ function clickQuickRemove(target) {
             removeFromPlaylistPositions(plist, [pos]);
             break;
         }
-        case 'QueueJukebox': {
+        case 'QueueJukeboxSong':
+        case 'QueueJukeboxAlbum': {
             const pos = getData(target.parentNode.parentNode, 'pos');
             delQueueJukeboxEntries([pos]);
             break;
@@ -213,7 +214,7 @@ function clickFilesystemPlaylist(uri, event) {
             };
             //reset filter and show playlist
             app.current.filter = '-';
-            appGoto('Browse', 'Filesystem', undefined, 0, app.current.limit, app.current.filter, app.current.sort, 'plist', uri);
+            appGoto('Browse', 'Filesystem', undefined, 0, app.current.limit, uri, app.current.sort, 'plist', '', 0);
             break;
         case 'context': return showContextMenu(event);
         default: logError('Invalid action: ' + settings.webuiSettings.clickFilesystemPlaylist);
@@ -232,7 +233,7 @@ function clickFolder(uri) {
         "scrollPos": getScrollPosY()
     };
     //reset filter and open folder
-    appGoto('Browse', 'Filesystem', undefined, 0, app.current.limit, '-', app.current.sort, 'dir', uri);
+    appGoto('Browse', 'Filesystem', undefined, 0, app.current.limit, uri, app.current.sort, 'dir', '', 0);
 }
 
 /**

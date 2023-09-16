@@ -352,16 +352,12 @@ function printValue(key, value) {
 }
 
 /**
- * Checks if tag matches the value
- * @param {string | object} tag tag to check
- * @param {string} value value to check
+ * Checks if tag is empty
+ * @param {string | Array} tagValue tag value to check
  * @returns {boolean} true if tag matches value, else false
  */
-function checkTagValue(tag, value) {
-    if (typeof tag === 'string') {
-        return tag === value;
-    }
-    return tag[0] === value;
+function isEmptyTag(tagValue) {
+    return tagValue === undefined || tagValue === null || tagValue.length === 0;
 }
 
 /**
@@ -439,9 +435,7 @@ function addMusicbrainzFields(songObj, showArtists) {
             elCreateNode('p', {"class": ["mb-1"]}, albumLink)
         );
     }
-    if (songObj[artist] !== undefined &&
-        checkTagValue(songObj[artist], '-') === false)
-    {
+    if (isEmptyTag(songObj[artist]) === false) {
         //show albumartists or artists
         for (let i = 0, j = songObj[artist].length; i < j; i++) {
             const artistLink = getMBtagLink(artist, songObj[artist][i]);

@@ -248,7 +248,14 @@ function parseSettings(obj) {
     pEl.coverPlayBtn.title = tn(settingsWebuiFields.clickQuickPlay.validValues[settings.webuiSettings.clickQuickPlay]);
 
     //goto view
-    appRoute();
+    if (app.id === 'QueueJukeboxSong' ||
+        app.id === 'QueueJukeboxAlbum')
+    {
+        gotoJukebox();
+    }
+    else {
+        appRoute();
+    }
 
     //mediaSession support
     if (features.featMediaSession === true) {
@@ -302,7 +309,8 @@ function parseMPDSettings() {
 
     filterCols('Playback');
 
-    for (const table of ['Search', 'QueueCurrent', 'QueueLastPlayed', 'QueueJukebox',
+    for (const table of ['Search', 'QueueCurrent', 'QueueLastPlayed',
+            'QueueJukeboxSong', 'QueueJukeboxAlbum',
             'BrowsePlaylistDetail', 'BrowseFilesystem', 'BrowseDatabaseAlbumDetail'])
     {
         filterCols(table);
@@ -350,7 +358,8 @@ function parseMPDSettings() {
         app.cards.Queue.tabs.Current.filter = 'filename';
         settings.colsQueueCurrent = ["Pos", "Title", "Duration"];
         settings.colsQueueLastPlayed = ["Pos", "Title", "LastPlayed"];
-        settings.colsQueueJukebox = ["Pos", "Title"];
+        settings.colsQueueJukeboxSong = ["Pos", "Title"];
+        settings.colsQueueJukeboxAlbum = ["Pos", "Title"];
         settings.colsSearch = ["Title", "Duration"];
         settings.colsBrowseFilesystem = ["Type", "Title", "Duration"];
         settings.colsPlayback = [];
@@ -414,6 +423,7 @@ function parseMPDSettings() {
     addTagList('BrowseRadioFavoritesNavDropdown', 'tagListBrowse');
     addTagList('BrowseRadioWebradiodbNavDropdown', 'tagListBrowse');
     addTagList('BrowseRadioRadiobrowserNavDropdown', 'tagListBrowse');
+
     addTagList('QueueCurrentSearchTags', 'tagListSearch');
     addTagList('QueueLastPlayedSearchTags', 'tagListSearch');
     addTagList('QueueJukeboxSongSearchTags', 'tagListSearch');
@@ -423,6 +433,7 @@ function parseMPDSettings() {
     addTagList('BrowseDatabaseAlbumListSearchTags', 'tagListBrowse');
     addTagList('BrowseDatabaseAlbumListSortTagsList', 'tagListBrowse');
     addTagList('BrowsePlaylistDetailSortTagsDropdown', 'tagList');
+
     addTagListSelect('modalSmartPlaylistEditSortInput', 'tagList');
 }
 
@@ -460,6 +471,7 @@ function setNavbarIcons() {
 
     const container = elGetById('navbar-main');
     elClear(container);
+
     if (settings.webuiSettings.showBackButton === true) {
         container.appendChild(
             elCreateNode('div', {"class": ["nav-item", "flex-fill", "text-center"]},
@@ -470,6 +482,7 @@ function setNavbarIcons() {
         );
         setData(container.firstElementChild.firstElementChild, 'href', {"cmd": "historyBack", "options": []});
     }
+
     for (const icon of settings.navbarIcons) {
         const id = "nav" + icon.options.join('');
         const btn = elCreateEmpty('div', {"id": id, "class": ["nav-item", "flex-fill", "text-center"]});

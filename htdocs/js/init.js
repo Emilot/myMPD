@@ -216,7 +216,6 @@ function appInit() {
     }, false);
     //init modules
     initBrowse();
-    initCollybia();
     initContextMenuOffcanvas();
     initLocalPlayback();
     initModalAbout();
@@ -262,7 +261,8 @@ function appInit() {
     const dndTableHeader = [
         'QueueCurrent',
         'QueueLastPlayed',
-        'QueueJukebox',
+        'QueueJukeboxSong',
+        'QueueJukeboxAlbum',
         'Search',
         'BrowseFilesystem',
         'BrowsePlaylistDetail',
@@ -338,7 +338,7 @@ function appInit() {
     }, false);
     //contextmenu for tables
     const tables = ['BrowseFilesystemList', 'BrowseDatabaseAlbumDetailList', 'QueueCurrentList', 'QueueLastPlayedList',
-        'QueueJukeboxList', 'SearchList', 'BrowsePlaylistListList', 'BrowsePlaylistDetailList',
+        'QueueJukeboxSongList', 'QueueJukeboxAlbumList', 'SearchList', 'BrowsePlaylistListList', 'BrowsePlaylistDetailList',
         'BrowseRadioRadiobrowserList', 'BrowseRadioWebradiodbList'];
     for (const tableId of tables) {
         const tbody = document.querySelector('#' + tableId + ' > tbody');

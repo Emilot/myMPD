@@ -47,4 +47,3 @@ function voteSong(el) {
         "like": vote
     }, null, false);
 }
-

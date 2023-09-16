@@ -88,7 +88,6 @@ function gotoBrowse(event) {
     }
     if (tag !== '' &&
         name !== '' &&
-        name !== '-' &&
         settings.tagListBrowse.includes(tag))
     {
         if (tag === 'Album') {
