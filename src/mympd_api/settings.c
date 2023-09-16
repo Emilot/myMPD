@@ -418,21 +418,21 @@ bool mympd_api_settings_set(const char *path, sds key, sds value, int vtype, val
     }
     else if (strcmp(key, "dac") == 0 && vtype == MJSON_TOK_STRING) {
         if (vcb_isfilepath(value) == false) {
-            *error = set_invalid_value(*error, key, value);
+            set_invalid_value(error, path, key, value, "Must be an alphanumeric value");
             return false;
         }
         mympd_state->dac = sds_replace(mympd_state->dac, value);
     }
     else if (strcmp(key, "mixer") == 0 && vtype == MJSON_TOK_STRING) {
         if (vcb_isfilepath(value) == false) {
-            *error = set_invalid_value(*error, key, value);
+            set_invalid_value(error, path, key, value, "Not a wise decision");
             return false;
         }
         mympd_state->mixer = sds_replace(mympd_state->mixer, value);
     }
     else if (strcmp(key, "sambaVersion") == 0 && vtype == MJSON_TOK_STRING) {
         if (vcb_isfilepath(value) == false) {
-            *error = set_invalid_value(*error, key, value);
+            set_invalid_value(error, path, key, value, "Not a wise decision");
             return false;
         }
         mympd_state->samba_version = sds_replace(mympd_state->samba_version, value);
@@ -440,7 +440,7 @@ bool mympd_api_settings_set(const char *path, sds key, sds value, int vtype, val
     else if (strcmp(key, "nsType") == 0 && vtype == MJSON_TOK_NUMBER) {
         int ns_type = (int)strtoimax(value, NULL, 10);
         if (ns_type < 0 || ns_type > 3) {
-            *error = set_invalid_value(*error, key, value);
+            set_invalid_value(error, path, key, value, "Not a wise decision");
             return false;
         }
         if (mympd_state->ns_type != ns_type)
@@ -454,7 +454,7 @@ bool mympd_api_settings_set(const char *path, sds key, sds value, int vtype, val
             mympd_state->dop = false;
         }
         else {
-            *error = set_invalid_value(*error, key, value);
+            set_invalid_value(error, path, key, value, "Not a wise decision");
             return false;
         }
     }
@@ -466,7 +466,7 @@ bool mympd_api_settings_set(const char *path, sds key, sds value, int vtype, val
             mympd_state->ffmpeg = false;
         }
         else {
-            *error = set_invalid_value(*error, key, value);
+            set_invalid_value(error, path, key, value, "Not a wise decision");
             return false;
         }
     }
@@ -478,7 +478,7 @@ bool mympd_api_settings_set(const char *path, sds key, sds value, int vtype, val
             mympd_state->airplay = false;
         }
         else {
-            *error = set_invalid_value(*error, key, value);
+            set_invalid_value(error, path, key, value, "Not a wise decision");
             return false;
         }
     }
@@ -490,7 +490,7 @@ bool mympd_api_settings_set(const char *path, sds key, sds value, int vtype, val
             mympd_state->roon = false;
         }
         else {
-            *error = set_invalid_value(*error, key, value);
+            set_invalid_value(error, path, key, value, "Not a wise decision");
             return false;
         }
     }
@@ -502,7 +502,7 @@ bool mympd_api_settings_set(const char *path, sds key, sds value, int vtype, val
             mympd_state->spotify = false;
         }
         else {
-            *error = set_invalid_value(*error, key, value);
+            set_invalid_value(error, path, key, value, "Not a wise decision");
             return false;
         }
     }
@@ -514,7 +514,7 @@ bool mympd_api_settings_set(const char *path, sds key, sds value, int vtype, val
             mympd_state->wifi = false;
         }
         else {
-            *error = set_invalid_value(*error, key, value);
+            set_invalid_value(error, path, key, value, "Not a wise decision");
             return false;
         }
     }
@@ -526,48 +526,48 @@ bool mympd_api_settings_set(const char *path, sds key, sds value, int vtype, val
             mympd_state->apmode = false;
         }
         else {
-            *error = set_invalid_value(*error, key, value);
+            set_invalid_value(error, path, key, value, "Not a wise decision");
             return false;
         }
     }
     else if (strcmp(key, "nsServer") == 0 && vtype == MJSON_TOK_STRING) {
         if (vcb_isfilepath(value) == false) {
-            *error = set_invalid_value(*error, key, value);
+            set_invalid_value(error, path, key, value, "Not a wise decision");
             return false;
         }
         mympd_state->ns_server = sds_replace(mympd_state->ns_server, value);
     }
     else if (strcmp(key, "nsShare") == 0 && vtype == MJSON_TOK_STRING) {
         if (vcb_isfilepath(value) == false) {
-            *error = set_invalid_value(*error, key, value);
+            set_invalid_value(error, path, key, value, "Not a wise decision");
             return false;
         }
         mympd_state->ns_share = sds_replace(mympd_state->ns_share, value);
     }
     else if (strcmp(key, "nsUsername") == 0 && vtype == MJSON_TOK_STRING) {
         if (vcb_isfilepath(value) == false) {
-            *error = set_invalid_value(*error, key, value);
+            set_invalid_value(error, path, key, value, "Not a wise decision");
             return false;
         }
         mympd_state->ns_username = sds_replace(mympd_state->ns_username, value);
     }
     else if (strcmp(key, "nsPassword") == 0 && vtype == MJSON_TOK_STRING) {
         if (vcb_isfilepath(value) == false) {
-            *error = set_invalid_value(*error, key, value);
+            set_invalid_value(error, path, key, value, "Not a wise decision");
             return false;
         }
         mympd_state->ns_password = sds_replace(mympd_state->ns_password, value);
     }
     else if (strcmp(key, "wifiPassword") == 0 && vtype == MJSON_TOK_STRING) {
         if (vcb_isfilepath(value) == false) {
-            *error = set_invalid_value(*error, key, value);
+            set_invalid_value(error, path, key, value, "Not a wise decision");
             return false;
         }
         mympd_state->wifi_password = sds_replace(mympd_state->wifi_password, value);
     }
     else if (strcmp(key, "wifissid") == 0 && vtype == MJSON_TOK_STRING) {
         if (vcb_isfilepath(value) == false) {
-            *error = set_invalid_value(*error, key, value);
+            set_invalid_value(error, path, key, value, "Not a wise decision");
             return false;
         }
         mympd_state->wifissid = sds_replace(mympd_state->wifissid, value);

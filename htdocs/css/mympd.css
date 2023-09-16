@@ -487,9 +487,13 @@ div#homeActions {
 }
 
 .card-footer-grid {
+  white-space: var(--mympd-card-footer-word-wrap);
+  font-size: 0.9rem;
+}
+
+.card-footer-grid > * {
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 0.9rem;
 }
 
 .album-cover-grid {
