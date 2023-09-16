@@ -3,7 +3,7 @@
 // myMPD (c) 2018-2023 Juergen Mang <mail@jcgames.de>
 // https://github.com/jcorporation/mympd
 
-/** @module QueueLastPlayed_js */
+/** @module viewQueueLastPlayed_js */
 
 /**
  * QueueLastPlayed handler
@@ -23,25 +23,10 @@ function handleQueueLastPlayed() {
  * Initialization function for last played elements
  * @returns {void}
  */
-function initQueueLastPlayed() {
-    document.getElementById('QueueLastPlayedList').addEventListener('click', function(event) {
-        //select mode
-        if (selectRow(event) === true) {
-            return;
-        }
-        //action td
-        if (event.target.nodeName === 'A') {
-            handleActionTdClick(event);
-            return;
-        }
-        //table body
-        const target = event.target.closest('TR');
-        if (target === null) {
-            return;
-        }
-        if (target.parentNode.nodeName === 'TBODY' &&
-            checkTargetClick(target) === true)
-        {
+function initViewQueueLastPlayed() {
+    elGetById('QueueLastPlayedList').addEventListener('click', function(event) {
+        const target = tableClickHandler(event);
+        if (target !== null) {
             clickSong(getData(target, 'uri'), event);
         }
     }, false);
@@ -59,7 +44,7 @@ function parseLastPlayed(obj) {
         return;
     }
 
-    const rowTitle = webuiSettingsDefault.clickSong.validValues[settings.webuiSettings.clickSong];
+    const rowTitle = settingsWebuiFields.clickSong.validValues[settings.webuiSettings.clickSong];
     updateTable(obj, 'QueueLastPlayed', function(row, data) {
         setData(row, 'uri', data.uri);
         setData(row, 'name', data.Title);

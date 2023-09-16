@@ -34,7 +34,7 @@ void mympd_state_save(struct t_mympd_state *mympd_state, bool free_data) {
     struct t_partition_state *partition_state = mympd_state->partition_state;
     while (partition_state != NULL) {
         mympd_api_last_played_file_save(partition_state);
-        presets_save(partition_state);
+        preset_list_save(partition_state);
         partition_state = partition_state->next;
     }
     if (free_data == true) {
@@ -104,6 +104,7 @@ void mympd_state_default(struct t_mympd_state *mympd_state, struct t_config *con
     mympd_state->listenbrainz_token = sdsempty();
     mympd_state->navbar_icons = sdsnew(MYMPD_NAVBAR_ICONS);
     reset_t_tags(&mympd_state->smartpls_generate_tag_types);
+    mympd_state->tag_disc_empty_is_first = MYMPD_TAG_DISC_EMPTY_IS_FIRST;
     //mpd shared state
     mympd_state->mpd_state = malloc_assert(sizeof(struct t_mpd_state));
     mpd_state_default(mympd_state->mpd_state, mympd_state);
@@ -328,11 +329,11 @@ void partition_state_default(struct t_partition_state *partition_state, const ch
     partition_state->set_conn_options = false;
     //local playback
     partition_state->mpd_stream_port = PARTITION_MPD_STREAM_PORT;
-    partition_state->stream_uri = sdsempty();
+    partition_state->stream_uri = sdsnew(PARTITION_MPD_STREAM_URI);
     //lists
     list_init(&partition_state->last_played);
-    list_init(&partition_state->presets);
-    presets_load(partition_state);
+    list_init(&partition_state->preset_list);
+    preset_list_load(partition_state);
 }
 
 /**
@@ -353,7 +354,7 @@ void partition_state_free(struct t_partition_state *partition_state) {
     list_clear(&partition_state->jukebox_queue_tmp);
     //lists
     list_clear(&partition_state->last_played);
-    list_clear(&partition_state->presets);
+    list_clear(&partition_state->preset_list);
     //local playback
     FREE_SDS(partition_state->stream_uri);
     //struct itself

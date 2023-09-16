@@ -68,6 +68,11 @@ function createMenuColumns(target, contextMenuTitle, contextMenuBody) {
             eventClick.preventDefault();
             eventClick.stopPropagation();
         }
+        else if (eventClick.target.nodeName === 'LABEL') {
+            toggleBtnChk(eventClick.target.previousElementSibling, undefined);
+            eventClick.preventDefault();
+            eventClick.stopPropagation();
+        }
     }, false);
     contextMenuBody.classList.add('px-3');
     contextMenuBody.appendChild(menu);
@@ -118,7 +123,7 @@ function addMenuItemsNavbarActions(target, popoverBody) {
     const type = target.getAttribute('data-contextmenu');
     switch(type) {
         case 'NavbarPlayback':
-            addMenuItem(popoverBody, {"cmd": "openModal", "options": ["modalQueueSettings"]}, 'Playback settings');
+            addMenuItem(popoverBody, {"cmd": "openModal", "options": ["modalPlayback"]}, 'Playback settings');
             addDivider(popoverBody);
             addMenuItemsSingleActions(popoverBody);
             addMenuItemsConsumeActions(popoverBody);
@@ -143,6 +148,8 @@ function addMenuItemsNavbarActions(target, popoverBody) {
             addMenuItem(popoverBody, {"cmd": "appGoto", "options": ["Browse", "Filesystem", undefined]}, 'Show browse filesystem');
             addMenuItem(popoverBody, {"cmd": "appGoto", "options": ["Browse", "Radio", undefined]}, 'Show browse webradio');
             break;
+        default:
+            logError('Invalid type: ' + type);
     }
 }
 
@@ -385,7 +392,7 @@ function addMenuItemsSearchActions(contextMenuBody, expression) {
         addMenuItem(contextMenuBody, {"cmd": "showAddToPlaylist", "options": ["search", [expression]]}, 'Add to playlist');
     }
     addDivider(contextMenuBody);
-    addMenuItem(contextMenuBody, {"cmd": "appGoto", "options": ["Search", undefined, undefined, 0, undefined, "any", {"tag": "Title", "desc": false}, "-", expression]}, 'Show search');
+    addMenuItem(contextMenuBody, {"cmd": "appGoto", "options": ["Search", undefined, undefined, 0, undefined, "any", {"tag": "Title", "desc": false}, "", expression]}, 'Show search');
 }
 
 /**
@@ -572,14 +579,14 @@ function createMenuLists(target, contextMenuTitle, contextMenuBody) {
             return true;
         }
         case 'BrowsePlaylistDetail': {
-            const table = document.getElementById('BrowsePlaylistDetailList');
+            const table = elGetById('BrowsePlaylistDetailList');
             addMenuItemsSongActions(dataNode, contextMenuBody, uri, type, name);
             if (getData(table, 'ro') === false) {
                 addDivider(contextMenuBody);
                 const plist = getData(table, 'uri');
                 const pos = getData(dataNode, 'pos');
                 const playlistLength = getData(table, 'playlistlength');
-                addMenuItem(contextMenuBody, {"cmd": "showSetSongPos", "options": [plist, pos, -1]}, 'Move song');
+                addMenuItem(contextMenuBody, {"cmd": "showSetSongPos", "options": [plist, pos]}, 'Move song');
                 addMenuItem(contextMenuBody, {"cmd": "removeFromPlaylistPositions", "options": [plist, [pos]]}, 'Remove');
                 if (features.featPlaylistRmRange === true) {
                     if (pos > 0) {
@@ -607,7 +614,7 @@ function createMenuLists(target, contextMenuTitle, contextMenuBody) {
                 addMenuItem(contextMenuBody, {"cmd": "showSetSongPriority", "options": [songid]}, 'Set priority');
             }
             else {
-                addMenuItem(contextMenuBody, {"cmd": "showSetSongPos", "options": ["queue", pos, songid]}, 'Move song');
+                addMenuItem(contextMenuBody, {"cmd": "showSetSongPos", "options": ["queue", pos]}, 'Move song');
             }
             if (songid === currentState.currentSongId) {
                 addMenuItemsSingleActions(contextMenuBody);
@@ -639,6 +646,7 @@ function createMenuLists(target, contextMenuTitle, contextMenuBody) {
             addMenuItem(contextMenuBody, {"cmd": "delQueueJukeboxEntries", "options": [[pos]]}, 'Remove');
             return true;
         }
+        // No Default
     }
     return false;
 }
@@ -685,6 +693,7 @@ function createMenuListsSecondary(target, contextMenuTitle, contextMenuBody) {
             }
             return true;
         }
+        // No Default
     }
     return false;
 }
@@ -758,6 +767,8 @@ function createMenuHome(target, contextMenuTitle, contextMenuBody) {
             addMenuItem(contextMenuBody, {"cmd": "executeHomeIcon", "options": [pos]}, actionDesc);
             addMenuItem(contextMenuBody, {"cmd": "showEditScriptModal", "options": [href.options[0]]}, 'Edit script');
             break;
+        default:
+            logError('Invalid type: ' + type);
     }
     return true;
 }
@@ -771,7 +782,7 @@ function createMenuHome(target, contextMenuTitle, contextMenuBody) {
  */
 function createMenuHomeSecondary(target, contextMenuTitle, contextMenuBody) {
     const pos = getData(target, 'pos');
-    contextMenuTitle.textContent = tn('Homeicon');
+    contextMenuTitle.textContent = tn('Home icon');
     contextMenuTitle.classList.add('offcanvas-title-homeicon');
     addMenuItem(contextMenuBody, {"cmd": "editHomeIcon", "options": [pos]}, 'Edit home icon');
     addMenuItem(contextMenuBody, {"cmd": "duplicateHomeIcon", "options": [pos]}, 'Duplicate home icon');

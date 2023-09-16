@@ -3,7 +3,7 @@
 // myMPD (c) 2018-2023 Juergen Mang <mail@jcgames.de>
 // https://github.com/jcorporation/mympd
 
-/** @module QueueJukebox_js */
+/** @module viewQueueJukebox_js */
 
 /**
  * QueueJukeboxSong handler
@@ -36,25 +36,10 @@ function handleQueueJukebox(view) {
  * @param {string} view jukebox view to display (song or album)
  * @returns {void}
  */
-function initQueueJukebox(view) {
-    document.getElementById(view + 'List').addEventListener('click', function(event) {
-        //select mode
-        if (selectRow(event) === true) {
-            return;
-        }
-        //action td
-        if (event.target.nodeName === 'A') {
-            handleActionTdClick(event);
-            return;
-        }
-        //table body
-        const target = event.target.closest('TR');
-        if (target === null) {
-            return;
-        }
-        if (target.parentNode.nodeName === 'TBODY' &&
-            checkTargetClick(target) === true)
-        {
+function initViewQueueJukebox(view) {
+    elGetById(view + 'List').addEventListener('click', function(event) {
+        const target = tableClickHandler(event);
+        if (target !== null) {
             if (settings.partition.jukeboxMode === 'song') {
                 clickSong(getData(target, 'uri'), event);
             }
@@ -141,8 +126,8 @@ function parseJukeboxList(obj) {
     elHideId(view + 'Disabled');
 
     const rowTitle = settings.partition.jukeboxMode === 'song' ?
-        webuiSettingsDefault.clickSong.validValues[settings.webuiSettings.clickSong] :
-        webuiSettingsDefault.clickQuickPlay.validValues[settings.webuiSettings.clickQuickPlay];
+        settingsWebuiFields.clickSong.validValues[settings.webuiSettings.clickSong] :
+        settingsWebuiFields.clickQuickPlay.validValues[settings.webuiSettings.clickQuickPlay];
     updateTable(obj, view, function(row, data) {
         setData(row, 'uri', data.uri);
         setData(row, 'name', data.Title);

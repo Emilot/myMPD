@@ -3,7 +3,7 @@
 // myMPD (c) 2018-2023 Juergen Mang <mail@jcgames.de>
 // https://github.com/jcorporation/mympd
 
-/** @module Search_js */
+/** @module viewSearch_js */
 
 /**
  * Handler for song search
@@ -11,8 +11,8 @@
  */
 function handleSearch() {
     handleSearchExpression('Search');
-    const searchStrEl = document.getElementById(app.id + 'SearchStr');
-    const searchCrumbEl = document.getElementById(app.id + 'SearchCrumb');
+    const searchStrEl = elGetById(app.id + 'SearchStr');
+    const searchCrumbEl = elGetById(app.id + 'SearchCrumb');
     if (searchStrEl.value.length >= 2 ||
         searchCrumbEl.children.length > 0)
     {
@@ -32,11 +32,11 @@ function handleSearch() {
     }
     else {
         // clear list if no search is defined
-        const SearchListEl = document.getElementById('SearchList');
+        const SearchListEl = elGetById('SearchList');
         elClear(SearchListEl.querySelector('tbody'));
         elClear(SearchListEl.querySelector('tfoot'));
-        elDisableId('searchAddAllSongs');
-        elDisableId('searchAddAllSongsBtn');
+        elDisableId('SearchAddAllSongsBtn');
+        elDisableId('SearchAddAllSongsDropdownBtn');
         unsetUpdateViewId('SearchList');
         setPagination(0, 0);
     }
@@ -46,37 +46,10 @@ function handleSearch() {
  * Initialization function for the search elements
  * @returns {void}
  */
-function initSearch() {
-    document.getElementById('SearchList').addEventListener('click', function(event) {
-        //select mode
-        if (selectRow(event) === true) {
-            return;
-        }
-        //action td
-        if (event.target.nodeName === 'A') {
-            handleActionTdClick(event);
-            return;
-        }
-        //table header
-        if (event.target.nodeName === 'TH') {
-            const colName = event.target.getAttribute('data-col');
-            if (isColSortable('Search', colName) === false) {
-                //by this fields can not be sorted
-                return;
-            }
-            toggleSort(event.target, colName);
-            appGoto(app.current.card, app.current.tab, app.current.view,
-                app.current.offset, app.current.limit, app.current.filter, app.current.sort, '', app.current.search);
-            return;
-        }
-        //table body
-        const target = event.target.closest('TR');
-        if (target === null) {
-            return;
-        }
-        if (target.parentNode.nodeName === 'TBODY' &&
-            checkTargetClick(target) === true)
-        {
+function initViewSearch() {
+    elGetById('SearchList').addEventListener('click', function(event) {
+        const target = tableClickHandler(event);
+        if (target !== null) {
             clickSong(getData(target, 'uri'), event);
         }
     }, false);
@@ -90,7 +63,7 @@ function initSearch() {
  * @returns {void}
  */
 function parseSearch(obj) {
-    const table = document.getElementById('SearchList');
+    const table = elGetById('SearchList');
     const tfoot = table.querySelector('tfoot');
     elClear(tfoot);
 
@@ -99,15 +72,15 @@ function parseSearch(obj) {
     }
 
     if (obj.result.returnedEntities > 0) {
-        elEnableId('searchAddAllSongs');
-        elEnableId('searchAddAllSongsBtn');
+        elEnableId('SearchAddAllSongsBtn');
+        elEnableId('SearchAddAllSongsDropdownBtn');
     }
     else {
-        elDisableId('searchAddAllSongs');
-        elDisableId('searchAddAllSongsBtn');
+        elDisableId('SearchAddAllSongsBtn');
+        elDisableId('SearchAddAllSongsDropdownBtn');
     }
 
-    const rowTitle = webuiSettingsDefault.clickSong.validValues[settings.webuiSettings.clickSong];
+    const rowTitle = settingsWebuiFields.clickSong.validValues[settings.webuiSettings.clickSong];
 
     updateTable(obj, 'Search', function(row, data) {
         setData(row, 'type', data.Type);
@@ -168,6 +141,8 @@ function addAllFromSearch(mode, type) {
         case 'replacePlay':
             replacePlayQueue(type, [app.current.search]);
             break;
+        default:
+            logError('Invalid mode: ' + mode);
     }
 }
 

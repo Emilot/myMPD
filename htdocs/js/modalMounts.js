@@ -9,15 +9,16 @@
  * Initializes the mounts related elements
  * @returns {void}
  */
-function initMounts() {
-    document.getElementById('listMountsList').addEventListener('click', function(event) {
+function initModalMounts() {
+    elGetById('modalMountsList').addEventListener('click', function(event) {
         event.stopPropagation();
         event.preventDefault();
         if (event.target.nodeName === 'A') {
             const action = event.target.getAttribute('data-action');
             const mountPoint = getData(event.target.parentNode.parentNode, 'point');
             if (action === 'unmount') {
-                unmountMount(mountPoint);
+                // @ts-ignore
+                unmountMount(mountPoint, event.target);
             }
             else if (action === 'update') {
                 updateMount(event.target, mountPoint);
@@ -30,30 +31,29 @@ function initMounts() {
         }
     }, false);
 
-    document.getElementById('btnDropdownNeighbors').parentNode.addEventListener('show.bs.dropdown', function () {
+    elGetById('modalMountsNeighborsBtn').parentNode.addEventListener('show.bs.dropdown', function () {
         if (features.featNeighbors === true) {
             sendAPI("MYMPD_API_MOUNT_NEIGHBOR_LIST", {}, parseNeighbors, true);
         }
         else {
-            const dropdownNeighbors = document.getElementById('dropdownNeighbors').firstElementChild;
-            elReplaceChild(dropdownNeighbors,
+            elReplaceChildId('modalMountsNeighborsList',
                 elCreateTextTn('div', {"class": ["list-group-item", "nowrap"]}, 'Neighbors are disabled')
             );
         }
     }, false);
 
-    document.getElementById('dropdownNeighbors').children[0].addEventListener('click', function (event) {
+    elGetById('modalMountsNeighborsList').addEventListener('click', function (event) {
         event.preventDefault();
         const target = event.target.nodeName === 'A'
             ? event.target
             : event.target.parentNode;
         if (target.nodeName === 'A') {
-            document.getElementById('inputMountUrl').value = getData(target, 'value');
-            uiElements.dropdownNeighbors.hide();
+            elGetById('modalMountsMountUrlInput').value = getData(target, 'value');
+            uiElements.modalMountsNeighborsDropdown.hide();
         }
     }, false);
 
-    document.getElementById('modalMounts').addEventListener('shown.bs.modal', function () {
+    elGetById('modalMounts').addEventListener('show.bs.modal', function () {
         showListMounts();
     });
 }
@@ -61,10 +61,13 @@ function initMounts() {
 /**
  * Unmounts a mount point
  * @param {string} mountPoint mount point
+ * @param {Element} target triggering element
  * @returns {void}
  */
 //eslint-disable-next-line no-unused-vars
-function unmountMount(mountPoint) {
+function unmountMount(mountPoint, target) {
+    cleanupModalId('modalMounts');
+    btnWaiting(target, true);
     sendAPI("MYMPD_API_MOUNT_UNMOUNT", {
         "mountPoint": mountPoint
     }, mountMountCheckError, true);
@@ -72,26 +75,19 @@ function unmountMount(mountPoint) {
 
 /**
  * Mounts a mount
+ * @param {Element} target triggering element
  * @returns {void}
  */
 //eslint-disable-next-line no-unused-vars
-function mountMount() {
+function mountMount(target) {
     cleanupModalId('modalMounts');
-    let formOK = true;
-    const inputMountUrl = document.getElementById('inputMountUrl');
-    const inputMountPoint = document.getElementById('inputMountPoint');
-    if (!validateNotBlankEl(inputMountUrl)) {
-        formOK = false;
-    }
-    if (!validateNotBlankEl(inputMountPoint)) {
-        formOK = false;
-    }
-    if (formOK === true) {
-        sendAPI("MYMPD_API_MOUNT_MOUNT", {
-            "mountUrl": inputMountUrl.value,
-            "mountPoint": inputMountPoint.value,
-        }, mountMountCheckError, true);
-    }
+    btnWaiting(target, true);
+    const inputMountUrl = elGetById('modalMountsMountUrlInput');
+    const inputMountPoint = elGetById('modalMountsMountPointInput');
+    sendAPI("MYMPD_API_MOUNT_MOUNT", {
+        "mountUrl": inputMountUrl.value,
+        "mountPoint": inputMountPoint.value,
+    }, mountMountCheckError, true);
 }
 
 /**
@@ -100,10 +96,7 @@ function mountMount() {
  * @returns {void}
  */
 function mountMountCheckError(obj) {
-    if (obj.error) {
-        showModalAlert(obj);
-    }
-    else {
+    if (modalApply(obj) === true) {
         showListMounts();
     }
 }
@@ -116,16 +109,8 @@ function mountMountCheckError(obj) {
  */
 //eslint-disable-next-line no-unused-vars
 function updateMount(el, uri) {
-    //hide action items
-    const parent = el.parentNode;
-    for (let i = 0, j = parent.children.length; i < j; i++) {
-        elHide(parent.children[i]);
-    }
-    //add spinner
-    const spinner = elCreateEmpty('div', {"id": "spinnerUpdateProgress", "class": ["spinner-border", "spinner-border-sm"]});
-    el.parentNode.insertBefore(spinner, el);
-    //update
-    updateDB(uri, false);
+    // @ts-ignore
+    updateDB(uri, false, el);
 }
 
 /**
@@ -137,13 +122,13 @@ function updateMount(el, uri) {
 //eslint-disable-next-line no-unused-vars
 function showEditMount(uri, storage) {
     cleanupModalId('modalMounts');
-    document.getElementById('listMounts').classList.remove('active');
-    document.getElementById('editMount').classList.add('active');
-    elHideId('listMountsFooter');
-    elShowId('editMountFooter');
-    document.getElementById('inputMountUrl').value = uri;
-    document.getElementById('inputMountPoint').value = storage;
-    setFocusId('inputMountPoint');
+    elGetById('modalMountsListTab').classList.remove('active');
+    elGetById('modalMountsEditTab').classList.add('active');
+    elHideId('modalMountsListFooter');
+    elShowId('modalMountsEditFooter');
+    elGetById('modalMountsMountUrlInput').value = uri;
+    elGetById('modalMountsMountPointInput').value = storage;
+    setFocusId('modalMountsMountPointInput');
 }
 
 /**
@@ -152,10 +137,10 @@ function showEditMount(uri, storage) {
  */
 function showListMounts() {
     cleanupModalId('modalMounts');
-    document.getElementById('listMounts').classList.add('active');
-    document.getElementById('editMount').classList.remove('active');
-    elShowId('listMountsFooter');
-    elHideId('editMountFooter');
+    elGetById('modalMountsListTab').classList.add('active');
+    elGetById('modalMountsEditTab').classList.remove('active');
+    elShowId('modalMountsListFooter');
+    elHideId('modalMountsEditFooter');
     sendAPI("MYMPD_API_MOUNT_LIST", {}, parseListMounts, true);
 }
 
@@ -165,7 +150,7 @@ function showListMounts() {
  * @returns {void}
  */
 function parseListMounts(obj) {
-    const tbody = document.querySelector('#listMountsList');
+    const tbody = document.querySelector('#modalMountsList');
     elClear(tbody);
 
     if (checkResult(obj, tbody) === false) {
@@ -185,7 +170,7 @@ function parseListMounts(obj) {
         const mountActionTd = elCreateEmpty('td', {"data-col": "Action"});
         if (obj.result.data[i].mountPoint !== '') {
             mountActionTd.appendChild(
-                elCreateText('a', {"href": "#", "data-title-phrase": "Unmount", "data-action": "unmount", "class": ["mi", "color-darkgrey"]}, 'delete')
+                elCreateText('a', {"href": "#", "data-title-phrase": "Unmount", "data-action": "unmount", "class": ["mi", "color-darkgrey"]}, 'eject')
             );
             mountActionTd.appendChild(
                 elCreateText('a', {"href": "#", "data-title-phrase": "Update", "data-action": "update", "class": ["mi", "color-darkgrey"]}, 'refresh')
@@ -212,7 +197,7 @@ function parseListMounts(obj) {
  * @returns {void}
  */
 function parseNeighbors(obj) {
-    const dropdownNeighbors = document.getElementById('dropdownNeighbors').children[0];
+    const dropdownNeighbors = elGetById('modalMountsNeighborsList');
     elClear(dropdownNeighbors);
 
     if (obj.error) {

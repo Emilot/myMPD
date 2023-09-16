@@ -11,9 +11,9 @@
  */
 function handleBrowseRadioRadiobrowser() {
     setFocusId('BrowseRadioRadiobrowserSearchStr');
-    document.getElementById('inputRadiobrowserTags').value = app.current.filter['tags'];
-    document.getElementById('inputRadiobrowserCountry').value = app.current.filter['country'];
-    document.getElementById('inputRadiobrowserLanguage').value = app.current.filter['language'];
+    elGetById('BrowseRadioRadiobrowserTagsInput').value = app.current.filter['tags'];
+    elGetById('BrowseRadioRadiobrowserCountryInput').value = app.current.filter['country'];
+    elGetById('BrowseRadioRadiobrowserLanguageInput').value = app.current.filter['language'];
     if (app.current.search === '') {
         sendAPI("MYMPD_API_CLOUD_RADIOBROWSER_NEWEST", {
             "offset": app.current.offset,
@@ -36,8 +36,8 @@ function handleBrowseRadioRadiobrowser() {
  * Initializes the radiobrowser elements
  * @returns {void}
  */
-function initBrowseRadioRadiobrowser() {
-    document.getElementById('BrowseRadioRadiobrowserSearchStr').addEventListener('keyup', function(event) {
+function initViewBrowseRadioRadiobrowser() {
+    elGetById('BrowseRadioRadiobrowserSearchStr').addEventListener('keyup', function(event) {
         if (ignoreKeys(event) === true) {
             return;
         }
@@ -47,32 +47,17 @@ function initBrowseRadioRadiobrowser() {
         }, searchTimerTimeout);
     }, false);
 
-    document.getElementById('BrowseRadioRadiobrowserFilter').addEventListener('show.bs.collapse', function() {
-        document.getElementById('BrowseRadioRadiobrowserFilterBtn').classList.add('active');
+    elGetById('BrowseRadioRadiobrowserFilter').addEventListener('show.bs.collapse', function() {
+        elGetById('BrowseRadioRadiobrowserFilterBtn').classList.add('active');
     }, false);
 
-    document.getElementById('BrowseRadioRadiobrowserFilter').addEventListener('hide.bs.collapse', function() {
-        document.getElementById('BrowseRadioRadiobrowserFilterBtn').classList.remove('active');
+    elGetById('BrowseRadioRadiobrowserFilter').addEventListener('hide.bs.collapse', function() {
+        elGetById('BrowseRadioRadiobrowserFilterBtn').classList.remove('active');
     }, false);
 
-    document.getElementById('BrowseRadioRadiobrowserList').addEventListener('click', function(event) {
-        //select mode
-        if (selectRow(event) === true) {
-            return;
-        }
-        if (event.target.nodeName === 'A') {
-            //action td
-            handleActionTdClick(event);
-            return;
-        }
-        //table body
-        const target = event.target.closest('TR');
-        if (target === null) {
-            return;
-        }
-        if (target.parentNode.nodeName === 'TBODY' &&
-            checkTargetClick(target) === true)
-        {
+    elGetById('BrowseRadioRadiobrowserList').addEventListener('click', function(event) {
+        const target = tableClickHandler(event);
+        if (target !== null) {
             const uri = getData(target, 'uri');
             if (settings.webuiSettings.clickRadiobrowser === 'add') {
                 showEditRadioFavorite({
@@ -107,88 +92,11 @@ function countClickRadiobrowser(uuid) {
  * @returns {void}
  */
 function searchRadiobrowser() {
-    app.current.filter['tags'] = document.getElementById('inputRadiobrowserTags').value;
-    app.current.filter['country'] = document.getElementById('inputRadiobrowserCountry').value;
-    app.current.filter['language'] = document.getElementById('inputRadiobrowserLanguage').value;
+    app.current.filter['tags'] = elGetById('BrowseRadioRadiobrowserTagsInput').value;
+    app.current.filter['country'] = elGetById('BrowseRadioRadiobrowserCountryInput').value;
+    app.current.filter['language'] = elGetById('BrowseRadioRadiobrowserLanguageInput').value;
     appGoto(app.current.card, app.current.tab, app.current.view,
-        0, app.current.limit, app.current.filter, '-', '-', document.getElementById('BrowseRadioRadiobrowserSearchStr').value);
-}
-
-/**
- * Shows the details of a radiobrowser station
- * @param {string} uuid station uuid
- * @returns {void}
- */
-//eslint-disable-next-line no-unused-vars
-function showRadiobrowserDetails(uuid) {
-    sendAPI("MYMPD_API_CLOUD_RADIOBROWSER_STATION_DETAIL", {
-        "uuid": uuid
-    }, parseRadiobrowserDetails, true);
-    uiElements.modalRadiobrowserDetails.show();
-    elReplaceChildId('modalRadiobrowserDetailsList',
-        elCreateNode('tr', {}, 
-            elCreateTextTn('td', {"colspan": 2}, 'Loading...')
-        )
-    );
-    countClickRadiobrowser(uuid);
-}
-
-/**
- * Parses the MYMPD_API_CLOUD_RADIOBROWSER_STATION_DETAIL jsonrpc response
- * @param {object} obj jsonrpc response
- * @returns {void}
- */
-function parseRadiobrowserDetails(obj) {
-    const tbody = document.getElementById('modalRadiobrowserDetailsList');
-    if (checkResult(obj, tbody) === false) {
-        return;
-    }
-    elClearId('modalRadiobrowserDetailsList');
-    const result = obj.result.data[0];
-    if (result.favicon !== '') {
-        document.getElementById('RadiobrowserDetailsImage').style.backgroundImage = getCssImageUri(result.favicon);
-    }
-    else {
-        document.getElementById('RadiobrowserDetailsImage').style.backgroundImage =
-            'url("' + subdir + '/assets/coverimage-notavailable")';
-    }
-    document.getElementById('RadiobrowserDetailsTitle').textContent = result.name;
-    //map fields to webradiodb fields
-    setDataId('RadiobrowserDetailsTitle', 'webradio', {
-        "Name": result.name,
-        "StreamUri": result.url_resolved,
-        "Genre": result.tags,
-        "Homepage": result.homepage,
-        "Country": result.country,
-        "Language": result.language,
-        "Codec": result.codec,
-        "Bitrate": result.bitrate,
-        "Description": "",
-        "Image": result.favicon
-    });
-    //friendly names for fields
-    const showFields = {
-        'url_resolved': 'StreamUri',
-        'homepage': 'Homepage',
-        'tags': 'Tags',
-        'country': 'Country',
-        'language': 'Language',
-        'codec': 'Codec',
-        'bitrate': 'Bitrate',
-        'votes': 'Votes',
-        'lastchangetime': 'Last change time',
-        'lastcheckok': 'State',
-        'clickcount': 'Click count'
-    };
-    for (const field in showFields) {
-        const value = printValue(field, result[field]);
-        tbody.appendChild(
-            elCreateNodes('tr', {}, [
-                elCreateTextTn('th', {}, showFields[field]),
-                elCreateNode('td', {}, value)
-            ])
-        );
-    }
+        0, app.current.limit, app.current.filter, '-', '-', elGetById('BrowseRadioRadiobrowserSearchStr').value);
 }
 
 /**
@@ -202,17 +110,17 @@ function parseRadiobrowserList(obj) {
         app.current.filter['country'] === '' &&
         app.current.filter['language'] === '')
     {
-        document.getElementById('BrowseRadioRadiobrowserFilterBtn').textContent = 'filter_list_off';
+        elGetById('BrowseRadioRadiobrowserFilterBtn').textContent = 'filter_list_off';
     }
     else {
-        document.getElementById('BrowseRadioRadiobrowserFilterBtn').textContent = 'filter_list';
+        elGetById('BrowseRadioRadiobrowserFilterBtn').textContent = 'filter_list';
     }
 
     if (checkResultId(obj, 'BrowseRadioRadiobrowserList') === false) {
         return;
     }
 
-    const rowTitle = tn(webuiSettingsDefault.clickRadiobrowser.validValues[settings.webuiSettings.clickRadiobrowser]);
+    const rowTitle = tn(settingsWebuiFields.clickRadiobrowser.validValues[settings.webuiSettings.clickRadiobrowser]);
     //set result keys for pagination
     obj.result.returnedEntities = obj.result.data.length;
     obj.result.totalEntities = -1;

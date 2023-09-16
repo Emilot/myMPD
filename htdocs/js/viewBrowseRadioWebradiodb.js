@@ -16,16 +16,16 @@ function handleBrowseRadioWebradiodb() {
         getWebradiodb();
         return;
     }
-    setDataId('filterWebradiodbGenre', 'value', app.current.filter['genre']);
-    document.getElementById('filterWebradiodbGenre').value = app.current.filter['genre'];
-    setDataId('filterWebradiodbCountry', 'value', app.current.filter['country']);
-    document.getElementById('filterWebradiodbCountry').value = app.current.filter['country'];
-    setDataId('filterWebradiodbLanguage', 'value', app.current.filter['language']);
-    document.getElementById('filterWebradiodbLanguage').value = app.current.filter['language'];
-    setDataId('filterWebradiodbCodec', 'value', app.current.filter['codec']);
-    document.getElementById('filterWebradiodbCodec').value = app.current.filter['codec'];
-    setDataId('filterWebradiodbBitrate', 'value', app.current.filter['bitrate']);
-    document.getElementById('filterWebradiodbBitrate').value = app.current.filter['bitrate'];
+    setDataId('BrowseRadioWebradiodbGenreFilter', 'value', app.current.filter['genre']);
+    elGetById('BrowseRadioWebradiodbGenreFilter').value = app.current.filter['genre'];
+    setDataId('BrowseRadioWebradiodbCountryFilter', 'value', app.current.filter['country']);
+    elGetById('BrowseRadioWebradiodbCountryFilter').value = app.current.filter['country'];
+    setDataId('BrowseRadioWebradiodbLanguageFilter', 'value', app.current.filter['language']);
+    elGetById('BrowseRadioWebradiodbLanguageFilter').value = app.current.filter['language'];
+    setDataId('BrowseRadioWebradiodbCodecFilter', 'value', app.current.filter['codec']);
+    elGetById('BrowseRadioWebradiodbCodecFilter').value = app.current.filter['codec'];
+    setDataId('BrowseRadioWebradiodbBitrateFilter', 'value', app.current.filter['bitrate']);
+    elGetById('BrowseRadioWebradiodbBitrateFilter').value = app.current.filter['bitrate'];
 
     const result = searchWebradiodb(app.current.search, app.current.filter['genre'],
         app.current.filter['country'], app.current.filter['language'], app.current.filter['codec'],
@@ -37,8 +37,8 @@ function handleBrowseRadioWebradiodb() {
  * Initialization function for webradioDB elements
  * @returns {void}
  */
-function initBrowseRadioWebradiodb() {
-    document.getElementById('BrowseRadioWebradiodbSearchStr').addEventListener('keyup', function(event) {
+function initViewBrowseRadioWebradiodb() {
+    elGetById('BrowseRadioWebradiodbSearchStr').addEventListener('keyup', function(event) {
         if (ignoreKeys(event) === true) {
             return;
         }
@@ -48,21 +48,21 @@ function initBrowseRadioWebradiodb() {
         }, searchTimerTimeout);
     }, false);
 
-    document.getElementById('BrowseRadioWebradiodbFilter').addEventListener('shown.bs.collapse', function() {
-        document.getElementById('BrowseRadioWebradiodbFilterBtn').classList.add('active');
-        setScrollViewHeight(document.getElementById('BrowseRadioWebradiodbList'));
+    elGetById('BrowseRadioWebradiodbFilter').addEventListener('shown.bs.collapse', function() {
+        elGetById('BrowseRadioWebradiodbFilterBtn').classList.add('active');
+        setScrollViewHeight(elGetById('BrowseRadioWebradiodbList'));
     }, false);
 
-    document.getElementById('BrowseRadioWebradiodbFilter').addEventListener('hidden.bs.collapse', function() {
-        document.getElementById('BrowseRadioWebradiodbFilterBtn').classList.remove('active');
-        setScrollViewHeight(document.getElementById('BrowseRadioWebradiodbList'));
+    elGetById('BrowseRadioWebradiodbFilter').addEventListener('hidden.bs.collapse', function() {
+        elGetById('BrowseRadioWebradiodbFilterBtn').classList.remove('active');
+        setScrollViewHeight(elGetById('BrowseRadioWebradiodbList'));
     }, false);
 
-    initWebradiodbFilter('filterWebradiodbGenre', 'webradioGenres', 'Genre');
-    initWebradiodbFilter('filterWebradiodbCountry', 'webradioCountries', 'Country');
-    initWebradiodbFilter('filterWebradiodbLanguage', 'webradioLanguages', 'Language');
-    initWebradiodbFilter('filterWebradiodbCodec', 'webradioCodecs', 'Codec');
-    initWebradiodbFilter('filterWebradiodbBitrate', 'webradioBitrates', 'Bitrate');
+    initWebradiodbFilter('BrowseRadioWebradiodbGenreFilter', 'webradioGenres', 'Genre');
+    initWebradiodbFilter('BrowseRadioWebradiodbCountryFilter', 'webradioCountries', 'Country');
+    initWebradiodbFilter('BrowseRadioWebradiodbLanguageFilter', 'webradioLanguages', 'Language');
+    initWebradiodbFilter('BrowseRadioWebradiodbCodecFilter', 'webradioCodecs', 'Codec');
+    initWebradiodbFilter('BrowseRadioWebradiodbBitrateFilter', 'webradioBitrates', 'Bitrate');
 
     document.querySelector('#BrowseRadioWebradiodbList > thead > tr').addEventListener('click', function(event) {
         const colName = event.target.getAttribute('data-col');
@@ -71,24 +71,9 @@ function initBrowseRadioWebradiodb() {
             app.current.offset, app.current.limit, app.current.filter, app.current.sort, '-', app.current.search);
     }, false);
 
-    document.getElementById('BrowseRadioWebradiodbList').addEventListener('click', function(event) {
-        //select mode
-        if (selectRow(event) === true) {
-            return;
-        }
-        if (event.target.nodeName === 'A') {
-            //action td
-            handleActionTdClick(event);
-            return;
-        }
-        //table body
-        const target = event.target.closest('TR');
-        if (target === null) {
-            return;
-        }
-        if (target.parentNode.nodeName === 'TBODY' &&
-            checkTargetClick(target) === true)
-        {
+    elGetById('BrowseRadioWebradiodbList').addEventListener('click', function(event) {
+        const target = tableClickHandler(event);
+        if (target !== null) {
             const uri = getData(target, 'uri');
             if (settings.webuiSettings.clickRadiobrowser === 'add') {
                 showEditRadioFavorite({
@@ -113,7 +98,7 @@ function initBrowseRadioWebradiodb() {
  * @returns {void}
  */
 function initWebradiodbFilter(id, dbField, name) {
-    document.getElementById(id).addEventListener('change', function() {
+    elGetById(id).addEventListener('change', function() {
         doSearchWebradiodb();
     }, false);
     setDataId(id, 'cb-filter', 'filterWebradiodbFilter');
@@ -131,11 +116,11 @@ function getWebradiodb() {
     );
     sendAPI("MYMPD_API_CLOUD_WEBRADIODB_COMBINED_GET", {}, function(obj) {
         webradioDb = obj.result.data;
-        filterWebradiodbFilter('filterWebradiodbGenre', 'webradioGenres', 'Genre', '');
-        filterWebradiodbFilter('filterWebradiodbCountry', 'webradioCountries', 'Country', '');
-        filterWebradiodbFilter('filterWebradiodbLanguage', 'webradioLanguages', 'Language', '');
-        filterWebradiodbFilter('filterWebradiodbCodec', 'webradioCodecs', 'Codec', '');
-        filterWebradiodbFilter('filterWebradiodbBitrate', 'webradioBitrates', 'Bitrate', '');
+        filterWebradiodbFilter('BrowseRadioWebradiodbGenreFilter', 'webradioGenres', 'Genre', '');
+        filterWebradiodbFilter('BrowseRadioWebradiodbCountryFilter', 'webradioCountries', 'Country', '');
+        filterWebradiodbFilter('BrowseRadioWebradiodbLanguageFilter', 'webradioLanguages', 'Language', '');
+        filterWebradiodbFilter('BrowseRadioWebradiodbCodecFilter', 'webradioCodecs', 'Codec', '');
+        filterWebradiodbFilter('BrowseRadioWebradiodbBitrateFilter', 'webradioBitrates', 'Bitrate', '');
         const result = searchWebradiodb(app.current.search, app.current.filter['genre'],
             app.current.filter['country'], app.current.filter['language'], app.current.filter['codec'],
             app.current.filter['bitrate'], app.current.sort, app.current.offset, app.current.limit);
@@ -153,7 +138,7 @@ function getWebradiodb() {
  */
 function filterWebradiodbFilter(id, dbField, placeholder, searchStr) {
     searchStr = searchStr.toLowerCase();
-    const el = document.getElementById(id);
+    const el = elGetById(id);
     elClear(el.filterResult);
     el.addFilterResult(tn(placeholder), '');
     let i = 0;
@@ -175,12 +160,12 @@ function filterWebradiodbFilter(id, dbField, placeholder, searchStr) {
  * @returns {void}
  */
 function doSearchWebradiodb() {
-    const searchstr = document.getElementById('BrowseRadioWebradiodbSearchStr').value;
-    const genre = getDataId('filterWebradiodbGenre', 'value');
-    const country = getDataId('filterWebradiodbCountry', 'value');
-    const language = getDataId('filterWebradiodbLanguage', 'value');
-    const codec = getDataId('filterWebradiodbCodec', 'value');
-    const bitrate = getDataId('filterWebradiodbBitrate', 'value');
+    const searchstr = elGetById('BrowseRadioWebradiodbSearchStr').value;
+    const genre = getDataId('BrowseRadioWebradiodbGenreFilter', 'value');
+    const country = getDataId('BrowseRadioWebradiodbCountryFilter', 'value');
+    const language = getDataId('BrowseRadioWebradiodbLanguageFilter', 'value');
+    const codec = getDataId('BrowseRadioWebradiodbCodecFilter', 'value');
+    const bitrate = getDataId('BrowseRadioWebradiodbBitrateFilter', 'value');
     appGoto('Browse', 'Radio', 'Webradiodb',
         0, app.current.limit, {"genre": genre, "country": country, "language": language, "codec": codec, "bitrate": bitrate},
         app.current.sort, undefined, searchstr, 0);
@@ -217,7 +202,7 @@ function searchWebradiodb(name, genre, country, language, codec, bitrate, sort, 
         if (webradioDb.webradios[key].Name.toLowerCase().indexOf(name) > -1 &&
             (genre === '' || webradioDb.webradios[key].Genre.includes(genre)) &&
             (country === '' || country === webradioDb.webradios[key].Country) &&
-            (language === '' || language === webradioDb.webradios[key].Language) &&
+            (language === '' || webradioDb.webradios[key].Languages.includes(language)) &&
             (codec === '' || webradioDb.webradios[key].allCodecs.includes(codec)) &&
             (bitrate === 0 || bitrate <= webradioDb.webradios[key].highestBitrate)
         ) {
@@ -284,17 +269,17 @@ function parseSearchWebradiodb(obj) {
         app.current.filter['codec'] === '' &&
         app.current.filter['bitrate'] === '')
     {
-        document.getElementById('BrowseRadioWebradiodbFilterBtn').textContent = 'filter_list_off';
+        elGetById('BrowseRadioWebradiodbFilterBtn').textContent = 'filter_list_off';
     }
     else {
-        document.getElementById('BrowseRadioWebradiodbFilterBtn').textContent = 'filter_list';
+        elGetById('BrowseRadioWebradiodbFilterBtn').textContent = 'filter_list';
     }
 
     if (checkResultId(obj, 'BrowseRadioWebradiodbList') === false) {
         return;
     }
 
-    const rowTitle = tn(webuiSettingsDefault.clickRadiobrowser.validValues[settings.webuiSettings.clickRadiobrowser]);
+    const rowTitle = tn(settingsWebuiFields.clickRadiobrowser.validValues[settings.webuiSettings.clickRadiobrowser]);
 
     updateTable(obj, 'BrowseRadioWebradiodb', function(row, data) {
         setData(row, 'uri', data.StreamUri);
@@ -303,7 +288,7 @@ function parseSearchWebradiodb(obj) {
         setData(row, 'image', webradioDbPicsUri + data.Image);
         setData(row, 'homepage', data.Homepage);
         setData(row, 'country', data.Country);
-        setData(row, 'language', data.Language);
+        setData(row, 'language', data.Languages);
         setData(row, 'description', data.Description);
         setData(row, 'codec', data.Codec);
         setData(row, 'bitrate', data.Bitrate);
@@ -328,79 +313,4 @@ function parseSearchWebradiodb(obj) {
  */
 function streamUriToName(uri) {
     return uri.replace(/[<>/.:?&$!#|;=]/g, '_');
-}
-
-/**
- * Shows the details of a webradioDB entry
- * @param {string} uri webradio uri
- * @returns {void}
- */
-//eslint-disable-next-line no-unused-vars
-function showWebradiodbDetails(uri) {
-    //reuse the radiobrowser modal
-    const tbody = document.getElementById('modalRadiobrowserDetailsList');
-    elClearId('modalRadiobrowserDetailsList');
-    const m3u = isStreamUri(uri) ? streamUriToName(uri) + '.m3u' : uri;
-    const result = webradioDb.webradios[m3u];
-    if (result.Image !== '') {
-        document.getElementById('RadiobrowserDetailsImage').style.backgroundImage = getCssImageUri(webradioDbPicsUri + result.Image);
-    }
-    else {
-        document.getElementById('RadiobrowserDetailsImage').style.backgroundImage =
-            'url("' + subdir + '/assets/coverimage-notavailable")';
-    }
-    document.getElementById('RadiobrowserDetailsTitle').textContent = result.Name;
-    setDataId('RadiobrowserDetailsTitle', 'webradio', result);
-    const showFields = [
-        'StreamUri',
-        'Homepage',
-        'Genre',
-        'Country',
-        'Language',
-        'Codec',
-        'Bitrate',
-        'Description'
-    ];
-    for (const field of showFields) {
-        const value = printValue(field, result[field]);
-        tbody.appendChild(
-            elCreateNodes('tr', {}, [
-                elCreateTextTn('th', {}, field),
-                elCreateNode('td', {}, value)
-            ])
-        );
-    }
-    const alternateStreams = Object.keys(result.alternativeStreams);
-    if (alternateStreams.length > 0) {
-        const td = elCreateEmpty('td', {});
-        for (const name of alternateStreams) {
-            const p = elCreateTextTn('p', {"class": ["pb-0"]}, 'Webradioformat',
-                {"codec": result.alternativeStreams[name].Codec, "bitrate": result.alternativeStreams[name].Bitrate});
-            const btn = elCreateText('button', {"class": ["btn", "btn-sm", "btn-secondary", "mi", "mi-sm", "ms-2"]}, 'favorite');
-            p.appendChild(btn);
-            td.appendChild(p);
-            btn.addEventListener('click', function(event) {
-                event.preventDefault();
-                showEditRadioFavorite({
-                    "Name": result.Name,
-                    "StreamUri": result.alternativeStreams[name].StreamUri,
-                    "Genre": result.Genre,
-                    "Homepage": result.Homepage,
-                    "Country": result.Country,
-                    "Language": result.Language,
-                    "Codec": result.alternativeStreams[name].Codec,
-                    "Bitrate": result.alternativeStreams[name].Bitrate,
-                    "Description": result.Description,
-                    "Image": result.Image
-                });
-            }, false);
-        }
-        tbody.appendChild(
-            elCreateNodes('tr', {}, [
-                elCreateTextTn('th', {}, 'Alternative streams'),
-                td
-            ])
-        );
-    }
-    uiElements.modalRadiobrowserDetails.show();
 }

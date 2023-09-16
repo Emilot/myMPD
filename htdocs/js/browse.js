@@ -11,11 +11,11 @@
  */
 function initBrowse() {
     for (const nav of ['BrowseDatabaseTagListTagDropdown', 'BrowseDatabaseAlbumListTagDropdown',
-        'BrowseNavPlaylistDropdown', 'BrowseNavFilesystemDropdown',
-        'BrowseNavWebradiodbDropdown','BrowseNavRadiobrowserDropdown',
-        'BrowseNavRadioFavoritesDropdown'])
+        'BrowsePlaylistListNavDropdown', 'BrowseFilesystemNavDropdown',
+        'BrowseRadioWebradiodbNavDropdown','BrowseRadioRadiobrowserNavDropdown',
+        'BrowseRadioFavoritesNavDropdown'])
     {
-        document.getElementById(nav).addEventListener('click', function(event) {
+        elGetById(nav).addEventListener('click', function(event) {
             navBrowseHandler(event);
         }, false);
     }
@@ -57,7 +57,7 @@ function navBrowseHandler(event) {
             app.current.view = 'AlbumList';
         }
         app.current.search = '';
-        document.getElementById('searchDatabaseAlbumListMatch').value = 'contains';
+        elGetById('BrowseDatabaseAlbumListSearchMatch').value = 'contains';
         appGoto(app.current.card, app.current.tab, app.current.view,
             0, app.current.limit, app.current.filter, app.current.sort, tag, app.current.search);
     }
@@ -134,7 +134,7 @@ function gotoAlbumList(tag, value) {
         //convert string to array
         value = [value];
     }
-    document.getElementById('searchDatabaseAlbumListStr').value = '';
+    elGetById('BrowseDatabaseAlbumListSearchStr').value = '';
     let expression = '(';
     for (let i = 0, j = value.length; i < j; i++) {
         if (i > 0) {
@@ -154,8 +154,8 @@ function gotoAlbumList(tag, value) {
  */
 //eslint-disable-next-line no-unused-vars
 function gotoFilesystem(uri, type) {
-    document.getElementById('searchFilesystemStr').value = '';
-    appGoto('Browse', 'Filesystem', undefined, 0, undefined, '-', {'tag':'-', 'desc': false}, type, uri);
+    elGetById('BrowseFilesystemSearchStr').value = '';
+    appGoto('Browse', 'Filesystem', undefined, 0, undefined, uri, {'tag':'', 'desc': false}, type, '');
 }
 
 /**

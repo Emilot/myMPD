@@ -9,8 +9,8 @@
  * Initialization function for song elements
  * @returns {void}
  */
-function initSongDetails() {
-    document.getElementById('tbodySongDetails').addEventListener('click', function(event) {
+function initModalSongDetails() {
+    elGetById('modalSongDetailsTagsList').addEventListener('click', function(event) {
         if (event.target.nodeName === 'A') {
             if (event.target.id === 'calcFingerprint') {
                 sendAPI("MYMPD_API_SONG_FINGERPRINT", {
@@ -35,7 +35,7 @@ function initSongDetails() {
                 case 'gotoContainingFolder': {
                     uiElements.modalSongDetails.hide();
                     event.preventDefault();
-                    appGoto('Browse', 'Filesystem', undefined, 0, undefined, '-', {'tag': '-', 'desc': false}, '-', getData(event.target, 'folder'), 0);
+                    appGoto('Browse', 'Filesystem', undefined, 0, undefined, getData(event.target, 'folder'), {'tag': '', 'desc': false}, '', '', 0);
                     break;
                 }
                 case 'downloadSong': {
@@ -111,14 +111,14 @@ function songDetailsRow(thContent, tdContent) {
  * @returns {void}
  */
 function parseSongDetails(obj) {
-    const modal = document.getElementById('modalSongDetails');
+    const modal = elGetById('modalSongDetails');
     modal.querySelector('.album-cover').style.backgroundImage = getCssImageUri('/albumart?offset=0&uri=' + myEncodeURIComponent(obj.result.uri));
 
     const elH1s = modal.querySelectorAll('h1');
     for (let i = 0, j = elH1s.length; i < j; i++) {
         elH1s[i].textContent = obj.result.Title;
     }
-    const tbody = document.getElementById('tbodySongDetails');
+    const tbody = elGetById('modalSongDetailsTagsList');
     elClear(tbody);
     for (let i = 0, j = settings.tagList.length; i < j; i++) {
         if (settings.tagList[i] === 'Title' ||
@@ -234,7 +234,7 @@ function parseSongDetails(obj) {
                     thDown,
                     thUp
                 ]);
-                setData(grp, 'href', {"cmd": "voteSong", "options": []});
+                setData(grp, 'href', {"cmd": "voteSong", "options": ["target"]});
                 setData(grp, 'uri', obj.result.uri);
                 tbody.appendChild(
                     elCreateNodes('tr', {}, [
@@ -252,11 +252,11 @@ function parseSongDetails(obj) {
     }
     //populate other tabs
     if (features.featLyrics === true) {
-        getLyrics(obj.result.uri, document.getElementById('lyricsText'));
+        getLyrics(obj.result.uri, elGetById('modalSongDetailsTabPicsLyricsText'));
     }
-    getComments(obj.result.uri, document.getElementById('tbodySongComments'));
-    const imgEl = document.getElementById('tabSongPics');
-    createImgCarousel(imgEl, 'songPicsCarousel', obj.result.uri, obj.result.images, obj.result.embeddedImageCount);
+    getComments(obj.result.uri, elGetById('modalSongDetailsCommentsList'));
+    const imgEl = elGetById('modalSongDetailsTabPics');
+    createImgCarousel(imgEl, 'modalSongDetailsPicsCarousel', obj.result.uri, obj.result.images, obj.result.embeddedImageCount);
 }
 
 /**
@@ -288,90 +288,3 @@ function getComments(uri, el) {
     }, false);
 }
 
-/**
- * Song love/hate event handler
- * @param {EventTarget} el triggering element
- * @returns {void}
- */
-//eslint-disable-next-line no-unused-vars
-function voteSong(el) {
-    if (el.nodeName === 'DIV') {
-        return;
-    }
-    let vote = Number(el.getAttribute('data-vote'));
-    if (vote === 0 &&
-        el.classList.contains('active'))
-    {
-        vote = 1;
-        el.classList.remove('active');
-    }
-    else if (vote === 2 &&
-             el.classList.contains('active'))
-    {
-        vote = 1;
-        el.classList.remove('active');
-    }
-    const aEl = el.parentNode.querySelector('.active');
-    if (aEl !== null) {
-        aEl.classList.remove('active');
-    }
-    if (vote === 0 ||
-        vote === 2)
-    {
-        el.classList.add('active');
-    }
-    let uri = getData(el.parentNode, 'uri');
-    if (uri === undefined) {
-        //fallback to current song
-        uri = getDataId('currentTitle', 'uri');
-    }
-    sendAPI("MYMPD_API_LIKE", {
-        "uri": uri,
-        "like": vote
-    }, null, false);
-}
-
-/**
- * Sets the state of the song vote button group
- * @param {number} vote the vote 0 = hate, 1 = neutral, 2 = love
- * @param {string} uri song uri
- * @returns {void}
- */
-function setVoteSongBtns(vote, uri) {
-    if (uri === undefined) {
-        uri = '';
-    }
-
-    const btnVoteUp = document.getElementById('btnVoteUp');
-    const btnVoteDown = document.getElementById('btnVoteDown');
-
-    if (isValidUri(uri) === false ||
-        isStreamUri(uri) === true)
-    {
-        elDisable(btnVoteUp);
-        elDisable(btnVoteDown);
-        elDisable(btnVoteUp.parentNode);
-        btnVoteUp.classList.remove('active');
-        btnVoteDown.classList.remove('active');
-    }
-    else {
-        elEnable(btnVoteUp);
-        elEnable(btnVoteDown);
-        elEnable(btnVoteUp.parentNode);
-    }
-
-    switch(vote) {
-        case 0:
-            btnVoteUp.classList.remove('active');
-            btnVoteDown.classList.add('active');
-            break;
-        case 2:
-            btnVoteUp.classList.add('active');
-            btnVoteDown.classList.remove('active');
-            break;
-        default:
-            btnVoteUp.classList.remove('active');
-            btnVoteDown.classList.remove('active');
-            break;
-    }
-}

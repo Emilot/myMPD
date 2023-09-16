@@ -461,7 +461,7 @@ const APImethods = {
     "MYMPD_API_QUEUE_APPEND_PLAYLISTS": {
         "desc": "Appends the playlists to the queue.",
         "params": {
-            "plists": APIparams.plist,
+            "plists": APIparams.plists,
             "play": APIparams.play
         }
     },
@@ -754,7 +754,7 @@ const APImethods = {
         "desc": "Batch removes playlists.",
         "protected": true,
         "params": {
-            "type": {
+            "plistType": {
                 "type": APItypes.string,
                 "example": "deleteEmptyPlaylists",
                 "desc": "valid values are: \"deleteEmptyPlaylists\", \"deleteSmartPlaylists\", \"deleteAllPlaylists\""
@@ -999,6 +999,16 @@ const APImethods = {
         "desc": "Goto previous song in queue.",
         "params": {}
     },
+    "MYMPD_API_PLAYER_OUTPUT_GET": {
+        "desc": "Get the details of a MPD output.",
+        "params": {
+            "outputName": {
+                "type": APItypes.string,
+                "example": "http",
+                "desc": "MPD output name"
+            }
+        }
+    },
     "MYMPD_API_PLAYER_OUTPUT_LIST": {
         "desc": "Lists the MPD outputs.",
         "params": {}
@@ -1133,12 +1143,12 @@ const APImethods = {
             "coverimageNames": {
                 "type": APItypes.string,
                 "example": "folder,cover",
-                "desc": "Comma separated list of coverimages, basenames or full names"
+                "desc": "Comma separated list of coverimages, basenames or full names."
             },
             "thumbnailNames": {
                 "type": APItypes.string,
                 "example": "folder-sm,cover-sm",
-                "desc": "Comma separated list of coverimage thumbnails, basenames or full names"
+                "desc": "Comma separated list of coverimage thumbnails, basenames or full names."
             },
             "lastPlayedCount": {
                 "type": APItypes.uint,
@@ -1163,7 +1173,7 @@ const APImethods = {
             "smartplsSort": {
                 "type": APItypes.string,
                 "example": "",
-                "desc": "Sort settings for generated smart playlists, blank = no sort, \"shuffle\" or tag name"
+                "desc": "Sort settings for generated smart playlists, blank = no sort, \"shuffle\" or tag name."
             },
             "smartplsGenerateTagList": {
                 "type": APItypes.string,
@@ -1312,45 +1322,60 @@ const APImethods = {
                         "example": true,
                         "desc": "Enable media session support"
                     },
-                    "uiFooterQueueSettings": {
-                        "type": APItypes.bool,
-                        "example": true,
-                        "desc": "Shows playback settings button in footer."
-                    },
-                    "uiFooterPlaybackControls": {
+                    "footerPlaybackControls": {
                         "type": APItypes.string,
                         "example": "both",
                         "desc": "\"pause\", \"stop\" or \"both\" for pause and stop"
                     },
-                    "uiFooterVolumeLevel": {
+                    "footerSettingsPlayback": {
                         "type": APItypes.bool,
                         "example": true,
-                        "desc": "Displays the volume level in the footer"
+                        "desc": "Shows playback settings button in footer."
                     },
-                    "uiFooterNotifications": {
+                    "footerVolumeLevel": {
                         "type": APItypes.bool,
                         "example": true,
-                        "desc": "Displays a notification icon in the footer"
+                        "desc": "Displays the volume level in the footer."
                     },
-                    "uiMaxElementsPerPage": {
+                    "footerNotifications": {
+                        "type": APItypes.bool,
+                        "example": true,
+                        "desc": "Displays a notification icon in the footer."
+                    },
+                    "showHelp": {
+                        "type": APItypes.bool,
+                        "example": true,
+                        "desc": "Displays help texts."
+                    },
+                    "maxElementsPerPage": {
                         "type": APItypes.uint,
                         "example": 50,
-                        "desc": "max. elements for lists: 25, 50, 100, 200 or 0 for unlimited"
+                        "desc": "Max. elements for lists: 25, 50, 100, 200 or 0 for unlimited"
                     },
-                    "uiSmallWidthTagRows": {
+                    "smallWidthTagRows": {
                         "type": APItypes.bool,
                         "example": true,
-                        "desc": "Display tags in rows for small displays"
+                        "desc": "Display tags in rows for small displays."
                     },
-                    "uiQuickPlayButton": {
+                    "quickPlayButton": {
                         "type": APItypes.bool,
                         "example": false,
-                        "title": "Show quick play button"
+                        "desc": "Show quick play button"
                     },
-                    "uiQuickRemoveButton": {
+                    "quickRemoveButton": {
                         "type": APItypes.bool,
                         "example": false,
-                        "title": "Show quick remove button"
+                        "desc": "Show quick remove button"
+                    },
+                    "compactGrids": {
+                        "type": APItypes.bool,
+                        "example": true,
+                        "desc": "Disables line-breaks in descriptions."
+                    },
+                    "showBackButton": {
+                        "type": APItypes.bool,
+                        "example": true,
+                        "desc": "Shows a history back button in the navigation bar."
                     },
                     "enableHome": {
                         "type": APItypes.bool,
@@ -1380,7 +1405,7 @@ const APImethods = {
                     "enableLocalPlayback": {
                         "type": APItypes.bool,
                         "example": false,
-                        "desc": "Enables local playback of mpd http stream"
+                        "desc": "Enables local playback of mpd http stream."
                     },
                     "enablePartitions": {
                         "type": APItypes.bool,
@@ -1392,45 +1417,50 @@ const APImethods = {
                         "example": true,
                         "desc": "Enable Lyrics"
                     },
-                    "uiTheme": {
+                    "theme": {
                         "type": APItypes.string,
                         "example": "dark",
                         "desc": "\"dark\", \"light\" or \"auto\""
                     },
-                    "uiThumbnailSize": {
+                    "thumbnailSize": {
                         "type": APItypes.int,
                         "example": 175,
                         "desc": "Size for thumbnails"
                     },
-                    "uiBgColor": {
+                    "bgCover": {
+                        "type": APItypes.bool,
+                        "example": true,
+                        "desc": "Display the coverimage as background."
+                    },
+                    "bgCssFilter": {
+                        "type": APItypes.string,
+                        "example": "grayscale(100%) opacity(10%)",
+                        "desc": "CSS filter for background coverimage."
+                    },
+                    "bgColor": {
                         "type": APItypes.string,
                         "example": "#000000",
                         "desc": "Background color"
                     },
-                    "uiBgImage": {
+                    "bgImage": {
                         "type": APItypes.string,
                         "example": "",
                         "desc": "Uri for background image"
                     },
-                    "uiBgCover": {
-                        "type": APItypes.bool,
-                        "example": true,
-                        "desc": "Display the coverimage as background"
-                    },
-                    "uiBgCssFilter": {
-                        "type": APItypes.string,
-                        "example": "grayscale(100%) opacity(10%)",
-                        "desc": "CSS filter for background coverimage"
-                    },
-                    "uiLocale": {
+                    "locale": {
                         "type": APItypes.string,
                         "example": "de-DE",
                         "desc": "Language code or \"auto\" for browser default."
                     },
-                    "uiStartupView": {
+                    "startupView": {
                         "type": APItypes.string,
                         "example": "Home",
                         "desc": "Startup view"
+                    },
+                    "musicbrainzLinks": {
+                        "type": APItypes.bool,
+                        "example": true,
+                        "desc": "Shows links to MusicBrainz website in the playback and album views."
                     }
                 }
             }
@@ -1523,8 +1553,8 @@ const APImethods = {
             "name": APIparams.preset
         }
     },
-    "MYMPD_API_PRESET_LOAD": {
-        "desc": "Loads a preset.",
+    "MYMPD_API_PRESET_APPLY": {
+        "desc": "Applies a preset.",
         "params": {
             "name": APIparams.preset
         }
@@ -1534,8 +1564,8 @@ const APImethods = {
         "params": {
             "table": {
                 "type": APItypes.string,
-                "example": "colsQueueJukebox",
-                "desc": "Valid values: colsQueueCurrent, colsQueueLastPlayed, colsSearch, colsBrowseDatabaseAlbumDetail, colsBrowseDatabaseAlbumList, colsBrowsePlaylistDetail, colsBrowseFilesystem, colsPlayback, colsQueueJukebox"
+                "example": "colsQueueCurrent",
+                "desc": "Valid values: colsQueueCurrent, colsQueueLastPlayed, colsSearch, colsBrowseDatabaseAlbumDetail, colsBrowseDatabaseAlbumList, colsBrowsePlaylistDetail, colsBrowseFilesystem, colsPlayback, colsQueueJukeboxAlbum, colsQueueJukeboxSong, colsBrowseRadioWebradiodb, colsBrowseRadioRadiobrowser"
             },
             "cols": APIparams.cols
         }

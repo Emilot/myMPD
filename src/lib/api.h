@@ -32,6 +32,7 @@
     X(INTERNAL_API_STICKERCACHE_SKIPPED) \
     X(INTERNAL_API_TIMER_STARTPLAY) \
     X(INTERNAL_API_WEBSERVER_NOTIFY) \
+    X(INTERNAL_API_WEBSERVER_READY) \
     X(INTERNAL_API_WEBSERVER_SETTINGS) \
     X(INTERNAL_API_COUNT) \
     X(MYMPD_API_CACHES_CREATE) \
@@ -81,6 +82,7 @@
     X(MYMPD_API_PLAYER_NEXT) \
     X(MYMPD_API_PLAYER_OPTIONS_SET) \
     X(MYMPD_API_PLAYER_OUTPUT_ATTRIBUTES_SET) \
+    X(MYMPD_API_PLAYER_OUTPUT_GET) \
     X(MYMPD_API_PLAYER_OUTPUT_LIST) \
     X(MYMPD_API_PLAYER_OUTPUT_TOGGLE) \
     X(MYMPD_API_PLAYER_PAUSE) \
@@ -126,7 +128,7 @@
     X(MYMPD_API_PLAYLIST_RM) \
     X(MYMPD_API_PLAYLIST_RM_ALL) \
     X(MYMPD_API_PRESET_RM) \
-    X(MYMPD_API_PRESET_LOAD) \
+    X(MYMPD_API_PRESET_APPLY) \
     X(MYMPD_API_QUEUE_ADD_RANDOM) \
     X(MYMPD_API_QUEUE_APPEND_PLAYLISTS) \
     X(MYMPD_API_QUEUE_APPEND_SEARCH) \
@@ -244,7 +246,6 @@ struct set_mg_user_data_request {
     sds thumbnail_names;      //!< comma separated list of coverimage thumbnail names
     bool feat_albumart;       //!< true if mpd supports the albumart protocol command
     sds mpd_host;             //!< configured mpd host
-    bool mympd_api_started;   //!< true if the mympd_api thread is ready, else false
     struct t_list partitions; //!< partition specific settings
 };
 
@@ -253,9 +254,9 @@ struct set_mg_user_data_request {
  * All other connection ids are from mongoose and identifies client connections.
  */
 enum conn_ids {
-    CONN_ID_NOTIFY_CLIENT = -2, //!< Send message to client identified by jsonrpc id
-    CONN_ID_INTERNAL = -1,      //!< Internal message from myMPD API thread to webserver thread
-    CONN_ID_NOTIFY_ALL = 0      //!< Send message to all clients in a specific partition
+    CONN_ID_NOTIFY_CLIENT = -2,        //!< Send message to client identified by jsonrpc id
+    CONN_ID_CONFIG_TO_WEBSERVER = -1,  //!< Internal message from myMPD API thread to webserver thread to push the configuration
+    CONN_ID_NOTIFY_ALL = 0             //!< Send message to all clients in a specific partition
 };
 
 /**

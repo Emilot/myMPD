@@ -25,7 +25,7 @@ function handleBrowseFilesystem() {
     }, parseFilesystem, true);
 
     //Create breadcrumb
-    const crumbEl = document.getElementById('BrowseBreadcrumb');
+    const crumbEl = elGetById('BrowseBreadcrumb');
     elClear(crumbEl);
     const home = elCreateText('a', {"class": ["mi"], "href": "#"}, 'home');
     setData(home, 'uri', '/');
@@ -58,33 +58,22 @@ function handleBrowseFilesystem() {
  * Initialization function for the browse filesystem view
  * @returns {void}
  */
-function initBrowseFilesystem() {
+function initViewBrowseFilesystem() {
     initSearchSimple('BrowseFilesystem');
 
-    document.getElementById('BrowseFilesystemList').addEventListener('click', function(event) {
-        //select mode
-        if (selectRow(event) === true) {
-            return;
-        }
-        //action td
-        if (event.target.nodeName === 'A') {
-            handleActionTdClick(event);
-            return;
-        }
-        //table body
-        const target = event.target.closest('TR');
-        if (target === null) {
-            return;
-        }
-        if (target.parentNode.nodeName === 'TBODY' &&
-            checkTargetClick(target) === true)
-        {
+    elGetById('BrowseFilesystemList').addEventListener('click', function(event) {
+        const target = tableClickHandler(event);
+        if (target !== null) {
             const uri = getData(target, 'uri');
             const dataType = getData(target, 'type');
             switch(dataType) {
                 case 'parentDir': {
-                    const offset = browseFilesystemHistory[uri] !== undefined ? browseFilesystemHistory[uri].offset : 0;
-                    const scrollPos = browseFilesystemHistory[uri] !== undefined ? browseFilesystemHistory[uri].scrollPos : 0;
+                    const offset = browseFilesystemHistory[uri] !== undefined
+                        ? browseFilesystemHistory[uri].offset
+                        : 0;
+                    const scrollPos = browseFilesystemHistory[uri] !== undefined
+                        ? browseFilesystemHistory[uri].scrollPos
+                        : 0;
                     app.current.filter = '-';
                     appGoto('Browse', 'Filesystem', undefined, offset, app.current.limit, uri, app.current.sort, 'dir', '', scrollPos);
                     break;
@@ -98,16 +87,22 @@ function initBrowseFilesystem() {
                 case 'plist':
                     clickFilesystemPlaylist(uri, event);
                     break;
+                default:
+                    logError('Invalid type: ' + dataType);
             }
         }
     }, false);
 
-    document.getElementById('BrowseBreadcrumb').addEventListener('click', function(event) {
+    elGetById('BrowseBreadcrumb').addEventListener('click', function(event) {
         if (event.target.nodeName === 'A') {
             event.preventDefault();
             const uri = getData(event.target, 'uri');
-            const offset = browseFilesystemHistory[uri] !== undefined ? browseFilesystemHistory[uri].offset : 0;
-            const scrollPos = browseFilesystemHistory[uri] !== undefined ? browseFilesystemHistory[uri].scrollPos : 0;
+            const offset = browseFilesystemHistory[uri] !== undefined
+                ? browseFilesystemHistory[uri].offset
+                : 0;
+            const scrollPos = browseFilesystemHistory[uri] !== undefined
+                ? browseFilesystemHistory[uri].scrollPos
+                : 0;
             appGoto('Browse', 'Filesystem', undefined, offset, app.current.limit, uri, app.current.sort, 'dir', '', scrollPos);
         }
     }, false);
@@ -120,10 +115,10 @@ function initBrowseFilesystem() {
  */
  function parseFilesystem(obj) {
     //show images in folder
-    const imageList = document.getElementById('BrowseFilesystemImages');
+    const imageList = elGetById('BrowseFilesystemImages');
     elClear(imageList);
 
-    const table = document.getElementById('BrowseFilesystemList');
+    const table = elGetById('BrowseFilesystemList');
     const tfoot = table.querySelector('tfoot');
     elClear(tfoot);
 
@@ -165,9 +160,9 @@ function initBrowseFilesystem() {
         obj.result.data.unshift({"Type": "parentDir", "name": "parentDir", "uri": parentUri});
     }
 
-    const rowTitleSong = webuiSettingsDefault.clickSong.validValues[settings.webuiSettings.clickSong];
+    const rowTitleSong = settingsWebuiFields.clickSong.validValues[settings.webuiSettings.clickSong];
     const rowTitleFolder = 'Open directory';
-    const rowTitlePlaylist = webuiSettingsDefault.clickFilesystemPlaylist.validValues[settings.webuiSettings.clickFilesystemPlaylist];
+    const rowTitlePlaylist = settingsWebuiFields.clickFilesystemPlaylist.validValues[settings.webuiSettings.clickFilesystemPlaylist];
 
     updateTable(obj, 'BrowseFilesystem', function(row, data) {
         setData(row, 'type', data.Type);

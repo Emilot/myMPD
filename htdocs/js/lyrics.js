@@ -45,7 +45,7 @@ function getLyrics(uri, el) {
  * @returns {void}
  */
 function createLyricsTabs(el, obj) {
-    const lyricsTabs = elCreateEmpty('div', {"class": [ "lyricsTabs"]});
+    const lyricsTabs = elCreateEmpty('div', {"class": [ "lyricsTabs", "btn-toolbar"]});
     const lyrics = elCreateEmpty('div', {"class": ["lyricsTextContainer", "mt-3"]});
     const currentLyrics = el.parentNode.getAttribute('id') === 'currentLyrics' ? true : false;
     showSyncedLyrics = false;
@@ -61,7 +61,7 @@ function createLyricsTabs(el, obj) {
             ht = i;
         }
         lyricsTabs.appendChild(
-            elCreateText('button', {"data-num": i, "class": ["btn", "btn-sm", "btn-outline-secondary", "me-2", "lyricsChangeButton"],
+            elCreateText('button', {"data-num": i, "class": ["btn", "btn-sm", "btn-outline-secondary", "me-2", "lyricsChangeButton", "text-truncate"],
                 "title": (obj.result.data[i].synced === true ? tn('Synced lyrics') : tn('Unsynced lyrics')) + ': ' + ht}, ht)
         );
         if (i === 0) {
@@ -128,11 +128,12 @@ function createLyricsTabs(el, obj) {
     }
     if (currentLyrics === true) {
         if (showSyncedLyrics === true) {
-            const ls = document.getElementById('lyricsScroll');
+            const ls = elGetById('lyricsScroll');
             if (ls !== null) {
                 //synced lyrics scrolling button
                 elShow(ls);
                 ls.addEventListener('click', function(event) {
+                    toggleBtn(event.target, undefined);
                     scrollSyncedLyrics = event.target.classList.contains('active');
                 }, false);
                 //seek to position on click
@@ -151,7 +152,7 @@ function createLyricsTabs(el, obj) {
             }
         }
         //resize button
-        const lr = document.getElementById('lyricsResize');
+        const lr = elGetById('lyricsResize');
         if (lr !== null) {
             lr.addEventListener('click', function(event) {
                 toggleBtn(event.target, undefined);
