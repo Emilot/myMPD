@@ -4,6 +4,17 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
+## myMPD v12.0.2 (2023-09-22)
+
+This is a small bug fix release.
+
+## Changelog
+
+- Upd: Bootstrap 5.3.2
+- Fix: listing of outputs to move to current partition #1106
+
+***
+
 ## myMPD v12.0.1 (2023-09-15)
 
 This release fixes only a small packaging bug for alpine linux.
