@@ -146,7 +146,7 @@ extern struct t_mympd_queue *mympd_script_queue;
 #define MYMPD_THUMBNAIL_NAMES "cover-sm,folder-sm"
 #define MYMPD_TAG_LIST_SEARCH "Album,AlbumArtist,Artist,Genre,Title"
 #define MYMPD_TAG_LIST_BROWSE "Album,AlbumArtist,Artist,Genre"
-#define MYMPD_SMARTPLS_GENERATE_TAG_LIST "Genre"
+#define MYMPD_SMARTPLS_GENERATE_TAG_LIST ""
 #define MYMPD_LAST_PLAYED_COUNT 2000
 #define MYMPD_SMARTPLS true
 #define MYMPD_SMARTPLS_SORT ""
@@ -273,8 +273,9 @@ extern struct t_mympd_queue *mympd_script_queue;
 #define MPD_RESULTS_MAX 10000 //maximum mpd results to request
 #define MPD_COMMANDS_MAX 10000 //maximum number of commands for mpd command lists
 #define MPD_PLAYLIST_LENGTH_MAX INT_MAX //max mpd queue or playlist length
-#define MPD_BINARY_SIZE_MIN 4096 //4 kB mpd default
-#define MPD_BINARY_SIZE_MAX 262144 //256 kB
+#define MPD_BINARY_CHUNK_SIZE_MIN 4096 //4 kB is the mpd default
+#define MPD_BINARY_CHUNK_SIZE_MAX 262144 //256 kB
+#define MPD_BINARY_SIZE_MAX 5242880 //5 MB
 #define MPD_QUEUE_PRIO_MAX 255
 #define MPD_CROSSFADE_MAX 100
 #define MPD_CONNECTION_MAX 100
@@ -330,7 +331,7 @@ extern struct t_mympd_queue *mympd_script_queue;
 #define FILEPATH_LEN_MAX 1000
 
 //file size limits
-#define LINE_LENGTH_MAX 4000
+#define LINE_LENGTH_MAX 8192 // 8 kb
 #define LYRICS_SIZE_MAX 10000 //bytes
 #define SCRIPTS_SIZE_MAX 10000 //bytes
 #define SMARTPLS_SIZE_MAX 2000 //bytes

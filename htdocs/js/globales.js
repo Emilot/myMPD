@@ -770,7 +770,7 @@ const settingsWebuiFields = {
         "onChange": "eventChangeLocale"
     },
     "startupView": {
-        "defaultValue": null,
+        "defaultValue": "Home",
         "validValues": {
             "Home": "Home",
             "Playback": "Playback",
@@ -794,6 +794,13 @@ const settingsWebuiFields = {
         "title": "Show MusicBrainz links",
         "form": "modalSettingsCloudFrm",
         "help": "helpSettingsMusicBrainzLinks"
+    },
+    "radiobrowserStationclicks": {
+        "defaultValue": false,
+        "inputType": "checkbox",
+        "title": "Submit station clicks to radiobrowser.info",
+        "form": "modalSettingsCloudFrm",
+        "help": "helpSettingsRadiobrowserStationclicks"
     },
     "outputLigatures": {
         "defaultValue": {
