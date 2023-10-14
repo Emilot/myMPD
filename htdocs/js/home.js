@@ -99,6 +99,22 @@ function addDirToHome(uri, name) {
 }
 
 /**
+ * Adds the current directory search to the homescreen
+ * @returns {void}
+ */
+//eslint-disable-next-line no-unused-vars
+function addSearchDirToHome() {
+    if (app.current.search === '') {
+        // Search is empty, add a dir to home screen
+        return addDirToHome(undefined, undefined);
+    }
+    // Add a saved search to home screen
+    const expression = createBaseSearchExpression(app.current.filter, app.current.search);
+    const name = basename(app.current.filter, false) + ' (' + app.current.search + ')';
+    _addHomeIcon('replaceQueue', name, 'saved_search', '', ['search', expression]);
+}
+
+/**
  * Adds a song or stream to the homescreen
  * @param {string} uri song or stream uri
  * @param {string} type one of song, stream
@@ -215,6 +231,7 @@ function homeIconGoto(type, uri) {
             gotoFilesystem(uri[0], type);
             break;
         case 'search':
+            elGetById('SearchSearchStr').value = '';
             appGoto('Search', undefined, undefined, 0, undefined, 'any', {'tag': 'Title', 'desc': false}, '', uri[0]);
             break;
         case 'album':
