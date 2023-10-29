@@ -194,7 +194,7 @@ function parseSongDetails(obj) {
 
     tbody.appendChild(songDetailsRow('AudioFormat', printValue('AudioFormat', obj.result.AudioFormat)));
     tbody.appendChild(songDetailsRow('Filetype', filetype(rUri)));
-    tbody.appendChild(songDetailsRow('LastModified', fmtDate(obj.result.LastModified)));
+    tbody.appendChild(songDetailsRow('Last-Modified', fmtDate(obj.result['Last-Modified'])));
     //fingerprint command is not supported for cuesheet virtual tracks
     if (features.featFingerprint === true &&
         isCuesheet === false)
@@ -221,7 +221,7 @@ function parseSongDetails(obj) {
             )
         );
         for (const sticker of stickerList) {
-            if (sticker === 'stickerLike') {
+            if (sticker === 'like') {
                 const thDown = elCreateText('button', {"data-vote": "0", "data-title-phrase": "Hate song", "class": ["btn", "btn-sm", "btn-secondary", "mi"]}, 'thumb_down');
                 if (obj.result[sticker] === 0) {
                     thDown.classList.add('active');

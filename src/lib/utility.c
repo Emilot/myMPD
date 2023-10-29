@@ -13,8 +13,11 @@
 #include <errno.h>
 #include <ifaddrs.h>
 #include <netdb.h>
+#include <netinet/in.h>
+#include <pwd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 
 /**
@@ -28,7 +31,7 @@ static sds get_local_ip(void);
  */
 
 /**
- * Sleep function
+ * Sleep function that is interuptable
  * @param msec milliseconds to sleep
  */
 void my_msleep(long msec) {
@@ -99,8 +102,8 @@ const char *get_extension_from_filename(const char *filename) {
 
 /**
  * Calculates the basename for files and uris
- * for files the path is removed
- * for uris the query string and hash is removed
+ * - for files the path is removed
+ * - for uris the query string and hash is removed
  * @param uri sds string to modify in place
  */
 void basename_uri(sds uri) {

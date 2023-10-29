@@ -11,6 +11,7 @@
  */
 function setFeatures() {
     //web ui features
+    features.featAdvAlbum = settings.albumMode === 'adv';
     features.featCacert = settings.features.featCacert;
     features.featHome = settings.webuiSettings.enableHome;
     features.featVolumeLevel = settings.webuiSettings.footerVolumeLevel;
@@ -22,11 +23,12 @@ function setFeatures() {
     features.featScripting = settings.webuiSettings.enableScripting
         ? settings.features.featScripting
         : false;
-    features.featTimer = settings.webuiSettings.enableTimer;
+    features.featTimer = settings.features.featTimer && settings.webuiSettings.enableTimer;
     features.featTrigger = settings.webuiSettings.enableTrigger;
     features.featMediaSession = checkMediaSessionSupport();
     features.featFooterNotifications = settings.webuiSettings.footerNotifications;
     features.featSession = settings.pin;
+    features.featStickersEnabled = settings.features.featStickersEnabled;
 
     //mpd features
     if (settings.partition.mpdConnected === true) {
