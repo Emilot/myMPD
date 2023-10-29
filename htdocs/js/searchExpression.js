@@ -131,7 +131,7 @@ function initSearchExpression(appid) {
 }
 
 /**
- * Executes the search expression
+ * Executes the search expression for the current displayed view
  * @param {string} value search value
  * @returns {void}
  */

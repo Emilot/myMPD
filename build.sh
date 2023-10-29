@@ -42,7 +42,6 @@ CLANG_TIDY_CHECKS="$CLANG_TIDY_CHECKS,-altera-id-dependent-backward-branch"
 CLANG_TIDY_CHECKS="$CLANG_TIDY_CHECKS,-altera-unroll-loops"
 CLANG_TIDY_CHECKS="$CLANG_TIDY_CHECKS,-altera-struct-pack-align,-clang-analyzer-optin.performance.Padding"
 CLANG_TIDY_CHECKS="$CLANG_TIDY_CHECKS,-bugprone-easily-swappable-parameters"
-CLANG_TIDY_CHECKS="$CLANG_TIDY_CHECKS,-bugprone-signal-handler,-cert-sig30-c"
 CLANG_TIDY_CHECKS="$CLANG_TIDY_CHECKS,-bugprone-assignment-in-if-condition"
 CLANG_TIDY_CHECKS="$CLANG_TIDY_CHECKS,-clang-diagnostic-invalid-command-line-argument"
 CLANG_TIDY_CHECKS="$CLANG_TIDY_CHECKS,-concurrency-mt-unsafe"
@@ -113,7 +112,8 @@ setversion() {
 
   for F in contrib/packaging/alpine/APKBUILD contrib/packaging/arch/PKGBUILD \
       contrib/packaging/rpm/mympd.spec contrib/packaging/debian/changelog \
-      contrib/packaging/openwrt/Makefile contrib/man/mympd.1 contrib/man/mympd-script.1
+      contrib/packaging/openwrt/Makefile contrib/man/mympd.1 contrib/man/mympd-script.1 \
+      contrib/packaging/freebsd/multimedia/mympd/Makefile
   do
     echo "$F"
     sed -e "s/__VERSION__/${VERSION}/g" -e "s/__DATE_F1__/$DATE_F1/g" -e "s/__DATE_F2__/$DATE_F2/g" \
@@ -306,12 +306,13 @@ createassets() {
 }
 
 buildrelease() {
+  BUILD_TYPE=$1
   echo "Compiling myMPD v${VERSION}"
   cmake -B release \
     -DCMAKE_INSTALL_PREFIX:PATH=/usr \
-    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
     .
-  make -C release
+  make -j4 -C release
 }
 
 addmympduser() {
@@ -404,7 +405,7 @@ builddebug() {
     -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
     $CMAKE_SANITIZER_OPTIONS \
     .
-  make -C debug VERBOSE=1
+  make -j4 -C debug VERBOSE=1
   echo "Linking compilation database"
   sed -e 's/\\t/ /g' -e 's/-Wformat-truncation//g' -e 's/-Wformat-overflow=2//g' -e 's/-fsanitize=bounds-strict//g' \
     -e 's/-Wno-stringop-overread//g' -e 's/-fstack-clash-protection//g' \
@@ -420,8 +421,8 @@ buildtest() {
     -DMYMPD_ENABLE_ASAN=ON \
     -DMYMPD_BUILD_TESTING=ON \
     .
-  make -C debug
-  make -C debug test
+  make -j4 -C debug
+  make -j4 -C debug test
   echo "Linking compilation database"
   sed -e 's/\\t/ /g' -e 's/-Wformat-truncation//g' -e 's/-Wformat-overflow=2//g' -e 's/-fsanitize=bounds-strict//g' \
     -e 's/-Wno-stringop-overread//g' -e 's/-fstack-clash-protection//g' \
@@ -455,6 +456,13 @@ cleanup() {
 
   #compilation database
   rm -f src/compile_commands.json
+
+  #caches
+  rm -fr src/.cache
+  rm -fr .cache
+
+  #node modules
+  rm -fr dist/bootstrap/node_modules
 
   #clang tidy
   rm -f clang-tidy.out
@@ -640,6 +648,7 @@ prepare() {
     [ "$F" = "$STARTPATH/osc" ] && continue
     [ "$F" = "$STARTPATH/builder" ] && continue
     cp -a "$F" .
+    rm -fr src/.cache
   done
 }
 
@@ -899,8 +908,7 @@ updatelibmympdclient() {
   rsync -av "$TMPDIR/libmympdclient/output/version.h" include/mpd/version.h
   rsync -av "$TMPDIR/libmympdclient/output/config.h" include/config.h
 
-  rsync -av "$TMPDIR/libmympdclient/COPYING" COPYING
-  rsync -av "$TMPDIR/libmympdclient/AUTHORS" AUTHORS
+  rsync -av "$TMPDIR/libmympdclient/LICENSE.md" LICENSE.md
 
   rm -rf "$TMPDIR"
 }
@@ -945,6 +953,7 @@ updatebootstrap() {
   then
     cp -v compiled/custom.css "$STARTPATH/htdocs/css/bootstrap.css"
   fi
+  rm -fr  dist/bootstrap/node_modules
 }
 
 #Also deletes stale installations in other locations.
@@ -1080,7 +1089,9 @@ createi18n() {
   fi
   #json to js
   printf "const i18n = " > "$MYMPD_BUILDDIR/htdocs/js/i18n.js"
-  head -c -1 "src/i18n/json/i18n.json" >> "$MYMPD_BUILDDIR/htdocs/js/i18n.js"
+  BYTES=$(wc -c < src/i18n/json/i18n.json)
+  BYTES=$((BYTES-1))
+  head -c "$BYTES" "src/i18n/json/i18n.json" >> "$MYMPD_BUILDDIR/htdocs/js/i18n.js"
   echo ";" >> "$MYMPD_BUILDDIR/htdocs/js/i18n.js"
   #Update serviceworker
   TO_CACHE=""
@@ -1354,9 +1365,31 @@ run_jsdoc() {
   jsdoc htdocs/js/ -c jsdoc.json -d docs/jsdoc/
 }
 
+create_doc() {
+  DOC_DEST=$1
+  if ! check_cmd jekyll
+  then
+    echo "Jekyll not installed, can not create documentation"
+    return 1
+  fi
+  if ! run_doxygen
+  then
+    echo "Skipped generation of c api documentation"
+  fi
+  if ! run_jsdoc
+  then
+    echo "Skipped generation of js api documentation"
+  fi
+  install -d "$DOC_DEST" || return 1
+  jekyll build -s "$STARTPATH/docs" -d "$DOC_DEST"
+}
+
 case "$ACTION" in
-  release)
-    buildrelease
+  release|MinSizeRel)
+    buildrelease "Release"
+  ;;
+  RelWithDebInfo)
+    buildrelease "RelWithDebInfo"
   ;;
   install)
     installrelease
@@ -1512,6 +1545,14 @@ case "$ACTION" in
     fi
     cp -v htdocs/js/apidoc.js docs/assets/apidoc.js
   ;;
+  doc)
+    if [ -z "${2+x}" ]
+    then
+      echo "Usage: $0 $1 <destination folder>"
+      exit 1
+    fi
+    create_doc "$2"
+    ;;
   cloc)
     cloc --exclude-dir=dist .
   ;;
@@ -1520,7 +1561,8 @@ case "$ACTION" in
     echo "Version: ${VERSION}"
     echo ""
     echo "Build options:"
-    echo "  release:          build release files in directory release"
+    echo "  release:          build release files in directory release (stripped)"
+    echo "  RelWithDebInfo:   build release files in directory release (with debug info)"
     echo "  install:          installs release files from directory release"
     echo "                    following environment variables are respected"
     echo "                      - DESTDIR=\"\""
@@ -1577,7 +1619,7 @@ case "$ACTION" in
     echo "                    following environment variables are respected"
     echo "                      - SIGN=\"FALSE\""
     echo "                      - GPGKEYID=\"\""
-    echo "  pkgdocker:        creates the docker image (debian based)"
+    echo "  pkgdocker:        creates the docker image (Alpine Linux based)"
     echo "                    following environment variables are respected"
     echo "                      - DOCKERFILE=\"Dockerfile.alpine\""
     echo "  pkgbuildx:        creates a multiarch docker image with buildx"
@@ -1611,6 +1653,7 @@ case "$ACTION" in
     echo "  addmympduser:     adds mympd group and user"
     echo "  luascript_index:  creates the json index of lua scripts"
     echo "  api_doc:          generates the api documentation"
+    echo "  doc:              generates the html documentation"
     echo "  cloc:             runs cloc (count lines of code)"
     echo ""
     echo "Source update options:"

@@ -25,6 +25,7 @@
 #include <openssl/rand.h>
 #include <openssl/x509v3.h>
 #include <string.h>
+#include <sys/socket.h>
 #include <unistd.h>
 
 //private definitions

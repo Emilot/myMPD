@@ -13,7 +13,6 @@
 #include <stdbool.h>
 #include <time.h>
 
-
 bool is_streamuri(const char *uri);
 bool is_virtual_cuedir(sds music_directory, sds filename);
 const char *get_extension_from_filename(const char *filename);

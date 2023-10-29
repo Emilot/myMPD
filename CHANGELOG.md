@@ -4,6 +4,44 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
+## myMPD v13.0.0 (2023-10-29)
+
+The album cache was reworked substantially. It uses now Album + AlbumArtist + Date tag to group albums as fallback for the MusicBrainz AlbumId, in earlier versions the fallback was Album + AlbumArtist.
+
+There is now also a simple album cache that can be created much faster than the traditional album cache. Enable the simple album mode is only reasonable, if you have a very big music collection. The simple album cache contains only the AlbumArtist, Album and Date tags.
+
+The sticker database was removed in this release. myMPD fetches now all stickers on demand from MPD. myMPD creates a separate MPD connection for the stickers. You can set this connection to another MPD instance to maintain central song statistics.
+
+## Notes
+
+- LastModified was renamed to Last-Modified. Home icons, column settings and links with references to the old name must be manually updated.
+- For packagers: cmake options are slightly changed and the new MYMPD_DOC options is enabled as default
+
+## Changelog
+
+- Feat: Add config option to disable sticker support
+- Feat: Replace sticker cache with central sticker database #1111
+- Feat: Use the MessagePack format to store caches on disc #1104
+- Feat: Improve album cache creation #1113
+- Feat: Add a simple album cache (fewer features, but much better performance) #113
+- Feat: Refresh status, if webui progress timer is greater than song length #1115
+- Feat: Add actions to the database tag view
+- Feat: Add option to display seek buttons in the footer #1110
+- Feat: Add advanced playback controls popover to footer #1110
+- Feat: Add exclude and include filter expression for jukebox mode #1098
+- Feat: Add min. duration option for jukebox mode #1098
+- Feat: Add Last-Modified option to playlist sorting
+- Feat: Respect search order for searches added to queue or playlist #1078
+- Feat: Add support for descending sort for smart playlists and playlists
+- Feat: Improve jukebox album mode
+- Feat: FreeBSD support #117
+- Upd: Use more standard cmake build types #1119
+- Upd: rework timer implementation
+- Upd: some websocket connection improvements
+- Upd: Mongoose 7.12 #1132
+
+***
+
 ## myMPD v12.1.1 (2023-10-19)
 
 This is a small bug fix release.
