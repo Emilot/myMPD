@@ -4,6 +4,28 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
+## myMPD v13.0.2 (not yet released)
+
+This is a small bugfix release.
+
+### Changelog
+
+- Fix: compilation on FreeBSD
+- Fix: search based smart playlists in shuffle mode
+
+***
+
+## myMPD v13.0.1 (2023-11-01)
+
+This is a small bugfix release.
+
+### Changelog
+
+- Fix: display selected jukebox uniq tag #1142
+- Fix: jukebox internal queue randomness #1142
+
+***
+
 ## myMPD v13.0.0 (2023-10-29)
 
 The album cache was reworked substantially. It uses now Album + AlbumArtist + Date tag to group albums as fallback for the MusicBrainz AlbumId, in earlier versions the fallback was Album + AlbumArtist.
