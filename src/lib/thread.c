@@ -23,12 +23,15 @@ void set_threadname(const char *threadname) {
 
 #else
 
+#include <string.h>
+
 /**
  * Ignore the thread name setting
  * @param threadname name of thread
  */
 void set_threadname(const char *threadname) {
-    MYMPD_LOG_DEBUG("Setting the thread name is not supported");
+    (void) threadname;
+    MYMPD_LOG_DEBUG(NULL, "Setting the thread name is not supported");
 }
 
 #endif
