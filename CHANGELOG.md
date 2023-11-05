@@ -4,6 +4,26 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
+## myMPD v13.0.4 (not yet released)
+
+This is a small bugfix release.
+
+### Changelog
+
+- Fix: delete mpd playlist before creating the smart playlist
+
+***
+
+## myMPD v13.0.3 (2023-11-05)
+
+This is a small bugfix release.
+
+### Changelog
+
+- Fix: Read certificates after creation #1160
+
+***
+
 ## myMPD v13.0.2 (2023-11-03)
 
 This is a small bugfix release.
