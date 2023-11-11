@@ -4,6 +4,21 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
+## myMPD v13.0.4 (2023-11-11)
+
+This is a small bugfix release.
+
+### Changelog
+
+- Upd: Translations are now managed through poeditor.com api
+- Upd: Translations
+- Fix: Delete mpd playlist before creating the smart playlist
+- Fix: Remove unit tests execution order dependencies #1161
+- Fix: Update favorite from webradiodb
+- Fix: Show album from song details modal #1167
+
+***
+
 ## myMPD v13.0.3 (2023-11-05)
 
 This is a small bugfix release.
@@ -20,10 +35,10 @@ This is a small bugfix release.
 
 ### Changelog
 
-- Fix: compilation on FreeBSD
-- Fix: search based smart playlists in shuffle mode
+- Fix: Compilation on FreeBSD
+- Fix: Search based smart playlists in shuffle mode
 - Fix: Round the volume for local playback to integer #1149
-- Fix: do not modify dom properties in parseCmd
+- Fix: Do not modify dom properties in parseCmd
 - Fix: SEGVAULT creating album search expression #1151
 - Fix: Album details cover zoom #1153
 
@@ -35,8 +50,8 @@ This is a small bugfix release.
 
 ### Changelog
 
-- Fix: display selected jukebox uniq tag #1142
-- Fix: jukebox internal queue randomness #1142
+- Fix: Display selected jukebox uniq tag #1142
+- Fix: Jukebox internal queue randomness #1142
 
 ***
 
@@ -72,8 +87,8 @@ The sticker database was removed in this release. myMPD fetches now all stickers
 - Feat: Improve jukebox album mode
 - Feat: FreeBSD support #117
 - Upd: Use more standard cmake build types #1119
-- Upd: rework timer implementation
-- Upd: some websocket connection improvements
+- Upd: Rework timer implementation
+- Upd: Some websocket connection improvements
 - Upd: Mongoose 7.12 #1132
 
 ***
