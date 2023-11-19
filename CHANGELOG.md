@@ -4,14 +4,18 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
-## myMPD v13.0.5 (not yet released)
+## myMPD v13.0.5 (2023-11-19)
 
 This is a small bugfix release.
 
 ### Changelog
 
-- Fix: switch grid mode by Strg+Click #1169
-- Fix: remove "parent dir" entry in filesystem view #1168
+- Fix: Switch grid mode by Strg+Click #1169
+- Fix: Remove "parent dir" entry in filesystem view #1168
+- Fix: Add random songs to queue
+- Fix: Parse uniq jukebox mode from state file
+- Fix: Detection of folder for tag pictures #1172
+- Fix: set TFD_NONBLOCK | TFD_CLOEXEC for timerfds
 
 ***
 
