@@ -65,6 +65,10 @@ if(MYMPD_MINIMAL)
   set(MYMPD_ENABLE_LIBID3TAG "OFF")
 endif()
 
+if(MYMPD_ENABLE_EXPERIMENTAL)
+  message("Experimental features enabled")
+endif()
+
 # cmake modules
 include(CheckCCompilerFlag)
 include(CheckCSourceCompiles)
@@ -417,6 +421,7 @@ endif()
 # install
 install(TARGETS mympd DESTINATION ${CMAKE_INSTALL_FULL_BINDIR})
 install(SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/cmake/Install.cmake)
+install(PROGRAMS ${PROJECT_SOURCE_DIR}/cli_tools/mympd-config/mympd-config DESTINATION ${CMAKE_INSTALL_FULL_BINDIR})
 
 # test
 if(MYMPD_BUILD_TESTING)

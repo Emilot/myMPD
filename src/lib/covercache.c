@@ -7,17 +7,16 @@
 #include "compile_time.h"
 #include "src/lib/covercache.h"
 
+#include "src/lib/datetime.h"
 #include "src/lib/filehandler.h"
 #include "src/lib/log.h"
 #include "src/lib/mimetype.h"
 #include "src/lib/sds_extras.h"
-#include "src/lib/utility.h"
 
 #include <dirent.h>
 #include <errno.h>
 #include <sys/stat.h>
 #include <time.h>
-
 
 /**
  * Writes the coverimage (as binary buffer) to the covercache,

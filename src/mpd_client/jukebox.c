@@ -15,7 +15,7 @@
 #include "src/lib/msg_queue.h"
 #include "src/lib/mympd_state.h"
 #include "src/lib/sds_extras.h"
-#include "src/lib/utility.h"
+#include "src/lib/timer.h"
 #include "src/mpd_client/errorhandler.h"
 #include "src/mpd_client/queue.h"
 #include "src/mpd_client/shortcuts.h"
@@ -88,6 +88,15 @@ void jukebox_clear_all(struct t_mympd_state *mympd_state) {
 }
 
 /**
+ * Disables the jukebox timer
+ * @param partition_state pointer to partition state
+ */
+void jukebox_disable(struct t_partition_state *partition_state) {
+    MYMPD_LOG_DEBUG(partition_state->name, "Disabling jukebox timer");
+    mympd_timer_set(partition_state->timer_fd_jukebox, 0, 0);
+}
+
+/**
  * The real jukebox function.
  * It determines if a song must be added or not and starts playing.
  * @param partition_state pointer to myMPD partition state
@@ -99,22 +108,21 @@ bool jukebox_run(struct t_partition_state *partition_state, struct t_cache *albu
         MYMPD_LOG_DEBUG(partition_state->name, "Filling the jukebox queue is already in progress");
         return true;
     }
+    if (partition_state->jukebox.mode == JUKEBOX_OFF) {
+        MYMPD_LOG_DEBUG(partition_state->name, "Jukebox is disabled");
+        return true;
+    }
 
     mpd_client_queue_status_update(partition_state);
     sdsclear(partition_state->jukebox.last_error);
 
-    //time_t now = time(NULL);
     MYMPD_LOG_DEBUG(partition_state->name, "Jukebox: MPD queue length: %u", partition_state->queue_length);
     MYMPD_LOG_DEBUG(partition_state->name, "Jukebox: min queue length: %u", partition_state->jukebox.queue_length);
 
-    /*
-    if (partition_state->queue_length >= partition_state->jukebox.queue_length &&
-        (now < partition_state->jukebox_add_time || partition_state->jukebox_add_time == 0))
-    {
-        MYMPD_LOG_DEBUG(partition_state->name, "Jukebox: MPD queue length >= %u and add_time not reached", partition_state->jukebox.queue_length);
+    if (partition_state->queue_length > partition_state->jukebox.queue_length) {
+        MYMPD_LOG_DEBUG(partition_state->name, "Jukebox: MPD queue length > %u", partition_state->jukebox.queue_length);
         return true;
     }
-    */
 
     unsigned add_songs = partition_state->jukebox.queue_length > partition_state->queue_length
         ? partition_state->jukebox.queue_length - partition_state->queue_length
@@ -191,8 +199,8 @@ bool jukebox_add_to_queue(struct t_partition_state *partition_state,
                 MYMPD_LOG_ERROR(partition_state->name, "Jukebox adding song %s failed", current->key);
             }
         }
-        else {
-            bool rc = mpd_client_add_album_to_queue(partition_state, album_cache, current->key, UINT_MAX, MPD_POSITION_ABSOLUTE, NULL);
+        else if (partition_state->jukebox.mode == JUKEBOX_ADD_ALBUM) {
+            bool rc = mpd_client_add_album_to_queue(partition_state, album_cache, current->key, UINT_MAX, MPD_POSITION_ABSOLUTE, error);
             if (rc == true) {
                 MYMPD_LOG_NOTICE(partition_state->name, "Jukebox adding album: %s - %s", current->value_p, current->key);
                 added++;
@@ -200,6 +208,10 @@ bool jukebox_add_to_queue(struct t_partition_state *partition_state,
             else {
                 MYMPD_LOG_ERROR(partition_state->name, "Jukebox adding album %s - %s failed", current->value_p, current->key);
             }
+        }
+        else {
+            // This should not appear
+            MYMPD_LOG_WARN(partition_state->name, "Jukebox is disabled");
         }
         list_node_free(current);
     }
@@ -210,7 +222,9 @@ bool jukebox_add_to_queue(struct t_partition_state *partition_state,
     if (added == 0) {
         MYMPD_LOG_ERROR(partition_state->name, "Error adding song(s)");
         send_jsonrpc_notify(JSONRPC_FACILITY_JUKEBOX, JSONRPC_SEVERITY_ERROR, partition_state->name, "Adding songs from jukebox to queue failed");
-        *error = sdscat(*error, "Adding songs from jukebox to queue failed");
+        if (sdslen(*error) == 0) {
+            *error = sdscat(*error, "Adding songs from jukebox to queue failed");
+        }
         return false;
     }
 
