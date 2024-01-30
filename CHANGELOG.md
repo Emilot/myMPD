@@ -4,7 +4,7 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
-## myMPV v14.0.0 (not yet released)
+## myMPD v14.0.0 (2024-01-30)
 
 This version ships many improvements for stickers, smart playlists and the jukebox mode.
 
@@ -58,9 +58,10 @@ It also supports the new "added" timestamp for songs in the mpd database.
 - Upd: Smart playlist interval can be disabled
 - Upd: Improve JSON encoding performance
 - Upd: Improve event loop resource usage
-- Upd: utf8 dependency
+- Upd: utf8.h dependency
 - Fix: More reliable websocket reconnection
-- Fix: limit sort tags for simple album mode #1204
+- Fix: Limit sort tags for simple album mode #1204
+- Fix: Sticker feature detection
 
 ***
 
