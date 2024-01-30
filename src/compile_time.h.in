@@ -47,6 +47,7 @@
 #cmakedefine I18N_pl_PL
 #cmakedefine I18N_ru_RU
 #cmakedefine I18N_zh_Hans
+#cmakedefine I18N_zh_Hant
 
 //myMPD version from cmake
 #define MYMPD_VERSION "${PROJECT_VERSION}"
@@ -122,6 +123,7 @@ extern struct t_mympd_queue *mympd_script_queue;
 #define CFG_MYMPD_ALBUM_MODE "adv"
 #define CFG_MYMPD_ALBUM_GROUP_TAG "Date"
 #define CFG_MYMPD_STICKERS true
+#define CFG_MYMPD_STICKERS_PAD_INT false
 
 //default partition state settings
 #define PARTITION_HIGHLIGHT_COLOR "#28a745"
@@ -278,6 +280,7 @@ extern struct t_mympd_queue *mympd_script_queue;
 #define HTTP_CONNECTIONS_MAX 100
 #define URI_LENGTH_MAX 1000
 #define BODY_SIZE_MAX 8192 //bytes
+#define WS_PING_TIMEOUT 300 // seconds
 
 //session limits
 #define HTTP_SESSIONS_MAX 10
@@ -352,7 +355,6 @@ extern struct t_mympd_queue *mympd_script_queue;
 #define STICKER_RATING_MIN 0
 #define STICKER_RATING_MAX 10
 
-
 //limits for lists
 #define LIST_HOME_ICONS_MAX 99
 #define LIST_TRIGGER_MAX 99
@@ -385,6 +387,8 @@ extern struct t_mympd_queue *mympd_script_queue;
 //limits for stickers
 #define STICKER_PLAY_COUNT_MAX INT_MAX / 2
 #define STICKER_SKIP_COUNT_MAX INT_MAX / 2
+
+#define PADDING_LENGTH 12
 
 //cloud api hosts
 #define RADIOBROWSER_HOST "all.api.radio-browser.info"

@@ -65,6 +65,10 @@ if(MYMPD_MINIMAL)
   set(MYMPD_ENABLE_LIBID3TAG "OFF")
 endif()
 
+if(MYMPD_ENABLE_EXPERIMENTAL)
+  message("Experimental features enabled")
+endif()
+
 # cmake modules
 include(CheckCCompilerFlag)
 include(CheckCSourceCompiles)
@@ -223,6 +227,9 @@ if(MYMPD_EMBEDDED_ASSETS)
   endif()
   if(EXISTS "${PROJECT_BINARY_DIR}/htdocs/assets/i18n/zh-Hans.json.gz")
     set(I18N_zh_Hans "ON")
+  endif()
+  if(EXISTS "${PROJECT_BINARY_DIR}/htdocs/assets/i18n/zh-Hant.json.gz")
+    set(I18N_zh_Hant "ON")
   endif()
 endif()
 
@@ -417,6 +424,7 @@ endif()
 # install
 install(TARGETS mympd DESTINATION ${CMAKE_INSTALL_FULL_BINDIR})
 install(SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/cmake/Install.cmake)
+install(PROGRAMS ${PROJECT_SOURCE_DIR}/cli_tools/mympd-config/mympd-config DESTINATION ${CMAKE_INSTALL_FULL_BINDIR})
 
 # test
 if(MYMPD_BUILD_TESTING)

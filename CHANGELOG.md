@@ -4,7 +4,7 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
-## myMPV v14.0.0 (not yet released)
+## myMPD v14.0.0 (2024-01-30)
 
 This version ships many improvements for stickers, smart playlists and the jukebox mode.
 
@@ -24,13 +24,15 @@ It also supports the new "added" timestamp for songs in the mpd database.
 - MYMPD_API_JUKEBOX_CLEARERROR: new
 - MYMPD_API_JUKEBOX_RESTART: new
 - MYMPD_API_PLAYER_OUTPUT_LIST: response changed
+- MYMPD_API_PLAYER_OUTPUT_GET: new
 - MYMPD_API_QUEUE_ADD_RANDOM: is now async
+- MYMPD_API_PLAYLIST_CONTENT_ENUMERATE: new
 
 ### Changelog
 
 - Feat: Support info.txt in music directory folders #1120
 - Feat: Add max. song duration as jukebox constraint #1146
-- Feat: Add operator lt, gt, eq to sticker based smart playlists (MPD 0.24) #1090
+- Feat: Add numeric and string operators lt, gt, eq for sticker based smart playlists (MPD 0.24) #1090
 - Feat: Add max entries option to all smart playlists #1157
 - Feat: Add rating sticker - stars like cantata #1141
 - Feat: Add sort by sticker for smart playlists (MPD 0.24) #1162
@@ -45,6 +47,9 @@ It also supports the new "added" timestamp for songs in the mpd database.
 - Feat: Rework data structures to improve thread safety
 - Feat: Improve random number generation
 - Feat: Add option to show audioformat in the footer #1184
+- Feat: New mympd-config utility
+- Feat: Add config option to pad integer values for stickers
+- Upd: Date tag is optional for simple album cache
 - Upd: Improve number conversions and enforcement of limits
 - Upd: Manual add random songs or albums should ignore the jukebox constraints
 - Upd: libmympdclient 1.0.26 (based on libmpdclient 2.23)
@@ -53,7 +58,10 @@ It also supports the new "added" timestamp for songs in the mpd database.
 - Upd: Smart playlist interval can be disabled
 - Upd: Improve JSON encoding performance
 - Upd: Improve event loop resource usage
-- Upd: utf8 dependency
+- Upd: utf8.h dependency
+- Fix: More reliable websocket reconnection
+- Fix: Limit sort tags for simple album mode #1204
+- Fix: Sticker feature detection
 
 ***
 

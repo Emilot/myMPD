@@ -34,7 +34,8 @@
 // private definitions
 
 static void populate_pfds(struct t_mympd_state *mympd_state);
-static void handle_socket_error(struct t_mympd_state *mympd_state, nfds_t i, short revents);
+static void handle_socket_pollin(struct t_mympd_state *mympd_state, nfds_t i, struct t_work_request **request);
+static void handle_socket_error(struct t_mympd_state *mympd_state, nfds_t i);
 
 // public functions
 
@@ -46,45 +47,45 @@ void *mympd_api_loop(void *arg_config) {
     thread_logname = sds_replace(thread_logname, "mympdapi");
     set_threadname(thread_logname);
 
-    //create initial mympd_state struct and set defaults
+    // create initial mympd_state struct and set defaults
     struct t_mympd_state *mympd_state = malloc_assert(sizeof(struct t_mympd_state));
     mympd_state_default(mympd_state, (struct t_config *)arg_config);
 
-    //start autoconfiguration, if mpd_host does not exist
+    // start autoconfiguration, if mpd_host does not exist
     sds filepath = sdscatfmt(sdsempty(), "%S/%s/mpd_host", mympd_state->config->workdir, DIR_WORK_STATE);
     if (testfile_read(filepath) == false) {
         mpd_client_autoconf(mympd_state);
     }
     FREE_SDS(filepath);
 
-    //read global states
+    // read global states
     mympd_api_settings_statefiles_global_read(mympd_state);
-    //read myMPD states for default partition
+    // read myMPD states for default partition
     mympd_api_settings_statefiles_partition_read(mympd_state->partition_state);
     // last played for default partition
     last_played_file_read(mympd_state->partition_state);
-    //home icons
+    // home icons
     mympd_api_home_file_read(&mympd_state->home_list, mympd_state->config->workdir);
-    //timer
+    // timer
     mympd_api_timer_file_read(&mympd_state->timer_list, mympd_state->config->workdir);
-    //trigger
+    // trigger
     mympd_api_trigger_file_read(&mympd_state->trigger_list, mympd_state->config->workdir);
-    //caches
+    // caches
     if (mympd_state->config->save_caches == true) {
-        //album cache
+        // album cache
         album_cache_read(&mympd_state->album_cache, mympd_state->config->workdir, &mympd_state->config->albums);
     }
-    //set timers
+    // set timers
     if (mympd_state->config->covercache_keep_days > 0) {
         MYMPD_LOG_DEBUG(NULL, "Adding timer for \"crop covercache\" to execute periodic each day");
         mympd_api_timer_add(&mympd_state->timer_list, TIMER_COVERCACHE_CLEANUP_OFFSET, TIMER_COVERCACHE_CLEANUP_INTERVAL,
             timer_handler_by_id, TIMER_ID_COVERCACHE_CROP, NULL);
     }
 
-    //start trigger
+    // start trigger
     mympd_api_trigger_execute(&mympd_state->trigger_list, TRIGGER_MYMPD_START, MPD_PARTITION_ALL);
 
-    //push ready state to webserver
+    // push ready state to webserver
     struct t_work_response *web_server_response = create_response_new(RESPONSE_TYPE_PUSH_CONFIG, 0, 0, INTERNAL_API_WEBSERVER_READY, MPD_PARTITION_DEFAULT);
     mympd_queue_push(web_server_queue, web_server_response, 0);
 
@@ -101,7 +102,7 @@ void *mympd_api_loop(void *arg_config) {
     // connect to default mpd partition
     mympd_timer_set(mympd_state->partition_state->timer_fd_mpd_connect, 0, 5);
 
-    //thread loop
+    // thread loop
     while (s_signal_received == 0) {
         populate_pfds(mympd_state);
         errno = 0;
@@ -114,55 +115,10 @@ void *mympd_api_loop(void *arg_config) {
         struct t_work_request *request = NULL;
         for (nfds_t i = 0; i < mympd_state->pfds.len; i++) {
             if (mympd_state->pfds.fds[i].revents & POLLIN) {
-                switch (mympd_state->pfds.fd_types[i]) {
-                    case PFD_TYPE_TIMER:
-                        if (event_pfd_read_fd(mympd_state->pfds.fds[i].fd) == true) {
-                            mympd_api_timer_check(mympd_state->pfds.fds[i].fd, &mympd_state->timer_list);
-                        }
-                        break;
-                    case PFD_TYPE_STICKERDB:
-                        stickerdb_idle(mympd_state->stickerdb);
-                        break;
-                    case PFD_TYPE_QUEUE:
-                        // check the mympd_api_queue
-                        if (event_pfd_read_fd(mympd_state->pfds.fds[i].fd) == true) {
-                            request = mympd_queue_shift(mympd_api_queue, 50, 0);
-                            if (request != NULL) {
-                                struct t_partition_state *partition_state = partitions_get_by_name(mympd_state, request->partition);
-                                if (partition_state == NULL) {
-                                    MYMPD_LOG_ERROR(NULL, "Unable to find partition for queue fd: %d", mympd_state->pfds.fds[i].fd);
-                                    break;
-                                }
-                                partition_state->waiting_events |= PFD_TYPE_QUEUE;
-                            }
-                        }
-                        break;
-                    case PFD_TYPE_PARTITION:
-                        // mpd idle event
-                        mympd_state->pfds.partition_states[i]->waiting_events |= PFD_TYPE_PARTITION;
-                        break;
-                    case PFD_TYPE_TIMER_JUKEBOX:
-                        // jukebox should add a song
-                        if (event_pfd_read_fd(mympd_state->pfds.fds[i].fd) == true) {
-                            mympd_state->pfds.partition_states[i]->waiting_events |= PFD_TYPE_TIMER_JUKEBOX;
-                        }
-                        break;
-                    case PFD_TYPE_TIMER_SCROBBLE:
-                        // the scrobble event
-                        if (event_pfd_read_fd(mympd_state->pfds.fds[i].fd) == true) {
-                            mpd_client_scrobble(mympd_state, mympd_state->pfds.partition_states[i]);
-                        }
-                        break;
-                    case PFD_TYPE_TIMER_MPD_CONNECT:
-                        // connect to mpd
-                        if (event_pfd_read_fd(mympd_state->pfds.fds[i].fd) == true) {
-                            partitions_connect(mympd_state, mympd_state->pfds.partition_states[i]);
-                        }
-                        break;
-                }
+                handle_socket_pollin(mympd_state, i, &request);
             }
             else if (mympd_state->pfds.fds[i].revents & (POLLHUP | POLLERR | POLLNVAL)) {
-                handle_socket_error(mympd_state, i, mympd_state->pfds.fds[i].revents);
+                handle_socket_error(mympd_state, i);
             }
         }
         // Iterate through mpd partitions and handle the events
@@ -170,10 +126,10 @@ void *mympd_api_loop(void *arg_config) {
     }
     MYMPD_LOG_DEBUG(NULL, "Stopping mympd_api thread");
 
-    //stop trigger
+    // stop trigger
     mympd_api_trigger_execute(&mympd_state->trigger_list, TRIGGER_MYMPD_STOP, MPD_PARTITION_ALL);
 
-    //disconnect from mpd
+    // disconnect from mpd
     mpd_client_disconnect_all(mympd_state);
     if (mympd_state->stickerdb->conn != NULL) {
         stickerdb_disconnect(mympd_state->stickerdb);
@@ -188,7 +144,7 @@ void *mympd_api_loop(void *arg_config) {
             &mympd_state->mpd_state->tags_album, &mympd_state->config->albums, true);
     }
 
-    //save and free states
+    // save and free states
     mympd_state_save(mympd_state, true);
 
     FREE_SDS(thread_logname);
@@ -198,14 +154,91 @@ void *mympd_api_loop(void *arg_config) {
 // private functions
 
 /**
+ * Handles socket read event
+ * @param mympd_state pointer to mympd state
+ * @param i fd number from pfds array
+ * @param request pointer to work request struct to populate
+ */
+static void handle_socket_pollin(struct t_mympd_state *mympd_state, nfds_t i, struct t_work_request **request) {
+    switch (mympd_state->pfds.fd_types[i]) {
+        case PFD_TYPE_TIMER:
+            MYMPD_LOG_DEBUG(NULL, "Timer event");
+            if (event_pfd_read_fd(mympd_state->pfds.fds[i].fd) == true) {
+                mympd_api_timer_check(mympd_state->pfds.fds[i].fd, &mympd_state->timer_list);
+            }
+            break;
+        case PFD_TYPE_STICKERDB:
+            MYMPD_LOG_DEBUG("stickerdb", "Stickerdb event");
+            stickerdb_idle(mympd_state->stickerdb);
+            break;
+        case PFD_TYPE_QUEUE:
+            // check the mympd_api_queue
+            MYMPD_LOG_DEBUG(NULL, "Queue event");
+            if (event_pfd_read_fd(mympd_state->pfds.fds[i].fd) == true) {
+                *request = mympd_queue_shift(mympd_api_queue, -1, 0);
+                if (*request == NULL) {
+                    break;
+                }
+                struct t_partition_state *partition_state = partitions_get_by_name(mympd_state, (*request)->partition);
+                if (partition_state == NULL) {
+                    MYMPD_LOG_ERROR(NULL, "Unable to find partition for queue fd: %d", mympd_state->pfds.fds[i].fd);
+                    break;
+                }
+                MYMPD_LOG_DEBUG(partition_state->name, "Queue event");
+                partition_state->waiting_events |= PFD_TYPE_QUEUE;
+            }
+            break;
+        case PFD_TYPE_PARTITION:
+            // mpd idle event
+            MYMPD_LOG_DEBUG(mympd_state->pfds.partition_states[i]->name, "Partition event");
+            mympd_state->pfds.partition_states[i]->waiting_events |= PFD_TYPE_PARTITION;
+            break;
+        case PFD_TYPE_TIMER_JUKEBOX:
+            // jukebox should add a song
+            MYMPD_LOG_DEBUG(mympd_state->pfds.partition_states[i]->name, "Jukebox event");
+            if (event_pfd_read_fd(mympd_state->pfds.fds[i].fd) == true) {
+                mympd_state->pfds.partition_states[i]->waiting_events |= PFD_TYPE_TIMER_JUKEBOX;
+            }
+            break;
+        case PFD_TYPE_TIMER_SCROBBLE:
+            MYMPD_LOG_DEBUG(mympd_state->pfds.partition_states[i]->name, "Scrobble event");
+            if (event_pfd_read_fd(mympd_state->pfds.fds[i].fd) == true) {
+                mpd_client_scrobble(mympd_state, mympd_state->pfds.partition_states[i]);
+            }
+            break;
+        case PFD_TYPE_TIMER_MPD_CONNECT:
+            // connect to mpd
+            MYMPD_LOG_DEBUG(mympd_state->pfds.partition_states[i]->name, "Connect event");
+            if (event_pfd_read_fd(mympd_state->pfds.fds[i].fd) == true) {
+                partitions_connect(mympd_state, mympd_state->pfds.partition_states[i]);
+            }
+            break;
+    }
+}
+
+/**
  * Handles socket errors
  * @param mympd_state pointer to mympd state
  * @param i fd number from pfds array
- * @param revents poll event
  */
-static void handle_socket_error(struct t_mympd_state *mympd_state, nfds_t i, short revents) {
-    MYMPD_LOG_ERROR(NULL, "Socket error %s for %d of type %s", lookup_pfd_revents(revents),
+static void handle_socket_error(struct t_mympd_state *mympd_state, nfds_t i) {
+    MYMPD_LOG_ERROR(NULL, "Socket error %s for %d of type %s", lookup_pfd_revents(mympd_state->pfds.fds[i].revents),
         mympd_state->pfds.fds[i].fd, lookup_pfd_type(mympd_state->pfds.fd_types[i]));
+    switch (mympd_state->pfds.fd_types[i]) {
+        case PFD_TYPE_PARTITION:
+            mpd_client_disconnect(mympd_state->pfds.partition_states[i]);
+            break;
+        case PFD_TYPE_STICKERDB:
+            stickerdb_disconnect(mympd_state->stickerdb);
+            break;
+        case PFD_TYPE_QUEUE:
+            event_fd_close(mympd_state->pfds.fds[i].fd);
+            mympd_api_queue->event_fd = event_eventfd_create();
+            break;
+        default:
+            MYMPD_LOG_DEBUG(NULL, "Closing socket");
+            event_fd_close(mympd_state->pfds.fds[i].fd);
+    }
 }
 
 /**
@@ -214,9 +247,6 @@ static void handle_socket_error(struct t_mympd_state *mympd_state, nfds_t i, sho
  * @param mympd_state pointer to mympd state
  */
 static void populate_pfds(struct t_mympd_state *mympd_state) {
-    #ifdef MYMPD_DEBUG
-        MYMPD_LOG_DEBUG(NULL, "Populating poll fds array");
-    #endif
     mympd_state->pfds.len = 0;
     // Connections for MPD partitions
     struct t_partition_state *partition_state = mympd_state->partition_state;
@@ -244,4 +274,7 @@ static void populate_pfds(struct t_mympd_state *mympd_state) {
         event_pfd_add_fd(&mympd_state->pfds, current_timer->fd, PFD_TYPE_TIMER, NULL);
         current = current->next;
     }
+    #ifdef MYMPD_DEBUG
+        MYMPD_LOG_DEBUG(NULL, "Polling %lu fds", mympd_state->pfds.len);
+    #endif
 }

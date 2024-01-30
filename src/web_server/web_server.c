@@ -33,8 +33,8 @@
 static void get_placeholder_image(sds workdir, const char *name, sds *result);
 static void read_queue(struct mg_mgr *mgr);
 static bool parse_internal_message(struct t_work_response *response, struct t_mg_user_data *mg_user_data);
-static void ev_handler(struct mg_connection *nc, int ev, void *ev_data, void *fn_data);
-static void ev_handler_redirect(struct mg_connection *nc_http, int ev, void *ev_data, void *fn_data);
+static void ev_handler(struct mg_connection *nc, int ev, void *ev_data);
+static void ev_handler_redirect(struct mg_connection *nc_http, int ev, void *ev_data);
 static void send_ws_notify(struct mg_mgr *mgr, struct t_work_response *response);
 static void send_ws_notify_client(struct mg_mgr *mgr, struct t_work_response *response);
 static void send_api_response(struct mg_mgr *mgr, struct t_work_response *response);
@@ -71,7 +71,7 @@ bool web_server_init(struct mg_mgr *mgr, struct t_config *config, struct t_mg_us
     mg_user_data->publish_music = false;
     mg_user_data->publish_playlists = false;
     mg_user_data->feat_albumart = false;
-    mg_user_data->connection_count = 0;
+    mg_user_data->connection_count = 2; // listening + wakup
     list_init(&mg_user_data->stream_uris);
     list_init(&mg_user_data->session_list);
     mg_user_data->mympd_api_started = false;
@@ -204,13 +204,13 @@ void *web_server_loop(void *arg_mgr) {
  */
 
 /**
- * Reads a message from the queue
+ * Reads and processes all messages from the queue
  * @param mgr pointer to mongoose mgr
  */
 static void read_queue(struct mg_mgr *mgr) {
     struct t_mg_user_data *mg_user_data = (struct t_mg_user_data *) mgr->userdata;
-    struct t_work_response *response = mympd_queue_shift(web_server_queue, 50, 0);
-    if (response != NULL) {
+    struct t_work_response *response;
+    while ((response = mympd_queue_shift(web_server_queue, -1, 0)) != NULL) {
         switch(response->type) {
             case RESPONSE_TYPE_NOTIFY_CLIENT:
                 //websocket notify for specific clients
@@ -359,10 +359,15 @@ static void send_ws_notify(struct mg_mgr *mgr, struct t_work_response *response)
     struct mg_connection *nc = mgr->conns;
     int send_count = 0;
     int conn_count = 0;
+    time_t last_ping = time(NULL) - WS_PING_TIMEOUT;
     while (nc != NULL) {
-        if ((int)nc->is_websocket == 1) {
+        if (nc->is_websocket == 1U) {
             struct t_frontend_nc_data *frontend_nc_data = (struct t_frontend_nc_data *)nc->fn_data;
-            if (strcmp(response->partition, frontend_nc_data->partition) == 0 ||
+            if (frontend_nc_data->last_ws_ping < last_ping) {
+                MYMPD_LOG_INFO(NULL, "Closing stale websocket connection \"%lu\"", nc->id);
+                nc->is_closing = 1;
+            }
+            else if (strcmp(response->partition, frontend_nc_data->partition) == 0 ||
                 strcmp(response->partition, MPD_PARTITION_ALL) == 0)
             {
                 MYMPD_LOG_DEBUG(response->partition, "Sending notify to conn_id \"%lu\": %s", nc->id, response->data);
@@ -396,7 +401,7 @@ static void send_ws_notify_client(struct mg_mgr *mgr, struct t_work_response *re
     const unsigned clientId = response->id / 1000;
     //const unsigned requestId = response->id % 1000;
     while (nc != NULL) {
-        if ((int)nc->is_websocket == 1) {
+        if (nc->is_websocket == 1U) {
             struct t_frontend_nc_data *frontend_nc_data = (struct t_frontend_nc_data *)nc->fn_data;
             if (clientId == frontend_nc_data->id) {
                 MYMPD_LOG_DEBUG(response->partition, "Sending notify to conn_id \"%lu\", jsonrpc client id %u: %s", nc->id, clientId, response->data);
@@ -421,7 +426,7 @@ static void send_ws_notify_client(struct mg_mgr *mgr, struct t_work_response *re
 static void send_api_response(struct mg_mgr *mgr, struct t_work_response *response) {
     struct mg_connection *nc = mgr->conns;
     while (nc != NULL) {
-        if ((int)nc->is_websocket == 0 &&
+        if (nc->is_websocket == 0U &&
             nc->id == response->conn_id)
         {
             if (response->cmd_id == INTERNAL_API_ALBUMART_BY_URI) {
@@ -502,11 +507,10 @@ static bool enforce_conn_limit(struct mg_connection *nc, int connection_count) {
  * @param nc mongoose connection
  * @param ev connection event
  * @param ev_data event data (http / websocket message)
- * @param fn_data backend connection for proxy connections
  */
-static void ev_handler(struct mg_connection *nc, int ev, void *ev_data, void *fn_data) {
+static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
     //connection specific data structure
-    struct t_frontend_nc_data *frontend_nc_data = (struct t_frontend_nc_data *) fn_data;
+    struct t_frontend_nc_data *frontend_nc_data = (struct t_frontend_nc_data *) nc->fn_data;
     //mongoose user data
     struct t_mg_user_data *mg_user_data = (struct t_mg_user_data *) nc->mgr->userdata;
     struct t_config *config = mg_user_data->config;
@@ -521,9 +525,10 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data, void *fn
                 mg_user_data->connection_count++;
                 //initialize fn_data
                 frontend_nc_data = malloc_assert(sizeof(struct t_frontend_nc_data));
-                frontend_nc_data->partition = NULL;  // populated on websocket handshake
-                frontend_nc_data->id = 0;            // populated through websocket message
-                frontend_nc_data->backend_nc = NULL; // used for reverse proxy function
+                frontend_nc_data->partition = NULL;           // populated on websocket handshake
+                frontend_nc_data->id = 0;                     // populated through websocket message
+                frontend_nc_data->last_ws_ping = time(NULL);  // websocket ping timestamp
+                frontend_nc_data->backend_nc = NULL;          // used for reverse proxy function
                 nc->fn_data = frontend_nc_data;
                 //set labels
                 nc->data[0] = 'F'; // connection type
@@ -585,6 +590,9 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data, void *fn
             if (sent == 0) {
                 MYMPD_LOG_ERROR(frontend_nc_data->partition, "Websocket: Could not reply, closing connection");
                 nc->is_closing = 1;
+            }
+            else {
+                frontend_nc_data->last_ws_ping = time(NULL);
             }
             break;
         }
@@ -715,7 +723,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data, void *fn
                     nc->is_draining = 1;
                     break;
                 }
-                create_backend_connection(nc, frontend_nc_data->backend_nc, node->value_p, forward_backend_to_frontend_stream);
+                create_backend_connection(nc, frontend_nc_data->backend_nc, node->value_p, forward_backend_to_frontend_stream, true);
             }
             else if (mg_http_match_uri(hm, "/proxy") == true) {
                 //Makes a get request to the defined uri and returns the response
@@ -824,10 +832,8 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data, void *fn
  * @param nc mongoose connection
  * @param ev connection event
  * @param ev_data event data (http / websocket message)
- * @param fn_data not used
  */
-static void ev_handler_redirect(struct mg_connection *nc, int ev, void *ev_data, void *fn_data) {
-    (void)fn_data;
+static void ev_handler_redirect(struct mg_connection *nc, int ev, void *ev_data) {
     struct t_mg_user_data *mg_user_data = (struct t_mg_user_data *) nc->mgr->userdata;
     struct t_config *config = mg_user_data->config;
 
