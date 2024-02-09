@@ -4,6 +4,18 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
+## myMPD v14.0.1 (2024-02-08)
+
+This is a small bugfix release.
+
+### Changelog
+
+- Fix: Skip event
+- Feat: Add skip event trigger
+- Fix: cmake dependency for Gentoo #1210
+
+***
+
 ## myMPD v14.0.0 (2024-01-30)
 
 This version ships many improvements for stickers, smart playlists and the jukebox mode.
