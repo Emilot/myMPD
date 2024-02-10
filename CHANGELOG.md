@@ -4,6 +4,18 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
+## myMPD v14.0.2 (not yet released)
+
+This is a small bugfix release.
+
+### Changelog
+
+- Fix: Use only configured tags #1215
+- Fix: Reconnect to MPD after connection parameters has changed
+- Fix: Remove split char from vorbis comment value #1217
+
+***
+
 ## myMPD v14.0.1 (2024-02-08)
 
 This is a small bugfix release.
