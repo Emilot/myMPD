@@ -12,8 +12,8 @@ typedef struct memory_struct
 void collybia_init(void);
 void collybia_dc_handle(int *dc);
 void collybia_cleanup(void);
-sds collybia_ns_server_list(struct t_partition_state *partition_state, sds buffer, long int request_id);
-sds collybia_wifi_server_list(struct t_partition_state *partition_state, sds buffer, long request_id);
-sds collybia_wifi_connect(struct t_partition_state *partition_state, sds buffer, long request_id);
+sds collybia_ns_server_list(sds buffer, enum mympd_cmd_ids cmd_id, unsigned request_id);
+sds collybia_wifi_server_list(sds buffer, enum mympd_cmd_ids cmd_id, unsigned request_id);
+sds collybia_wifi_connect(sds buffer, enum mympd_cmd_ids cmd_id, unsigned request_id);
 int collybia_settings_set(struct t_mympd_state *mympd_state, bool ns_changed, bool mpd_conf_changed, bool dac_changed, bool ffmpeg_changed, bool apmode_changed, bool airplay_changed, bool roon_changed, bool spotify_changed, bool wifi_changed);
 #endif

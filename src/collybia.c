@@ -29,16 +29,15 @@ static bool syscmd(const char *cmdline);
 static int ns_set(int type, const char *server, const char *share, const char *vers, const char *username,
                   const char *password);
 
-sds collybia_ns_server_list(struct t_partition_state *partition_state, sds buffer, long int request_id) {
-    enum mympd_cmd_ids cmd_id = MYMPD_API_NS_SERVER_LIST;
-
+sds collybia_ns_server_list(sds buffer, enum mympd_cmd_ids cmd_id, unsigned request_id) 
+{
     FILE *fp = popen("/usr/bin/nmblookup -S '*' | grep \"<00>\" | awk '{print $1}'", "r");
     // returns three lines per server found - 1st line ip address 2nd line name 3rd line workgroup
     if (fp == NULL)
     {
-        MYMPD_LOG_INFO(NULL, "Failed to get server list");
+        MYMPD_LOG_ERROR(NULL, "Failed to get server list");
         buffer = jsonrpc_respond_message(buffer, cmd_id, request_id,
-	JSONRPC_FACILITY_DATABASE, JSONRPC_SEVERITY_ERROR, "Failed to get server list");
+	JSONRPC_FACILITY_GENERAL, JSONRPC_SEVERITY_ERROR, "Failed to get server list");
     }
     else
     {
@@ -78,12 +77,9 @@ sds collybia_ns_server_list(struct t_partition_state *partition_state, sds buffe
             buffer = sdscat(buffer, "}");
         }
         buffer = sdscat(buffer, "],");
-        buffer = tojson_long(buffer, "totalEntities", entity_count, true);
-        buffer = tojson_long(buffer, "returnedEntities", entity_count, false);
+        buffer = tojson_uint(buffer, "totalEntities", entity_count, true);
+        buffer = tojson_uint(buffer, "returnedEntities", entity_count, false);
         buffer = jsonrpc_end(buffer);
-
-        mpd_response_finish(partition_state->conn);
-
         if (line != NULL)
         {
             free(line);
@@ -97,20 +93,15 @@ sds collybia_ns_server_list(struct t_partition_state *partition_state, sds buffe
     return buffer;
 }
 
-sds collybia_wifi_server_list(struct t_partition_state *partition_state, sds buffer, long request_id) {
-    enum mympd_cmd_ids cmd_id = MYMPD_API_WIFI_SERVER_LIST;
-    if (mympd_check_error_and_recover_respond(partition_state, &buffer, cmd_id, request_id, "mpd_search_db_songs") == false) {
-        mpd_search_cancel(partition_state->conn);
-        return buffer;
-    }
+sds collybia_wifi_server_list(sds buffer, enum mympd_cmd_ids cmd_id, unsigned request_id) {
 
     FILE *fp = popen("ifconfig wlan0 up;/usr/bin/iw dev wlan0 scan | grep \"SSID\" | awk '{print $2}'", "r");
 
     if (fp == NULL)
     {
         buffer = jsonrpc_respond_message(buffer, cmd_id, request_id,
-	JSONRPC_FACILITY_DATABASE, JSONRPC_SEVERITY_ERROR, "Failed to get server list");
-        MYMPD_LOG_INFO(NULL, "Failed to get server list");
+	JSONRPC_FACILITY_GENERAL, JSONRPC_SEVERITY_ERROR, "Failed to get server list");
+        MYMPD_LOG_ERROR(NULL, "Failed to get server list");
     }
     else
     {
@@ -138,8 +129,8 @@ sds collybia_wifi_server_list(struct t_partition_state *partition_state, sds buf
             buffer = sdscat(buffer, "}");
         }
         buffer = sdscat(buffer, "],");
-        buffer = tojson_long(buffer, "totalEntities", entity_count, true);
-        buffer = tojson_long(buffer, "returnedEntities", entity_count, false);
+        buffer = tojson_uint(buffer, "totalEntities", entity_count, true);
+        buffer = tojson_uint(buffer, "returnedEntities", entity_count, false);
         buffer = jsonrpc_end(buffer);
         if (line != NULL)
         {
@@ -151,12 +142,7 @@ sds collybia_wifi_server_list(struct t_partition_state *partition_state, sds buf
     return buffer;
 }
 
-sds collybia_wifi_connect(struct t_partition_state *partition_state, sds buffer, long request_id) {
-    enum mympd_cmd_ids cmd_id = MYMPD_API_WIFI_CONNECT;
-    if (mympd_check_error_and_recover_respond(partition_state, &buffer, cmd_id, request_id, "mpd_search_db_songs") == false) {
-        mpd_search_cancel(partition_state->conn);
-        return buffer;
-    }
+sds collybia_wifi_connect(sds buffer, enum mympd_cmd_ids cmd_id, unsigned request_id) {
 
     bool service = syscmd("/home/collybia/wifi_connect");
 

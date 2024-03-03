@@ -1631,13 +1631,13 @@ void mympd_api_handler(struct t_mympd_state *mympd_state, struct t_partition_sta
             list_clear(&filenames);
             break;
         case MYMPD_API_NS_SERVER_LIST:
-                response->data = collybia_ns_server_list(partition_state, response->data, request->id);
+                response->data = collybia_ns_server_list(response->data, request->cmd_id, request->id);
             break;
         case MYMPD_API_WIFI_SERVER_LIST:
-                response->data = collybia_wifi_server_list(partition_state, response->data, request->id);
+                response->data = collybia_wifi_server_list(response->data, request->cmd_id, request->id);
             break;
         case MYMPD_API_WIFI_CONNECT:
-                response->data = collybia_wifi_connect(partition_state, response->data, request->id);
+                response->data = collybia_wifi_connect(response->data, request->cmd_id, request->id);
             break;
         }
     // unhandled method
