@@ -4,6 +4,42 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
+## myMPD 14.0.3 (2024-02-15)
+
+This is a small bugfix release.
+
+### Changelog
+
+- Fix: myMPD does not work with safari on iOS #1212
+- Fix: Volume slider color #1218
+- Fix: Gentoo ebuild install #1219
+
+***
+
+## myMPD v14.0.2 (2024-02-11)
+
+This is a small bugfix release.
+
+### Changelog
+
+- Fix: Use only configured tags #1215
+- Fix: Reconnect to MPD after connection parameters has changed
+- Fix: Remove split char from vorbis comment value #1217
+
+***
+
+## myMPD v14.0.1 (2024-02-08)
+
+This is a small bugfix release.
+
+### Changelog
+
+- Fix: Skip event
+- Feat: Add skip event trigger
+- Fix: cmake dependency for Gentoo #1210
+
+***
+
 ## myMPD v14.0.0 (2024-01-30)
 
 This version ships many improvements for stickers, smart playlists and the jukebox mode.
