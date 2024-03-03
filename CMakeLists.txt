@@ -47,7 +47,7 @@ option(MYMPD_DOC_HTML "Creates and installs the html documentation, default OFF"
 option(MYMPD_EMBEDDED_ASSETS "Embed assets in binary, default ON, OFF for Debug" "ON")
 option(MYMPD_ENABLE_EXPERIMENTAL "Enable experimental features" "OFF")
 option(MYMPD_ENABLE_FLAC "Enables flac support, default ON" "ON")
-option(MYMPD_ENABLE_IPV6 "Enables IPv6, default ON" "OFF")
+option(MYMPD_ENABLE_IPV6 "Enables IPv6, default ON" "ON")
 option(MYMPD_ENABLE_LIBID3TAG "Enables libid3tag support, default ON" "ON")
 option(MYMPD_ENABLE_LUA "Enables lua support, default ON" "ON")
 option(MYMPD_MANPAGES "Creates and installs manpages" "ON")
