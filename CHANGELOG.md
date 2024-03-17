@@ -2,6 +2,16 @@
 
 https://github.com/jcorporation/myMPD/
 
+## myMPD 14.1.0 (2024-03-12)
+
+This release enables the support for sticker sorting and fixes a severe mongoose bug.
+
+### Changelog
+
+- Feat: Sort sticker search results (MPD 0.24) #1094
+- Fix: Problems with settings in 14.0.x #1221
+- Fix: Browse filesystem layout #1235
+
 ## myMPD 14.0.4 (2024-03-03)
 
 This is a small bugfix release.
