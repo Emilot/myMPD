@@ -4,13 +4,84 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
-## myMPD 14.1.1 (not yet released)
+## myMPD 15.0.2 (2024-05-13)
 
 This is a small bugfix release.
 
 ### Changelog
 
-- Fix: mympd-config - cleanup before writing new values #1245
+- Upd: Translations
+- Upd: Improve docker documentation #1268
+- Fix: Missing parameter for `build.sh releaseinstall` #1271
+- Fix: Alignment of footer content
+- Fix: Drag and Drop in queue in playlist view #1278
+
+***
+
+## myMPD 15.0.1 (2024-05-02)
+
+This is a small bugfix release.
+
+### Changelog
+
+- Upd: Japanese translation
+- Fix: Save playback view #1264
+- Fix: JavaScript minification #1264
+- Fix: GPIO set and toggle functions
+
+***
+
+## myMPD v15.0.0 (2024-05-02)
+
+This release reworks the table and grid layouts for all views. Each view can now be displayed as table or grid.
+
+### API changes
+
+- The `cols` param was renamed to `fields`
+- MYMPD_API_PLAYLIST_LIST: response changed
+- MYMPD_API_VIEW_SAVE: new
+- MYMPD_API_COLS_SAVE: removed
+
+### Changelog
+
+- Feat: All views can be displayed as table or grid (with pictures) #1051
+- Feat: Add setting for default sort tag in library view #1207
+- Feat: Add lua library for myGPIOd support #1208
+- Feat: Support range for listplaylist and listplaylistinfo (MPD 0.24) #1214
+- Feat: Support playlistlength command (MPD 0.24) #1213
+- Feat: Add column for "File type" in song lists #1225
+- Feat: Add thumbnail column to views #1093
+- Feat: Add playlist art handler
+- Feat: Configurable columns for playlist view
+- Feat: Add option to disable covercache pruning #1237
+- Feat: Add support for sticker find operators contains, starts_with (MPD 0.24)
+- Feat: Provide and install a systemd user unit #1262
+- Upd: Bootstrap 5.3.3
+- Upd: Support ESLint 9
+- Fix: List and search playlists in filesystem view
+- Fix: SSL issues with iPhone clients
+
+***
+
+## myMPD 14.1.2 (2024-04-15)
+
+This is a small bugfix release.
+
+### Changelog
+
+- Fix: Output enabled state is bool type #1254
+- Fix: Add missing sort parameters to home icon for search #1257
+- Fix: Set default stream port if stream uri is defined #1255
+
+***
+
+## myMPD 14.1.1 (2023-04-03)
+
+This is a small bugfix release.
+
+### Changelog
+
+- Fix: `-c` command line option cleans up the config dir #1245
 
 ***
 
@@ -23,6 +94,7 @@ This release enables the support for sticker sorting and fixes a severe mongoose
 - Feat: Sort sticker search results (MPD 0.24) #1094
 - Fix: Problems with settings in 14.0.x #1221
 - Fix: Browse filesystem layout #1235
+- Fix: Re-add custom css to mongoose dir listing
 
 ***
 

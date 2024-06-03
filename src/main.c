@@ -81,6 +81,7 @@ static void mympd_signal_handler(int sig_num) {
     switch(sig_num) {
         case SIGTERM:
         case SIGINT: {
+            MYMPD_LOG_NOTICE(NULL, "Signal \"%s\" received, exiting", (sig_num == SIGTERM ? "SIGTERM" : "SIGINT"));
             //Set loop end condition for threads
             s_signal_received = sig_num;
             //Wakeup queue loops
@@ -88,7 +89,6 @@ static void mympd_signal_handler(int sig_num) {
             pthread_cond_signal(&mympd_script_queue->wakeup);
             pthread_cond_signal(&web_server_queue->wakeup);
             event_eventfd_write(mympd_api_queue->event_fd);
-            MYMPD_LOG_NOTICE(NULL, "Signal \"%s\" received, exiting", (sig_num == SIGTERM ? "SIGTERM" : "SIGINT"));
             if (web_server_queue->mg_mgr != NULL) {
                 mg_wakeup(web_server_queue->mg_mgr, web_server_queue->mg_conn_id, "", 0);
             }
@@ -384,8 +384,8 @@ int main(int argc, char **argv) {
     mympd_config_defaults_initial(config);
 
     //command line option
-    int handle_options_rc = handle_options(config, argc, argv);
-    switch(handle_options_rc) {
+    enum handle_options_rc options_rc = handle_options(config, argc, argv);
+    switch(options_rc) {
         case OPTIONS_RC_INVALID:
             //invalid option or error
             loglevel = LOG_ERR;
@@ -395,6 +395,9 @@ int main(int argc, char **argv) {
             loglevel = LOG_ERR;
             rc = EXIT_SUCCESS;
             goto cleanup;
+        case OPTIONS_RC_OK:
+            //continue
+            break;
     }
 
     //get startup uid
@@ -421,6 +424,7 @@ int main(int argc, char **argv) {
     //bootstrap - write config files and exit
     if (config->bootstrap == true) {
         if (drop_privileges(config->user, startup_uid) == true &&
+            mympd_config_rm(config) == true &&
             mympd_config_rw(config, true) == true &&
             create_certificates(config) == true)
         {
