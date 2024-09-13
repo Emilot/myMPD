@@ -4,6 +4,10 @@
  https://github.com/jcorporation/mympd
 */
 
+/*! \file
+ * \brief Scripts thread API handler
+ */
+
 #include "compile_time.h"
 #include "src/scripts/api_handler.h"
 
@@ -79,6 +83,11 @@ void scripts_api_handler(struct t_scripts_state *scripts_state, struct t_work_re
             list_clear(&arguments);
             break;
         }
+        case MYMPD_API_SCRIPT_RELOAD:
+            rc = scripts_file_reload(scripts_state);
+            response->data = jsonrpc_respond_with_ok_or_error(response->data, request->cmd_id, request->id, rc,
+                        JSONRPC_FACILITY_SCRIPT, "Could not reload scripts from disk");
+            break;
         case MYMPD_API_SCRIPT_RM:
             if (json_get_string(request->data, "$.params.script", 1, FILENAME_LEN_MAX, &sds_buf1, vcb_isfilename, &parse_error) == true) {
                 rc = script_delete(scripts_state, sds_buf1);
@@ -148,7 +157,7 @@ void scripts_api_handler(struct t_scripts_state *scripts_state, struct t_work_re
             break;
         }
         case MYMPD_API_SCRIPT_VAR_DELETE:
-            if (json_get_string(request->data, "$.params.key", 1, NAME_LEN_MAX, &sds_buf1, vcb_isfilename, &parse_error) == true) {
+            if (json_get_string(request->data, "$.params.key", 1, NAME_LEN_MAX, &sds_buf1, vcb_isname, &parse_error) == true) {
                 rc = scripts_vars_delete(&scripts_state->var_list, sds_buf1);
                 response->data = jsonrpc_respond_with_ok_or_error(response->data, request->cmd_id, request->id, rc,
                         JSONRPC_FACILITY_SCRIPT, "Can't delete script variable");

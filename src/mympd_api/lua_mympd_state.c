@@ -4,6 +4,10 @@
  https://github.com/jcorporation/mympd
 */
 
+/*! \file
+ * \brief myMPD state for Lua scripts
+ */
+
 #include "compile_time.h"
 #include "src/mympd_api/lua_mympd_state.h"
 
@@ -90,10 +94,15 @@ bool mympd_api_status_lua_mympd_state_set(struct t_list *lua_partition_state, st
     lua_mympd_state_set_p(lua_partition_state, "jukebox_uniq_tag", mpd_tag_name(partition_state->jukebox.uniq_tag.tags[0]));
     lua_mympd_state_set_i(lua_partition_state, "jukebox_min_song_duration", partition_state->jukebox.min_song_duration);
     lua_mympd_state_set_i(lua_partition_state, "jukebox_max_song_duration", partition_state->jukebox.max_song_duration);
-    //myMPD uri
+    //myMPD https uri
     sds uri = sdsnew("mympd://");
-    uri = resolv_mympd_uri(uri, mympd_state->mpd_state->mpd_host, mympd_state->config);
+    uri = resolv_mympd_uri(uri, mympd_state->mpd_state->mpd_host, mympd_state->config, true);
     lua_mympd_state_set_p(lua_partition_state, "mympd_uri", uri);
+    FREE_SDS(uri);
+    //myMPD http uri
+    uri = sdsnew("mympd://");
+    uri = resolv_mympd_uri(uri, mympd_state->mpd_state->mpd_host, mympd_state->config, false);
+    lua_mympd_state_set_p(lua_partition_state, "mympd_uri_plain", uri);
     FREE_SDS(uri);
     return rc;
 }
@@ -161,6 +170,7 @@ void lua_mympd_state_set_b(struct t_list *lua_mympd_state, const char *k, bool v
 /**
  * Frees the lua_mympd_state list
  * @param lua_mympd_state pointer to the list
+ * @return NULL
  */
 void *lua_mympd_state_free(struct t_list *lua_mympd_state) {
     return list_free_user_data(lua_mympd_state, lua_mympd_state_free_user_data);

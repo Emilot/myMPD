@@ -346,7 +346,7 @@ function parseMPDSettings() {
             }
         }
     }
-    for (const table of ['Home', 'BrowseRadioFavorites', 'BrowseRadioWebradiodb', 'BrowseRadioRadiobrowser', 'BrowsePlaylistList']) {
+    for (const table of ['Home', 'BrowseRadioFavorites', 'BrowseRadioWebradiodb', 'BrowsePlaylistList']) {
         setView(table);
         if (settings['view' + table].mode === 'table') {
             setCols(table);
@@ -376,6 +376,12 @@ function parseMPDSettings() {
         settings.tagList.includes('Disc'))
     {
         settings.viewBrowseDatabaseAlbumDetailFetch.fields.push('Disc');
+    }
+
+    if (settings.viewBrowseDatabaseAlbumDetailFetch.fields.includes('Work') === false &&
+        settings.tagList.includes('Work'))
+    {
+        settings.viewBrowseDatabaseAlbumDetailFetch.fields.push('Work');
     }
 
     if (features.featTags === false) {
@@ -448,7 +454,6 @@ function parseMPDSettings() {
     addTagList('BrowseFilesystemNavDropdown', 'tagListBrowse');
     addTagList('BrowseRadioFavoritesNavDropdown', 'tagListBrowse');
     addTagList('BrowseRadioWebradiodbNavDropdown', 'tagListBrowse');
-    addTagList('BrowseRadioRadiobrowserNavDropdown', 'tagListBrowse');
 
     addTagList('QueueCurrentSearchTags', 'tagListSearch');
     addTagList('QueueCurrentSortTagsList', 'tagList');
@@ -459,6 +464,9 @@ function parseMPDSettings() {
     addTagList('BrowseDatabaseAlbumListSearchTags', 'tagListAlbum');
     addTagList('BrowseDatabaseAlbumListSortTagsList', 'tagListAlbum');
     addTagList('BrowsePlaylistDetailSortTagsDropdown', 'tagList');
+    addTagList('BrowseRadioFavoritesSearchTags', '');
+    addTagList('BrowseRadioFavoritesSortTagsList', '');
+    addTagList('BrowseRadioWebradiodbSearchTags', '');
     addTagList('BrowseRadioWebradiodbSortTagsList', '');
     addTagList('SearchSearchTags', 'tagListSearch');
     addTagList('SearchSortTagsList', 'tagList');

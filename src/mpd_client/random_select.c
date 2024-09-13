@@ -4,6 +4,10 @@
  https://github.com/jcorporation/mympd
 */
 
+/*! \file
+ * \brief Functions to select random songs or albums.
+ */
+
 #include "compile_time.h"
 #include "src/mpd_client/random_select.h"
 
@@ -11,8 +15,8 @@
 #include "src/lib/log.h"
 #include "src/lib/random.h"
 #include "src/lib/sds_extras.h"
+#include "src/lib/search.h"
 #include "src/mpd_client/errorhandler.h"
-#include "src/mpd_client/search_local.h"
 #include "src/mpd_client/stickerdb.h"
 #include "src/mpd_client/tags.h"
 
@@ -25,7 +29,7 @@
 
 static bool check_min_duration(const struct mpd_song *song, unsigned min_duration);
 static bool check_max_duration(const struct mpd_song *song, unsigned max_duration);
-static bool check_expression(const struct mpd_song *song, struct t_tags *tags,
+static bool check_expression(const struct mpd_song *song, struct t_mpd_tags *tags,
         struct t_list *include_expr_list, struct t_list *exclude_expr_list);
 static bool check_not_hated(rax *stickers_like, const char *uri, bool ignore_hated);
 static bool check_last_played_album(rax *stickers_last_played, const char *uri, time_t since, enum album_modes album_mode);
@@ -33,6 +37,9 @@ static bool check_last_played(rax *stickers_last_played, const char *uri, time_t
 static long check_uniq_tag(const char *uri, const char *value, struct t_list *queue_list, struct t_list *add_list);
 static bool add_uri_constraint_or_expression(const char *include_expression, struct t_partition_state *partition_state);
 
+/**
+ * Uniq constraints for random select
+ */
 enum random_add_uniq_result {
     RANDOM_ADD_UNIQ_IN_QUEUE = -2,
     RANDOM_ADD_UNIQ_IS_UNIQ = -1
@@ -86,10 +93,10 @@ unsigned random_select_albums(struct t_partition_state *partition_state, struct 
 
     //parse mpd search expression
     struct t_list *include_expr_list = constraints->filter_include != NULL && constraints->filter_include[0] != '\0'
-        ? parse_search_expression_to_list(constraints->filter_include)
+        ? parse_search_expression_to_list(constraints->filter_include, SEARCH_TYPE_SONG)
         : NULL;
     struct t_list *exclude_expr_list = constraints->filter_exclude != NULL && constraints->filter_exclude[0] != '\0'
-        ? parse_search_expression_to_list(constraints->filter_exclude)
+        ? parse_search_expression_to_list(constraints->filter_exclude, SEARCH_TYPE_SONG)
         : NULL;
 
     sds tag_value = sdsempty();
@@ -193,10 +200,10 @@ unsigned random_select_songs(struct t_partition_state *partition_state, struct t
 
     //parse mpd search expression
     struct t_list *include_expr_list = constraints->filter_include != NULL && constraints->filter_include[0] != '\0'
-        ? parse_search_expression_to_list(constraints->filter_include)
+        ? parse_search_expression_to_list(constraints->filter_include, SEARCH_TYPE_SONG)
         : NULL;
     struct t_list *exclude_expr_list = constraints->filter_exclude != NULL && constraints->filter_exclude[0] != '\0'
-        ? parse_search_expression_to_list(constraints->filter_exclude)
+        ? parse_search_expression_to_list(constraints->filter_exclude, SEARCH_TYPE_SONG)
         : NULL;
 
     if (include_expr_list == NULL) {
@@ -205,6 +212,10 @@ unsigned random_select_songs(struct t_partition_state *partition_state, struct t
     if (exclude_expr_list == NULL) {
         MYMPD_LOG_DEBUG(NULL, "Exclude expression is empty");
     }
+
+    // Request results from mpd in chunks of MPD_RESULTS_MAX
+    // Only MPD 0.24 supports this for playlists
+    bool iterate = from_database || partition_state->mpd_state->feat.listplaylist_range;
 
     do {
         MYMPD_LOG_DEBUG(partition_state->name, "Iterating through source, start: %u", start);
@@ -218,6 +229,11 @@ unsigned random_select_songs(struct t_partition_state *partition_state, struct t
             }
             else {
                 mpd_search_commit(partition_state->conn);
+            }
+        }
+        else if (partition_state->mpd_state->feat.listplaylist_range == true) {
+            if (mpd_send_list_playlist_range_meta(partition_state->conn, playlist, start, end) == false) {
+                MYMPD_LOG_ERROR(partition_state->name, "Error in response to command: mpd_send_list_playlist_meta");
             }
         }
         else {
@@ -269,7 +285,7 @@ unsigned random_select_songs(struct t_partition_state *partition_state, struct t
         }
         start = end;
         end = end + MPD_RESULTS_MAX;
-    } while (from_database == true && lineno + skipno > start);
+    } while (iterate == true && lineno + skipno > start);
     stickerdb_free_find_result(stickers_last_played);
     stickerdb_free_find_result(stickers_like);
     free_search_expression_list(include_expr_list);
@@ -362,12 +378,12 @@ static long check_uniq_tag(const char *uri, const char *value, struct t_list *qu
  * @param exclude_expr_list exclude expression list
  * @return true if song should be included, else false
  */
-static bool check_expression(const struct mpd_song *song, struct t_tags *tags,
+static bool check_expression(const struct mpd_song *song, struct t_mpd_tags *tags,
         struct t_list *include_expr_list, struct t_list *exclude_expr_list)
 {
     // first check exclude expression
     if (exclude_expr_list != NULL &&
-        search_song_expression(song, exclude_expr_list, tags) == true)
+        search_expression_song(song, exclude_expr_list, tags) == true)
     {
         // exclude expression matches
         return false;
@@ -375,7 +391,7 @@ static bool check_expression(const struct mpd_song *song, struct t_tags *tags,
     // exclude expression not matched, try include expression
     if (include_expr_list != NULL) {
         // exclude overwrites include
-        return search_song_expression(song, include_expr_list, tags);
+        return search_expression_song(song, include_expr_list, tags);
     }
     // no include expression, include all
     return true;

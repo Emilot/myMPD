@@ -85,8 +85,7 @@ function addTagList(elId, list) {
     if (elId === 'BrowseFilesystemNavDropdown' ||
         elId === 'BrowsePlaylistListNavDropdown' ||
         elId === 'BrowseRadioFavoritesNavDropdown' ||
-        elId === 'BrowseRadioWebradiodbNavDropdown' ||
-        elId === 'BrowseRadioRadiobrowserNavDropdown')
+        elId === 'BrowseRadioWebradiodbNavDropdown')
     {
         elClear(stack);
         stack.appendChild(
@@ -98,8 +97,7 @@ function addTagList(elId, list) {
         elId === 'BrowseFilesystemNavDropdown' ||
         elId === 'BrowsePlaylistListNavDropdown' ||
         elId === 'BrowseRadioFavoritesNavDropdown' ||
-        elId === 'BrowseRadioWebradiodbNavDropdown' ||
-        elId === 'BrowseRadioRadiobrowserNavDropdown')
+        elId === 'BrowseRadioWebradiodbNavDropdown')
     {
         if (elId === 'BrowseDatabaseAlbumListTagDropdown' ||
             elId === 'BrowseDatabaseTagListTagDropdown')
@@ -126,8 +124,7 @@ function addTagList(elId, list) {
             elCreateTextTn('button', {"class": ["btn", "btn-secondary", "btn-sm"], "data-tag": "Radio"}, 'Webradios')
         );
         if (elId === 'BrowseRadioFavoritesNavDropdown' ||
-            elId === 'BrowseRadioWebradiodbNavDropdown' ||
-            elId === 'BrowseRadioRadiobrowserNavDropdown')
+            elId === 'BrowseRadioWebradiodbNavDropdown')
         {
             stack.lastChild.classList.add('active');
         }
@@ -141,15 +138,17 @@ function addTagList(elId, list) {
         }
     }
     else if (elId === 'QueueCurrentSearchTags') {
-        if (features.featAdvqueue === true)
-        {
+        if (features.featAdvqueue === true) {
             stack.appendChild(
                 elCreateTextTn('button', {"class": ["btn", "btn-secondary", "btn-sm"], "data-tag": "prio"}, 'Priority')
             );
         }
     }
-    else if (elId === 'BrowseRadioWebradiodbSortTagsList') {
-        const tags = ["Bitrate", "Codec", "Country", "Description", "Genre", "Homepage", "Languages", "Name", "State"];
+    else if (elId === 'BrowseRadioFavoritesSearchTags' ||
+             elId === 'BrowseRadioWebradiodbSortTagsList' ||
+             elId === 'BrowseRadioWebradiodbSearchTags')
+    {
+        const tags = ["Added", "Bitrate", "Codec", "Country", "Description", "Genres", "Homepage", "Languages", "Last-Modified", "Name", "Region"];
         for (let i = 0, j = tags.length; i < j; i++) {
             stack.appendChild(
                 elCreateTextTn('button', {"class": ["btn", "btn-secondary", "btn-sm"], "data-tag": tags[i]}, tags[i])
@@ -390,19 +389,14 @@ function printValue(key, value) {
             return span;
         }
         case 'Genre':
+        case 'Genres':
             if (typeof value === 'string') {
                 return document.createTextNode(value);
             }
             //multi value tags - return comma separated
             return document.createTextNode(
-                value.join(', ')
+                joinArray(value)
             );
-        case 'tags':
-            //radiobrowser.info
-            return document.createTextNode(
-                value.replace(/,(\S)/g, ', $1')
-            );
-        case 'homepage':
         case 'Homepage':
         case 'StreamUri':
             //webradios
@@ -413,12 +407,7 @@ function printValue(key, value) {
                 "href": value, "rel": "noreferrer", "target": "_blank"}, value);
         case 'Languages':
             return document.createTextNode(
-                value.join(', ')
-            );
-        case 'lastcheckok':
-            //radiobrowser.info
-            return elCreateText('span', {"class": ["mi"]},
-                (value === 1 ? 'check_circle' : 'error')
+                joinArray(value)
             );
         case 'Bitrate':
             return document.createTextNode(value + ' ' + tn('kbit'));
@@ -477,6 +466,9 @@ function getMBtagLink(tag, value) {
             break;
         case 'MUSICBRAINZ_TRACKID':
             MBentity = 'recording';
+            break;
+        case 'MUSICBRAINZ_WORKID':
+            MBentity = 'work';
             break;
         case 'MUSICBRAINZ_RELEASEGROUPID':
             MBentity = 'release-group';

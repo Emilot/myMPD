@@ -4,6 +4,10 @@
  https://github.com/jcorporation/mympd
 */
 
+/*! \file
+ * \brief myMPD settings API
+ */
+
 #include "compile_time.h"
 #include "src/mympd_api/settings.h"
 
@@ -55,6 +59,8 @@ bool settings_to_webserver(struct t_mympd_state *mympd_state) {
     extra->thumbnail_names = sdsdup(mympd_state->thumbnail_names);
     extra->feat_albumart = mympd_state->mpd_state->feat.albumart;
     extra->mpd_host = sdsdup(mympd_state->mpd_state->mpd_host);
+    extra->webradiodb = mympd_state->webradiodb;
+    extra->webradio_favorites = mympd_state->webradio_favorites;
     list_init(&extra->partitions);
     struct t_partition_state *partition_state = mympd_state->partition_state;
     while (partition_state != NULL) {
@@ -286,9 +292,6 @@ bool mympd_api_settings_view_save(struct t_mympd_state *mympd_state, sds view, s
     else if (strcmp(view, "viewBrowseRadioWebradiodb") == 0) {
         mympd_state->view_browse_radio_webradiodb = sds_replace(mympd_state->view_browse_radio_webradiodb, def);
     }
-    else if (strcmp(view, "viewBrowseRadioRadiobrowser") == 0) {
-        mympd_state->view_browse_radio_radiobrowser = sds_replace(mympd_state->view_browse_radio_radiobrowser, def);
-    }
     else if (strcmp(view, "viewBrowseRadioFavorites") == 0) {
         mympd_state->view_browse_radio_favorites = sds_replace(mympd_state->view_browse_radio_favorites, def);
     }
@@ -505,6 +508,18 @@ bool mympd_api_settings_set(const char *path, sds key, sds value, int vtype, val
         }
         else if (vtype == MJSON_TOK_FALSE) {
             mympd_state->tag_disc_empty_is_first = false;
+        }
+        else {
+            set_invalid_value(error, path, key, value, "Must be a boolean value");
+            return false;
+        }
+    }
+    else if (strcmp(key, "showWorkTagAlbumDetail") == 0) {
+        if (vtype == MJSON_TOK_TRUE) {
+            mympd_state->show_work_tag_album_detail = true;
+        }
+        else if (vtype == MJSON_TOK_FALSE) {
+            mympd_state->show_work_tag_album_detail = false;
         }
         else {
             set_invalid_value(error, path, key, value, "Must be a boolean value");
@@ -874,7 +889,6 @@ void mympd_api_settings_statefiles_global_read(struct t_mympd_state *mympd_state
     mympd_state->view_queue_jukebox_song = state_file_rw_string_sds(workdir, DIR_WORK_STATE, "view_queue_jukebox_song", mympd_state->view_queue_jukebox_song, vcb_isname, true);
     mympd_state->view_queue_jukebox_album = state_file_rw_string_sds(workdir, DIR_WORK_STATE, "view_queue_jukebox_album", mympd_state->view_queue_jukebox_album, vcb_isname, true);
     mympd_state->view_browse_radio_webradiodb = state_file_rw_string_sds(workdir, DIR_WORK_STATE, "view_browse_radio_webradiodb", mympd_state->view_browse_radio_webradiodb, vcb_isname, true);
-    mympd_state->view_browse_radio_radiobrowser = state_file_rw_string_sds(workdir, DIR_WORK_STATE, "view_browse_radio_radiobrowser", mympd_state->view_browse_radio_radiobrowser, vcb_isname, true);
     mympd_state->view_browse_radio_favorites = state_file_rw_string_sds(workdir, DIR_WORK_STATE, "view_browse_radio_favorites", mympd_state->view_browse_radio_favorites, vcb_isname, true);
     mympd_state->coverimage_names = state_file_rw_string_sds(workdir, DIR_WORK_STATE, "coverimage_names", mympd_state->coverimage_names, vcb_isfilename, true);
     mympd_state->thumbnail_names = state_file_rw_string_sds(workdir, DIR_WORK_STATE, "thumbnail_names", mympd_state->thumbnail_names, vcb_isfilename, true);
@@ -890,6 +904,7 @@ void mympd_api_settings_statefiles_global_read(struct t_mympd_state *mympd_state
     mympd_state->lyrics.vorbis_sylt = state_file_rw_string_sds(workdir, DIR_WORK_STATE, "lyrics_vorbis_sylt", mympd_state->lyrics.vorbis_sylt, vcb_isalnum, true);
     mympd_state->navbar_icons = state_file_rw_string_sds(workdir, DIR_WORK_STATE, "navbar_icons", mympd_state->navbar_icons, validate_json_array, true);
     mympd_state->tag_disc_empty_is_first = state_file_rw_bool(workdir, DIR_WORK_STATE, "tag_disc_empty_is_first", mympd_state->tag_disc_empty_is_first, true);
+    mympd_state->show_work_tag_album_detail = state_file_rw_bool(workdir, DIR_WORK_STATE, "show_work_tag_album_detail", mympd_state->show_work_tag_album_detail, true);
 
     strip_slash(mympd_state->music_directory);
     strip_slash(mympd_state->playlist_directory);
@@ -987,10 +1002,10 @@ sds mympd_api_settings_get(struct t_mympd_state *mympd_state, struct t_partition
     buffer = tojson_raw(buffer, "viewQueueJukeboxSong", mympd_state->view_queue_jukebox_song, true);
     buffer = tojson_raw(buffer, "viewQueueJukeboxAlbum", mympd_state->view_queue_jukebox_album, true);
     buffer = tojson_raw(buffer, "viewBrowseRadioWebradiodb", mympd_state->view_browse_radio_webradiodb, true);
-    buffer = tojson_raw(buffer, "viewBrowseRadioRadiobrowser", mympd_state->view_browse_radio_radiobrowser, true);
     buffer = tojson_raw(buffer, "viewBrowseRadioFavorites", mympd_state->view_browse_radio_favorites, true);
     buffer = tojson_raw(buffer, "navbarIcons", mympd_state->navbar_icons, true);
     buffer = tojson_bool(buffer, "tagDiscEmptyIsFirst", mympd_state->tag_disc_empty_is_first, true);
+    buffer = tojson_bool(buffer, "showWorkTagAlbumDetail", mympd_state->show_work_tag_album_detail, true);
     buffer = tojson_char(buffer, "albumMode", lookup_album_mode(mympd_state->config->albums.mode), true);
     buffer = tojson_char(buffer, "albumGroupTag", mpd_tag_name(mympd_state->config->albums.group_tag), true);
     buffer = tojson_raw(buffer, "webuiSettings", mympd_state->webui_settings, true);
@@ -1077,6 +1092,7 @@ sds mympd_api_settings_get(struct t_mympd_state *mympd_state, struct t_partition
         buffer = tojson_bool(buffer, "featDbAdded", partition_state->mpd_state->feat.db_added, true);
         buffer = tojson_bool(buffer, "featStickerSortWindow", partition_state->mpd_state->feat.sticker_sort_window, true);
         buffer = tojson_bool(buffer, "featStickerInt", partition_state->mpd_state->feat.sticker_int, true);
+        buffer = tojson_bool(buffer, "featWebradioDB", partition_state->config->webradiodb, true);
     }
     buffer = tojson_bool(buffer, "featCacert", (mympd_state->config->custom_cert == false && mympd_state->config->ssl == true ? true : false), true);
     #ifdef MYMPD_ENABLE_MYGPIOD

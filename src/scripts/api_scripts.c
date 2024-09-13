@@ -4,6 +4,10 @@
  https://github.com/jcorporation/mympd
 */
 
+/*! \file
+ * \brief Scripts API functions
+ */
+
 #include "compile_time.h"
 #include "src/scripts/api_scripts.h"
 
@@ -36,6 +40,16 @@ bool parse_script(sds scriptfilename, sds *metadata, sds *content, int *order);
 /**
  * Public functions
  */
+
+/**
+ * Reload the scripts from disk.
+ * @param scripts_state pointer to scripts_state
+ * @return true on success, else false
+ */
+bool scripts_file_reload(struct t_scripts_state *scripts_state) {
+    list_clear_user_data(&scripts_state->script_list, list_free_cb_script_list_user_data);
+    return scripts_file_read(scripts_state);
+}
 
 /**
  * Reads the scripts from the scripts directory
@@ -226,12 +240,13 @@ sds script_get(struct t_list *script_list, sds buffer, unsigned request_id, sds 
  */
 
 /**
- * Parses the script metadata line.
+ * Parses the script file.
  * The metadata line is the first line of the scriptfile.
- * @param buffer already allocated sds string to append the metadata
- * @param scriptfilename file to read
- * @param order pointer to int to populate with order
- * @return pointer to buffer
+ * @param scriptfilename File to read
+ * @param metadata Pointer to sds string to populate the metadata
+ * @param content Pointer to sds string to populate with the script content
+ * @param order Pointer to int to populate with order
+ * @return true on success, else false
  */
 bool parse_script(sds scriptfilename, sds *metadata, sds *content, int *order) {
     errno = 0;

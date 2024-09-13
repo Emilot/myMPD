@@ -4,6 +4,10 @@
  https://github.com/jcorporation/mympd
 */
 
+/*! \file
+ * \brief Message queue implementation
+ */
+
 #ifndef MYMPD_QUEUE_H
 #define MYMPD_QUEUE_H
 
@@ -11,6 +15,9 @@
 #include <stdbool.h>
 #include <time.h>
 
+/**
+ * Queue types
+ */
 enum mympd_queue_types {
     QUEUE_TYPE_REQUEST,  //!< queue holds only t_work_request entries
     QUEUE_TYPE_RESPONSE  //!< queue holds only t_work_response entries
@@ -49,5 +56,5 @@ struct t_mympd_queue *mympd_queue_create(const char *name, enum mympd_queue_type
 void *mympd_queue_free(struct t_mympd_queue *queue);
 bool mympd_queue_push(struct t_mympd_queue *queue, void *data, unsigned id);
 void *mympd_queue_shift(struct t_mympd_queue *queue, int timeout_ms, unsigned id);
-int mympd_queue_expire(struct t_mympd_queue *queue, time_t max_age_s);
+int mympd_queue_expire_age(struct t_mympd_queue *queue, time_t max_age_s);
 #endif

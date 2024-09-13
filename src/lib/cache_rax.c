@@ -4,6 +4,10 @@
  https://github.com/jcorporation/mympd
 */
 
+/*! \file
+ * \brief General rax cache handling
+ */
+
 #include "compile_time.h"
 #include "src/lib/cache_rax.h"
 
@@ -11,7 +15,8 @@
 
 /**
  * Initializes a cache struct
- * @param cache 
+ * @param cache Pointer to cache struct to free
+ * @return true on success, else false
  */
 bool cache_init(struct t_cache *cache) {
     cache->building = false;
@@ -26,8 +31,9 @@ bool cache_init(struct t_cache *cache) {
 }
 
 /**
- * Initializes a cache struct
- * @param cache 
+ * Frees a cache struct
+ * @param cache Pointer to cache struct to free
+ * @return true on success, else false
  */
 bool cache_free(struct t_cache *cache) {
     cache->cache = NULL;
@@ -35,7 +41,7 @@ bool cache_free(struct t_cache *cache) {
     if (rc == 0) {
         return true;
     }
-    MYMPD_LOG_ERROR(NULL, "Can not get destroy lock");
+    MYMPD_LOG_ERROR(NULL, "Can not destroy lock");
     MYMPD_LOG_ERRNO(NULL, rc);
     return false;
 }
@@ -46,6 +52,7 @@ bool cache_free(struct t_cache *cache) {
  * @return true on success, else false
  */
 bool cache_get_read_lock(struct t_cache *cache) {
+    MYMPD_LOG_DEBUG(NULL, "Waiting for read lock");
     int rc = pthread_rwlock_rdlock(&cache->rwlock);
     if (rc == 0) {
         return true;
@@ -56,11 +63,12 @@ bool cache_get_read_lock(struct t_cache *cache) {
 }
 
 /**
- * Acquires a read lock
+ * Acquires a write lock
  * @param cache pointer to cache struct
  * @return true on success, else false
  */
 bool cache_get_write_lock(struct t_cache *cache) {
+    MYMPD_LOG_DEBUG(NULL, "Waiting for rw lock");
     int rc = pthread_rwlock_wrlock(&cache->rwlock);
     if (rc == 0) {
         return true;
@@ -76,6 +84,7 @@ bool cache_get_write_lock(struct t_cache *cache) {
  * @return true on success, else false
  */
 bool cache_release_lock(struct t_cache *cache) {
+    MYMPD_LOG_DEBUG(NULL, "Releasing lock");
     int rc = pthread_rwlock_unlock(&cache->rwlock);
     if (rc == 0) {
         return true;

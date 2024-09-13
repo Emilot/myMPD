@@ -4,6 +4,10 @@
  https://github.com/jcorporation/mympd
 */
 
+/*! \file
+ * \brief Scripts API functions
+ */
+
 #ifndef MYMPD_SCRIPTS_SCRIPTS_API_H
 #define MYMPD_SCRIPTS_SCRIPTS_API_H
 
@@ -13,6 +17,7 @@
 
 #include <stdbool.h>
 
+bool scripts_file_reload(struct t_scripts_state *scripts_state);
 bool scripts_file_read(struct t_scripts_state *scripts_state);
 bool script_save(struct t_scripts_state *scripts_state, sds scriptname, sds oldscript,
         sds file, int order, int version, sds content, struct t_list *arguments, sds *error);

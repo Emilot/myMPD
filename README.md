@@ -22,16 +22,16 @@ myMPD also integrates extended features like an advanced jukebox mode, timers, t
 - MPD option presets
 - Queue and playlist management
 - Browse mpd database by tags or filesystem
-- Webradios: [Webradiodb](https://jcorporation.github.io/webradiodb/) and [RadioBrowser](https://www.radio-browser.info/)
 - Advanced search
 - Jukebox mode
 - MPD mount and neighbors support
-- Customizable home screen and navigation bar
+- Customizable home screen, navigation bar and footer
+- Webradio Favorites and [WebradioDB](https://jcorporation.github.io/webradiodb/)
 - [Smart playlists and saved searches](https://jcorporation.github.io/myMPD/references/smart-playlists)
 - Centralized playback statistics and song voting through MPD stickers
 - [Albumart: embedded and image per folder](https://jcorporation.github.io/myMPD/references/pictures)
 - [Unsynchronized and synchronized Lyrics](https://jcorporation.github.io/myMPD/references/lyrics)
-- Local PDF booklet info.txt support (per album folder)
+- Local PDF booklet and info.txt support (per album folder)
 - [Local playback of mpd http stream](https://jcorporation.github.io/myMPD/references/local-playback)
 - Timers and Triggers
 - [Lua scripting](https://jcorporation.github.io/myMPD/scripting/)
@@ -44,6 +44,16 @@ myMPD also integrates extended features like an advanced jukebox mode, timers, t
 - [myGPIOd](https://github.com/jcorporation/myGPIOd) integration
 
 To use all myMPD functions you should use the latest stable MPD version.
+
+## Scripts to add functionality
+
+The [mympd-scripts](https://github.com/jcorporation/mympd-scripts) repository provides many script to enhance and add features to myMPD.
+
+- Scrobbling to Last.fm, Maloja or ListenBrainz
+- Fetch albumart or tagart from fanart.tv and OpenOpus
+- Fetch lyrics
+- Import webradios from [RadioBrowser](https://www.radio-browser.info/)
+- and many more
 
 ## Documentation
 

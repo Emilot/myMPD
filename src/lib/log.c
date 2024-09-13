@@ -4,6 +4,10 @@
  https://github.com/jcorporation/mympd
 */
 
+/*! \file
+ * \brief Log implementation
+ */
+
 #include "compile_time.h"
 #include "src/lib/log.h"
 
@@ -12,10 +16,28 @@
 #include <pthread.h>
 #include <string.h>
 
-//global variables
+/**
+ * Global variables
+ */
+
+/**
+ * Thread name
+ */
 _Thread_local sds thread_logname;
+
+/**
+ * Loglevel
+ */
 _Atomic int loglevel;
+
+/**
+ * Log to syslog?
+ */
 bool log_to_syslog;
+
+/**
+ * Log goes to tty?
+ */
 bool log_on_tty;
 
 /**
@@ -43,7 +65,7 @@ static const char *loglevel_colors[8] = {
     [LOG_WARNING] = "\033[0;33m",
     [LOG_NOTICE] = "",
     [LOG_INFO] = "",
-    [LOG_DEBUG] = "\033[0;34m"
+    [LOG_DEBUG] = "\033[0;32m"
 };
 
 /**
