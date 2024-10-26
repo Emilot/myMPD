@@ -27,10 +27,10 @@ function setFeatures() {
     features.featMediaSession = checkMediaSessionSupport();
     features.featFooterNotifications = settings.webuiSettings.footerNotifications;
     features.featSession = settings.pin;
-    features.featStickersEnabled = settings.features.featStickersEnabled;
     features.featFooterAudioFormat = settings.webuiSettings.footerAudioFormat;
     features.featMygpiod = settings.features.featMygpiod;
     features.featWebradioDB = settings.features.featWebradioDB;
+    features.viewTitle = settings.webuiSettings.viewTitles;
 
     //mpd features
     if (settings.partition.mpdConnected === true) {
@@ -67,8 +67,7 @@ function setFeatures() {
         features.featLike = features.featStickers && settings.webuiSettings.feedback === 'like';
         features.featRating = features.featStickers && settings.webuiSettings.feedback === 'rating';
         features.featDbAdded = settings.features.featDbAdded;
-        features.featStickerSortWindow  = features.featStickers && settings.features.featStickerSortWindow;
-        features.featStickerInt  = features.featStickers && settings.features.featStickerInt;
+        features.featStickerAdv  = features.featStickers && settings.features.featStickerAdv;
     }
 }
 

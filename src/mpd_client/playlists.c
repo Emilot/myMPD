@@ -340,7 +340,7 @@ bool mpd_client_playlist_sort(struct t_partition_state *partition_state, const c
 bool mpd_client_enum_playlist(struct t_partition_state *partition_state, const char *plist,
         unsigned *count, unsigned *duration, sds *error)
 {
-    return mpd_connection_cmp_server_version(partition_state->conn, 0, 24, 0) >= 0
+    return partition_state->mpd_state->feat.mpd_0_24_0 == true
         ? mpd_worker_playlist_content_enumerate_mpd(partition_state, plist, count, duration, error)
         : mpd_worker_playlist_content_enumerate_manual(partition_state, plist, count, duration, error);
 }
@@ -446,6 +446,16 @@ bool mpd_client_get_all_playlists(struct t_partition_state *partition_state, str
     return true;
 }
 
+/**
+ * Parses the provided string to the playlist_sort_type
+ * @param str String to parse
+ * @return enum playlist_sort_types or PLSORT_UNKNOWN on error
+ */
+enum playlist_sort_types playlist_parse_sort(const char *str) {
+    if (strcmp(str, "Name") == 0) { return PLSORT_NAME; }
+    if (strcmp(str, "Last-Modified") == 0) { return PLSORT_LAST_MODIFIED; }
+    return PLSORT_UNKNOWN;
+}
 
 /**
  * Private functions

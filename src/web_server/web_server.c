@@ -430,7 +430,7 @@ static void send_ws_notify_client(struct mg_mgr *mgr, struct t_work_response *re
         nc = nc->next;
     }
     if (send_count == 0) {
-        MYMPD_LOG_DEBUG(NULL, "No websocket client connected, discarding message: %s", response->data);
+        MYMPD_LOG_DEBUG(NULL, "No websocket client with id %u connected, discarding message: %s", client_id, response->data);
     }
     free_response(response);
 }
@@ -471,15 +471,12 @@ static void send_raw_response(struct mg_mgr *mgr, struct t_work_response *respon
  * @param response jsonrpc response
  */
 static void send_redirect(struct mg_mgr *mgr, struct t_work_response *response) {
-    struct mg_connection *nc = mgr->conns;
-    while (nc != NULL) {
-        if (nc->is_websocket == 0U &&
-            nc->id == response->conn_id)
-        {
-            webserver_send_header_redirect(nc, response->data, NULL);
-            break;
-        }
-        nc = nc->next;
+    struct mg_connection *nc = get_nc_by_id(mgr, response->conn_id);
+    if (nc != NULL) {
+        webserver_send_header_redirect(nc, response->data, NULL);
+    }
+    else {
+        MYMPD_LOG_ERROR(NULL, "Connection for id \"%lu\" not found", response->conn_id);
     }
     free_response(response);
 }
@@ -506,6 +503,9 @@ static void send_api_response(struct mg_mgr *mgr, struct t_work_response *respon
                 MYMPD_LOG_DEBUG(response->partition, "Sending response to conn_id \"%lu\" (length: %lu): %s", nc->id, (unsigned long)sdslen(response->data), response->data);
                 webserver_send_data(nc, response->data, sdslen(response->data), EXTRA_HEADERS_JSON_CONTENT);
         }
+    }
+    else {
+        MYMPD_LOG_ERROR(NULL, "Connection for id \"%lu\" not found", response->conn_id);
     }
     free_response(response);
 }
@@ -628,12 +628,16 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
                 break;
             }
             break;
+        case MG_EV_WS_OPEN: {
+            nc->is_resp = 1;
+            break;
+        }
         case MG_EV_WS_MSG: {
             struct mg_ws_message *wm = (struct mg_ws_message *) ev_data;
             struct mg_str matches[1];
             size_t sent = 0;
             if (wm->data.len > 9) {
-                MYMPD_LOG_ERROR(frontend_nc_data->partition, "Websocket message too long: %lu", (unsigned long)wm->data.len);
+                MYMPD_LOG_ERROR(frontend_nc_data->partition, "Websocket (%lu) message too long: %lu", nc->id, (unsigned long)wm->data.len);
                 sent = mg_ws_send(nc, "too long", 8, WEBSOCKET_OP_TEXT);
             }
             else if (mg_strcmp(wm->data, mg_str("ping")) == 0) {
@@ -641,16 +645,16 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
             }
             else if (mg_match(wm->data, mg_str("id:*"), matches)) {
                 frontend_nc_data->id = mg_str_to_uint(&matches[0]);
-                MYMPD_LOG_INFO(frontend_nc_data->partition, "Setting websocket id to \"%u\"", frontend_nc_data->id);
+                MYMPD_LOG_INFO(frontend_nc_data->partition, "Setting websocket (%lu) id to \"%u\"", nc->id, frontend_nc_data->id);
                 sent = mg_ws_send(nc, "ok", 2, WEBSOCKET_OP_TEXT);
             }
             else {
-                MYMPD_LOG_DEBUG(frontend_nc_data->partition, "Websocket message (%lu): %.*s", nc->id, (int)wm->data.len, wm->data.buf);
-                MYMPD_LOG_ERROR(frontend_nc_data->partition, "Invalid Websocket message");
+                MYMPD_LOG_DEBUG(frontend_nc_data->partition, "Websocket (%lu) message: %.*s", nc->id, (int)wm->data.len, wm->data.buf);
+                MYMPD_LOG_ERROR(frontend_nc_data->partition, "Websocket (%lu): Invalid message", nc->id);
                 sent = mg_ws_send(nc, "invalid", 7, WEBSOCKET_OP_TEXT);
             }
             if (sent == 0) {
-                MYMPD_LOG_ERROR(frontend_nc_data->partition, "Websocket: Could not reply, closing connection");
+                MYMPD_LOG_ERROR(frontend_nc_data->partition, "Websocket (%lu): Could not reply, closing connection", nc->id);
                 nc->is_closing = 1;
             }
             else {
@@ -659,6 +663,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
             break;
         }
         case MG_EV_HTTP_MSG: {
+            nc->is_resp = 1;
             struct mg_http_message *hm = (struct mg_http_message *) ev_data;
             if (hm->query.len > 0) {
                 MYMPD_LOG_INFO(NULL, "HTTP request (%lu): %.*s %.*s?%.*s", nc->id, (int)hm->method.len, hm->method.buf,
@@ -726,6 +731,11 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
                 }
                 //check partition
                 if (get_partition_from_uri(nc, hm, frontend_nc_data) == false) {
+                    MYMPD_LOG_ERROR(NULL, "API request without partition");
+                    sds response = jsonrpc_respond_message(sdsempty(), GENERAL_API_UNKNOWN, 0,
+                        JSONRPC_FACILITY_GENERAL, JSONRPC_SEVERITY_ERROR, "Invalid API uri, partition not found");
+                    webserver_send_data(nc, response, sdslen(response), EXTRA_HEADERS_JSON_CONTENT);
+                    FREE_SDS(response);
                     break;
                 }
                 //body
@@ -775,6 +785,8 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
             else if (mg_match(hm->uri, mg_str("/ws/*"), NULL)) {
                 //check partition
                 if (get_partition_from_uri(nc, hm, frontend_nc_data) == false) {
+                    MYMPD_LOG_ERROR(NULL, "Websocket request without partition");
+                    webserver_send_error(nc, 404, "Invalid websocket uri, partition not found");
                     break;
                 }
                 mg_ws_upgrade(nc, hm, NULL);
@@ -786,6 +798,8 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
             else if (mg_match(hm->uri, mg_str("/stream/*"), NULL)) {
                 //check partition
                 if (get_partition_from_uri(nc, hm, frontend_nc_data) == false) {
+                    MYMPD_LOG_ERROR(NULL, "Stream request without partition");
+                    webserver_send_error(nc, 404, "Invalid stream uri, partition not found");
                     break;
                 }
                 struct t_list_node *node = list_get_node(&mg_user_data->stream_uris, frontend_nc_data->partition);
@@ -815,6 +829,11 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
                 }
                 //check partition
                 if (get_partition_from_uri(nc, hm, frontend_nc_data) == false) {
+                    MYMPD_LOG_ERROR(NULL, "script-api request without partition");
+                    sds response = jsonrpc_respond_message(sdsempty(), GENERAL_API_UNKNOWN, 0,
+                        JSONRPC_FACILITY_GENERAL, JSONRPC_SEVERITY_ERROR, "Invalid API uri, partition not found");
+                    webserver_send_data(nc, response, sdslen(response), EXTRA_HEADERS_JSON_CONTENT);
+                    FREE_SDS(response);
                     break;
                 }
                 sds body = sdsnewlen(hm->body.buf, hm->body.len);

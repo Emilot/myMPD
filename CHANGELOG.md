@@ -4,13 +4,134 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
-## myMPD 17.0.4 (not yet released)
+## myMPD v18.2.0 (not yet released)
+
+This is a small maintenance release.
+
+### Changelog
+
+- Feat: Add Last-Modified and Added (MPD 0.24) to sort tags in Search and Current Queue view
+- Feat: Support new "tagtypes available" command (MPD 0.24) #1352
+- Feat: Support new "protocol" command (MPD 0.24) #1353
+- Feat: Support mpd playlist search command (MPD 0.24) #1351
+- Upd: Translations
+- Upd: libmympdclient 1.0.31
+- Upd: bootstrap.native
+- Fix: Populate sort tags for Radio Favorites
+- Fix: Home Widgets in Chrome
+
+***
+
+## myMPD v18.1.2 (2024-10-13)
+
+This is a small bug fix release.
+
+### Changelog
+
+- Upd: Improve webserver error logging and responses
+- Upd: mongoose to latest master with fix for #1358
+- Fix: Add check featStickers before setting feedback #1359
+
+***
+
+## myMPD v18.1.1 (2024-10-09)
+
+This is a small bug fix release.
+
+### Changelog
+
+- Fix: Revert to mongoose 7.14 #1358
+
+***
+
+## myMPD v18.1.0 (2024-10-09)
+
+This is a small maintenance release.
+
+### Changelog
+
+- Feat: New Lua function: `mympd.read_file()`, `mympd.sleep`, `mympd.splitlines()`, `mympd.trim()`
+- Upd: Translations
+- Upd: Add Lua integer sanity checks
+- Upd: Mongoose to current master
+- Upd: translations
+- Fix: Contextmenu for songs #1356
+
+***
+
+## myMPD v18.0.0 (2024-09-29)
+
+This release improves the support for the new MPD 0.24 sticker features. You can now rate not only songs but also albums and playlists and add custom stickers to songs, albums and playlists. On the basis of stickers a new resume feature for songs, playlists and albums is available.
+
+This version also introduces scriptable widgets for the home screen. This widgets using myMPD scripts as the backend and can therefore be fully customized.
+
+An another notable feature is the new list view that supplements the table and grid views.
+
+### Script API
+
+- `mympd_state` includes now a subtable `current_song`. You do not need to call `MYMPD_API_CURRENT_SONG` manually.
+- `mympd_env` includes now a subtable `var` with the user defined variables. The entries with `var_` prefix are deprecated.
+- `mympd.http_client` supports now all HTTP methods
+
+All scripts in the mympd-scripts repository are updated accordingly, do not forget to update your imported scripts.
+
+### API changes
+
+- MYMPD_API_DATABASE_LIST_RANDOM: new
+- MYMPD_API_HOME_WIDGET_SAVE: new
+- MYMPD_API_STICKER_GET: new
+- MYMPD_API_STICKER_DELETE: new
+- MYMPD_API_STICKER_LIST: new
+- MYMPD_API_STICKER_NAMES: new
+- MYMPD_API_STICKER_SET: new
+- MYMPD_API_STICKER_INC: new
+- MYMPD_API_PLAYLIST_LIST: add parameter fields, sort, sortdesc
+- MYMPD_API_QUEUE_APPEND_URI_RESUME: new
+- MYMPD_API_QUEUE_INSERT_URI_RESUME: new
+- MYMPD_API_QUEUE_REPLACE_URI_RESUME: new
+- MYMPD_API_QUEUE_APPEND_PLAYLIST_RANGE: new
+- MYMPD_API_QUEUE_INSERT_PLAYLIST_RANGE: new
+- MYMPD_API_QUEUE_REPLACE_PLAYLIST_RANGE: new
+- MYMPD_API_QUEUE_APPEND_ALBUM_RANGE: new
+- MYMPD_API_QUEUE_INSERT_ALBUM_RANGE: new
+- MYMPD_API_QUEUE_REPLACE_ALBUM_RANGE: new
+- MYMPD_API_SETTINGS_GET: returns now available sticker types
+- MYMPD_API_QUEUE_APPEND_ALBUM_DISC renamed to MYMPD_API_QUEUE_APPEND_ALBUM_TAG
+- MYMPD_API_QUEUE_INSERT_ALBUM_DISC renamed to MYMPD_API_QUEUE_INSERT_ALBUM_TAG
+- MYMPD_API_QUEUE_REPLACE_ALBUM_DISC renamed to MYMPD_API_QUEUE_REPLACE_ALBUM_TAG
+- MYMPD_API_PLAYLIST_CONTENT_APPEND_ALBUM_DISC renamed to MYMPD_API_PLAYLIST_CONTENT_APPEND_ALBUM_TAG
+- MYMPD_API_PLAYLIST_CONTENT_INSERT_ALBUM_DISC renamed to MYMPD_API_PLAYLIST_CONTENT_INSERT_ALBUM_TAG
+- MYMPD_API_PLAYLIST_CONTENT_REPLACE_ALBUM_DISC renamed to MYMPD_API_PLAYLIST_CONTENT_REPLACE_ALBUM_TAG
+
+### Changelog
+
+- Feat: Resume for songs #1338
+- Feat: Resume for playlists and albums (MPD 0.24) #1338
+- Feat: Rating for albums and playlists (MPD 0.24) #1134
+- Feat: User defined stickers #1091
+- Feat: Support stickers for playlists, filters and tag types (MPD 0.24).
+- Feat: Add list view
+- Feat: Add widgets for home screen
+- Feat: Sort list of playlists by name or last-modified
+- Feat: Work actions in album detail view
+- Feat: New documentation site with search made with Material for MkDocs
+- Upd: Playlist pictures are moved in a separate folder `/var/lib/mympd/pics/playlists`
+- Upd: Latest libmympdclient based on libmpdclient master
+- Upd: Hide advanced search by default
+- Upd: Dependency sds and rax
+- Fix: Send JSONRPC_EVENT_UPDATE_OPTIONS only on feature change
+- Fix: Outdated documentation
+
+***
+
+## myMPD 17.0.4 (2024-09-16)
 
 This is a small bug fix release.
 
 ### Changelog
 
 - Upd: Russian translation
+- Fix: Delete webradio favorite
 
 ***
 

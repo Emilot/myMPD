@@ -1,4 +1,4 @@
-![image](https://jcorporation.github.io/assets/mympd-logo-schriftzug.svg)
+![image](https://jcorporation.github.io/myMPD/assets/mympd-logo-schriftzug.svg)
 
 [![release](https://github.com/jcorporation/myMPD/actions/workflows/build_release.yml/badge.svg)](https://github.com/jcorporation/myMPD/actions/workflows/build_release.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
@@ -25,10 +25,11 @@ myMPD also integrates extended features like an advanced jukebox mode, timers, t
 - Advanced search
 - Jukebox mode
 - MPD mount and neighbors support
-- Customizable home screen, navigation bar and footer
+- Customizable navigation bar and footer
+- Home screen with shortcuts and widgets
 - Webradio Favorites and [WebradioDB](https://jcorporation.github.io/webradiodb/)
 - [Smart playlists and saved searches](https://jcorporation.github.io/myMPD/references/smart-playlists)
-- Centralized playback statistics and song voting through MPD stickers
+- MPD sticker support: playback statistics, voting and user defined stickers
 - [Albumart: embedded and image per folder](https://jcorporation.github.io/myMPD/references/pictures)
 - [Unsynchronized and synchronized Lyrics](https://jcorporation.github.io/myMPD/references/lyrics)
 - Local PDF booklet and info.txt support (per album folder)
@@ -66,6 +67,8 @@ For information on installation and configuration, see the [myMPD documentation]
 ## Support
 
 Please read the [documentation](https://jcorporation.github.io/myMPD/) before asking for help. Bugs should be reported through [issues](https://github.com/jcorporation/myMPD/issues). For all other question and general feedback use the [discussions](https://github.com/jcorporation/myMPD/discussions).
+
+You can follow me at [mastodon](https://mastodon.social/@jcorporation) to get news about myMPD.
 
 ## Contribution
 

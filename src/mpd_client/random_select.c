@@ -88,7 +88,7 @@ unsigned random_select_albums(struct t_partition_state *partition_state, struct 
     if (partition_state->config->albums.mode == ALBUM_MODE_ADV &&
         partition_state->mpd_state->feat.stickers == true)
     {
-        stickers_last_played = stickerdb_find_stickers_by_name(stickerdb, "lastPlayed");
+        stickers_last_played = stickerdb_find_stickers_by_name(stickerdb, STICKER_TYPE_SONG, "lastPlayed");
     }
 
     //parse mpd search expression
@@ -191,10 +191,10 @@ unsigned random_select_songs(struct t_partition_state *partition_state, struct t
     rax *stickers_like = NULL;
     if (partition_state->mpd_state->feat.stickers == true) {
         MYMPD_LOG_DEBUG(partition_state->name, "Fetching lastPlayed stickers");
-        stickers_last_played = stickerdb_find_stickers_by_name(stickerdb, "lastPlayed");
+        stickers_last_played = stickerdb_find_stickers_by_name(stickerdb, STICKER_TYPE_SONG, "lastPlayed");
         if (constraints->ignore_hated == true) {
             MYMPD_LOG_DEBUG(partition_state->name, "Fetching stickers for hated songs");
-            stickers_like = stickerdb_find_stickers_by_name_value(stickerdb, "like", MPD_STICKER_OP_EQ, "0");
+            stickers_like = stickerdb_find_stickers_by_name_value(stickerdb, STICKER_TYPE_SONG, "like", MPD_STICKER_OP_EQ, "0");
         }
     }
 
@@ -410,12 +410,13 @@ static bool check_not_hated(rax *stickers_like, const char *uri, bool ignore_hat
     {
         return true;
     }
-    void *sticker_value_hated = raxFind(stickers_like, (unsigned char *)uri, strlen(uri));
-    return sticker_value_hated == raxNotFound
-        ? true
-        : ((sds)sticker_value_hated)[0] == '0'
-            ? false
-            : true;
+    void *sticker_value_hated;
+    if (raxFind(stickers_like, (unsigned char *)uri, strlen(uri), &sticker_value_hated) == 0) {
+        return true;
+    }
+    return ((sds)sticker_value_hated)[0] == '0'
+        ? false
+        : true;
 }
 
 /**
@@ -429,8 +430,8 @@ static bool check_last_played(rax *stickers_last_played, const char *uri, time_t
     if (stickers_last_played == NULL) {
         return true;
     }
-    void *sticker_value_last_played = raxFind(stickers_last_played, (unsigned char *)uri, strlen(uri));
-    if (sticker_value_last_played == raxNotFound) {
+    void *sticker_value_last_played;
+    if (raxFind(stickers_last_played, (unsigned char *)uri, strlen(uri), &sticker_value_last_played) == 0) {
         return true;
     }
     int64_t sticker_last_played;

@@ -309,6 +309,7 @@ lualibs() {
   [ "$MYMPD_ENABLE_MYGPIOD" = "ON" ] && cat contrib/lualibs/mympd/40-mygpiod.lua >> "$MYMPD_BUILDDIR/contrib/lualibs/mympd.lua"
   cat contrib/lualibs/mympd/50-util.lua >> "$MYMPD_BUILDDIR/contrib/lualibs/mympd.lua"
   cat contrib/lualibs/mympd/60-caches.lua >> "$MYMPD_BUILDDIR/contrib/lualibs/mympd.lua"
+  cat contrib/lualibs/mympd/70-string.lua >> "$MYMPD_BUILDDIR/contrib/lualibs/mympd.lua"
   cat contrib/lualibs/mympd/99-end.lua >> "$MYMPD_BUILDDIR/contrib/lualibs/mympd.lua"
   echo "Compiling lua libraries"
   LUAC=$(command -v luac5.4 2> /dev/null || command -v luac5.3 2> /dev/null || command -v luac 2> /dev/null || true)
@@ -473,8 +474,7 @@ cleanup() {
   rm -rf htdocs/assets/i18n
 
   #generated documentation
-  rm -rf docs/_site
-  rm -rf docs/.jekyll-cache
+  rm -rf _site
   rm -rf docs/doxygen
   rm -rf docs/jsdoc
 
@@ -912,7 +912,7 @@ updatebootstrapnative() {
   npm run build-vite
   grep -v "^//" dist/bootstrap-native.js > "$STARTPATH/dist/bootstrap-native/bootstrap-native.min.js"
   #normal build
-  sed -i 's/sourcemap: true,/sourcemap: true,\nminify: false/' vite.config.ts
+  sed -i 's/sourcemap: true,/sourcemap: true,\nminify: false/' vite.config.mts
   npm run build-vite
   grep -v "^//" dist/bootstrap-native.js > "$STARTPATH/dist/bootstrap-native/bootstrap-native.js"
   #cleanup
@@ -1327,6 +1327,19 @@ run_luacheck() {
   return 0
 }
 
+run_markdownlint() {
+  if ! check_cmd npx
+  then
+    return 1
+  fi
+  echo "Linting docs markdown"
+  if ! npx markdownlint-cli -i "./docs/_includes/*" ./docs/**
+  then
+    return 1
+  fi
+  return 0
+}
+
 run_doxygen() {
   if ! check_cmd doxygen
   then
@@ -1357,21 +1370,17 @@ run_luadoc() {
 
 create_doc() {
   DOC_DEST=$1
-  if ! check_cmd jekyll
+  install -d "$DOC_DEST" || return 1
+  if ! check_cmd python3
   then
-    echo "Jekyll not installed, can not create documentation"
+    echo "Python3 not installed, can not create documentation"
     return 1
   fi
-  if ! run_doxygen
-  then
-    echo "Skipped generation of c api documentation"
-  fi
-  if ! run_jsdoc
-  then
-    echo "Skipped generation of js api documentation"
-  fi
-  install -d "$DOC_DEST" || return 1
-  jekyll build -s "$STARTPATH/docs" -d "$DOC_DEST"
+  ./build.sh api_doc
+  python3 -m venv ~/python-venv/
+  ~/python-venv/bin/pip install mkdocs mkdocs-material \
+      mkdocs-include-markdown-plugin mkdocs-awesome-pages-plugin
+  ~/python-venv/bin/mkdocs build -d "$DOC_DEST"
 }
 
 translation_import() {
@@ -1598,30 +1607,13 @@ case "$ACTION" in
     sbuild_cleanup
   ;;
   lint)
-    if ! run_htmlhint
-    then
-      exit 1
-    fi
-    if ! run_eslint
-    then
-      exit 1
-    fi
-    if ! run_stylelint
-    then
-      exit 1
-    fi
-    if ! run_tsc
-    then
-      exit 1
-    fi
-    if ! run_checkjs
-    then
-      exit 1
-    fi
-    if ! run_luacheck
-    then
-      exit 1
-    fi
+    run_htmlhint
+    run_eslint
+    run_stylelint
+    run_tsc
+    run_checkjs
+    run_luacheck
+    run_markdownlint
   ;;
   eslint)
     run_eslint
@@ -1631,6 +1623,9 @@ case "$ACTION" in
   ;;
   htmlhint)
     run_htmlhint
+  ;;
+  markdownlint)
+    run_markdownlint
   ;;
   luacheck)
     run_luacheck
@@ -1706,7 +1701,8 @@ case "$ACTION" in
     echo "  check_file:       same as check, but for one file, second arg must be the file"
     echo "  check_docs        checks the documentation for missing API methods"
     echo "  check_includes:   checks for valid include paths"
-    echo "  lint:             runs eslint, stylelint and htmlhint"
+    echo "  lint:             runs linters for javascript, css, html and markdown"
+    echo "  markdownlint:     check for valid markdown in the docs folder"
     echo "  eslint:           combines javascript files and runs eslint"
     echo "  stylelint:        runs stylelint (lints css files)"
     echo "  htmlhint:         runs htmlhint (lints html files)"
