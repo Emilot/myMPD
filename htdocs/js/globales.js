@@ -187,6 +187,9 @@ let phrases = {};
 /** @type {number} */
 let lastSeekStep = 10;
 
+/** @type {number} */
+const maxElementsPerPage = 1000;
+
 /**
  * This settings are saved in the browsers localStorage
  */
@@ -651,7 +654,8 @@ const settingsWebuiFields = {
             "50": 50,
             "100": 100,
             "250": 250,
-            "500": 500
+            "500": 500,
+            "1000": 1000
         },
         "inputType": "select",
         "contentType": "number",
@@ -1144,7 +1148,6 @@ for (const key in localSettings) {
 }
 
 const userAgentData = {};
-userAgentData.hasIO = 'IntersectionObserver' in window ? true : false;
 
 /**
  * Sets the useragentData object
@@ -1539,6 +1542,7 @@ domCache.progress = elGetById('footerProgress');
 domCache.progressBar = elGetById('footerProgressBar');
 domCache.progressPos = elGetById('footerProgressPos');
 domCache.volumeBar = elGetById('volumeBar');
+domCache.localPlayerProgress = elGetById('localPlayerProgress');
 
 //Get BSN object references for fast access
 const uiElements = {};

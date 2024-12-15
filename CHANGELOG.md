@@ -4,7 +4,77 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
-## myMPD v18.2.0 (not yet released)
+## myMPD v19.0.1 (2024-12-15)
+
+This is a small bug fix release.
+
+### Changelog
+
+- Fix: Import of scripts
+- Fix: Lua wrapper for `mympd.api`
+- Fix: Emmit correct trigger event for INTERNAL_API_TRIGGER_EVENT_EMIT
+
+***
+
+## myMPD v19.0.0 (2024-12-15)
+
+This is a small maintenance release. It ships support for the newest MPD 0.24 protocol commands and enhancements for user defined stickers.
+
+### Scripting
+
+- The deprecated `var_` entries are remove from `mympd_env`, use the subtable `var`.
+
+### API changes
+
+- MYMPD_API_STICKER_NAMES: respect type parameter
+
+### Changelog
+
+- Feat: Support "stickernamestypes" command (MPD 0.24) #1092
+- Feat: Support "tagtypes reset" command (MPD 0.24) #1367
+- Feat: Generate smart playlists by user defined song stickers #1345
+- Feat: Show user defined stickers in lists #1368
+- Feat: New Lua method `mympd.api_partition` #1387
+- Upd: Improve lists layout
+- Upd: libmympdclient 1.0.32
+- Upd: bootstrap.native 5.1 #1372
+- Upd: Improve local playback
+- Upd: Mongoose 7.16 #1375
+- Upd: Improve http client
+- Upd: sds to current master
+- Upd: Remove IntersectionObserver, use image tag with lazy loading
+- Fix: Support "contains" and "starts_with" sticker operators
+- Fix: Increase max header count from 30 to 50
+- Fix: rpm dependency - whiptail is in package newt #1381
+
+***
+
+## myMPD v18.2.2 (2024-11-21)
+
+This is a small bug fix release.
+
+### Changelog
+
+- Fix: Parse hh:mm:ss timestamps #1370
+- Fix: Pause streams with known duration #1371
+- Fix: Show title for last played song in album view
+
+***
+
+## myMPD v18.2.1 (2024-11-15)
+
+This is a small bug fix release.
+
+### Changelog
+
+- Upd: Translations
+- Fix: Add correct number of songs to sticker based smart playlist #1369
+- Fix: Do not crop playlists on shuffle #1369
+- Fix: Remove duplicate depends in Debian Control file
+
+***
+
+## myMPD v18.2.0 (2024-11-01)
 
 This is a small maintenance release.
 
@@ -19,6 +89,7 @@ This is a small maintenance release.
 - Upd: bootstrap.native
 - Fix: Populate sort tags for Radio Favorites
 - Fix: Home Widgets in Chrome
+- Fix: Home Widgets behind Reverse Proxy
 
 ***
 
@@ -54,7 +125,6 @@ This is a small maintenance release.
 - Upd: Translations
 - Upd: Add Lua integer sanity checks
 - Upd: Mongoose to current master
-- Upd: translations
 - Fix: Contextmenu for songs #1356
 
 ***

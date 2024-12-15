@@ -127,7 +127,12 @@ struct mg_connection *create_backend_connection(struct mg_connection *nc, struct
         sds uri, mg_event_handler_t fn, bool stream)
 {
     if (backend_nc == NULL) {
-        MYMPD_LOG_INFO(NULL, "Creating new http backend connection to \"%s\"", uri);
+        if (stream == false) {
+            MYMPD_LOG_INFO(NULL, "Creating new http backend connection to \"%s\"", uri);
+        }
+        else {
+            MYMPD_LOG_INFO(NULL, "Creating new stream backend connection to \"%s\"", uri);
+        }
         struct t_backend_nc_data *backend_nc_data = malloc(sizeof(struct t_backend_nc_data));
         backend_nc_data->uri = sdsdup(uri);
         backend_nc_data->frontend_nc = nc;
@@ -136,8 +141,8 @@ struct mg_connection *create_backend_connection(struct mg_connection *nc, struct
             : mg_connect(nc->mgr, uri, fn, backend_nc_data); // tcp connection with MG_EV_READ event
         if (backend_nc == NULL) {
             //no backend connection, close frontend connection
-            MYMPD_LOG_WARN(NULL, "Can not create http backend connection");
-            webserver_send_error(nc, 502, "Could not create backend connection");
+            MYMPD_LOG_WARN(NULL, "Failure creating backend connection");
+            webserver_send_error(nc, 502, "Failure creating backend connection");
             nc->is_draining = 1;
             //free backend_nc_data
             free_backend_nc_data(backend_nc_data);
@@ -261,6 +266,8 @@ void forward_backend_to_frontend_covercache(struct mg_connection *nc, int ev, vo
                 MYMPD_LOG_ERROR(NULL, "Invalid response from connection \"%lu\", response code %d", nc->id, response_code);
                 webserver_redirect_placeholder_image(backend_nc_data->frontend_nc, PLACEHOLDER_NA);
             }
+            //Tell mongoose to close this connection
+            nc->is_draining = 1;
             break;
         }
         case MG_EV_CLOSE: {

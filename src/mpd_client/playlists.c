@@ -274,14 +274,12 @@ bool mpd_client_playlist_shuffle(struct t_partition_state *partition_state, cons
 
     //add shuffled songs to tmp playlist
     //uses command list to add MPD_COMMANDS_MAX songs at once
-    unsigned i = 0;
     bool rc = true;
-    while (i < plist.length) {
+    while (plist.length > 0) {
         if (mpd_command_list_begin(partition_state->conn, false) == true) {
             unsigned j = 0;
             struct t_list_node *current;
             while ((current = list_shift_first(&plist)) != NULL) {
-                i++;
                 j++;
                 rc = mpd_send_playlist_add(partition_state->conn, playlist_tmp, current->key);
                 list_node_free(current);
@@ -405,6 +403,25 @@ static bool mpd_worker_playlist_content_enumerate_manual(struct t_partition_stat
     *duration = total_time;
     return mympd_check_error_and_recover(partition_state, error, "mpd_send_list_playlist_meta") &&
         enable_mpd_tags(partition_state, &partition_state->mpd_state->tags_mympd);
+}
+
+/**
+ * Crops a playlist
+ * @param partition_state Pointer to partition specific states
+ * @param plist Playlist name
+ * @param num_entries May number of songs
+ * @return true on success, else false
+ */
+bool mpd_client_playlist_crop(struct t_partition_state *partition_state, const char *plist, unsigned num_entries) {
+    unsigned duration;
+    unsigned count;
+    if (mpd_client_enum_playlist(partition_state, plist, &count, &duration, NULL) == true) {
+        if (count > num_entries) {
+            return mpd_run_playlist_delete_range(partition_state->conn, plist, num_entries, UINT_MAX);
+        }
+        return true;
+    }
+    return false;
 }
 
 /**
