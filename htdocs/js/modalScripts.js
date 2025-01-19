@@ -1,6 +1,6 @@
 "use strict";
 // SPDX-License-Identifier: GPL-3.0-or-later
-// myMPD (c) 2018-2024 Juergen Mang <mail@jcgames.de>
+// myMPD (c) 2018-2025 Juergen Mang <mail@jcgames.de>
 // https://github.com/jcorporation/mympd
 
 /** @module modalScripts_js */
@@ -95,6 +95,19 @@ function initModalScripts() {
             importScript(target);
         }
     }, false);
+
+    initSearchSimpleInput(elGetById('modalScriptsImportSearchStr'), function(value) {
+        const valueLwr = value.toLowerCase();
+        const items = document.querySelectorAll('#modalScriptsImportList > li');
+        for (const item of items) {
+            if (item.textContent.toLowerCase().indexOf(valueLwr) > -1) {
+                item.classList.remove('d-none');
+            }
+            else {
+                item.classList.add('d-none');
+            }
+        }
+    });
 }
 
 /**
@@ -266,8 +279,13 @@ function removeScriptArgument(ev) {
  */
 //eslint-disable-next-line no-unused-vars
 function showEditScriptModal(script) {
-    uiElements.modalScripts.show();
-    showEditScript(script);
+    // Open modal only if script can be opened
+    sendAPI("MYMPD_API_SCRIPT_GET", {"script": script}, function(obj) {
+        if (obj.result) {
+            showEditScript(script, obj);
+            uiElements.modalScripts.show();
+        }
+    }, true);
 }
 
 /**
@@ -283,10 +301,16 @@ function showListScriptModal() {
 /**
  * Shows the edit script tab
  * @param {string} script script name
+ * @param {object} [obj] script object
  * @returns {void}
  */
 //eslint-disable-next-line no-unused-vars
-function showEditScript(script) {
+function showEditScript(script, obj) {
+    elGetById('modalScriptsScriptInput').value = '';
+    elGetById('modalScriptsOrderInput').value = '1';
+    elGetById('modalScriptsAddArgumentInput').value = '';
+    elClearId('modalScriptsArgumentsInput');
+    elGetById('modalScriptsContentInput').value = '';
     cleanupModalId('modalScripts');
     elGetById('modalScripts').firstElementChild.classList.remove('modal-dialog-scrollable');
     elGetById('modalScriptsContentInput').removeAttribute('disabled');
@@ -296,18 +320,16 @@ function showEditScript(script) {
     elHideId('modalScriptsListFooter');
     elHideId('modalScriptsImportFooter');
     elShowId('modalScriptsEditFooter');
-    if (script !== '') {
+    if (obj !== undefined) {
+        parseEditScript(obj);
+    }
+    else if (script !== '') {
         sendAPI("MYMPD_API_SCRIPT_GET", {"script": script}, parseEditScript, false);
     }
     else {
         setDataId('modalScriptsEditTab', 'id', '');
         setDataId('modalScriptsEditTab', 'file', '');
         setDataId('modalScriptsEditTab', 'version', 0);
-        elGetById('modalScriptsScriptInput').value = '';
-        elGetById('modalScriptsOrderInput').value = '1';
-        elGetById('modalScriptsAddArgumentInput').value = '';
-        elClearId('modalScriptsArgumentsInput');
-        elGetById('modalScriptsContentInput').value = '';
         elDisableId('modalScriptsUpdateBtn');
         elHideId('modalScriptsEditDescRow');
     }
@@ -501,9 +523,24 @@ function showImportScript() {
     elHideId('modalScriptsListFooter');
     elHideId('modalScriptsEditFooter');
     elShowId('modalScriptsImportFooter');
+    if (userAgentData.isMobile === false) {
+        setFocusId('modalScriptsImportSearchStr');
+    }
     const list = elGetById('modalScriptsImportList');
     elClear(list);
+    list.appendChild(
+        elCreateTextTn('li', {"class": ["list-group-item", "not-clickable"]}, 'Loading...')
+    );
     httpGet(subdir + '/proxy?uri=' + myEncodeURI(scriptsImportUri + 'index.json'), function(obj) {
+        elClear(list);
+        if (obj === null) {
+            list.appendChild(
+                elCreateNode('li', {"class": ["list-group-item", "not-clickable"]},
+                    elCreateTextTn('div', {"class": ["alert", "alert-danger"]}, 'Failure loading script list.')
+                )
+            );
+            return;
+        }
         for (const key in obj) {
             const script = obj[key];
             const clickable = elGetById('modalScriptsList').querySelector('[data-file="' + key + '"') === null

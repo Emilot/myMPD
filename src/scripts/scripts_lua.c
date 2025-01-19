@@ -1,6 +1,6 @@
 /*
  SPDX-License-Identifier: GPL-3.0-or-later
- myMPD (c) 2018-2024 Juergen Mang <mail@jcgames.de>
+ myMPD (c) 2018-2025 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 */
 
@@ -392,6 +392,7 @@ static void register_lua_functions(lua_State *lua_vm) {
     lua_register(lua_vm, "mympd_caches_images_write", lua_caches_images_write);
     lua_register(lua_vm, "mympd_caches_lyrics_write", lua_caches_lyrics_write);
     lua_register(lua_vm, "mympd_caches_update_mtime", lua_caches_update_mtime);
+    lua_register(lua_vm, "mympd_caches_tmp_file", lua_caches_tmp_file);
     #ifdef MYMPD_ENABLE_MYGPIOD
         lua_register(lua_vm, "mygpio_gpio_blink", lua_mygpio_gpio_blink);
         lua_register(lua_vm, "mygpio_gpio_get", lua_mygpio_gpio_get);

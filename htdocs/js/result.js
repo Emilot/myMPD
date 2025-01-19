@@ -1,6 +1,6 @@
 "use strict";
 // SPDX-License-Identifier: GPL-3.0-or-later
-// myMPD (c) 2018-2024 Juergen Mang <mail@jcgames.de>
+// myMPD (c) 2018-2025 Juergen Mang <mail@jcgames.de>
 // https://github.com/jcorporation/mympd
 
 /** @module result_js */
@@ -131,12 +131,15 @@ function checkResult(obj, parent, mode) {
             }
             parent = parent.querySelector('tbody');
         }
-        elClear(parent);
-        
+
         if (obj.error) {
+            elClear(parent);
             parent.appendChild(errorMsgEl(obj, colspan, mode));
         }
-        else {
+        else if (features.featPagination === true ||
+                 obj.result.offset === 0)
+        {
+            elClear(parent);
             parent.appendChild(emptyMsgEl(colspan, mode));
         }
         if (mode === 'table') {

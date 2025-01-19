@@ -1,6 +1,6 @@
 /*
  SPDX-License-Identifier: GPL-3.0-or-later
- myMPD (c) 2018-2024 Juergen Mang <mail@jcgames.de>
+ myMPD (c) 2018-2025 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 */
 
@@ -50,6 +50,7 @@
 #include "src/mympd_api/pictures.h"
 #include "src/mympd_api/playlists.h"
 #include "src/mympd_api/queue.h"
+#include "src/mympd_api/requests.h"
 #include "src/mympd_api/search.h"
 #include "src/mympd_api/settings.h"
 #include "src/mympd_api/smartpls.h"
@@ -161,6 +162,10 @@ void mympd_api_handler(struct t_mympd_state *mympd_state, struct t_partition_sta
                     break;
                 }
                 mympd_state->album_cache.building = mympd_state->mpd_state->feat.tags;
+            }
+            if (request->cmd_id == MYMPD_API_SMARTPLS_UPDATE_ALL) {
+                // Trigger for smart playlist scripts
+                mympd_api_request_trigger_event_emit(TRIGGER_MYMPD_SMARTPLS, partition_state->name);
             }
             async = mpd_worker_start(mympd_state, partition_state, request);
             if (async == false) {
@@ -878,14 +883,39 @@ void mympd_api_handler(struct t_mympd_state *mympd_state, struct t_partition_sta
                         JSONRPC_FACILITY_STICKER, error);
             }
             break;
-        case MYMPD_API_STICKER_INC:
+        case MYMPD_API_STICKER_DEC:
             if (json_get_string(request->data, "$.params.uri", 1, FILEPATH_LEN_MAX, &sds_buf1, vcb_isname, &parse_error) == true &&
                 json_get_string(request->data, "$.params.type", 1, NAME_LEN_MAX, &sds_buf2, vcb_ismpdstickertype, &parse_error) == true &&
-                json_get_string(request->data, "$.params.name", 0, NAME_LEN_MAX, &sds_buf3, vcb_isname, &parse_error) == true)
+                json_get_string(request->data, "$.params.name", 0, NAME_LEN_MAX, &sds_buf3, vcb_isname, &parse_error) == true &&
+                json_get_uint_max(request->data, "$.params.value", &uint_buf1, &parse_error) == true)
             {
                 enum mympd_sticker_type type = mympd_sticker_type_name_parse(sds_buf2);
                 sds_buf1 = mympd_api_get_sticker_uri(mympd_state, sds_buf1, &type);
-                rc = stickerdb_inc(mympd_state->stickerdb, type, sds_buf1, sds_buf3);
+                rc = stickerdb_dec(mympd_state->stickerdb, type, sds_buf1, sds_buf3, uint_buf1);
+                response->data = jsonrpc_respond_with_ok_or_error(response->data, request->cmd_id, request->id, rc,
+                        JSONRPC_FACILITY_STICKER, error);
+            }
+            break;
+        case MYMPD_API_STICKER_INC:
+            if (json_get_string(request->data, "$.params.uri", 1, FILEPATH_LEN_MAX, &sds_buf1, vcb_isname, &parse_error) == true &&
+                json_get_string(request->data, "$.params.type", 1, NAME_LEN_MAX, &sds_buf2, vcb_ismpdstickertype, &parse_error) == true &&
+                json_get_string(request->data, "$.params.name", 0, NAME_LEN_MAX, &sds_buf3, vcb_isname, &parse_error) == true &&
+                json_get_uint_max(request->data, "$.params.value", &uint_buf1, &parse_error) == true)
+            {
+                enum mympd_sticker_type type = mympd_sticker_type_name_parse(sds_buf2);
+                sds_buf1 = mympd_api_get_sticker_uri(mympd_state, sds_buf1, &type);
+                rc = stickerdb_inc(mympd_state->stickerdb, type, sds_buf1, sds_buf3, uint_buf1);
+                response->data = jsonrpc_respond_with_ok_or_error(response->data, request->cmd_id, request->id, rc,
+                        JSONRPC_FACILITY_STICKER, error);
+            }
+            break;
+        case MYMPD_API_STICKER_PLAYCOUNT:
+            if (json_get_string(request->data, "$.params.uri", 1, FILEPATH_LEN_MAX, &sds_buf1, vcb_isname, &parse_error) == true &&
+                json_get_string(request->data, "$.params.type", 1, NAME_LEN_MAX, &sds_buf2, vcb_ismpdstickertype, &parse_error) == true)
+            {
+                enum mympd_sticker_type type = mympd_sticker_type_name_parse(sds_buf2);
+                sds_buf1 = mympd_api_get_sticker_uri(mympd_state, sds_buf1, &type);
+                rc = stickerdb_inc_play_count(mympd_state->stickerdb, type, sds_buf1, partition_state->song_start_time);
                 response->data = jsonrpc_respond_with_ok_or_error(response->data, request->cmd_id, request->id, rc,
                         JSONRPC_FACILITY_STICKER, error);
             }

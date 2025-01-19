@@ -1,6 +1,6 @@
 /*
  SPDX-License-Identifier: GPL-3.0-or-later
- myMPD (c) 2018-2024 Juergen Mang <mail@jcgames.de>
+ myMPD (c) 2018-2025 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 */
 
@@ -218,6 +218,8 @@
     X(MYMPD_API_STICKER_NAMES) \
     X(MYMPD_API_STICKER_SET) \
     X(MYMPD_API_STICKER_INC) \
+    X(MYMPD_API_STICKER_DEC) \
+    X(MYMPD_API_STICKER_PLAYCOUNT) \
     X(MYMPD_API_TIMER_GET) \
     X(MYMPD_API_TIMER_LIST) \
     X(MYMPD_API_TIMER_RM) \

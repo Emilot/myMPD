@@ -1,6 +1,6 @@
 "use strict";
 // SPDX-License-Identifier: GPL-3.0-or-later
-// myMPD (c) 2018-2024 Juergen Mang <mail@jcgames.de>
+// myMPD (c) 2018-2025 Juergen Mang <mail@jcgames.de>
 // https://github.com/jcorporation/mympd
 
 /** @module globales_js */
@@ -32,7 +32,6 @@ let socket = null;
 let websocketKeepAliveTimer = null;
 let websocketLastPong = null;
 let searchTimer = null;
-let resizeTimer = null;
 let progressTimer = null;
 
 /** @type {number} */
@@ -127,6 +126,14 @@ const webradioFields = [
     'Bitrate',
     'Description',
     'Added',
+    'Last-Modified'
+];
+
+/** @type {object} */
+const albumFields = [
+    'Discs',
+    'SongCount',
+    'Duration',
     'Last-Modified'
 ];
 
@@ -663,6 +670,13 @@ const settingsWebuiFields = {
         "form": "modalSettingsListsFrm",
         "help": "helpSettingsMaxElementsPerPage"
     },
+    "endlessScroll": {
+        "defaultValue": false,
+        "inputType": "checkbox",
+        "title": "Endless scrolling",
+        "form": "modalSettingsListsFrm",
+        "help": "helpEndlessScroll"
+    },
     "smallWidthTagRows": {
         "defaultValue": true,
         "inputType": "checkbox",
@@ -1196,24 +1210,31 @@ const mpdVersion = {
 //remember offset for filesystem browsing uris
 const browseFilesystemHistory = {};
 
-//list of stickers for songs
-/** @type {Array} */
-const stickerListSongs = [
-    'playCount',
-    'skipCount',
-    'lastPlayed',
-    'lastSkipped',
-    'like',
-    'rating',
-    'elapsed'
-];
-
-//list of stickers for playlists and filters (albums)
+//list of stickers for tags, playlists and filters (albums)
 /** @type {Array} */
 const stickerListAll = [
     'like',
-    'rating'
+    'rating',
+    'playCount',
+    'lastPlayed'
 ];
+
+//list of stickers for songs
+/** @type {Array} */
+const stickerListSongs = stickerListAll.concat([
+    'skipCount',
+    'lastSkipped',
+    'elapsed'
+]);
+
+//ID's of cards/tabs/views
+const allCards = ['cardHome', 'cardPlayback', 'cardSearch',
+    'cardQueue', 'tabQueueCurrent', 'tabQueueLastPlayed',
+    'tabQueueJukebox', 'viewQueueJukeboxSong', 'viewQueueJukeboxAlbum',
+    'cardBrowse', 'tabBrowseFilesystem',
+    'tabBrowseRadio', 'viewBrowseRadioFavorites', 'viewBrowseRadioWebradiodb',
+    'tabBrowsePlaylist', 'viewBrowsePlaylistDetail', 'viewBrowsePlaylistList',
+    'tabBrowseDatabase', 'viewBrowseDatabaseTagList', 'viewBrowseDatabaseAlbumDetail', 'viewBrowseDatabaseAlbumList'];
 
 //application state
 const app = {};
@@ -1611,6 +1632,11 @@ const LUAfunctions = {
     "mympd.http_download": {
         "desc": "HTTP download",
         "func": "local rc, code, headers = mympd.http_download(uri, extra_headers, out)",
+        "feat": ""
+    },
+    "mympd.http_header_get": {
+        "desc": "Lookup HTTP header",
+        "func": "local value = mympd.http_header_get(headers, name)",
         "feat": ""
     },
     "mympd.http_jsonrpc_error": {

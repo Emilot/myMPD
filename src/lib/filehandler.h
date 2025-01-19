@@ -1,6 +1,6 @@
 /*
  SPDX-License-Identifier: GPL-3.0-or-later
- myMPD (c) 2018-2024 Juergen Mang <mail@jcgames.de>
+ myMPD (c) 2018-2025 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 */
 
@@ -43,6 +43,7 @@ sds sds_getline(sds s, FILE *fp, size_t max, int *nread);
 sds sds_getfile(sds s, const char *file_path, size_t max, bool remove_newline, bool warn, int *nread);
 sds sds_getfile_from_fp(sds s, FILE *fp, size_t max, bool remove_newline, int *nread);
 
+bool create_tmp_file(const char *filepath);
 FILE *open_tmp_file(sds filepath);
 bool rename_tmp_file(FILE *fp, sds tmp_file, bool write_rc);
 bool write_data_to_file(const char *filepath, const char *data, size_t data_len);

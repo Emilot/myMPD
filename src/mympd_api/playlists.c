@@ -1,6 +1,6 @@
 /*
  SPDX-License-Identifier: GPL-3.0-or-later
- myMPD (c) 2018-2024 Juergen Mang <mail@jcgames.de>
+ myMPD (c) 2018-2025 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 */
 
@@ -789,7 +789,6 @@ sds mympd_api_playlist_content_search(struct t_partition_state *partition_state,
         if (sdslen(expression) == 0) {
             entity_count = offset;
             if (mpd_send_list_playlist_range_meta(partition_state->conn, plist, offset, real_limit)) {
-                
                 while ((song = mpd_recv_song(partition_state->conn)) != NULL) {
                     total_time += mpd_song_get_duration(song);
                     if (entities_returned++) {
@@ -821,6 +820,7 @@ sds mympd_api_playlist_content_search(struct t_partition_state *partition_state,
                     }
                     buffer = print_plist_entry(buffer, song, mpd_song_get_pos(song), print_stickers, partition_state, stickerdb, tagcols,
                         &last_played_max, &last_played_song_uri, &last_played_pos, &last_played_song_title);
+                    mpd_song_free(song);
                 }
             }
             entities_found = entities_returned;

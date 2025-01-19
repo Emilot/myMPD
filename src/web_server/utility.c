@@ -1,6 +1,6 @@
 /*
  SPDX-License-Identifier: GPL-3.0-or-later
- myMPD (c) 2018-2024 Juergen Mang <mail@jcgames.de>
+ myMPD (c) 2018-2025 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 */
 
@@ -78,7 +78,7 @@ sds get_uri_param(struct mg_str *query, const char *name) {
  * @return true on success, else false
  */
 bool get_partition_from_uri(struct mg_connection *nc, struct mg_http_message *hm, struct t_frontend_nc_data *frontend_nc_data) {
-    sds partition = sdsnewlen(hm->uri.buf, hm->uri.len);
+    sds partition = sds_urldecode(sdsempty(), hm->uri.buf, hm->uri.len, false);
     basename_uri(partition);
     FREE_SDS(frontend_nc_data->partition);
     frontend_nc_data->partition = partition;
@@ -135,12 +135,7 @@ bool check_imagescache(struct mg_connection *nc, struct mg_http_message *hm,
     if (sdslen(imagescachefile) > 0) {
         const char *mime_type = get_mime_type_by_ext(imagescachefile);
         MYMPD_LOG_DEBUG(NULL, "Serving file %s (%s)", imagescachefile, mime_type);
-        static struct mg_http_serve_opts s_http_server_opts;
-        s_http_server_opts.root_dir = mg_user_data->browse_directory;
-        s_http_server_opts.extra_headers = EXTRA_HEADERS_IMAGE;
-        s_http_server_opts.mime_types = EXTRA_MIME_TYPES;
-        mg_http_serve_file(nc, hm, imagescachefile, &s_http_server_opts);
-        webserver_handle_connection_close(nc);
+        webserver_serve_file(nc, hm, EXTRA_HEADERS_IMAGE, imagescachefile);
         FREE_SDS(imagescachefile);
         return true;
     }
@@ -217,10 +212,18 @@ bool find_image_in_folder(sds *coverfile, sds music_directory, sds path, sds *na
  * @param msg the error message
  */
 void webserver_send_error(struct mg_connection *nc, int code, const char *msg) {
-    mg_http_reply(nc, code, "Content-Type: text/html\r\n", "<!DOCTYPE html><html><head><title>myMPD error</title></head><body>"
-        "<h1>myMPD error</h1>"
-        "<p>%s</p>"
-        "</body></html>",
+    mg_http_reply(nc, code, "Content-Type: text/html\r\n",
+        "<!DOCTYPE html>"
+        "<html lang=\"en\">"
+          "<head>"
+            "<meta charset=\"utf-8\">"
+            "<title>myMPD error</title>"
+          "</head>"
+          "<body>"
+            "<h1>myMPD error</h1>"
+            "<p>%s</p>"
+          "</body>"
+        "</html>",
         msg);
     if (code >= 400) {
         MYMPD_LOG_ERROR(NULL, "HTTP %d: %s", code, msg);
@@ -271,14 +274,15 @@ void webserver_send_raw(struct mg_connection *nc, const char *data, size_t len) 
  * Serves a file defined by file from path
  * @param nc mongoose connection
  * @param hm mongoose http message
- * @param path document root
- * @param file file to serve
+ * @param headers extra headers to add
+ * @param file absolute filepath to serve
  */
-void webserver_serve_file(struct mg_connection *nc, struct mg_http_message *hm, const char *path, const char *file) {
+void webserver_serve_file(struct mg_connection *nc, struct mg_http_message *hm,
+        const char *headers, const char *file)
+{
     MYMPD_LOG_DEBUG(NULL, "Serving file %s", file);
     static struct mg_http_serve_opts s_http_server_opts;
-    s_http_server_opts.root_dir = path;
-    s_http_server_opts.extra_headers = EXTRA_HEADERS_IMAGE;
+    s_http_server_opts.extra_headers = headers;
     s_http_server_opts.mime_types = EXTRA_MIME_TYPES;
     mg_http_serve_file(nc, hm, file, &s_http_server_opts);
     webserver_handle_connection_close(nc);

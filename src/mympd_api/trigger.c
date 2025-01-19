@@ -1,6 +1,6 @@
 /*
  SPDX-License-Identifier: GPL-3.0-or-later
- myMPD (c) 2018-2024 Juergen Mang <mail@jcgames.de>
+ myMPD (c) 2018-2025 Juergen Mang <mail@jcgames.de>
  https://github.com/jcorporation/mympd
 */
 
@@ -90,6 +90,7 @@ static const char *const mympd_event_names[] = {
     "mympd_albumart",
     "mympd_tagart",
     "mympd_jukebox",
+    "mympd_smartpls",
     NULL
 };
 

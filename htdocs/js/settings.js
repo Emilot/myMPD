@@ -1,6 +1,6 @@
 "use strict";
 // SPDX-License-Identifier: GPL-3.0-or-later
-// myMPD (c) 2018-2024 Juergen Mang <mail@jcgames.de>
+// myMPD (c) 2018-2025 Juergen Mang <mail@jcgames.de>
 // https://github.com/jcorporation/mympd
 
 /** @module settings_js */
@@ -276,14 +276,10 @@ function parseSettings(obj) {
     }
 
     //goto view
-    if (app.id === 'QueueJukeboxSong' ||
-        app.id === 'QueueJukeboxAlbum')
-    {
-        gotoJukebox();
-    }
-    else {
-        appRoute();
-    }
+    //overwrite hash to reflect current settings
+    appRoute(app.current.card, app.current.tab, app.current.view,
+        app.current.offset, app.current.limit, app.current.filter,
+        app.current.sort, app.current.tag, app.current.search);
 
     //mediaSession support
     if (features.featMediaSession === true) {

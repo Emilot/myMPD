@@ -1,6 +1,6 @@
 "use strict";
 // SPDX-License-Identifier: GPL-3.0-or-later
-// myMPD (c) 2018-2024 Juergen Mang <mail@jcgames.de>
+// myMPD (c) 2018-2025 Juergen Mang <mail@jcgames.de>
 // https://github.com/jcorporation/mympd
 
 /** @module apidoc_js */
@@ -1287,7 +1287,32 @@ const APImethods = {
         "params": {
             "uri": APIparams.uri,
             "type": APIparams.stickerType,
-            "name": APIparams.stickerName
+            "name": APIparams.stickerName,
+            "value": {
+                "type": APItypes.uint,
+                "example": 1,
+                "desc": "Increment sticker by this value"
+            }
+        }
+    },
+    "MYMPD_API_STICKER_DEC": {
+        "desc": "Decrements a MPD sticker by one.",
+        "params": {
+            "uri": APIparams.uri,
+            "type": APIparams.stickerType,
+            "name": APIparams.stickerName,
+            "value": {
+                "type": APItypes.uint,
+                "example": 1,
+                "desc": "Decrement sticker by this value"
+            }
+        }
+    },
+    "MYMPD_API_STICKER_PLAYCOUNT": {
+        "desc": "Increments playCount and sets lastPlayed.",
+        "params": {
+            "uri": APIparams.uri,
+            "type": APIparams.stickerType
         }
     },
     "MYMPD_API_MOUNT_LIST": {
