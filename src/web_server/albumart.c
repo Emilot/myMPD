@@ -105,7 +105,7 @@ void webserver_send_albumart(struct mg_connection *nc, sds data, sds binary) {
 void request_handler_albumart_by_album_id(struct mg_http_message *hm, unsigned long conn_id, enum albumart_sizes size) {
     sds albumid = sdsnewlen(hm->uri.buf, hm->uri.len);
     basename_uri(albumid);
-    MYMPD_LOG_DEBUG(NULL, "Sending getalbumart to mpd_client_queue");
+    MYMPD_LOG_DEBUG(NULL, "Sending getalbumart to mympd_client_queue");
     struct t_work_request *request = create_request(REQUEST_TYPE_DEFAULT, conn_id, 0, INTERNAL_API_ALBUMART_BY_ALBUMID, NULL, MPD_PARTITION_DEFAULT);
     request->data = tojson_sds(request->data, "albumid", albumid, true);
     request->data = tojson_uint(request->data, "size", size, false);
@@ -246,9 +246,7 @@ bool request_handler_albumart_by_uri(struct mg_connection *nc, struct mg_http_me
     }
 
     //ask mpd - mpd can read only first image
-    if (mg_user_data->feat_albumart == true &&
-        offset == 0)
-    {
+    if (offset == 0) {
         MYMPD_LOG_DEBUG(NULL, "Sending INTERNAL_API_ALBUMART_BY_URI to mympdapi_queue");
         struct t_work_request *request = create_request(REQUEST_TYPE_DEFAULT, conn_id, 0, INTERNAL_API_ALBUMART_BY_URI, NULL, MPD_PARTITION_DEFAULT);
         request->data = tojson_sds(request->data, "uri", uri, false);

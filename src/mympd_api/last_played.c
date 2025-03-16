@@ -16,10 +16,10 @@
 #include "src/lib/sds_extras.h"
 #include "src/lib/search.h"
 #include "src/lib/utility.h"
-#include "src/mpd_client/errorhandler.h"
-#include "src/mpd_client/stickerdb.h"
-#include "src/mpd_client/tags.h"
 #include "src/mympd_api/sticker.h"
+#include "src/mympd_client/errorhandler.h"
+#include "src/mympd_client/stickerdb.h"
+#include "src/mympd_client/tags.h"
 
 #include <string.h>
 
@@ -83,6 +83,13 @@ sds mympd_api_last_played_list(struct t_partition_state *partition_state, struct
 
     unsigned real_limit = offset + limit;
     struct t_list *expr_list = parse_search_expression_to_list(expression, SEARCH_TYPE_SONG);
+    if (expr_list == NULL) {
+        FREE_SDS(obj);
+        sdsclear(buffer);
+        buffer = jsonrpc_respond_message(buffer, cmd_id, request_id,
+            JSONRPC_FACILITY_DATABASE, JSONRPC_SEVERITY_ERROR, "Invalid search expression");
+        return buffer;
+    }
     bool print_stickers = check_get_sticker(partition_state->mpd_state->feat.stickers, &tagcols->stickers);
     if (print_stickers == true) {
         stickerdb_exit_idle(stickerdb);

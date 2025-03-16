@@ -79,7 +79,7 @@ static bool cmp_regex(pcre2_code *re_compiled, const char *value);
  * Parses a mpd search expression
  * @param expression mpd search expression
  * @param type type of struct for the search expression
- * @return list of the expression
+ * @return list of the expression or NULL on error
  */
 struct t_list *parse_search_expression_to_list(const char *expression, enum search_type type) {
     struct t_list *expr_list = list_new();
@@ -107,6 +107,7 @@ struct t_list *parse_search_expression_to_list(const char *expression, enum sear
         if (p + 1 >= end) {
             MYMPD_LOG_ERROR(NULL, "Can not parse search expression");
             free_search_expression(expr);
+            expr_list = free_search_expression_list(expr_list);
             break;
         }
         if (type == SEARCH_TYPE_SONG) {
@@ -130,6 +131,7 @@ struct t_list *parse_search_expression_to_list(const char *expression, enum sear
                 else {
                     MYMPD_LOG_ERROR(NULL, "Can not parse search expression, invalid tag");
                     free_search_expression(expr);
+                    expr_list = free_search_expression_list(expr_list);
                     break;
                 }
             }
@@ -162,6 +164,7 @@ struct t_list *parse_search_expression_to_list(const char *expression, enum sear
             if (p + 2 >= end) {
                 MYMPD_LOG_ERROR(NULL, "Can not parse search expression");
                 free_search_expression(expr);
+                expr_list = free_search_expression_list(expr_list);
                 break;
             }
             if (strcmp(op, "contains") == 0) { expr->op = SEARCH_OP_CONTAINS; }
@@ -173,11 +176,18 @@ struct t_list *parse_search_expression_to_list(const char *expression, enum sear
             else {
                 MYMPD_LOG_ERROR(NULL, "Unknown search operator: \"%s\"", op);
                 free_search_expression(expr);
+                expr_list = free_search_expression_list(expr_list);
                 break;
             }
             p++;
         }
-        //skip apostrophe
+        //skip starting quote of value
+        if (*p != '\'' && *p != '"') {
+            MYMPD_LOG_ERROR(NULL, "Can not parse search expression, invalid number");
+            free_search_expression(expr);
+            expr_list = free_search_expression_list(expr_list);
+            break;
+        }
         p++;
         //value
         while (p < end) {
@@ -193,7 +203,7 @@ struct t_list *parse_search_expression_to_list(const char *expression, enum sear
             p++;
         }
         //push to list
-        if (*end == '\'') {
+        if (*end == '\'' || *end == '\"') {
             if (expr->op == SEARCH_OP_REGEX ||
                 expr->op == SEARCH_OP_NOT_REGEX)
             {
@@ -205,6 +215,7 @@ struct t_list *parse_search_expression_to_list(const char *expression, enum sear
                     if (str2int64(&expr->value_i, expr->value) != STR2INT_SUCCESS) {
                         MYMPD_LOG_ERROR(NULL, "Can not parse search expression, invalid number");
                         free_search_expression(expr);
+                        expr_list = free_search_expression_list(expr_list);
                         break;
                     }
                 }
@@ -213,6 +224,7 @@ struct t_list *parse_search_expression_to_list(const char *expression, enum sear
                     if (expr->value_i == 0) {
                         MYMPD_LOG_ERROR(NULL, "Can not parse search expression, invalid date");
                         free_search_expression(expr);
+                        expr_list = free_search_expression_list(expr_list);
                         break;
                     }
                 }
@@ -222,6 +234,7 @@ struct t_list *parse_search_expression_to_list(const char *expression, enum sear
         }
         else {
             free_search_expression(expr);
+            expr_list = free_search_expression_list(expr_list);
             MYMPD_LOG_ERROR(NULL, "Can not parse search expression");
             break;
         }
@@ -251,8 +264,8 @@ void *free_search_expression_list(struct t_list *expr_list) {
  * @param any_tag_types tags for special "any" tag in expression
  * @return expression result
  */
-bool search_expression_song(const struct mpd_song *song, const struct t_list *expr_list, const struct t_mpd_tags *any_tag_types) {
-    struct t_mpd_tags one_tag;
+bool search_expression_song(const struct mpd_song *song, const struct t_list *expr_list, const struct t_mympd_mpd_tags *any_tag_types) {
+    struct t_mympd_mpd_tags one_tag;
     one_tag.len = 1;
     struct t_list_node *current = expr_list->head;
     while (current != NULL) {
@@ -274,7 +287,7 @@ bool search_expression_song(const struct mpd_song *song, const struct t_list *ex
         }
         else {
             one_tag.tags[0] = (enum mpd_tag_type)expr->tag;
-            const struct t_mpd_tags *tags = expr->tag == SEARCH_FILTER_ANY_TAG
+            const struct t_mympd_mpd_tags *tags = expr->tag == SEARCH_FILTER_ANY_TAG
                 ? any_tag_types  //any - use provided tags
                 : &one_tag;      //use only selected tag
 

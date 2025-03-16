@@ -59,8 +59,8 @@
 
 //minimum mpd version
 #define MPD_VERSION_MIN_MAJOR 0
-#define MPD_VERSION_MIN_MINOR 21
-#define MPD_VERSION_MIN_PATCH 0
+#define MPD_VERSION_MIN_MINOR 22
+#define MPD_VERSION_MIN_PATCH 6
 
 //default paths from cmake
 #define MYMPD_DOC_ROOT "${MYMPD_DOC_ROOT}"
@@ -69,7 +69,7 @@
 #define MYMPD_LUALIBS_PATH "${MYMPD_LUALIBS_PATH}"
 
 //global variables
-extern _Atomic int mpd_worker_threads;
+extern _Atomic int mympd_worker_threads;
 #ifdef MYMPD_ENABLE_LUA
     extern _Atomic int script_worker_threads;
 #endif
@@ -158,7 +158,7 @@ extern struct t_mympd_queue *mympd_api_queue;
 #define MYMPD_MPD_HOST "localhost"
 #define MYMPD_MPD_PORT 6600
 #define MYMPD_MPD_PASS ""
-#define MYMPD_MPD_BINARYLIMIT 262144 // 256 kB
+#define MYMPD_MPD_BINARYLIMIT 524288 // 512 kB
 
 //default mympd state settings
 #define MYMPD_MUSIC_DIRECTORY "auto"
@@ -320,12 +320,12 @@ extern struct t_mympd_queue *mympd_api_queue;
 #define MPD_TIMEOUT_MIN 10000 //ms
 #define MPD_TIMEOUT_MAX 1000000 //ms
 #define MPD_RESULTS_MIN 1 // minimum mpd results to request
-#define MPD_RESULTS_MAX 10000 //maximum mpd results to request
-#define MPD_COMMANDS_MAX 10000 //maximum number of commands for mpd command lists
-#define MPD_PLAYLIST_LENGTH_MAX INT_MAX //max mpd queue or playlist length
+#define MPD_RESULTS_MAX 10000 // maximum mpd results to request
+#define MPD_COMMANDS_MAX 10000 // maximum number of commands for mpd command lists
+#define MPD_PLAYLIST_LENGTH_MAX INT_MAX // max mpd queue or playlist length
 #define MPD_BINARY_CHUNK_SIZE_MIN 4096 // 4 kB is the mpd default
-#define MPD_BINARY_CHUNK_SIZE_MAX 1048576 // 1 MB
-#define MPD_BINARY_SIZE_MAX 5242880 //5 MB
+#define MPD_BINARY_CHUNK_SIZE_MAX 5242880 // 5 MB
+#define MPD_BINARY_SIZE_MAX 10485760 // 10 MB
 #define MPD_QUEUE_PRIO_MAX 255
 #define MPD_CROSSFADE_MAX 100
 #define MPD_CONNECTION_MAX 25

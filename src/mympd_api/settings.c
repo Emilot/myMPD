@@ -24,16 +24,16 @@
 #include "src/lib/state_files.h"
 #include "src/lib/utility.h"
 #include "src/lib/validate.h"
-#include "src/mpd_client/errorhandler.h"
-#include "src/mpd_client/jukebox.h"
-#include "src/mpd_client/presets.h"
-#include "src/mpd_client/shortcuts.h"
-#include "src/mpd_client/tags.h"
 #include "src/mympd_api/jukebox.h"
 #include "src/mympd_api/sticker.h"
 #include "src/mympd_api/timer.h"
 #include "src/mympd_api/timer_handlers.h"
 #include "src/mympd_api/trigger.h"
+#include "src/mympd_client/errorhandler.h"
+#include "src/mympd_client/jukebox.h"
+#include "src/mympd_client/presets.h"
+#include "src/mympd_client/shortcuts.h"
+#include "src/mympd_client/tags.h"
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -58,7 +58,6 @@ bool settings_to_webserver(struct t_mympd_state *mympd_state) {
     extra->playlist_directory = sdsdup(mympd_state->mpd_state->playlist_directory_value);
     extra->coverimage_names = sdsdup(mympd_state->coverimage_names);
     extra->thumbnail_names = sdsdup(mympd_state->thumbnail_names);
-    extra->feat_albumart = mympd_state->mpd_state->feat.albumart;
     extra->mpd_host = sdsdup(mympd_state->mpd_state->mpd_host);
     extra->webradiodb = mympd_state->webradiodb;
     extra->webradio_favorites = mympd_state->webradio_favorites;
@@ -685,7 +684,7 @@ bool mympd_api_settings_mpd_options_set(const char *path, sds key, sds value, in
         }
     }
     else if (strcmp(key, "jukeboxFilterInclude") == 0 && vtype == MJSON_TOK_STRING) {
-        if (vcb_issearchexpression(value) == false) {
+        if (vcb_issearchexpression_song(value) == false) {
             set_invalid_value(error, path, key, value, "Invalid MPD search expression");
             return false;
         }
@@ -695,7 +694,7 @@ bool mympd_api_settings_mpd_options_set(const char *path, sds key, sds value, in
         }
     }
     else if (strcmp(key, "jukeboxFilterExclude") == 0 && vtype == MJSON_TOK_STRING) {
-        if (vcb_issearchexpression(value) == false) {
+        if (vcb_issearchexpression_song(value) == false) {
             set_invalid_value(error, path, key, value, "Invalid MPD search expression");
             return false;
         }
@@ -914,8 +913,8 @@ void mympd_api_settings_statefiles_partition_read(struct t_partition_state *part
     partition_state->jukebox.last_played = state_file_rw_uint(workdir, partition_state->state_dir, "jukebox_last_played", partition_state->jukebox.last_played, JUKEBOX_LAST_PLAYED_MIN, JUKEBOX_LAST_PLAYED_MAX, true);
     partition_state->jukebox.uniq_tag.tags[0] = state_file_rw_tag(workdir, partition_state->state_dir, "jukebox_uniq_tag", partition_state->jukebox.uniq_tag.tags[0], true);
     partition_state->jukebox.ignore_hated = state_file_rw_bool(workdir, partition_state->state_dir, "jukebox_ignore_hated", MYMPD_JUKEBOX_IGNORE_HATED, true);
-    partition_state->jukebox.filter_include = state_file_rw_string_sds(workdir, partition_state->state_dir, "jukebox_filter_include", partition_state->jukebox.filter_include, vcb_issearchexpression, true);
-    partition_state->jukebox.filter_exclude = state_file_rw_string_sds(workdir, partition_state->state_dir, "jukebox_filter_exclude", partition_state->jukebox.filter_exclude, vcb_issearchexpression, true);
+    partition_state->jukebox.filter_include = state_file_rw_string_sds(workdir, partition_state->state_dir, "jukebox_filter_include", partition_state->jukebox.filter_include, vcb_issearchexpression_song, true);
+    partition_state->jukebox.filter_exclude = state_file_rw_string_sds(workdir, partition_state->state_dir, "jukebox_filter_exclude", partition_state->jukebox.filter_exclude, vcb_issearchexpression_song, true);
     partition_state->jukebox.min_song_duration= state_file_rw_uint(workdir, partition_state->state_dir, "jukebox_min_song_duration", partition_state->jukebox.min_song_duration, 0, JUKEBOX_MIN_SONG_DURATION_MAX, true);
     partition_state->jukebox.max_song_duration= state_file_rw_uint(workdir, partition_state->state_dir, "jukebox_max_song_duration", partition_state->jukebox.max_song_duration, 0, JUKEBOX_MAX_SONG_DURATION_MAX, true);
     partition_state->highlight_color = state_file_rw_string_sds(workdir, partition_state->state_dir, "highlight_color", partition_state->highlight_color, vcb_ishexcolor, true);
@@ -1028,7 +1027,7 @@ sds mympd_api_settings_get(struct t_mympd_state *mympd_state, struct t_partition
             if (mpd_send_replay_gain_status(partition_state->conn) == false) {
                 mympd_set_mpd_failure(partition_state, "Error adding command to command list mpd_send_replay_gain_status");
             }
-            mpd_client_command_list_end_check(partition_state);
+            mympd_client_command_list_end_check(partition_state);
         }
         struct mpd_status *status = mpd_recv_status(partition_state->conn);
         enum mpd_replay_gain_mode replay_gain_mode = MPD_REPLAY_UNKNOWN;
@@ -1071,10 +1070,8 @@ sds mympd_api_settings_get(struct t_mympd_state *mympd_state, struct t_partition
         buffer = tojson_bool(buffer, "featStickers", mympd_state->stickerdb->mpd_state->feat.stickers, true);
         buffer = tojson_bool(buffer, "featStickerAdv", mympd_state->stickerdb->mpd_state->feat.advsticker, true);
         buffer = tojson_bool(buffer, "featFingerprint", partition_state->mpd_state->feat.fingerprint, true);
-        buffer = tojson_bool(buffer, "featPartitions", partition_state->mpd_state->feat.partitions, true);
         buffer = tojson_bool(buffer, "featMounts", partition_state->mpd_state->feat.mount, true);
         buffer = tojson_bool(buffer, "featNeighbors", partition_state->mpd_state->feat.neighbor, true);
-        buffer = tojson_bool(buffer, "featBinarylimit", partition_state->mpd_state->feat.binarylimit, true);
         buffer = tojson_bool(buffer, "featPlaylistRmRange", partition_state->mpd_state->feat.playlist_rm_range, true);
         buffer = tojson_bool(buffer, "featWhence", partition_state->mpd_state->feat.whence, true);
         buffer = tojson_bool(buffer, "featAdvqueue", partition_state->mpd_state->feat.advqueue, true);

@@ -214,6 +214,7 @@
     X(MYMPD_API_STATS) \
     X(MYMPD_API_STICKER_DELETE) \
     X(MYMPD_API_STICKER_GET) \
+    X(MYMPD_API_STICKER_FIND) \
     X(MYMPD_API_STICKER_LIST) \
     X(MYMPD_API_STICKER_NAMES) \
     X(MYMPD_API_STICKER_SET) \
@@ -318,7 +319,6 @@ struct set_mg_user_data_request {
     sds playlist_directory;                  //!< configured mpd playlist directory
     sds coverimage_names;                    //!< comma separated list of coverimage names
     sds thumbnail_names;                     //!< comma separated list of coverimage thumbnail names
-    bool feat_albumart;                      //!< true if mpd supports the albumart protocol command
     sds mpd_host;                            //!< configured mpd host
     struct t_list partitions;                //!< partition specific settings
     struct t_webradios *webradiodb;          //!< Pointer to webradiodb

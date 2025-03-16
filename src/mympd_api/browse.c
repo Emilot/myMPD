@@ -21,12 +21,12 @@
 #include "src/lib/sds_extras.h"
 #include "src/lib/search.h"
 #include "src/lib/sticker.h"
-#include "src/mpd_client/errorhandler.h"
-#include "src/mpd_client/search.h"
-#include "src/mpd_client/stickerdb.h"
-#include "src/mpd_client/tags.h"
 #include "src/mympd_api/extra_media.h"
 #include "src/mympd_api/sticker.h"
+#include "src/mympd_client/errorhandler.h"
+#include "src/mympd_client/search.h"
+#include "src/mympd_client/stickerdb.h"
+#include "src/mympd_client/tags.h"
 
 #include <dirent.h>
 #include <inttypes.h>
@@ -237,6 +237,11 @@ sds mympd_api_browse_album_list(struct t_mympd_state *mympd_state, struct t_part
 
     //parse mpd search expression
     struct t_list *expr_list = parse_search_expression_to_list(expression, SEARCH_TYPE_SONG);
+    if (expr_list == NULL) {
+        buffer = jsonrpc_respond_message(buffer, MYMPD_API_DATABASE_ALBUM_LIST, request_id,
+            JSONRPC_FACILITY_DATABASE, JSONRPC_SEVERITY_WARN, "Invalid search expression");
+        return buffer;
+    }
     
     //search and sort albumlist
     unsigned real_limit = offset + limit;

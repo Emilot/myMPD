@@ -4,7 +4,27 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
-## myMPD v20.0.0 (not yet released)
+## myMPD v20.1.0 (2025-03-16)
+
+This is the first release that supports only MPD 0.22.6 and above.
+
+### API changes
+
+- MYMPD_API_STICKER_FIND: new
+
+### Changelog
+
+- Feat: API explorer
+- Upd: Mongoose 7.17
+- Upd: Enforce search expression parsing errors
+- Upd: utf8.h
+- Fix: Check for openrc-run also in /usr/sbin (Alpine Linux /usr merge project) #1407
+- Fix: Simplify Debian packaging
+- Fix: Create new script
+
+***
+
+## myMPD v20.0.0 (2025-02-01)
 
 This release improves the Lua scripting interface, supports the newest MPD 0.24 sticker commands and add's a trigger for smart playlist creation.
 

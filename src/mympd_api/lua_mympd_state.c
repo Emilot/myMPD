@@ -16,9 +16,9 @@
 #include "src/lib/mem.h"
 #include "src/lib/sds_extras.h"
 #include "src/lib/utility.h"
-#include "src/mpd_client/errorhandler.h"
-#include "src/mpd_client/shortcuts.h"
 #include "src/mympd_api/status.h"
+#include "src/mympd_client/errorhandler.h"
+#include "src/mympd_client/shortcuts.h"
 
 /**
  * Private definitions
@@ -47,7 +47,7 @@ bool mympd_api_status_lua_mympd_state_set(struct t_list *lua_partition_state, st
         if (mpd_send_replay_gain_status(partition_state->conn) == false) {
             mympd_set_mpd_failure(partition_state, "Error adding command to command list mpd_send_replay_gain_status");
         }
-        mpd_client_command_list_end_check(partition_state);
+        mympd_client_command_list_end_check(partition_state);
     }
     struct mpd_status *status = mpd_recv_status(partition_state->conn);
     enum mpd_replay_gain_mode replay_gain_mode = MPD_REPLAY_UNKNOWN;
@@ -73,9 +73,7 @@ bool mympd_api_status_lua_mympd_state_set(struct t_list *lua_partition_state, st
         lua_mympd_state_set_f(lua_partition_state, "mixrampdelay", mpd_status_get_mixrampdelay(status));
         lua_mympd_state_set_f(lua_partition_state, "mixrampdb", mpd_status_get_mixrampdb(status));
         lua_mympd_state_set_i(lua_partition_state, "replaygain", replay_gain_mode);
-        if (partition_state->mpd_state->feat.partitions == true) {
-            lua_mympd_state_set_p(lua_partition_state, "partition", mpd_status_get_partition(status));
-        }
+        lua_mympd_state_set_p(lua_partition_state, "partition", mpd_status_get_partition(status));
         mpd_status_free(status);
     }
     mpd_response_finish(partition_state->conn);
