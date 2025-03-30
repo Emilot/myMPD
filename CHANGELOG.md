@@ -4,6 +4,28 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
+## myMPD v20.1.2 (2025-03-30)
+
+This is a small bug fix release.
+
+### Changelog
+
+- Fix: Enable partition feature #1415
+
+***
+
+## myMPD v20.1.1 (2025-03-25)
+
+This is a small bug fix release.
+
+### Changelog
+
+- Upd: Translations
+- Upd: Rework compiler options
+- Upd: Initial support for MPD 0.25
+
+***
+
 ## myMPD v20.1.0 (2025-03-16)
 
 This is the first release that supports only MPD 0.22.6 and above.
