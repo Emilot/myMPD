@@ -12,7 +12,8 @@
 #include "src/mympd_api/search.h"
 
 #include "src/lib/api.h"
-#include "src/lib/jsonrpc.h"
+#include "src/lib/json/json_print.h"
+#include "src/lib/json/json_rpc.h"
 #include "src/mympd_api/sticker.h"
 #include "src/mympd_client/errorhandler.h"
 #include "src/mympd_client/search.h"
@@ -74,7 +75,6 @@ sds mympd_api_search_songs(struct t_partition_state *partition_state, struct t_s
             mpd_song_free(song);
         }
     }
-    mpd_response_finish(partition_state->conn);
     if (print_stickers == true) {
         stickerdb_enter_idle(stickerdb);
     }

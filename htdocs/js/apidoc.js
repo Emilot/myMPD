@@ -1752,10 +1752,10 @@ const APImethods = {
                         "example": 175,
                         "desc": "Width for grids."
                     },
-                    "bgCover": {
-                        "type": APItypes.bool,
-                        "example": true,
-                        "desc": "Display the coverimage as background."
+                    "dynamicBackground": {
+                        "type": APItypes.string,
+                        "example": "albumart",
+                        "desc": "Background mode: \"albumart\", \"trigger\" or \"off\""
                     },
                     "bgCssFilter": {
                         "type": APItypes.string,
@@ -2149,6 +2149,50 @@ const APImethods = {
                 "type": APItypes.string,
                 "example": "value1",
                 "desc": "Variable value"
+            }
+        }
+    },
+    "MYMPD_API_SCRIPT_TMP_DELETE": {
+        "desc": "Deletes a temporary variable.",
+        "params": {
+            "key": {
+                "type": APItypes.string,
+                "example": "tmp-var",
+                "desc": "Variable name"
+            }
+        }
+    },
+    "MYMPD_API_SCRIPT_TMP_GET": {
+        "desc": "Gets a temporary variable.",
+        "params": {
+            "key": {
+                "type": APItypes.string,
+                "example": "tmp-var",
+                "desc": "Variable name"
+            }
+        }
+    },
+    "MYMPD_API_SCRIPT_TMP_LIST": {
+        "desc": "Lists all temporary variables.",
+        "params": {}
+    },
+    "MYMPD_API_SCRIPT_TMP_SET": {
+        "desc": "Sets a temporary variable.",
+        "params": {
+            "key": {
+                "type": APItypes.string,
+                "example": "tmp-var",
+                "desc": "Variable name"
+            },
+            "value": {
+                "type": APItypes.string,
+                "example": "tmp-value",
+                "desc": "Variable value"
+            },
+            "lifetime": {
+                "type": APItypes.int,
+                "example": 300,
+                "desc": "Lifetime of variable in seconds."
             }
         }
     },

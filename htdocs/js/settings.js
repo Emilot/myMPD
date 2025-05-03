@@ -158,6 +158,9 @@ function parseSettings(obj) {
     //presets
     populatePresetDropdowns();
 
+    // Set severity for filtering notifications and logs
+    elGetById('modalNotificationsSeveritySelect').value = settings.loglevel;
+
     //parse mpd settings if connected
     if (settings.partition.mpdConnected === true) {
         parseMPDSettings();
@@ -221,7 +224,7 @@ function parseSettings(obj) {
     modalScriptsFunctionSelectEl.appendChild(
         elCreateTextTn('option', {"value": ""}, 'Select function')
     );
-    for (const m in LUAfunctions) {
+    for (const m of Object.keys(LUAfunctions).sort()) {
         if (LUAfunctions[m].feat === '' ||
             features[LUAfunctions[m].feat] === true)
         {
@@ -287,8 +290,8 @@ function parseSettings(obj) {
             navigator.mediaSession.setActionHandler('play', clickPlay);
             navigator.mediaSession.setActionHandler('pause', clickPlay);
             navigator.mediaSession.setActionHandler('stop', clickStop);
-            navigator.mediaSession.setActionHandler('seekbackward', seekRelativeBackward);
-            navigator.mediaSession.setActionHandler('seekforward', seekRelativeForward);
+            navigator.mediaSession.setActionHandler('seekbackward', clickFastRewind);
+            navigator.mediaSession.setActionHandler('seekforward', clickFastForward);
             navigator.mediaSession.setActionHandler('previoustrack', clickPrev);
             navigator.mediaSession.setActionHandler('nexttrack', clickNext);
         }
@@ -321,7 +324,7 @@ function parseSettings(obj) {
 function parseMPDSettings() {
     elGetById('partitionName').textContent = localSettings.partition;
 
-    if (settings.webuiSettings.bgCover === true) {
+    if (settings.webuiSettings.dynamicBackground !== 'off') {
         setBackgroundImage(domCache.body, currentSongObj.uri);
     }
     else {

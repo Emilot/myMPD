@@ -9,9 +9,9 @@ set(TEST_SOURCES
   main.c
   utility.c
   ../src/lib/api.c
-  ../src/lib/cache_disk_lyrics.c
-  ../src/lib/cache_rax_album.c
-  ../src/lib/cache_rax.c
+  ../src/lib/cache/cache_disk_lyrics.c
+  ../src/lib/cache/cache_rax_album.c
+  ../src/lib/cache/cache_rax.c
   ../src/lib/cert.c
   ../src/lib/config.c
   ../src/lib/convert.c
@@ -21,7 +21,10 @@ set(TEST_SOURCES
   ../src/lib/fields.c
   ../src/lib/filehandler.c
   ../src/lib/http_client.c
-  ../src/lib/jsonrpc.c
+  ../src/lib/http_client_cache.c
+  ../src/lib/json/json_print.c
+  ../src/lib/json/json_query.c
+  ../src/lib/json/json_rpc.c
   ../src/lib/last_played.c
   ../src/lib/list.c
   ../src/lib/log.c
@@ -72,6 +75,7 @@ set(TEST_SOURCES
   ../src/mympd_api/queue.c
   ../src/mympd_api/webradio.c
   ../src/scripts/events.c
+  ../src/webserver/mg_user_data.c
   tests/test_album_cache.c
   tests/test_api.c
   tests/test_cert.c
@@ -80,6 +84,7 @@ set(TEST_SOURCES
   tests/test_env.c
   tests/test_filehandler.c
   tests/test_http_client.c
+  tests/test_http_client_cache.c
   tests/test_jsonrpc.c
   tests/test_list.c
   tests/test_mimetype.c

@@ -60,7 +60,8 @@
 //minimum mpd version
 #define MPD_VERSION_MIN_MAJOR 0
 #define MPD_VERSION_MIN_MINOR 22
-#define MPD_VERSION_MIN_PATCH 6
+#define MPD_VERSION_MIN_PATCH 4
+#define MPD_TOO_OLD_MSG "MPD version too old, myMPD supports only MPD version >= 0.22.4"
 
 //default paths from cmake
 #define MYMPD_DOC_ROOT "${MYMPD_DOC_ROOT}"
@@ -76,7 +77,7 @@ extern _Atomic int mympd_worker_threads;
 //signal handler
 extern sig_atomic_t s_signal_received;
 //message queues
-extern struct t_mympd_queue *web_server_queue;
+extern struct t_mympd_queue *webserver_queue;
 extern struct t_mympd_queue *mympd_api_queue;
 #ifdef MYMPD_ENABLE_LUA
     extern struct t_mympd_queue *script_queue;
@@ -95,6 +96,7 @@ extern struct t_mympd_queue *mympd_api_queue;
 #define FILENAME_SCRIPTVARS "scriptvars_list"
 
 #define DIR_CACHE_COVER "cover"
+#define DIR_CACHE_HTTP "http"
 #define DIR_CACHE_LYRICS "lyrics"
 #define DIR_CACHE_MISC "misc"
 #define DIR_CACHE_THUMBS "thumbs"
@@ -134,6 +136,7 @@ extern struct t_mympd_queue *mympd_api_queue;
 #define CFG_MYMPD_SAVE_CACHES true
 #define CFG_MYMPD_LOG_TO_SYSLOG false
 #define CFG_MYMPD_CACHE_COVER_KEEP_DAYS 31
+#define CFG_MYMPD_CACHE_HTTP_KEEP_DAYS 31
 #define CFG_MYMPD_CACHE_LYRICS_KEEP_DAYS 31
 #define CFG_MYMPD_CACHE_THUMBS_KEEP_DAYS 31
 #define CFG_MYMPD_CACHE_MISC_KEEP_DAYS 1

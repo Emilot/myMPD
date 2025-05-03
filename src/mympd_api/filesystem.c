@@ -12,7 +12,8 @@
 #include "src/mympd_api/filesystem.h"
 
 #include "dist/utf8/utf8.h"
-#include "src/lib/jsonrpc.h"
+#include "src/lib/json/json_print.h"
+#include "src/lib/json/json_rpc.h"
 #include "src/lib/mem.h"
 #include "src/lib/rax_extras.h"
 #include "src/lib/sds_extras.h"
@@ -117,7 +118,6 @@ sds mympd_api_browse_filesystem(struct t_mympd_state *mympd_state, struct t_part
         }
         FREE_SDS(key);
     }
-    mpd_response_finish(partition_state->conn);
     if (mympd_check_error_and_recover_respond(partition_state, &buffer, cmd_id, request_id, "mpd_send_list_meta") == false) {
         //free result
         rax_free_data(entity_list, free_t_dir_entry);

@@ -11,7 +11,8 @@
 #include "compile_time.h"
 #include "src/mympd_api/jukebox.h"
 
-#include "src/lib/jsonrpc.h"
+#include "src/lib/json/json_print.h"
+#include "src/lib/json/json_rpc.h"
 #include "src/lib/log.h"
 #include "src/lib/sds_extras.h"
 #include "src/lib/search.h"
@@ -164,7 +165,6 @@ sds mympd_api_jukebox_list(struct t_partition_state *partition_state, struct t_s
                     mpd_song_free(song);
                 }
             }
-            mpd_response_finish(partition_state->conn);
             mympd_check_error_and_recover(partition_state, NULL, "mpd_send_list_meta");
             current = current->next;
         }

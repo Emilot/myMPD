@@ -12,8 +12,9 @@
 #include "src/mympd_client/jukebox.h"
 
 #include "dist/sds/sds.h"
-#include "src/lib/cache_rax_album.h"
-#include "src/lib/jsonrpc.h"
+#include "src/lib/cache/cache_rax_album.h"
+#include "src/lib/json/json_print.h"
+#include "src/lib/json/json_rpc.h"
 #include "src/lib/log.h"
 #include "src/lib/mem.h"
 #include "src/lib/msg_queue.h"
@@ -166,7 +167,8 @@ bool jukebox_run(struct t_mympd_state *mympd_state, struct t_partition_state *pa
         MYMPD_LOG_DEBUG(partition_state->name, "Jukebox: Starting worker thread to fill the jukebox queue");
         struct t_work_request *request = create_request(REQUEST_TYPE_DISCARD, 0, 0, INTERNAL_API_JUKEBOX_REFILL_ADD, NULL, partition_state->name);
         request->data = tojson_uint(request->data, "addSongs", add_songs, false);
-        request->data = sdscatlen(request->data, "}}", 2);
+        request->data = jsonrpc_end(request->data);
+
         struct t_list *queue_list = jukebox_get_last_played(partition_state, partition_state->jukebox.mode);
         request->extra = queue_list;
         return mympd_queue_push(mympd_api_queue, request, 0);
@@ -336,7 +338,6 @@ static struct t_list *jukebox_get_last_played(struct t_partition_state *partitio
             jukebox_get_last_played_add(partition_state, song, queue_list, jukebox_mode);
         }
     }
-    mpd_response_finish(partition_state->conn);
     if (mympd_check_error_and_recover(partition_state, NULL, "mpd_send_list_queue_meta") == false) {
         FREE_PTR(queue_list);
         return NULL;
@@ -358,7 +359,6 @@ static struct t_list *jukebox_get_last_played(struct t_partition_state *partitio
                     MYMPD_LOG_WARN(partition_state->name, "Failure fetching song information for uri \"%s\"", current->key);
                 }
             }
-            mpd_response_finish(partition_state->conn);
             mympd_check_error_and_recover(partition_state, NULL, "mpd_send_list_meta");
             current = current->next;
         }

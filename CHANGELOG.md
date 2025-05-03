@@ -4,6 +4,54 @@ https://github.com/jcorporation/myMPD/
 
 ***
 
+## myMPD v21.0.0 (not yet released)
+
+This release supports the first new MPD 0.25 feature and improves the scripting feature.
+
+There is now a new trigger to provide a background image by a script. An example implementation is available in the [mympd-scripts repository](https://github.com/jcorporation/mympd-scripts/tree/main/Background).
+
+Scripts can now set temporary variables which are kept in memory only and have an expiration time. They are useful to save some state between script executions.
+
+Thanks to @cbrenberg that ironed out a severe bug in the `mympd.tmp_file()` function.
+
+### API changes
+
+- MYMPD_API_SCRIPT_TMP_DELETE: new
+- MYMPD_API_SCRIPT_TMP_GET: new
+- MYMPD_API_SCRIPT_TMP_LIST: new
+- MYMPD_API_SCRIPT_TMP_SET: new
+
+### Scripting changes
+
+- Feat: `mympd.check_arguments()` - Argument checking function
+- Feat: `mympd.isnilorempty()` - Checks for nil and empty string
+- Feat: `mympd.remove_file()` - Wrapper for `os.remove` that logs errors
+- Fix: `mympd.tmp_file()` - Function does not return always uniq names #1422
+
+### Changelog
+
+- Feat: Add temporary variables for scripts
+- Feat: Add cache for Lua http client #1421
+- Feat: Add trigger for background image selection #1420
+- Feat: Use MPD side filter and window for listing tags (MPD 0.25)
+- Feat: Add logviewer for gui logs
+- Feat: Use range for retrieving playlist contents (MPD 0.24) #1424
+- Upd: Improve websocket reconnection
+- Upd: Improve API explorer - show request
+- Upd: Bootstrap v5.3.4 #1418
+
+***
+
+## myMPD v20.1.3 (2025-04-15)
+
+This is a small bug fix release.
+
+### Changelog
+
+- Fix: Set minimum MPD version to 0.22.4 #1419
+
+***
+
 ## myMPD v20.1.2 (2025-03-30)
 
 This is a small bug fix release.

@@ -12,8 +12,8 @@
 #include "src/mympd_api/mympd_api_handler.h"
 
 #include "src/lib/api.h"
-#include "src/lib/cache_rax_album.h"
-#include "src/lib/jsonrpc.h"
+#include "src/lib/cache/cache_rax_album.h"
+#include "src/lib/json/json_rpc.h"
 #include "src/lib/list.h"
 #include "src/lib/log.h"
 #include "src/lib/mem.h"
@@ -71,7 +71,6 @@
 #endif
 
 #include <stdbool.h>
-#include <stdlib.h>
 #include <string.h>
 
 /**
@@ -100,8 +99,8 @@ void mympd_api_handler(struct t_mympd_state *mympd_state, struct t_partition_sta
     sds error = sdsempty();
     bool async = false;
 
-    struct t_jsonrpc_parse_error parse_error;
-    jsonrpc_parse_error_init(&parse_error);
+    struct t_json_parse_error parse_error;
+    json_parse_error_init(&parse_error);
 
     #ifdef MYMPD_DEBUG
         MEASURE_INIT
@@ -165,7 +164,7 @@ void mympd_api_handler(struct t_mympd_state *mympd_state, struct t_partition_sta
             }
             if (request->cmd_id == MYMPD_API_SMARTPLS_UPDATE_ALL) {
                 // Trigger for smart playlist scripts
-                mympd_api_request_trigger_event_emit(TRIGGER_MYMPD_SMARTPLS, partition_state->name);
+                mympd_api_request_trigger_event_emit(TRIGGER_MYMPD_SMARTPLS, partition_state->name, NULL, 0);
             }
             async = mympd_worker_start(mympd_state, partition_state, request);
             if (async == false) {
@@ -188,12 +187,14 @@ void mympd_api_handler(struct t_mympd_state *mympd_state, struct t_partition_sta
                 //free the old album cache and replace it with the freshly generated one
                 if (cache_get_write_lock(&mympd_state->album_cache) == false) {
                     album_cache_free_rt(request->extra);
+                    request->extra = NULL;
                     send_jsonrpc_notify(JSONRPC_FACILITY_DATABASE, JSONRPC_SEVERITY_ERROR, MPD_PARTITION_ALL, "Album cache could not be replaced");
                     break;
                 }
                 album_cache_free(&mympd_state->album_cache);
                 mympd_state->album_cache.cache = (rax *) request->extra;
                 cache_release_lock(&mympd_state->album_cache);
+                request->extra = NULL;
                 MYMPD_LOG_INFO(partition_state->name, "Album cache was replaced");
             }
             else {
@@ -260,7 +261,9 @@ void mympd_api_handler(struct t_mympd_state *mympd_state, struct t_partition_sta
     // Albumart
         case INTERNAL_API_ALBUMART_BY_URI:
             if (json_get_string(request->data, "$.params.uri", 1, FILEPATH_LEN_MAX, &sds_buf1, vcb_isfilepath, &parse_error) == true) {
-                response->data = mympd_api_albumart_getcover_by_uri(mympd_state, partition_state, response->data, request->id, request->conn_id, sds_buf1, &response->binary);
+                response->extra = sdsempty();
+                response->extra_free = sds_free_void;
+                response->data = mympd_api_albumart_getcover_by_uri(mympd_state, partition_state, response->data, request->id, request->conn_id, sds_buf1, &response->extra);
                 if (sdslen(response->data) == 0) {
                     // response must be send by triggered script
                     async = true;
@@ -368,6 +371,7 @@ void mympd_api_handler(struct t_mympd_state *mympd_state, struct t_partition_sta
             if (rc == true) {
                 response->data = jsonrpc_respond_ok(response->data, request->cmd_id, request->id, JSONRPC_FACILITY_SCRIPT);
                 response->extra = lua_mympd_state;
+                response->extra_free = lua_mympd_state_free_void;
             }
             else {
                 response->data = jsonrpc_respond_message(response->data, request->cmd_id, request->id,
@@ -620,6 +624,7 @@ void mympd_api_handler(struct t_mympd_state *mympd_state, struct t_partition_sta
                 sdsclear(partition_state->jukebox.last_error);
                 list_free(partition_state->jukebox.queue);
                 partition_state->jukebox.queue = (struct t_list *)request->extra;
+                request->extra = NULL;
             }
             else if (partition_state->jukebox.mode != JUKEBOX_SCRIPT) {
                 MYMPD_LOG_ERROR(partition_state->name, "Jukebox queue is NULL");
@@ -657,7 +662,7 @@ void mympd_api_handler(struct t_mympd_state *mympd_state, struct t_partition_sta
                 break;
             }
             //malloc trigger_data - it is used in trigger list
-            struct t_trigger_data *trigger_data = trigger_data_new();
+            struct t_trigger_data *trigger_data = mympd_api_trigger_data_new();
 
             if (json_get_string(request->data, "$.params.name", 1, FILENAME_LEN_MAX, &sds_buf1, vcb_isfilename, &parse_error) == true &&
                 json_get_string(request->data, "$.params.script", 0, FILENAME_LEN_MAX, &trigger_data->script, vcb_isfilename, &parse_error) == true &&
@@ -686,12 +691,21 @@ void mympd_api_handler(struct t_mympd_state *mympd_state, struct t_partition_sta
             }
             break;
         case INTERNAL_API_TRIGGER_EVENT_EMIT:
-            if (json_get_int_max(request->data, "$.params.event", &int_buf1, &parse_error) == true) {
-                if (mympd_api_event_name(int_buf1) != NULL) {
-                    mympd_api_trigger_execute(&mympd_state->trigger_list, int_buf1, partition_state->name, NULL);
+            assert(request->extra);
+            struct t_event_data *data = (struct t_event_data *)request->extra;
+            if (data->event == TRIGGER_MYMPD_BGIMAGE) {
+                int n = mympd_api_trigger_execute_http(&mympd_state->trigger_list, TRIGGER_MYMPD_BGIMAGE,
+                            partition_state->name, request->conn_id, request->id, data->arguments);
+                if (n > 1) {
+                    MYMPD_LOG_WARN(partition_state->name, "More than one script triggered for bgimage.");
                 }
-                response->data = jsonrpc_respond_ok(response->data, INTERNAL_API_TRIGGER_EVENT_EMIT, request->id, JSONRPC_FACILITY_TRIGGER);
             }
+            else if (mympd_api_event_name(data->event) != NULL) {
+                mympd_api_trigger_execute(&mympd_state->trigger_list, data->event, partition_state->name, NULL);
+            }
+            mympd_api_event_data_free(data);
+            request->extra = NULL;
+            response->data = jsonrpc_respond_ok(response->data, INTERNAL_API_TRIGGER_EVENT_EMIT, request->id, JSONRPC_FACILITY_TRIGGER);
             break;
     // outputs
     case MYMPD_API_PLAYER_OUTPUT_GET:
@@ -1850,6 +1864,7 @@ void mympd_api_handler(struct t_mympd_state *mympd_state, struct t_partition_sta
         case INTERNAL_API_WEBRADIODB_CREATED:
             if (request->extra != NULL) {
                 struct t_webradios *new = (struct t_webradios *)request->extra;
+                request->extra = NULL;
                 if (webradios_get_write_lock(mympd_state->webradiodb) == false) {
                     MYMPD_LOG_ERROR(partition_state->name, "Discarding fetched WebradioDB");
                     webradios_free(new);
@@ -1991,7 +2006,7 @@ void mympd_api_handler(struct t_mympd_state *mympd_state, struct t_partition_sta
     if (async == true) {
         free_response(response);
         FREE_SDS(error);
-        jsonrpc_parse_error_clear(&parse_error);
+        json_parse_error_clear(&parse_error);
         return;
     }
 
@@ -2019,5 +2034,5 @@ void mympd_api_handler(struct t_mympd_state *mympd_state, struct t_partition_sta
     push_response(response);
     free_request(request);
     FREE_SDS(error);
-    jsonrpc_parse_error_clear(&parse_error);
+    json_parse_error_clear(&parse_error);
 }

@@ -192,7 +192,7 @@
             </select>
             <input data-is="mympd-input-clear" data-clear-event="keydown" data-placeholder-phrase="Search queue" class="form-control rounded-start-0 rounded-end" id="QueueCurrentSearchStr"/>
           </div>
-          <div  id="QueueCurrentSettingsPlayback" class="btn-group me-2">
+          <div id="QueueCurrentSettingsPlayback" class="btn-group me-2">
             <button data-title-phrase="Playback settings" type="button" class="btn btn-secondary mi" data-bs-toggle="modal" href="#modalPlayback">tune</button>
             <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" data-title-phrase="Select preset"></button>
             <div class="dropdown-menu px-2" id="selectPresetDropdown1">
@@ -1556,6 +1556,17 @@
               <div id="modalSettingsThemeFrm3"></div>
               <hr/>
               <h4 data-phrase="Background"></h4>
+              <div class="mb-3 row">
+                <label class="col-sm-4 col-form-label" data-phrase="Background"></label>
+                <div class="col-sm-8">
+                  <div class="btn-group" id="modalSettingsBackgroundGroup">
+                    <button data-value="albumart" class="btn btn-secondary" data-href='{"cmd": "toggleBtnGroup", "options": ["target"]}' type="button" data-phrase="Albumart"></button>
+                    <button data-value="trigger" class="btn btn-secondary featScripting" data-href='{"cmd": "toggleBtnGroup", "options": ["target"]}' type="button" data-phrase="Trigger"></button>
+                    <button data-value="off" class="btn btn-secondary" data-href='{"cmd": "toggleBtnGroup", "options": ["target"]}' type="button" data-phrase="Off"></button>
+                  </div>
+                  <small class="help" data-phrase="helpSettingsDynamicBackground"></small>
+                </div>
+              </div>
               <div id="modalSettingsBgFrm"></div>
               <hr/>
               <h4 data-phrase="Navigation bar"></h4>
@@ -2275,8 +2286,27 @@
                 <div id="modalScriptAPIparams"></div>
               </form>
               <div class="card border d-none" id="modalScriptAPIresult">
-                <div class="card-header" id="modalScriptAPIresultState" data-phrase="Result"></div>
-                <textarea rows="10" class="font-monospace form-control" id="modalScriptAPIresultText"></textarea>
+                <div class="card-header pb-0">
+                  <ul class="nav nav-tabs border-bottom-0">
+                    <li class="nav-item">
+                      <a class="nav-link active" href="#modalScriptAPIresultTab" data-bs-toggle="tab" data-height="true" data-phrase="Response"></a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link" href="#modalScriptAPIrequestTab" data-bs-toggle="tab" data-height="true" data-phrase="Request"></a>
+                    </li>
+                  </ul>
+                </div>
+                <div class="card-body">
+                  <div class="tab-content">
+                    <div class="tab-pane active" id="modalScriptAPIresultTab">
+                      <textarea rows="10" class="font-monospace form-control" id="modalScriptAPIresultText"></textarea>
+                    </div>
+                    <div class="tab-pane" id="modalScriptAPIrequestTab">
+                      <textarea rows="10" class="font-monospace form-control" id="modalScriptAPIrequestText"></textarea>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-footer" id="modalScriptAPIresultState" data-phrase="Result"></div>
               </div>
             </div>
             <div id="modalScriptsEditTab" class="tab-pane">
@@ -2374,7 +2404,7 @@
           </div>
         </div>
         <div id="modalScriptAPIfooter" class="modal-footer justify-content-between">
-          <button data-href='{"cmd":"showListScripts","options":[]}' type="button" class="btn btn-secondary" data-phrase="Cancel"></button>
+          <button data-href='{"cmd":"hideModalScriptAPItab","options":[]}' type="button" class="btn btn-secondary" data-phrase="Cancel"></button>
         </div>
         <div id="modalScriptsListFooter" class="modal-footer justify-content-between">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-phrase="Close"></button>
@@ -2387,10 +2417,12 @@
         <div id="modalScriptsEditFooter" class="modal-footer justify-content-between d-none">
           <div>
             <button data-href='{"cmd":"showListScripts","options":[]}' type="button" class="btn btn-secondary me-2" data-phrase="Cancel"></button>
-            <button data-href='{"cmd":"showModalScriptAPItab","options":["",""]}' class="btn btn-success protected me-2" data-phrase="API"></button>
             <button type="button" class="btn btn-secondary btnHelp mi" data-href='{"cmd": "toggleHelp", "options": []}' data-title-phrase="Show help">question_mark</button>
           </div>
-          <button data-href='{"cmd":"saveScript","options":["target"]}' type="button" class="btn btn-success protected" data-phrase="Save"></button>
+          <div>
+            <button data-href='{"cmd":"showModalScriptAPItab","options":["",""]}' class="btn btn-success protected me-2" data-phrase="API"></button>
+            <button data-href='{"cmd":"saveScript","options":["target"]}' type="button" class="btn btn-success protected" data-phrase="Save"></button>
+          </div>
         </div>
         <div id="modalScriptsImportFooter" class="modal-footer justify-content-between d-none">
           <button data-href='{"cmd":"showListScripts","options":[]}' type="button" class="btn btn-secondary" data-phrase="Cancel"></button>
@@ -2987,16 +3019,7 @@
             <label class="col-sm-4 col-form-label"><span data-phrase="Loglevel"></span><small class="mi mi-sm ms-1" data-title-phrase="Temporary setting">hourglass_bottom</small></label>
             <div class="col-sm-8">
               <div class="input-group">
-                <select id="modalMaintenanceLoglevelInput" class="form-select">
-                  <option value="0" data-phrase="0 - Emerg"></option>
-                  <option value="1" data-phrase="1 - Alert"></option>
-                  <option value="2" data-phrase="2 - Critical"></option>
-                  <option value="3" data-phrase="3 - Error"></option>
-                  <option value="4" data-phrase="4 - Warn"></option>
-                  <option value="5" data-phrase="5 - Notice"></option>
-                  <option value="6" data-phrase="6 - Info"></option>
-                  <option value="7" data-phrase="7 - Debug"></option>
-                </select>
+                <select id="modalMaintenanceLoglevelInput" class="form-select"></select>
                 <button type="button" class="btn btn-secondary protected" data-href='{"cmd": "setLoglevel", "options": ["target"]}' data-phrase="Set"></button>
               </div>
             </div>
@@ -3145,28 +3168,59 @@
   <div class="modal fade" id="modalNotifications" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
       <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title"><span class="mi title-icon">chat_bubble_outline</span> <span data-phrase="Notifications"></span></h5>
+        <div class="modal-header pb-0">
+          <ul class="nav nav-tabs border-bottom-0">
+            <li class="nav-item">
+              <a id="modalNotificationsMessagesTab" class="nav-link active" href="#modalNotificationsMessagesTabPane" data-bs-toggle="tab" data-height="true" data-phrase="Notifications"></a>
+            </li>
+            <li class="nav-item">
+              <a id="modalNotificationsLogsTab" class="nav-link" href="#modalNotificationsLogsTabPane" data-bs-toggle="tab" data-height="true" data-phrase="Logs"></a>
+            </li>
+          </ul>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <div class="table-responsive">
-            <table id="modalNotificationsList" class="table table-sm">
-              <thead>
-                <tr>
-                  <th data-phrase="Timestamp"></th>
-                  <th data-phrase="Facility"></th>
-                  <th>#</th>
-                  <th data-phrase="Message"></th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
+          <div class="tab-content">
+            <div class="tab-pane active" id="modalNotificationsMessagesTabPane">
+              <div class="table-responsive">
+                <table id="modalNotificationsMessagesList" class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th data-phrase="Timestamp"></th>
+                      <th data-phrase="Facility"></th>
+                      <th>#</th>
+                      <th data-phrase="Message"></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="tab-pane" id="modalNotificationsLogsTabPane">
+              <div class="table-responsive">
+                <table id="modalNotificationsLogsList" class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th data-phrase="Timestamp"></th>
+                      <th data-phrase="Loglevel"></th>
+                      <th data-phrase="Message"></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
         <div class="modal-footer justify-content-between">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-phrase="Close"></button>
-          <button type="button" class="btn btn-secondary" data-href='{"cmd": "clearMessages", "options": ["target"]}' data-phrase="Clear"></button>
+          <div>
+            <select class="form-select" id="modalNotificationsSeveritySelect"></select>
+          </div>
+          <div>
+            <button type="button" class="btn btn-secondary me-2" data-href='{"cmd": "refreshMessages", "options": ["target"]}' data-phrase="Refresh"></button>
+            <button type="button" class="btn btn-secondary" data-href='{"cmd": "clearMessages", "options": ["target"]}' data-phrase="Clear"></button>
+          </div>
         </div>
       </div>
     </div>

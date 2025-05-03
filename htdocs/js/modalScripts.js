@@ -233,7 +233,9 @@ function exploreAPIsendRequest() {
         elGetById('modalScriptAPIresultState').textContent = obj.error
             ? tn('Error')
             : tn('OK');
-        elGetById('modalScriptAPIresultText').textContent = JSON.stringify(obj);
+        elGetById('modalScriptAPIresultText').textContent = JSON.stringify(obj, null, 2);
+        const id = obj.id;
+        elGetById('modalScriptAPIrequestText').textContent = JSON.stringify({"jsonrpc": "2.0", "id": id, "method": method, "params": params}, null, 2);
     }, true);
 }
 
@@ -497,11 +499,13 @@ function parseEditScript(obj) {
 }
 
 /**
- * Shows the list scripts tab
+ * Shows the scripts API tab
  * @returns {void}
  */
 //eslint-disable-next-line no-unused-vars
 function showModalScriptAPItab() {
+    const lastActiveTab = document.querySelector('#modalScripts > div > div > div > .tab-content > .tab-pane.active').id;
+    setDataId('modalScripts', 'lastActiveTab', lastActiveTab);
     cleanupModalId('modalScripts');
     elGetById('modalScripts').firstElementChild.classList.remove('modal-dialog-scrollable');
     elGetById('modalScriptAPItab').classList.add('active');
@@ -512,7 +516,29 @@ function showModalScriptAPItab() {
     elHideId('modalScriptsListFooter');
     elHideId('modalScriptsEditFooter');
     elHideId('modalScriptsImportFooter');
-    getScriptList(true);
+}
+
+/**
+ * Returns from the scripts API tab
+ * @returns {void}
+ */
+//eslint-disable-next-line no-unused-vars
+function hideModalScriptAPItab() {
+    const lastActiveTab = getDataId('modalScripts', 'lastActiveTab');
+    switch(lastActiveTab) {
+        case 'modalScriptsEditTab':
+            elGetById('modalScriptsEditTab').classList.add('active');
+            elGetById('modalScriptAPItab').classList.remove('active');
+            elGetById('modalScriptsListTab').classList.remove('active');
+            elGetById('modalScriptsImportTab').classList.remove('active');
+            elShowId('modalScriptsEditFooter');
+            elHideId('modalScriptAPIfooter');
+            elHideId('modalScriptsListFooter');
+            elHideId('modalScriptsImportFooter');
+            break;
+        default:
+            showListScripts();
+    }
 }
 
 /**
@@ -586,7 +612,7 @@ function parseScriptList(obj) {
     const widgetScripts = elGetById('modalHomeWidgetScriptInput');
     elClear(widgetScripts);
 
-    if (checkResult(obj, table, 'table') === false) {
+    if (checkResult(obj, table, 'modalTable') === false) {
         return;
     }
 

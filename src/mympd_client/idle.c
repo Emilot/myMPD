@@ -13,7 +13,7 @@
 
 #include "src/lib/datetime.h"
 #include "src/lib/event.h"
-#include "src/lib/jsonrpc.h"
+#include "src/lib/json/json_rpc.h"
 #include "src/lib/log.h"
 #include "src/lib/msg_queue.h"
 #include "src/lib/mympd_state.h"
@@ -77,7 +77,7 @@ void mympd_client_idle(struct t_mympd_state *mympd_state, struct t_work_request 
             response->data = jsonrpc_respond_message(response->data, request->cmd_id, request->id,
                 JSONRPC_FACILITY_MPD, JSONRPC_SEVERITY_ERROR, "Unknown partition");
             MYMPD_LOG_DEBUG(NULL, "Send http response to connection %lu: %s", request->conn_id, response->data);
-            mympd_queue_push(web_server_queue, response, 0);
+            mympd_queue_push(webserver_queue, response, 0);
         }
         free_request(request);
     }
@@ -120,7 +120,7 @@ static void mympd_client_idle_partition(struct t_mympd_state *mympd_state, struc
         struct t_work_request *request)
 {
     if (request != NULL) {
-        if (is_mpd_disconnected_api_method(request->cmd_id) == true &&
+        if (check_cmd_acl(request->cmd_id, API_MPD_DISCONNECTED) == true &&
             partition_state->conn_state != MPD_CONNECTED)
         {
             // Handle request if MPD is not connected
@@ -129,7 +129,7 @@ static void mympd_client_idle_partition(struct t_mympd_state *mympd_state, struc
             partition_state->waiting_events &= ~(unsigned)PFD_TYPE_QUEUE;
             request = NULL;
         }
-        else if (is_mympd_only_api_method(request->cmd_id) == true) {
+        else if (check_cmd_acl(request->cmd_id, API_MYMPD_ONLY) == true) {
             // Request that can be handled without a MPD connection
             MYMPD_LOG_DEBUG(partition_state->name, "Handle request \"%s\"", get_cmd_id_method_name(request->cmd_id));
             mympd_api_handler(mympd_state, partition_state, request);
@@ -171,7 +171,7 @@ static void mympd_client_idle_partition(struct t_mympd_state *mympd_state, struc
         mympd_client_parse_idle(mympd_state, partition_state, idle_bitmask);
     }
     else {
-        mpd_response_finish(partition_state->conn);
+        mympd_check_error_and_recover(partition_state, NULL, "mpd_send_noidle");
     }
     // set mpd connection options
     if (partition_state->set_conn_options == true &&

@@ -2,25 +2,10 @@
 --- myMPD functions for caches
 ---
 
-local rand_charset = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"
-local rand_charset_len = #rand_charset
-math.randomseed(os.time())
-
---- Generates a temporary file for the misc cache
+--- Creates a temporary file for the misc cache
 -- @return filename or nil on error
 function mympd.tmp_file()
-  local ret = {}
-  local r
-  for _ = 1, 10 do
-    r = math.random(1, rand_charset_len)
-    table.insert(ret, rand_charset:sub(r, r))
-  end
-  local filename = mympd_env.cachedir_misc .. "/" .. table.concat(ret) .. ".tmp"
-  if mympd_caches_tmp_file(filename) == 0 then
-    return filename
-  else
-    return nil
-  end
+  return mympd_caches_tmp_file()
 end
 
 --- Write a file for the cover cache
@@ -41,6 +26,16 @@ end
 -- @return written name or error message on error
 function mympd.cache_thumbs_write(src, tagvalue, mimetype)
   return mympd_caches_images_write("thumbs", src, tagvalue, mimetype)
+end
+
+--- Write a file for the misc cache
+-- @param src File to rename
+-- @param name Value to create the misc cache file for
+-- @param mimetype Mime Type or nil to sniff by magic bytes
+-- @return 0 on success, else 1
+-- @return written name or error message on error
+function mympd.cache_misc_write(src, name, mimetype)
+  return mympd_caches_images_write("misc", src, name, mimetype)
 end
 
 --- Write a string to a file in the lyrics cache

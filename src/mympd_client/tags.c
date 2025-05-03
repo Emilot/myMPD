@@ -12,9 +12,9 @@
 #include "src/mympd_client/tags.h"
 
 #include "dist/libmympdclient/src/isong.h"
-#include "src/lib/cache_rax_album.h"
+#include "src/lib/cache/cache_rax_album.h"
 #include "src/lib/convert.h"
-#include "src/lib/jsonrpc.h"
+#include "src/lib/json/json_print.h"
 #include "src/lib/log.h"
 #include "src/lib/mem.h"
 #include "src/lib/sds_extras.h"
@@ -50,7 +50,6 @@ time_t mympd_client_get_db_mtime(struct t_partition_state *partition_state) {
         mtime = (time_t)mpd_stats_get_db_update_time(stats);
         mpd_stats_free(stats);
     }
-    mpd_response_finish(partition_state->conn);
     if (mympd_check_error_and_recover(partition_state, NULL, "mpd_run_stats") == false) {
         mtime = 0;
     }
@@ -283,7 +282,6 @@ bool enable_mpd_tags(struct t_partition_state *partition_state, const struct t_m
             }
             mympd_client_command_list_end_check(partition_state);
         }
-        mpd_response_finish(partition_state->conn);
     }
     return mympd_check_error_and_recover(partition_state, NULL, "mpd_send_enable_tag_types");
 }

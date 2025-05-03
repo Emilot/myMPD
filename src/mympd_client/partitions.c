@@ -44,7 +44,8 @@ bool partitions_connect(struct t_mympd_state *mympd_state, struct t_partition_st
     if (partition_state->is_default == true) {
         // check version
         if (mpd_connection_cmp_server_version(partition_state->conn, MPD_VERSION_MIN_MAJOR, MPD_VERSION_MIN_MINOR, MPD_VERSION_MIN_PATCH) < 0) {
-            MYMPD_LOG_EMERG(partition_state->name, "MPD version too old, myMPD supports only MPD version >= 0.21");
+            MYMPD_LOG_EMERG(partition_state->name, MPD_TOO_OLD_MSG);
+            // Signal myMPD to shutdown
             s_signal_received = 1;
             return false;
         }
@@ -154,7 +155,6 @@ bool partitions_populate(struct t_mympd_state *mympd_state) {
             mpd_return_pair(mympd_state->partition_state->conn, partition);
         }
     }
-    mpd_response_finish(mympd_state->partition_state->conn);
     if (mympd_check_error_and_recover(mympd_state->partition_state, NULL, "mpd_send_listpartitions") == false) {
         list_clear(&mpd_partitions);
         return false;
@@ -217,6 +217,6 @@ void partitions_add(struct t_mympd_state *mympd_state, const char *name) {
     last_played_file_read(partition_state->next);
     //set connect timer
     mympd_timer_set(partition_state->next->timer_fd_mpd_connect, 0, 5);
-    //push settings to web_server_queue
+    //push settings to webserver_queue
     settings_to_webserver(mympd_state);
 }

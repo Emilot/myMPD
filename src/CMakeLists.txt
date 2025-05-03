@@ -42,11 +42,11 @@ target_sources(mympd
   PRIVATE
     main.c
     lib/api.c
-    lib/cache_disk_images.c
-    lib/cache_disk_lyrics.c
-    lib/cache_disk.c
-    lib/cache_rax_album.c
-    lib/cache_rax.c
+    lib/cache/cache_disk_images.c
+    lib/cache/cache_disk_lyrics.c
+    lib/cache/cache_disk.c
+    lib/cache/cache_rax_album.c
+    lib/cache/cache_rax.c
     lib/cert.c
     lib/config.c
     lib/convert.c
@@ -57,7 +57,10 @@ target_sources(mympd
     lib/filehandler.c
     lib/handle_options.c
     lib/http_client.c
-    lib/jsonrpc.c
+    lib/http_client_cache.c
+    lib/json/json_print.c
+    lib/json/json_query.c
+    lib/json/json_rpc.c
     lib/last_played.c
     lib/list.c
     lib/log.c
@@ -139,17 +142,18 @@ target_sources(mympd
     mympd_api/volume.c
     mympd_api/webradio.c
     mympd_api/webradio_favorites.c
-    web_server/web_server.c
-    web_server/albumart.c
-    web_server/folderart.c
-    web_server/request_handler.c
-    web_server/placeholder.c
-    web_server/proxy.c
-    web_server/sessions.c
-    web_server/playlistart.c
-    web_server/tagart.c
-    web_server/utility.c
-    web_server/webradio.c
+    webserver/webserver.c
+    webserver/albumart.c
+    webserver/folderart.c
+    webserver/mg_user_data.c
+    webserver/request_handler.c
+    webserver/placeholder.c
+    webserver/proxy.c
+    webserver/sessions.c
+    webserver/playlistart.c
+    webserver/tagart.c
+    webserver/utility.c
+    webserver/webradio.c
 )
 
 if(MYMPD_ENABLE_LUA)
@@ -158,6 +162,7 @@ if(MYMPD_ENABLE_LUA)
       mympd_api/lua_mympd_state.c
       scripts/api_handler.c
       scripts/api_scripts.c
+      scripts/api_tmp.c
       scripts/api_vars.c
       scripts/events.c
       scripts/interface_caches.c
@@ -169,7 +174,7 @@ if(MYMPD_ENABLE_LUA)
       scripts/scripts_worker.c
       scripts/scripts.c
       scripts/util.c
-      web_server/scripts.c
+      webserver/scripts.c
   )
 endif()
 
@@ -177,7 +182,7 @@ if(MYMPD_ENABLE_FLAC)
   target_sources(mympd
     PRIVATE
       mympd_api/lyrics_flac.c
-      web_server/albumart_flac.c
+      webserver/albumart_flac.c
   )
 endif()
 
@@ -185,7 +190,7 @@ if(MYMPD_ENABLE_LIBID3TAG)
   target_sources(mympd
     PRIVATE
       mympd_api/lyrics_id3.c
-      web_server/albumart_id3.c
+      webserver/albumart_id3.c
   )
 endif()
 

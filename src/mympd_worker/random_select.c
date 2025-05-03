@@ -12,8 +12,9 @@
 #include "src/mympd_worker/random_select.h"
 
 #include "dist/sds/sds.h"
-#include "src/lib/cache_rax.h"
-#include "src/lib/jsonrpc.h"
+#include "src/lib/cache/cache_rax.h"
+#include "src/lib/json/json_print.h"
+#include "src/lib/json/json_rpc.h"
 #include "src/lib/log.h"
 #include "src/lib/sds_extras.h"
 #include "src/mympd_client/errorhandler.h"
@@ -162,7 +163,6 @@ sds mympd_worker_list_random(struct t_mympd_worker_state *mympd_worker_state, sd
                     mpd_song_free(song);
                 }
             }
-            mpd_response_finish(mympd_worker_state->partition_state->conn);
             mympd_check_error_and_recover(mympd_worker_state->partition_state, NULL, "mpd_send_list_meta");
             current = current->next;
             if (current != NULL) {

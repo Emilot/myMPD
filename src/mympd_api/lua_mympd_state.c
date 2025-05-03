@@ -11,7 +11,7 @@
 #include "compile_time.h"
 #include "src/mympd_api/lua_mympd_state.h"
 
-#include "src/lib/cache_rax_album.h"
+#include "src/lib/cache/cache_rax_album.h"
 #include "src/lib/log.h"
 #include "src/lib/mem.h"
 #include "src/lib/sds_extras.h"
@@ -76,7 +76,6 @@ bool mympd_api_status_lua_mympd_state_set(struct t_list *lua_partition_state, st
         lua_mympd_state_set_p(lua_partition_state, "partition", mpd_status_get_partition(status));
         mpd_status_free(status);
     }
-    mpd_response_finish(partition_state->conn);
     bool rc = mympd_check_error_and_recover(partition_state, NULL, "mpd_run_status");
     if (rc == false) {
         MYMPD_LOG_ERROR(partition_state->name, "Error getting mpd state for script execution");
@@ -187,10 +186,17 @@ void lua_mympd_state_set_b(struct t_list *lua_mympd_state, const char *k, bool v
 /**
  * Frees the lua_mympd_state list
  * @param lua_mympd_state pointer to the list
- * @return NULL
  */
-void *lua_mympd_state_free(struct t_list *lua_mympd_state) {
-    return list_free_user_data(lua_mympd_state, lua_mympd_state_free_user_data);
+void lua_mympd_state_free(struct t_list *lua_mympd_state) {
+    list_free_user_data(lua_mympd_state, lua_mympd_state_free_user_data);
+}
+
+/**
+ * Frees the lua_mympd_state list
+ * @param lua_mympd_state void pointer to lua_mympd_state
+ */
+void lua_mympd_state_free_void(void *lua_mympd_state) {
+    lua_mympd_state_free((struct t_list *)lua_mympd_state);
 }
 
 /**
