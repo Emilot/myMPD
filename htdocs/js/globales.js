@@ -231,11 +231,6 @@ const messagesMax = 100;
 /** @type {boolean} */
 const debugMode = document.querySelector("script").src.replace(/^.*[/]/, '') === 'combined.js' ? false : true;
 
-/** @type {string} */
-const scriptsUri = 'https://github.com/jcorporation/mympd-scripts/tree/main/';
-/** @type {string} */
-const scriptsImportUri = 'https://raw.githubusercontent.com/jcorporation/mympd-scripts/main/';
-
 /** @type {object} */
 const imageExtensions = ['webp', 'png', 'jpg', 'jpeg', 'svg', 'avif'];
 
@@ -341,7 +336,7 @@ const settingsPartitionFields = {
         "hintText": "Partition specific setting"
     },
     "streamUri": {
-        "defaultValue": defaults["PARTITION_MPD_STREAM_URI"],
+        "defaultValue": "",
         "placeholder": "auto",
         "inputType": "text",
         "title": "Stream URI",
@@ -1884,6 +1879,11 @@ const LUAfunctions = {
     "mympd.check_arguments": {
         "desc": "Checks arguments from the mympd_arguments global variable.",
         "func": "local rc, msg = mympd.check_arguments({uri = \"notempty\"})\nif rc == false then\n  return msg\nend",
+        "feat": ""
+    },
+    "mympd.tblvalue_in_list": {
+        "desc": "Checks a Lua table of tags against a comma separated list.",
+        "func": "if mympd.tblvalue_in_list(list_str, tbl) == true then\n  -- Handle match\n\nend",
         "feat": ""
     }
 };

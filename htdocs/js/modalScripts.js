@@ -109,6 +109,10 @@ function initModalScripts() {
         }
     });
 
+    if (window.innerHeight > 900) {
+        elGetById('modalScriptsContentInput').setAttribute('rows', '20');
+    }
+
     initModalScriptAPItab();
 }
 
@@ -443,14 +447,7 @@ function showEditScript(script, obj) {
     cleanupModalId('modalScripts');
     elGetById('modalScripts').firstElementChild.classList.remove('modal-dialog-scrollable');
     elGetById('modalScriptsContentInput').removeAttribute('disabled');
-    elGetById('modalScriptsEditTab').classList.add('active');
-    elGetById('modalScriptAPItab').classList.remove('active');
-    elGetById('modalScriptsListTab').classList.remove('active');
-    elGetById('modalScriptsImportTab').classList.remove('active');
-    elShowId('modalScriptsEditFooter');
-    elHideId('modalScriptAPIfooter');
-    elHideId('modalScriptsListFooter');
-    elHideId('modalScriptsImportFooter');
+    showModalTab('modalScriptsEditTab', 'modalScriptsEditFooter');
     if (obj !== undefined) {
         parseEditScript(obj);
     }
@@ -482,7 +479,7 @@ function parseEditScript(obj) {
     if (obj.result.metadata.file !== '' && obj.result.metadata.version > 0) {
         elEnableId('modalScriptsUpdateBtn');
         elShowId('modalScriptsEditDescRow');
-        elGetById('modalScriptsEditLink').setAttribute('href', scriptsUri + dirname(obj.result.metadata.file));
+        elGetById('modalScriptsEditLink').setAttribute('href', settings.scriptsUri + dirname(obj.result.metadata.file));
     }
     else {
         elDisableId('modalScriptsUpdateBtn');
@@ -508,14 +505,7 @@ function showModalScriptAPItab() {
     setDataId('modalScripts', 'lastActiveTab', lastActiveTab);
     cleanupModalId('modalScripts');
     elGetById('modalScripts').firstElementChild.classList.remove('modal-dialog-scrollable');
-    elGetById('modalScriptAPItab').classList.add('active');
-    elGetById('modalScriptsListTab').classList.remove('active');
-    elGetById('modalScriptsEditTab').classList.remove('active');
-    elGetById('modalScriptsImportTab').classList.remove('active');
-    elShowId('modalScriptAPIfooter');
-    elHideId('modalScriptsListFooter');
-    elHideId('modalScriptsEditFooter');
-    elHideId('modalScriptsImportFooter');
+    showModalTab('modalScriptAPItab', 'modalScriptAPIfooter');
 }
 
 /**
@@ -527,14 +517,7 @@ function hideModalScriptAPItab() {
     const lastActiveTab = getDataId('modalScripts', 'lastActiveTab');
     switch(lastActiveTab) {
         case 'modalScriptsEditTab':
-            elGetById('modalScriptsEditTab').classList.add('active');
-            elGetById('modalScriptAPItab').classList.remove('active');
-            elGetById('modalScriptsListTab').classList.remove('active');
-            elGetById('modalScriptsImportTab').classList.remove('active');
-            elShowId('modalScriptsEditFooter');
-            elHideId('modalScriptAPIfooter');
-            elHideId('modalScriptsListFooter');
-            elHideId('modalScriptsImportFooter');
+            showModalTab('modalScriptsEditTab', 'modalScriptsEditFooter');
             break;
         default:
             showListScripts();
@@ -548,14 +531,7 @@ function hideModalScriptAPItab() {
 function showListScripts() {
     cleanupModalId('modalScripts');
     elGetById('modalScripts').firstElementChild.classList.remove('modal-dialog-scrollable');
-    elGetById('modalScriptsListTab').classList.add('active');
-    elGetById('modalScriptAPItab').classList.remove('active');
-    elGetById('modalScriptsEditTab').classList.remove('active');
-    elGetById('modalScriptsImportTab').classList.remove('active');
-    elShowId('modalScriptsListFooter');
-    elHideId('modalScriptAPIfooter');
-    elHideId('modalScriptsEditFooter');
-    elHideId('modalScriptsImportFooter');
+    showModalTab('modalScriptsListTab', 'modalScriptsListFooter');
     getScriptList(true);
 }
 
@@ -693,14 +669,7 @@ function addOptionToScriptSelect(sel, opt, args) {
 function showImportScript() {
     cleanupModalId('modalScripts');
     elGetById('modalScripts').firstElementChild.classList.add('modal-dialog-scrollable');
-    elGetById('modalScriptsImportTab').classList.add('active');
-    elGetById('modalScriptAPItab').classList.remove('active');
-    elGetById('modalScriptsListTab').classList.remove('active');
-    elGetById('modalScriptsEditTab').classList.remove('active');
-    elShowId('modalScriptsImportFooter');
-    elHideId('modalScriptAPIfooter');
-    elHideId('modalScriptsListFooter');
-    elHideId('modalScriptsEditFooter');
+    showModalTab('modalScriptsImportTab', 'modalScriptsImportFooter');
     if (userAgentData.isMobile === false) {
         setFocusId('modalScriptsImportSearchStr');
     }
@@ -710,9 +679,9 @@ function showImportScript() {
     list.appendChild(
         elCreateTextTn('li', {"class": ["list-group-item", "not-clickable"]}, 'Loading...')
     );
-    httpGet(subdir + '/proxy?uri=' + myEncodeURI(scriptsImportUri + 'index.json'), function(obj) {
+    httpGet(subdir + '/proxy?uri=' + myEncodeURI(settings.scriptsImportUri + 'index.json'), function(text) {
         elClear(list);
-        if (obj === null) {
+        if (text === '') {
             list.appendChild(
                 elCreateNode('li', {"class": ["list-group-item", "not-clickable"]},
                     elCreateTextTn('div', {"class": ["alert", "alert-danger"]}, 'Failure loading script list.')
@@ -720,27 +689,73 @@ function showImportScript() {
             );
             return;
         }
-        for (const key in obj) {
-            const script = obj[key];
-            const clickable = elGetById('modalScriptsList').querySelector('[data-file="' + key + '"') === null
-                ? 'clickable'
-                : 'disabled';
-            list.appendChild(
-                elCreateNodes('li', {"data-script": key, "class": ["list-group-item", "list-group-item-action", clickable],
-                    "title": tn("Import"), "data-title-phrase": "Import"}, [
-                    elCreateNodes('div', {"class": ["d-flex", "w-100", "justify-content-between"]}, [
-                        elCreateText('h5', {}, script.name),
-                        elCreateText('a', {"href": scriptsUri + dirname(key), "target": "_blank", "class": ["mi", "text-success"],
-                            "data-title": tn("Open"), "data-title-phrase": "Open"}, 'open_in_browser')
-                    ]),
-                    elCreateNodes('div', {"class": ["d-flex", "w-100", "justify-content-between"]}, [
-                        elCreateText('p', {"class": ["mb-1"]}, script.desc),
-                        elCreateText('small', {}, 'v' + script.version)
-                    ])
+        getIndexSignature(text);
+    }, false);
+}
+
+/**
+ * Fetches the index signature and validates it
+ * @param {string} text Script index as text
+ * @returns {void}
+ */
+function getIndexSignature(text) {
+    httpGet(subdir + '/proxy?uri=' + myEncodeURI(settings.scriptsImportUri + 'index.json.sig'), function(signature) {
+        sendAPI('MYMPD_API_SCRIPT_VERIFY_SIG', {
+            "script": text,
+            "signature": signature
+        }, function(obj) {
+            if (obj.error) {
+                //Signature validation failed
+                showModalAlert(obj);
+            }
+            else {
+                populateScriptImportList(text);
+            }
+        },
+        true);
+    }, false);
+}
+
+/**
+ * Parses the script index into json and populate the list of scripts to import
+ * @param {string} text Script index as text
+ * @returns {void}
+ */
+function populateScriptImportList(text) {
+    const list = elGetById('modalScriptsImportList');
+    let obj;
+    try {
+        obj = JSON.parse(text);
+    }
+    catch(e) {
+        list.appendChild(
+            elCreateNode('li', {"class": ["list-group-item", "not-clickable"]},
+                elCreateTextTn('div', {"class": ["alert", "alert-danger"]}, 'Failure loading script list.')
+            )
+        );
+        logError(e);
+        return;
+    }
+    for (const key in obj) {
+        const script = obj[key];
+        const clickable = elGetById('modalScriptsList').querySelector('[data-file="' + key + '"') === null
+            ? 'clickable'
+            : 'disabled';
+        list.appendChild(
+            elCreateNodes('li', {"data-script": key, "class": ["list-group-item", "list-group-item-action", clickable],
+                "title": tn("Import"), "data-title-phrase": "Import"}, [
+                elCreateNodes('div', {"class": ["d-flex", "w-100", "justify-content-between"]}, [
+                    elCreateText('h5', {}, script.name),
+                    elCreateText('a', {"href": settings.scriptsUri + dirname(key), "target": "_blank", "class": ["mi", "text-success"],
+                        "data-title": tn("Open"), "data-title-phrase": "Open"}, 'open_in_browser')
+                ]),
+                elCreateNodes('div', {"class": ["d-flex", "w-100", "justify-content-between"]}, [
+                    elCreateText('p', {"class": ["mb-1"]}, script.desc),
+                    elCreateText('small', {}, 'v' + script.version)
                 ])
-            );
-        }
-    }, true);
+            ])
+        );
+    }
 }
 
 /**
@@ -753,8 +768,33 @@ function importScript(target) {
     const script = target.getAttribute('data-script');
     showEditScript('');
     elDisableId('modalScriptsContentInput');
-    httpGet(subdir + '/proxy?uri=' + myEncodeURI(scriptsImportUri + script), function(text) {
-        doImportScript(text);
+    httpGet(subdir + '/proxy?uri=' + myEncodeURI(settings.scriptsImportUri + script), function(text) {
+        getScriptSignature(script, text);
+    }, false);
+}
+
+/**
+ * Fetches the script signature and validates it.
+ * @param {string} script Script name
+ * @param {string} text Script content
+ * @returns {void}
+ */
+function getScriptSignature(script, text) {
+    httpGet(subdir + '/proxy?uri=' + myEncodeURI(settings.scriptsImportUri + script + '.sig'), function(signature) {
+        sendAPI('MYMPD_API_SCRIPT_VERIFY_SIG', {
+            "script": text,
+            "signature": signature
+        }, function(obj) {
+            if (obj.error) {
+                //Signature validation failed
+                showModalAlert(obj);
+                elEnableId('modalScriptsContentInput');
+            }
+            else {
+                doImportScript(text);
+            }
+        },
+        true);
     }, false);
 }
 
@@ -811,7 +851,7 @@ function updateScript() {
     if (importFile === '' || currentVersion === '') {
         return;
     }
-    httpGet(subdir + '/proxy?uri=' + myEncodeURI(scriptsImportUri + 'index.json'), function(obj) {
+    httpGet(subdir + '/proxy?uri=' + myEncodeURI(settings.scriptsImportUri + 'index.json'), function(obj) {
         if (obj[importFile] === undefined) {
             showModalAlert({
                 "error": {
@@ -827,7 +867,7 @@ function updateScript() {
             return;
         }
         elDisableId('modalScriptsContentInput');
-        httpGet(subdir + '/proxy?uri=' + myEncodeURI(scriptsImportUri + importFile), function(text) {
+        httpGet(subdir + '/proxy?uri=' + myEncodeURI(settings.scriptsImportUri + importFile), function(text) {
             if (doImportScript(text) === true) {
                 showModalInfo("Script successfully updated.");
             }
