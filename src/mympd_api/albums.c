@@ -11,6 +11,7 @@
 #include "compile_time.h"
 #include "src/mympd_api/albums.h"
 
+#include "src/lib/album.h"
 #include "src/lib/cache/cache_rax_album.h"
 #include "src/lib/fields.h"
 #include "src/lib/json/json_print.h"
@@ -57,7 +58,7 @@ sds mympd_api_album_detail(struct t_mympd_state *mympd_state, struct t_partition
         return buffer;
     }
 
-    struct mpd_song *mpd_album = album_cache_get_album(&mympd_state->album_cache, albumid);
+    struct t_album *mpd_album = album_cache_get_album(&mympd_state->album_cache, albumid);
     if (mpd_album == NULL) {
         return jsonrpc_respond_message(buffer, cmd_id, request_id,
             JSONRPC_FACILITY_DATABASE, JSONRPC_SEVERITY_ERROR, "Album not found");
@@ -84,9 +85,9 @@ sds mympd_api_album_detail(struct t_mympd_state *mympd_state, struct t_partition
     unsigned last_played_song_pos = 0;
     if (partition_state->config->albums.mode == ALBUM_MODE_SIMPLE) {
         // reset album values for simple album mode
-        album_cache_set_total_time(mpd_album, 0);
-        album_cache_set_disc_count(mpd_album, 0);
-        album_cache_set_song_count(mpd_album, 0);
+        album_set_total_time(mpd_album, 0);
+        album_set_disc_count(mpd_album, 0);
+        album_set_song_count(mpd_album, 0);
     }
     bool print_stickers = check_get_sticker(partition_state->mpd_state->feat.stickers, &tagcols->stickers);
     if (print_stickers == true) {
@@ -122,9 +123,9 @@ sds mympd_api_album_detail(struct t_mympd_state *mympd_state, struct t_partition
             buffer = sdscatlen(buffer, "}", 1);
             if (partition_state->config->albums.mode == ALBUM_MODE_SIMPLE) {
                 // calculate some album values for simple album mode
-                album_cache_inc_total_time(mpd_album, song);
-                album_cache_set_discs(mpd_album, song);
-                album_cache_inc_song_count(mpd_album);
+                album_inc_total_time(mpd_album, mpd_song_get_duration(song));
+                album_set_discs(mpd_album, mpd_song_get_tag(song, MPD_TAG_DISC, 0));
+                album_inc_song_count(mpd_album);
             }
             mpd_song_free(song);
         }
@@ -282,11 +283,11 @@ sds mympd_api_album_list(struct t_mympd_state *mympd_state, struct t_partition_s
             if (entities_returned++) {
                 buffer = sdscatlen(buffer, ",", 1);
             }
-            struct mpd_song *album = (struct mpd_song *)iter.data;
+            struct t_album *album = (struct t_album *)iter.data;
             buffer = sdscat(buffer, "{\"Type\": \"album\",");
             buffer = print_album_tags(buffer, partition_state->mpd_state, &tagcols->mpd_tags, album);
             buffer = sdscatlen(buffer, ",", 1);
-            buffer = tojson_char(buffer, "FirstSongUri", mpd_song_get_uri(album), false);
+            buffer = tojson_char(buffer, "FirstSongUri", album_get_uri(album), false);
             if (print_stickers == true) {
                 buffer = sdscatlen(buffer, ",", 1);
                 album_exp = get_search_expression_album(album_exp, mympd_state->mpd_state->tag_albumartist, album, &mympd_state->config->albums);

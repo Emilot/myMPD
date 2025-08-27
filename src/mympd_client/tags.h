@@ -12,11 +12,10 @@
 #define MYMPD_MPD_CLIENT_TAGS_H
 
 #include "dist/sds/sds.h"
+#include "src/lib/album.h"
 #include "src/lib/mympd_state.h"
 
 time_t mympd_client_get_db_mtime(struct t_partition_state *partition_state);
-bool mympd_mpd_song_add_tag_dedup(struct mpd_song *song,
-        enum mpd_tag_type type, const char *value);
 bool is_multivalue_tag(enum mpd_tag_type tag);
 bool is_numeric_tag(enum mpd_tag_type tag);
 sds printAudioFormat(sds buffer, const struct mpd_audio_format *audioformat);
@@ -27,7 +26,7 @@ enum mpd_tag_type get_sort_tag(enum mpd_tag_type tag, const struct t_mympd_mpd_t
 sds print_song_tags(sds buffer, const struct t_mpd_state *mpd_state, const struct t_mympd_mpd_tags *tagcols,
         const struct mpd_song *song);
 sds print_album_tags(sds buffer, const struct t_mpd_state *mpd_state, const struct t_mympd_mpd_tags *tagcols,
-        const struct mpd_song *album);
+        const struct t_album *album);
 void check_tags(sds taglist, const char *taglistname, struct t_mympd_mpd_tags *tagtypes,
         const struct t_mympd_mpd_tags *allowed_tag_types);
 bool mympd_client_tag_exists(const struct t_mympd_mpd_tags *tagtypes, enum mpd_tag_type tag);

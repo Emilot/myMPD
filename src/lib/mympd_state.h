@@ -11,7 +11,6 @@
 #ifndef MYMPD_STATE_H
 #define MYMPD_STATE_H
 
-#include "dist/libmympdclient/include/mpd/client.h"
 #include "dist/sds/sds.h"
 #include "src/lib/cache/cache_rax.h"
 #include "src/lib/config_def.h"
@@ -82,6 +81,7 @@ struct t_mpd_state {
     unsigned mpd_binarylimit;           //!< mpd binary limit to set
     unsigned mpd_timeout;               //!< mpd connection timeout
     bool mpd_keepalive;                 //!< mpd tcp keepalive flag
+    bool mpd_stringnormalization;       //!< mpd stringnormalization
     sds music_directory_value;          //!< real music directory set by feature detection
     sds playlist_directory_value;       //!< real playlist directory set by feature detection
     //tags

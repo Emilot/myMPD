@@ -11,29 +11,11 @@
 #ifndef MYMPD_LIB_CONFIG_DEF_H
 #define MYMPD_LIB_CONFIG_DEF_H
 
-#include "compile_time.h"
-
 #include "dist/sds/sds.h"
-#include "mpd/tag.h"
+#include "src/lib/cache/cache_rax_album.h"
 #include "src/lib/validate.h"
 
 #include <stdbool.h>
-
-/**
- * Modes for the album cache
- */
-enum album_modes {
-    ALBUM_MODE_SIMPLE = 0,
-    ALBUM_MODE_ADV
-};
-
-/**
- * Holds config for the album cache
- */
-struct t_albums_config {
-    enum album_modes mode;        //!< enable advanced albums
-    enum mpd_tag_type group_tag;  //!< additional group tag for albums
-};
 
 /**
  * Config items
